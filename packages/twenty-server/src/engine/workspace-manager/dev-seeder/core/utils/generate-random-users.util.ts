@@ -460,7 +460,9 @@ export function generateRandomUsers(): {
   const passwordHash =
     '$2b$10$3LwXjJRtLsfx4hLuuXhxt.3mWgismTiZFCZSG3z9kDrSfsrBl0fT6';
 
-  for (let i = 1; i <= 1000; i++) {
+  const RANDOM_USER_COUNT = 0;
+
+  for (let i = 1; i <= RANDOM_USER_COUNT; i++) {
     // Generate deterministic random indices for names
     const firstNameIndex = Math.floor(
       seededRandom(i * 1000) * FIRST_NAMES.length,

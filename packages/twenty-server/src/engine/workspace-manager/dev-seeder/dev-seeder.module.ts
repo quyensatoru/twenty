@@ -20,6 +20,8 @@ import { RoleTargetModule } from 'src/engine/metadata-modules/role-target/role-t
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { RoleModule } from 'src/engine/metadata-modules/role/role.module';
 import { UserRoleModule } from 'src/engine/metadata-modules/user-role/user-role.module';
+import { ViewFieldModule } from 'src/engine/metadata-modules/view-field/view-field.module';
+import { ViewModule } from 'src/engine/metadata-modules/view/view.module';
 import { UpgradeModule } from 'src/engine/core-modules/upgrade/upgrade.module';
 import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
@@ -60,6 +62,8 @@ import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace
     SdkClientModule,
     SecretEncryptionModule,
     UpgradeModule,
+    ViewModule,
+    ViewFieldModule,
   ],
   exports: [DevSeederService],
   providers: [

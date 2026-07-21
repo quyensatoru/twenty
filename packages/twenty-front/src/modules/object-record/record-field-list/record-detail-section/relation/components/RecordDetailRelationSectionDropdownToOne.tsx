@@ -14,6 +14,7 @@ import { type RecordPickerPickableMorphItem } from '@/object-record/record-picke
 import { getRecordFieldCardRelationPickerDropdownId } from '@/object-record/record-show/utils/getRecordFieldCardRelationPickerDropdownId';
 import { recordStoreFamilySelector } from '@/object-record/record-store/states/selectors/recordStoreFamilySelector';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { useEpicIdsOutsideProject } from '@/project-management/hooks/useEpicIdsOutsideProject';
 import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { dropdownPlacementComponentState } from '@/ui/layout/dropdown/states/dropdownPlacementComponentState';
@@ -158,6 +159,19 @@ export const RecordDetailRelationSectionDropdownToOne = ({
     relationObjectMetadataNameSingular !==
     CoreObjectNameSingular.WorkspaceMember;
 
+  const isIssueEpicField =
+    objectMetadataItem.nameSingular === 'issue' && fieldMetadataItem.name === 'epic';
+
+  const issueProjectValue = useAtomFamilySelectorValue(recordStoreFamilySelector, {
+    recordId,
+    fieldName: 'project',
+  }) as { id: string } | null;
+
+  const epicIdsOutsideProject = useEpicIdsOutsideProject({
+    projectId: issueProjectValue?.id,
+    skip: !isIssueEpicField,
+  });
+
   return (
     <Dropdown
       dropdownId={dropdownId}
@@ -178,6 +192,7 @@ export const RecordDetailRelationSectionDropdownToOne = ({
           focusId={dropdownId}
           componentInstanceId={dropdownId}
           EmptyIcon={IconForbid}
+          excludedRecordIds={isIssueEpicField ? epicIdsOutsideProject : undefined}
           onMorphItemSelected={handleRelationPickerEntitySelected}
           objectNameSingulars={[relationObjectMetadataNameSingular]}
           recordPickerInstanceId={dropdownId}

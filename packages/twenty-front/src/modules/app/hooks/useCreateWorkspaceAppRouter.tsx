@@ -117,6 +117,12 @@ const NotFound = lazy(() =>
   })),
 );
 
+const MyProjectsPage = lazy(() =>
+  import('~/pages/my-projects/MyProjectsPage').then((module) => ({
+    default: module.MyProjectsPage,
+  })),
+);
+
 const preloadOnboardingPages = () => {
   void WorkspaceActivation.preload();
   void CreateProfile.preload();
@@ -163,6 +169,14 @@ const createWorkspaceAppRouter = (
                 element={
                   <LazyRoute>
                     <StandalonePageLayoutPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.MyProjectsPage}
+                element={
+                  <LazyRoute>
+                    <MyProjectsPage />
                   </LazyRoute>
                 }
               />

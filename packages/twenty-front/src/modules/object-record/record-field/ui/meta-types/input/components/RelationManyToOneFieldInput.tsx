@@ -11,9 +11,12 @@ import { recordFieldInputLayoutDirectionLoadingComponentState } from '@/object-r
 import { SingleRecordPicker } from '@/object-record/record-picker/single-record-picker/components/SingleRecordPicker';
 import { singleRecordPickerSelectedIdComponentState } from '@/object-record/record-picker/single-record-picker/states/singleRecordPickerSelectedIdComponentState';
 import { type RecordPickerPickableMorphItem } from '@/object-record/record-picker/types/RecordPickerPickableMorphItem';
+import { recordStoreFamilySelector } from '@/object-record/record-store/states/selectors/recordStoreFamilySelector';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { useEpicIdsOutsideProject } from '@/project-management/hooks/useEpicIdsOutsideProject';
 import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/component-state/hooks/useAvailableComponentInstanceIdOrThrow';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
+import { useAtomFamilySelectorValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilySelectorValue';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
 import { useLingui } from '@lingui/react/macro';
 import { useContext } from 'react';
@@ -98,6 +101,20 @@ export const RelationManyToOneFieldInput = () => {
     }
   };
 
+  const isIssueEpicField =
+    objectMetadataItem.nameSingular === 'issue' &&
+    fieldMetadataItem.name === 'epic';
+
+  const issueProjectValue = useAtomFamilySelectorValue(
+    recordStoreFamilySelector,
+    { recordId, fieldName: 'project' },
+  ) as { id: string } | null;
+
+  const epicIdsOutsideProject = useEpicIdsOutsideProject({
+    projectId: issueProjectValue?.id,
+    skip: !isIssueEpicField,
+  });
+
   if (recordFieldInputLayoutDirectionLoading) {
     return <></>;
   }
@@ -109,6 +126,7 @@ export const RelationManyToOneFieldInput = () => {
       componentInstanceId={instanceId}
       EmptyIcon={IconForbid}
       emptyLabel={t`No ${fieldLabel}`}
+      excludedRecordIds={isIssueEpicField ? epicIdsOutsideProject : undefined}
       onCancel={onCancel}
       onCreate={
         isDefined(createNewRecordAndOpenSidePanel) ? handleCreateNew : undefined

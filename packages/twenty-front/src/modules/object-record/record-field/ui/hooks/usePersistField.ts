@@ -27,9 +27,11 @@ import { isFieldSelect } from '@/object-record/record-field/ui/types/guards/isFi
 import { isFieldSelectValue } from '@/object-record/record-field/ui/types/guards/isFieldSelectValue';
 import { recordStoreFamilySelector } from '@/object-record/record-store/states/selectors/recordStoreFamilySelector';
 
+import { useApolloCoreClient } from '@/object-metadata/hooks/useApolloCoreClient';
 import { useObjectMetadataItemById } from '@/object-metadata/hooks/useObjectMetadataItemById';
 import { useObjectMetadataItems } from '@/object-metadata/hooks/useObjectMetadataItems';
 import { getRecordFromRecordNode } from '@/object-record/cache/utils/getRecordFromRecordNode';
+import { useFindOneRecordQuery } from '@/object-record/hooks/useFindOneRecordQuery';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
 import { buildMorphRelationUpdateInput } from '@/object-record/record-field/ui/meta-types/input/utils/buildMorphRelationUpdateInput';
 import { isFieldArray } from '@/object-record/record-field/ui/types/guards/isFieldArray';
@@ -73,6 +75,12 @@ export const usePersistField = ({
 
   const store = useStore();
   const { upsertRecordsInStore } = useUpsertRecordsInStore();
+  const apolloCoreClient = useApolloCoreClient();
+
+  const { findOneRecordQuery: findOneEpicQuery } = useFindOneRecordQuery({
+    objectNameSingular: 'epic',
+    recordGqlFields: { id: true, project: { id: true } },
+  });
 
   const persistField = useCallback(
     async ({
@@ -214,6 +222,49 @@ export const usePersistField = ({
               [getForeignKeyNameFromRelationFieldName(fieldName)]: true,
             },
           });
+
+          if (
+            objectMetadataItem.nameSingular === 'issue' &&
+            fieldName === 'project'
+          ) {
+            const currentEpic = store.get(
+              recordStoreFamilySelector.selectorFamily({
+                recordId,
+                fieldName: 'epic',
+              }),
+            ) as { id: string } | null | undefined;
+
+            if (isDefined(currentEpic)) {
+              const { data } = await apolloCoreClient.query<{
+                epic: { id: string; project: { id: string } | null } | null;
+              }>({
+                query: findOneEpicQuery,
+                variables: { objectRecordId: currentEpic.id },
+                fetchPolicy: 'network-only',
+              });
+
+              const epicProjectId = data?.epic?.project?.id ?? null;
+
+              if (epicProjectId !== (valueToPersist?.id ?? null)) {
+                await updateOneRecord({
+                  objectNameSingular: objectMetadataItem.nameSingular,
+                  idToUpdate: recordId,
+                  updateOneRecordInput: {
+                    [getForeignKeyNameFromRelationFieldName('epic')]: null,
+                  },
+                });
+
+                store.set(
+                  recordStoreFamilySelector.selectorFamily({
+                    recordId,
+                    fieldName: 'epic',
+                  }),
+                  null,
+                );
+              }
+            }
+          }
+
           return;
         }
 
@@ -292,6 +343,8 @@ export const usePersistField = ({
       }
     },
     [
+      apolloCoreClient,
+      findOneEpicQuery,
       objectMetadataItem?.nameSingular,
       objectMetadataItems,
       store,

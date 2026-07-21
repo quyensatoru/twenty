@@ -42,10 +42,8 @@ import {
   ObjectMetadataException,
   ObjectMetadataExceptionCode,
 } from 'src/engine/metadata-modules/object-metadata/object-metadata.exception';
-import { buildReservedSystemFlatFieldMetadatasForCustomObject } from 'src/engine/metadata-modules/object-metadata/utils/build-reserved-system-flat-field-metadatas-for-custom-object.util';
 import { computeFlatDefaultRecordPageLayoutToCreate } from 'src/engine/metadata-modules/object-metadata/utils/compute-flat-default-record-page-layout-to-create.util';
 import { computeFlatRecordPageFieldsViewToCreate } from 'src/engine/metadata-modules/object-metadata/utils/compute-flat-record-page-fields-view-to-create.util';
-import { computeFlatViewFieldsToCreate } from 'src/engine/metadata-modules/object-metadata/utils/compute-flat-view-fields-to-create.util';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceMigrationBuilderException } from 'src/engine/workspace-manager/workspace-migration/exceptions/workspace-migration-builder-exception';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
@@ -489,36 +487,9 @@ export class ObjectMetadataService extends TypeOrmQueryService<ObjectMetadataEnt
         flatApplication: resolvedOwnerFlatApplication,
       });
 
-    // Default view fields reference the caller-provided fields (reused as-is from
-    // the transpiler output) plus the engine-owned reserved system fields, whose
-    // deterministic identifiers we re-derive here (searchVector is never shown).
-    // TODO: remove once default view fields move to the metadata side effect engine.
-    const defaultFlatFieldMetadatasForViewFields: UniversalFlatFieldMetadata[] =
-      [
-        ...flatFieldMetadataToCreateOnObject,
-        ...Object.values(
-          buildReservedSystemFlatFieldMetadatasForCustomObject({
-            flatObjectMetadata: {
-              applicationUniversalIdentifier:
-                resolvedOwnerFlatApplication.universalIdentifier,
-              universalIdentifier:
-                flatObjectMetadataToCreate.universalIdentifier,
-            },
-          }),
-        ),
-      ];
-
     const flatDefaultViewToCreate = this.computeFlatViewToCreate({
       objectMetadata: flatObjectMetadataToCreate,
       flatApplication: resolvedOwnerFlatApplication,
-    });
-
-    const flatDefaultViewFieldsToCreate = computeFlatViewFieldsToCreate({
-      flatApplication: resolvedOwnerFlatApplication,
-      objectFlatFieldMetadatas: defaultFlatFieldMetadatasForViewFields,
-      labelIdentifierFieldMetadataUniversalIdentifier:
-        flatObjectMetadataToCreate.labelIdentifierFieldMetadataUniversalIdentifier,
-      viewUniversalIdentifier: flatDefaultViewToCreate.universalIdentifier,
     });
 
     const flatNavigationMenuItemToCreate =
@@ -555,17 +526,6 @@ export class ObjectMetadataService extends TypeOrmQueryService<ObjectMetadataEnt
         flatApplication: resolvedOwnerFlatApplication,
       });
 
-    const flatRecordPageFieldsViewFieldsToCreate =
-      computeFlatViewFieldsToCreate({
-        flatApplication: resolvedOwnerFlatApplication,
-        objectFlatFieldMetadatas: defaultFlatFieldMetadatasForViewFields,
-        labelIdentifierFieldMetadataUniversalIdentifier:
-          flatObjectMetadataToCreate.labelIdentifierFieldMetadataUniversalIdentifier,
-        viewUniversalIdentifier:
-          flatRecordPageFieldsViewToCreate.universalIdentifier,
-        excludeLabelIdentifier: true,
-      });
-
     const flatDefaultRecordPageLayoutsToCreate =
       this.computeFlatDefaultRecordPageLayoutToCreate({
         objectMetadata: flatObjectMetadataToCreate,
@@ -597,14 +557,6 @@ export class ObjectMetadataService extends TypeOrmQueryService<ObjectMetadataEnt
               flatEntityToCreate: [
                 flatDefaultViewToCreate,
                 flatRecordPageFieldsViewToCreate,
-              ],
-              flatEntityToDelete: [],
-              flatEntityToUpdate: [],
-            },
-            viewField: {
-              flatEntityToCreate: [
-                ...flatDefaultViewFieldsToCreate,
-                ...flatRecordPageFieldsViewFieldsToCreate,
               ],
               flatEntityToDelete: [],
               flatEntityToUpdate: [],

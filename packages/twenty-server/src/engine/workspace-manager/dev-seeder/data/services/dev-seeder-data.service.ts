@@ -46,6 +46,14 @@ import {
   EMPLOYMENT_HISTORY_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/employment-history-data-seeds.constant';
 import {
+  EPIC_DATA_SEED_COLUMNS,
+  EPIC_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/epic-data-seeds.constant';
+import {
+  ISSUE_DATA_SEED_COLUMNS,
+  ISSUE_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-data-seeds.constant';
+import {
   MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_DATA_SEED_COLUMNS,
   MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/message-channel-message-association-data-seeds.constant';
@@ -86,9 +94,21 @@ import {
   PET_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/pet-data-seeds.constant';
 import {
+  PROJECT_DATA_SEED_COLUMNS,
+  PROJECT_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/project-data-seeds.constant';
+import {
+  PROJECT_MEMBER_DATA_SEED_COLUMNS,
+  PROJECT_MEMBER_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/project-member-data-seeds.constant';
+import {
   ROCKET_DATA_SEED_COLUMNS,
   ROCKET_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/rocket-data-seeds.constant';
+import {
+  SPRINT_DATA_SEED_COLUMNS,
+  SPRINT_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/sprint-data-seeds.constant';
 import {
   SURVEY_RESULT_DATA_SEED_COLUMNS,
   SURVEY_RESULT_DATA_SEEDS,
@@ -97,6 +117,10 @@ import {
   TASK_DATA_SEED_COLUMNS,
   TASK_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/task-data-seeds.constant';
+import {
+  TIME_LOG_DATA_SEED_COLUMNS,
+  TIME_LOG_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/time-log-data-seeds.constant';
 import {
   TASK_TARGET_DATA_SEED_COLUMNS,
   TASK_TARGET_DATA_SEEDS,
@@ -155,9 +179,14 @@ const getRecordSeedsBatches = (
       pgColumns: DASHBOARD_DATA_SEED_COLUMNS,
       recordSeeds: getDashboardDataSeeds(workspaceId),
     },
+    {
+      tableName: '_project',
+      pgColumns: PROJECT_DATA_SEED_COLUMNS,
+      recordSeeds: PROJECT_DATA_SEEDS,
+    },
   ];
 
-  // Batch 3: Depends on company
+  // Batch 3: Depends on company / _project
   const batch3: RecordSeedConfig[] = [
     {
       tableName: 'person',
@@ -168,6 +197,21 @@ const getRecordSeedsBatches = (
       tableName: '_pet',
       pgColumns: PET_DATA_SEED_COLUMNS,
       recordSeeds: PET_DATA_SEEDS,
+    },
+    {
+      tableName: '_projectMember',
+      pgColumns: PROJECT_MEMBER_DATA_SEED_COLUMNS,
+      recordSeeds: PROJECT_MEMBER_DATA_SEEDS,
+    },
+    {
+      tableName: '_epic',
+      pgColumns: EPIC_DATA_SEED_COLUMNS,
+      recordSeeds: EPIC_DATA_SEEDS,
+    },
+    {
+      tableName: '_sprint',
+      pgColumns: SPRINT_DATA_SEED_COLUMNS,
+      recordSeeds: SPRINT_DATA_SEEDS,
     },
   ];
 
@@ -197,6 +241,11 @@ const getRecordSeedsBatches = (
       tableName: 'messageThread',
       pgColumns: MESSAGE_THREAD_DATA_SEED_COLUMNS,
       recordSeeds: MESSAGE_THREAD_DATA_SEEDS,
+    },
+    {
+      tableName: '_issue',
+      pgColumns: ISSUE_DATA_SEED_COLUMNS,
+      recordSeeds: ISSUE_DATA_SEEDS,
     },
     // Junction tables
     {
@@ -237,6 +286,11 @@ const getRecordSeedsBatches = (
       tableName: 'message',
       pgColumns: MESSAGE_DATA_SEED_COLUMNS,
       recordSeeds: MESSAGE_DATA_SEEDS,
+    },
+    {
+      tableName: '_timeLog',
+      pgColumns: TIME_LOG_DATA_SEED_COLUMNS,
+      recordSeeds: TIME_LOG_DATA_SEEDS,
     },
   ];
 

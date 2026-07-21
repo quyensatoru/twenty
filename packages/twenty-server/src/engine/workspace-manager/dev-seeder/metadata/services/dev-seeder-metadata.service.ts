@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { FieldMetadataType, RelationType } from 'twenty-shared/types';
+import { FieldMetadataType, RelationType, ViewType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
 import { FieldMetadataService } from 'src/engine/metadata-modules/field-metadata/services/field-metadata.service';
@@ -11,20 +11,34 @@ import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-m
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { buildObjectIdByNameMaps } from 'src/engine/metadata-modules/flat-object-metadata/utils/build-object-id-by-name-maps.util';
 import { ObjectMetadataService } from 'src/engine/metadata-modules/object-metadata/object-metadata.service';
+import { ViewFieldService } from 'src/engine/metadata-modules/view-field/services/view-field.service';
+import { ViewService } from 'src/engine/metadata-modules/view/services/view.service';
 import {
   SEED_APPLE_WORKSPACE_ID,
   SEED_YCOMBINATOR_WORKSPACE_ID,
 } from 'src/engine/workspace-manager/dev-seeder/core/constants/seeder-workspaces.constant';
 import { COMPANY_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/company-custom-field-seeds.constant';
+import { EPIC_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/epic-custom-field-seeds.constant';
+import { ISSUE_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/issue-custom-field-seeds.constant';
 import { PERSON_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/person-custom-field-seeds.constant';
 import { PET_CARE_AGREEMENT_CARETAKER_MORPH_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/pet-care-agreement-custom-relation-field-seeds.constant';
 import { PET_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/pet-custom-field-seeds.constant';
 import { PET_CUSTOM_RELATION_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/pet-custom-relation-field-seeds.constant';
+import { PROJECT_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/project-custom-field-seeds.constant';
+import { PROJECT_MEMBER_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/project-member-custom-field-seeds.constant';
+import { SPRINT_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/sprint-custom-field-seeds.constant';
 import { SURVEY_RESULT_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/survey-results-field-seeds.constant';
+import { TIME_LOG_CUSTOM_FIELD_SEEDS } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-fields/constants/time-log-custom-field-seeds.constant';
 import { EMPLOYMENT_HISTORY_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/employment-history-custom-object-seed.constant';
+import { EPIC_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/epic-custom-object-seed.constant';
+import { ISSUE_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/issue-custom-object-seed.constant';
 import { PET_CARE_AGREEMENT_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/pet-care-agreement-custom-object-seed.constant';
 import { PET_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/pet-custom-object-seed.constant';
+import { PROJECT_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/project-custom-object-seed.constant';
+import { PROJECT_MEMBER_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/project-member-custom-object-seed.constant';
 import { ROCKET_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/rocket-custom-object-seed.constant';
+import { SPRINT_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/sprint-custom-object-seed.constant';
+import { TIME_LOG_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/time-log-custom-object-seed.constant';
 import { SURVEY_RESULT_CUSTOM_OBJECT_SEED } from 'src/engine/workspace-manager/dev-seeder/metadata/custom-objects/constants/survey-results-object-seed.constant';
 import { type FieldMetadataSeed } from 'src/engine/workspace-manager/dev-seeder/metadata/types/field-metadata-seed.type';
 import { type ObjectMetadataSeed } from 'src/engine/workspace-manager/dev-seeder/metadata/types/object-metadata-seed.type';
@@ -50,12 +64,33 @@ type JunctionConfigSeed = {
   label?: string;
 };
 
+type RelationFieldSeed = {
+  sourceObjectName: string;
+  name: string;
+  label: string;
+  icon: string;
+  relationType: RelationType;
+  targetObjectName: string;
+  targetFieldLabel: string;
+  targetFieldIcon: string;
+};
+
+type KanbanViewSeed = {
+  objectName: string;
+  name: string;
+  icon: string;
+  mainGroupByFieldName: string;
+  visibleFieldNames?: string[];
+};
+
 type WorkspaceSeedConfig = {
   objects: { seed: ObjectMetadataSeed; fields?: FieldMetadataSeed[] }[];
   fields: { objectName: string; seeds: FieldMetadataSeed[] }[];
   morphRelations?: { objectName: string; seeds: MorphRelationSeed[] }[];
   junctionFields?: JunctionFieldSeed[];
   junctionConfigs?: JunctionConfigSeed[];
+  relations?: RelationFieldSeed[];
+  kanbanViews?: KanbanViewSeed[];
 };
 
 type FlatMaps = {
@@ -70,6 +105,8 @@ export class DevSeederMetadataService {
     private readonly objectMetadataService: ObjectMetadataService,
     private readonly fieldMetadataService: FieldMetadataService,
     private readonly flatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
+    private readonly viewService: ViewService,
+    private readonly viewFieldService: ViewFieldService,
   ) {}
 
   private readonly workspaceConfigs: Record<string, WorkspaceSeedConfig> = {
@@ -84,6 +121,22 @@ export class DevSeederMetadataService {
         // Junction objects (minimal pivots)
         { seed: EMPLOYMENT_HISTORY_CUSTOM_OBJECT_SEED },
         { seed: PET_CARE_AGREEMENT_CUSTOM_OBJECT_SEED },
+        // Jira-style task manager
+        {
+          seed: PROJECT_CUSTOM_OBJECT_SEED,
+          fields: PROJECT_CUSTOM_FIELD_SEEDS,
+        },
+        {
+          seed: PROJECT_MEMBER_CUSTOM_OBJECT_SEED,
+          fields: PROJECT_MEMBER_CUSTOM_FIELD_SEEDS,
+        },
+        { seed: ISSUE_CUSTOM_OBJECT_SEED, fields: ISSUE_CUSTOM_FIELD_SEEDS },
+        { seed: EPIC_CUSTOM_OBJECT_SEED, fields: EPIC_CUSTOM_FIELD_SEEDS },
+        { seed: SPRINT_CUSTOM_OBJECT_SEED, fields: SPRINT_CUSTOM_FIELD_SEEDS },
+        {
+          seed: TIME_LOG_CUSTOM_OBJECT_SEED,
+          fields: TIME_LOG_CUSTOM_FIELD_SEEDS,
+        },
       ],
       fields: [
         { objectName: 'company', seeds: COMPANY_CUSTOM_FIELD_SEEDS },
@@ -129,6 +182,25 @@ export class DevSeederMetadataService {
           targetFieldLabel: 'Pet',
           targetFieldIcon: 'IconCat',
         },
+        // Project Member: Project <-> Workspace Member
+        {
+          sourceObjectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'members',
+          label: 'Members',
+          icon: 'IconUsers',
+          targetObjectName: PROJECT_MEMBER_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Project',
+          targetFieldIcon: 'IconLayoutKanban',
+        },
+        {
+          sourceObjectName: 'workspaceMember',
+          name: 'projects',
+          label: 'Projects',
+          icon: 'IconLayoutKanban',
+          targetObjectName: PROJECT_MEMBER_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Workspace Member',
+          targetFieldIcon: 'IconUser',
+        },
       ],
       junctionConfigs: [
         // Employment History junction configs
@@ -157,6 +229,138 @@ export class DevSeederMetadataService {
           objectName: 'person',
           fieldName: 'caredForPets',
           junctionTargetFieldRef: `${PET_CARE_AGREEMENT_CUSTOM_OBJECT_SEED.nameSingular}.pet`,
+        },
+        // Project Member junction configs
+        {
+          objectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          fieldName: 'members',
+          junctionTargetFieldRef: `${PROJECT_MEMBER_CUSTOM_OBJECT_SEED.nameSingular}.workspaceMember`,
+        },
+        {
+          objectName: 'workspaceMember',
+          fieldName: 'projects',
+          junctionTargetFieldRef: `${PROJECT_MEMBER_CUSTOM_OBJECT_SEED.nameSingular}.project`,
+        },
+      ],
+      relations: [
+        {
+          sourceObjectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'lead',
+          label: 'Lead',
+          icon: 'IconUser',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: 'workspaceMember',
+          targetFieldLabel: 'Led Projects',
+          targetFieldIcon: 'IconLayoutKanban',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'project',
+          label: 'Project',
+          icon: 'IconLayoutKanban',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'assignee',
+          label: 'Assignee',
+          icon: 'IconUser',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: 'workspaceMember',
+          targetFieldLabel: 'Assigned Issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'reporter',
+          label: 'Reporter',
+          icon: 'IconUser',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: 'workspaceMember',
+          targetFieldLabel: 'Reported Issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: EPIC_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'project',
+          label: 'Project',
+          icon: 'IconLayoutKanban',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Epics',
+          targetFieldIcon: 'IconFlag',
+        },
+        {
+          sourceObjectName: SPRINT_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'project',
+          label: 'Project',
+          icon: 'IconLayoutKanban',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: PROJECT_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Sprints',
+          targetFieldIcon: 'IconRun',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'epic',
+          label: 'Epic',
+          icon: 'IconFlag',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: EPIC_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'sprint',
+          label: 'Sprint',
+          icon: 'IconRun',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: SPRINT_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'parentIssue',
+          label: 'Parent Issue',
+          icon: 'IconArrowBackUp',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Sub-issues',
+          targetFieldIcon: 'IconListCheck',
+        },
+        {
+          sourceObjectName: TIME_LOG_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'issue',
+          label: 'Issue',
+          icon: 'IconListCheck',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          targetFieldLabel: 'Time Logs',
+          targetFieldIcon: 'IconClock',
+        },
+        {
+          sourceObjectName: TIME_LOG_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'member',
+          label: 'Member',
+          icon: 'IconUser',
+          relationType: RelationType.MANY_TO_ONE,
+          targetObjectName: 'workspaceMember',
+          targetFieldLabel: 'Time Logs',
+          targetFieldIcon: 'IconClock',
+        },
+      ],
+      kanbanViews: [
+        {
+          objectName: ISSUE_CUSTOM_OBJECT_SEED.nameSingular,
+          name: 'Board',
+          icon: 'IconLayoutKanban',
+          mainGroupByFieldName: 'status',
+          visibleFieldNames: ['priority', 'assignee', 'storyPoints'],
         },
       ],
     },
@@ -289,14 +493,21 @@ export class DevSeederMetadataService {
       });
     }
 
-    // 2. Seed junction fields (creates relations + inverses on junction objects)
+    // 2. Seed plain single-target relations (creates inverses on target objects)
+    maps = await this.getFreshFlatMaps(workspaceId);
+
+    for (const relation of config.relations ?? []) {
+      await this.seedRelationField({ workspaceId, relation, flatMaps: maps });
+    }
+
+    // 3. Seed junction fields (creates relations + inverses on junction objects)
     maps = await this.getFreshFlatMaps(workspaceId);
 
     for (const field of config.junctionFields ?? []) {
       await this.seedJunctionField({ workspaceId, field, flatMaps: maps });
     }
 
-    // 3. Configure junction settings (after all fields exist)
+    // 4. Configure junction settings (after all fields exist)
     if (config.junctionConfigs && config.junctionConfigs.length > 0) {
       maps = await this.getFreshFlatMaps(workspaceId);
 
@@ -308,6 +519,147 @@ export class DevSeederMetadataService {
         });
       }
     }
+  }
+
+  public async seedViews({
+    workspaceId,
+    light = false,
+  }: {
+    workspaceId: string;
+    light?: boolean;
+  }) {
+    const config = this.getConfig(workspaceId, light);
+    const maps = await this.getFreshFlatMaps(workspaceId);
+
+    for (const kanbanView of config.kanbanViews ?? []) {
+      await this.seedKanbanView({
+        workspaceId,
+        kanbanView,
+        flatMaps: maps,
+        config,
+      });
+    }
+  }
+
+  private async seedKanbanView({
+    workspaceId,
+    kanbanView,
+    flatMaps,
+    config,
+  }: {
+    workspaceId: string;
+    kanbanView: KanbanViewSeed;
+    flatMaps: FlatMaps;
+    config: WorkspaceSeedConfig;
+  }): Promise<void> {
+    const objectMetadataId = flatMaps.objectIdByName[kanbanView.objectName];
+
+    if (!isDefined(objectMetadataId)) {
+      throw new Error(`Object not found: ${kanbanView.objectName}`);
+    }
+
+    const mainGroupByFieldMetadataId = this.findFieldId(
+      kanbanView.objectName,
+      kanbanView.mainGroupByFieldName,
+      flatMaps,
+    );
+
+    const createdView = await this.viewService.createOne({
+      createViewInput: {
+        name: kanbanView.name,
+        icon: kanbanView.icon,
+        objectMetadataId,
+        type: ViewType.KANBAN,
+        mainGroupByFieldMetadataId,
+      },
+      workspaceId,
+    });
+
+    // A UI-created view always gets a ViewField for every object field (visible
+    // or hidden) — mirror that here, otherwise the board's "reveal hidden field"
+    // action crashes on an empty field list (no field to anchor the new position to).
+    const objectMetadata = findFlatEntityByIdInFlatEntityMaps({
+      flatEntityId: objectMetadataId,
+      flatEntityMaps: flatMaps.flatObjectMetadataMaps,
+    });
+
+    if (!isDefined(objectMetadata)) {
+      throw new Error(`Object metadata not found: ${kanbanView.objectName}`);
+    }
+
+    const visibleFieldNames = new Set(kanbanView.visibleFieldNames ?? []);
+
+    // The label identifier field (e.g. "Name") is always shown as the card/row
+    // title and can't have a ViewField of its own — creating one is rejected.
+    const fieldIdsExcludingLabelIdentifier = objectMetadata.fieldIds.filter(
+      (fieldMetadataId) =>
+        fieldMetadataId !== objectMetadata.labelIdentifierFieldMetadataId,
+    );
+
+    // objectMetadata.fieldIds reflects raw DB fetch order, not creation order
+    // (no ORDER BY anywhere in that path), so custom fields end up scrambled
+    // with system/relation fields. Reorder using the seed config itself: caller
+    // declared scalar fields first, then declared relations, in the order the
+    // seed lists them; anything else (system fields, standard relations,
+    // reverse relations) keeps its existing relative order at the end.
+    const declaredFieldNameOrder = [
+      ...(config.objects.find(
+        (objectConfig) =>
+          objectConfig.seed.nameSingular === kanbanView.objectName,
+      )?.fields ?? []
+      ).map((field) => field.name),
+      ...(config.relations ?? [])
+        .filter(
+          (relation) => relation.sourceObjectName === kanbanView.objectName,
+        )
+        .map((relation) => relation.name),
+    ];
+
+    const fieldNameById = new Map(
+      fieldIdsExcludingLabelIdentifier.map((fieldMetadataId) => [
+        fieldMetadataId,
+        findFlatEntityByIdInFlatEntityMaps({
+          flatEntityId: fieldMetadataId,
+          flatEntityMaps: flatMaps.flatFieldMetadataMaps,
+        })?.name,
+      ]),
+    );
+
+    const orderedFieldIds = [...fieldIdsExcludingLabelIdentifier].sort(
+      (fieldMetadataIdA, fieldMetadataIdB) => {
+        const rankA = declaredFieldNameOrder.indexOf(
+          fieldNameById.get(fieldMetadataIdA) ?? '',
+        );
+        const rankB = declaredFieldNameOrder.indexOf(
+          fieldNameById.get(fieldMetadataIdB) ?? '',
+        );
+
+        if (rankA === -1 && rankB === -1) return 0;
+        if (rankA === -1) return 1;
+        if (rankB === -1) return -1;
+
+        return rankA - rankB;
+      },
+    );
+
+    await this.viewFieldService.createMany({
+      workspaceId,
+      createViewFieldInputs: orderedFieldIds.map(
+        (fieldMetadataId, position) => {
+          const field = findFlatEntityByIdInFlatEntityMaps({
+            flatEntityId: fieldMetadataId,
+            flatEntityMaps: flatMaps.flatFieldMetadataMaps,
+          });
+
+          return {
+            fieldMetadataId,
+            viewId: createdView.id,
+            isVisible: isDefined(field) && visibleFieldNames.has(field.name),
+            position,
+          };
+        },
+      ),
+    });
   }
 
   private async getFreshFlatMaps(workspaceId: string): Promise<FlatMaps> {
@@ -427,6 +779,45 @@ export class DevSeederMetadataService {
 
     await this.fieldMetadataService.createManyFields({
       createFieldInputs,
+      workspaceId,
+    });
+  }
+
+  private async seedRelationField({
+    workspaceId,
+    relation,
+    flatMaps,
+  }: {
+    workspaceId: string;
+    relation: RelationFieldSeed;
+    flatMaps: FlatMaps;
+  }): Promise<void> {
+    const sourceObjectId = flatMaps.objectIdByName[relation.sourceObjectName];
+    const targetObjectId = flatMaps.objectIdByName[relation.targetObjectName];
+
+    if (!isDefined(sourceObjectId)) {
+      throw new Error(`Source object not found: ${relation.sourceObjectName}`);
+    }
+    if (!isDefined(targetObjectId)) {
+      throw new Error(`Target object not found: ${relation.targetObjectName}`);
+    }
+
+    await this.fieldMetadataService.createManyFields({
+      createFieldInputs: [
+        {
+          type: FieldMetadataType.RELATION,
+          name: relation.name,
+          label: relation.label,
+          icon: relation.icon,
+          objectMetadataId: sourceObjectId,
+          relationCreationPayload: {
+            type: relation.relationType,
+            targetFieldLabel: relation.targetFieldLabel,
+            targetFieldIcon: relation.targetFieldIcon,
+            targetObjectMetadataId: targetObjectId,
+          },
+        },
+      ],
       workspaceId,
     });
   }

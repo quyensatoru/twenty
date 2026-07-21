@@ -13,7 +13,7 @@ export const computeFlatViewFieldsToCreate = ({
   labelIdentifierFieldMetadataUniversalIdentifier,
   excludeLabelIdentifier = false,
 }: {
-  flatApplication: FlatApplication;
+  flatApplication: Pick<FlatApplication, 'universalIdentifier'>;
   objectFlatFieldMetadatas: UniversalFlatFieldMetadata[];
   viewUniversalIdentifier: string;
   labelIdentifierFieldMetadataUniversalIdentifier: string | null;

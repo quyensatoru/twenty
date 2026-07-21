@@ -94,7 +94,11 @@ export const useObjectOptionsForBoard = ({
 
   const handleReorderBoardFields: OnDragEndResponder = useCallback(
     (result) => {
-      if (!result.destination) {
+      if (
+        !result.destination ||
+        result.destination.index === 1 ||
+        result.source.index === 1
+      ) {
         return;
       }
 
@@ -221,6 +225,30 @@ export const useObjectOptionsForBoard = ({
                 recordIndexFieldDefinitionToModify.fieldMetadataId ===
                 updatedRecordField.fieldMetadataItemId,
             );
+
+            if (indexToModify === -1) {
+              const correspondingAvailableColumnDefinition =
+                availableColumnDefinitions.find(
+                  findByProperty(
+                    'fieldMetadataId',
+                    updatedFieldDefinition.fieldMetadataId,
+                  ),
+                );
+
+              if (!isDefined(correspondingAvailableColumnDefinition)) {
+                throw new Error(
+                  `correspondingAvailableColumnDefinition is not defined this should not happen.`,
+                );
+              }
+
+              draftRecordIndexFieldDefinitions.push({
+                ...correspondingAvailableColumnDefinition,
+                fieldMetadataId: updatedFieldDefinition.fieldMetadataId,
+                isVisible: shouldShowFieldMetadataItem,
+              });
+
+              return;
+            }
 
             draftRecordIndexFieldDefinitions[indexToModify].isVisible =
               shouldShowFieldMetadataItem;

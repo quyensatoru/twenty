@@ -147,6 +147,11 @@ export class DevSeederService {
       light,
     });
 
+    await this.devSeederMetadataService.seedViews({
+      workspaceId,
+      light,
+    });
+
     await this.devSeederPermissionsService.initPermissions({
       workspaceId,
       twentyStandardFlatApplication,
