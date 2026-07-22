@@ -13,10 +13,10 @@ type ProjectMemberRoleRecord = {
 
 export const useCurrentProjectRole = (
   projectId: string | undefined,
-): ProjectMemberRole | null => {
+): { role: ProjectMemberRole | null; loading: boolean } => {
   const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
 
-  const { records } = useFindManyRecords<ProjectMemberRoleRecord>({
+  const { records, loading } = useFindManyRecords<ProjectMemberRoleRecord>({
     objectNameSingular: 'projectMember',
     filter: {
       workspaceMemberId: { eq: currentWorkspaceMember?.id ?? '' },
@@ -26,5 +26,5 @@ export const useCurrentProjectRole = (
     skip: !isDefined(currentWorkspaceMember?.id) || !isDefined(projectId),
   });
 
-  return records[0]?.projectRole ?? null;
+  return { role: records[0]?.projectRole ?? null, loading };
 };

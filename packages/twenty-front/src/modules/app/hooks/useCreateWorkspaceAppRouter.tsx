@@ -123,6 +123,12 @@ const MyProjectsPage = lazy(() =>
   })),
 );
 
+const ProjectPage = lazy(() =>
+  import('~/pages/project-management/ProjectPage').then((module) => ({
+    default: module.ProjectPage,
+  })),
+);
+
 const preloadOnboardingPages = () => {
   void WorkspaceActivation.preload();
   void CreateProfile.preload();
@@ -177,6 +183,14 @@ const createWorkspaceAppRouter = (
                 element={
                   <LazyRoute>
                     <MyProjectsPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.ProjectPage}
+                element={
+                  <LazyRoute>
+                    <ProjectPage />
                   </LazyRoute>
                 }
               />

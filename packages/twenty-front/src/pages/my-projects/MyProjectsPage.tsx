@@ -1,4 +1,3 @@
-import { getLinkToShowPage } from '@/object-metadata/utils/getLinkToShowPage';
 import { ProjectRoleTag } from '@/project-management/components/ProjectRoleTag';
 import { useMyProjectMemberships } from '@/project-management/hooks/useMyProjectMemberships';
 import { PageCardLayout } from '@/ui/layout/page/components/PageCardLayout';
@@ -57,7 +56,7 @@ export const MyProjectsPage = () => {
           .map((membership) => (
             <StyledRow
               key={membership.id}
-              to={getLinkToShowPage('project', membership.project ?? {})}
+              to={`/projects/${membership.project?.id}`}
             >
               <span>
                 <StyledProjectName>
