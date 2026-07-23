@@ -147,7 +147,10 @@ const createWorkspaceAppRouter = (
         <Route element={<MinimalMetadataGate />}>
           <Route element={<DefaultLayout />}>
             <Route element={<MainAppLayoutWithSidePanel />}>
-              <Route path={indexAppPath.getIndexAppPath()} element={<></>} />
+              <Route
+                path={indexAppPath.getIndexAppPath()}
+                element={<RecordIndexSkeletonLoader />}
+              />
               <Route
                 path={AppPath.RecordIndexPage}
                 element={
@@ -222,7 +225,7 @@ const createWorkspaceAppRouter = (
           <Route
             path={AppPath.PlanRequiredSuccess}
             element={
-              <LazyRoute fallback={null}>
+              <LazyRoute fallback={<OnboardingPageLoader />}>
                 <PaymentSuccess />
               </LazyRoute>
             }
@@ -230,7 +233,7 @@ const createWorkspaceAppRouter = (
           <Route
             path={AppPath.BookCall}
             element={
-              <LazyRoute fallback={null}>
+              <LazyRoute fallback={<OnboardingPageLoader />}>
                 <BookCall />
               </LazyRoute>
             }
