@@ -45,12 +45,19 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
       STANDARD_OBJECTS.dashboard.views.allDashboards.universalIdentifier,
     position: 5,
   },
+  allIssues: {
+    universalIdentifier: '8a0cbd41-9261-4601-a54d-6f5818490450',
+    type: NavigationMenuItemType.OBJECT,
+    viewUniversalIdentifier:
+      STANDARD_OBJECTS.issue.views.allIssues.universalIdentifier,
+    position: 6,
+  },
   workflowsFolder: {
     universalIdentifier: '20202020-b007-4b07-8b07-c0aba11c0007',
     type: NavigationMenuItemType.FOLDER,
     name: 'Workflows',
     icon: 'IconSettingsAutomation',
-    position: 6,
+    position: 7,
   },
   workflowsFolderAllWorkflows: {
     universalIdentifier: '20202020-b008-4b08-8b08-c0aba11c0008',
@@ -86,6 +93,7 @@ export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
   allPeople: 'blue',
   allTasks: 'turquoise',
   allNotes: 'turquoise',
+  allIssues: 'turquoise',
   allOpportunities: 'red',
   workflowsFolder: 'orange',
   allDashboards: 'gray',

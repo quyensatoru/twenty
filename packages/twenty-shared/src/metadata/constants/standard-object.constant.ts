@@ -97,6 +97,36 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.workflow,
         }),
       },
+      targetIssue: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+        }),
+      },
+      targetIssueComment: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueComment,
+        }),
+      },
+      targetProject: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
+        }),
+      },
     },
     morphIds: {
       targetMorphId: { morphId: '20202020-f634-435d-ab8d-e1168b375c69' },
@@ -104,6 +134,15 @@ export const STANDARD_OBJECTS = {
     indexes: {
       taskIdIndex: {
         universalIdentifier: 'b8d4f9a3-0c25-4e7b-9f6a-2d3e4c5b6f70',
+      },
+      issueIdIndex: {
+        universalIdentifier: '6f1a2b3c-4d5e-4f60-8a1b-2c3d4e5f6071',
+      },
+      issueCommentIdIndex: {
+        universalIdentifier: '453efd66-de44-4449-8b08-35a4b05fe66e',
+      },
+      projectIdIndex: {
+        universalIdentifier: 'b541c98b-9924-48db-9274-b1953dc6fdd5',
       },
       noteIdIndex: {
         universalIdentifier: '9d31ea73-13b6-4e06-84ee-c66c72bf7787',
@@ -1965,6 +2004,371 @@ export const STANDARD_OBJECTS = {
       },
     },
   },
+  project: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
+      ),
+      name: { universalIdentifier: '955f07c4-9e4a-44ba-9c31-3d5ac2d21070' },
+      key: { universalIdentifier: 'ae48add5-4d3a-4308-b158-8e63ad68700a' },
+      nextIssueNumber: {
+        universalIdentifier: 'cf46bf2b-8c71-4925-9533-9abc7d2e57cb',
+      },
+      description: {
+        universalIdentifier: '21a68c5d-8d68-46e2-a53a-943a8d135795',
+      },
+      category: {
+        universalIdentifier: '427396a5-36d1-4b9c-ba7b-29667191a578',
+      },
+      lead: { universalIdentifier: 'e5e2b42e-4568-4498-96e6-9a35546ac1f9' },
+      sprints: { universalIdentifier: 'a980d736-d31e-473e-a599-7702d6f53c22' },
+      issues: { universalIdentifier: '8ef104d2-8d9f-436b-8764-7d1b07b65e8d' },
+      attachments: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+        }),
+      },
+    },
+    indexes: {
+      leadIdIndex: {
+        universalIdentifier: 'c57bc5a8-1475-418e-ad82-2641bfc6f6a7',
+      },
+    },
+    views: {
+      allProjects: {
+        universalIdentifier: '84edc4ee-3c2e-42ad-b375-a6dc50cc5dac',
+        viewFields: {
+          name: {
+            universalIdentifier: '631cb31e-d6a7-4198-8ea9-8b2bc36fcb34',
+          },
+          key: {
+            universalIdentifier: '3a05ffe3-c661-4208-a823-0ba578fbc6bb',
+          },
+          category: {
+            universalIdentifier: 'cd4bf1ad-082c-4dae-8f7c-73ed2475332d',
+          },
+          lead: {
+            universalIdentifier: '31a4d47d-9e45-4bc3-a37a-147386db7c8f',
+          },
+          createdAt: {
+            universalIdentifier: '7d1a030e-de6d-44bd-ac05-bf72a4d55438',
+          },
+        },
+      },
+      projectRecordPageFields: {
+        universalIdentifier: '96e24b69-a724-4dfa-aa0f-d3e3d903ff26',
+        viewFields: {},
+      },
+    },
+  },
+  sprint: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.sprint,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.sprint,
+      ),
+      name: { universalIdentifier: '6876a9c0-c38f-4637-844e-c873ad3742d7' },
+      state: { universalIdentifier: '529c560f-5953-4113-a67b-06b67167ea85' },
+      goal: { universalIdentifier: '47e4562e-7d9d-4ac8-bda5-bf0cbca9863a' },
+      startDate: {
+        universalIdentifier: '78eb74f1-6246-470e-bc7e-cc6991721756',
+      },
+      endDate: { universalIdentifier: 'f98825ea-49e8-4dcc-9d81-88cccbf42a85' },
+      completeDate: {
+        universalIdentifier: 'a1896ecc-77e8-4e13-8b47-732bf3dcaf72',
+      },
+      project: { universalIdentifier: '490bf2b4-6329-4b6e-9439-9a8b8f665f65' },
+      issues: { universalIdentifier: '6c883b2e-192a-4ccc-aa18-b8845b49ebaf' },
+    },
+    indexes: {
+      projectIdIndex: {
+        universalIdentifier: 'f56963a7-0c8a-440e-8087-d4995473a62c',
+      },
+    },
+    views: {
+      allSprints: {
+        universalIdentifier: '2b5d2c5a-41e6-4ed8-80fe-489515b23aa9',
+        viewFields: {
+          name: {
+            universalIdentifier: '4e7af099-0b39-437e-8e45-3ba47b9328fb',
+          },
+          state: {
+            universalIdentifier: '872abc2f-6fa9-4be6-9ac2-0a2de749a304',
+          },
+          project: {
+            universalIdentifier: 'c8f1d4ea-c07e-4865-b4b0-85e72ee1fcc5',
+          },
+          startDate: {
+            universalIdentifier: '194c445a-88f2-412a-9b9b-6b2ed594dafc',
+          },
+          createdAt: {
+            universalIdentifier: 'c9715992-719f-4147-ae5c-44fe9964b8dd',
+          },
+        },
+      },
+      sprintRecordPageFields: {
+        universalIdentifier: '1dff7b19-4859-4298-b9ea-f9ee8a9832c7',
+        viewFields: {},
+      },
+    },
+  },
+  issue: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+      ),
+      title: { universalIdentifier: '46ef3a12-88e2-414b-bc23-0dc959250e63' },
+      issueKey: {
+        universalIdentifier: '36c20308-3437-4099-a70b-23a0a82fa971',
+      },
+      description: {
+        universalIdentifier: '18b0e949-24c2-4944-936b-2ec0dcfafa48',
+      },
+      issueType: {
+        universalIdentifier: '8971bffb-e416-4f48-8da6-9072b813d767',
+      },
+      status: { universalIdentifier: '09023d91-7408-459d-8a3b-e4f02ae7d33e' },
+      priority: {
+        universalIdentifier: '664598fb-f6e5-4576-a26a-0bd5ac9b4f71',
+      },
+      resolution: {
+        universalIdentifier: '45052024-8df9-415a-8371-a117028ca651',
+      },
+      storyPoints: {
+        universalIdentifier: '824f542f-b031-4eef-b8d2-7d4359b74727',
+      },
+      labels: { universalIdentifier: '4a698498-1f09-4b0c-b6e6-8bcb0a48ea32' },
+      dueDate: { universalIdentifier: '26e9639e-9e13-4877-889a-2d6da1a90298' },
+      originalEstimateMinutes: {
+        universalIdentifier: '4152dfdd-eca6-48b9-b95b-d64da6a4a1d5',
+      },
+      remainingEstimateMinutes: {
+        universalIdentifier: '9e9692be-7e86-4b1a-921a-c2fa831a0974',
+      },
+      timeSpentMinutes: {
+        universalIdentifier: '6f89e0b5-df29-46cc-92f9-17ef18c7b247',
+      },
+      assignee: { universalIdentifier: 'e73c84a8-d843-4029-8d87-6ce1506b09cd' },
+      reporter: { universalIdentifier: 'a7b3391d-bbb2-4913-8b48-42190b5f950c' },
+      project: { universalIdentifier: '3c15d323-c131-4e6f-ad8c-86515f55420e' },
+      sprint: { universalIdentifier: 'fc7e57b3-900e-423d-beda-0ab1edcd1248' },
+      parent: { universalIdentifier: '96ebe5cd-d301-4ab0-b8c8-8f4ca022f2fe' },
+      children: {
+        universalIdentifier: '42e7d2a1-6fae-4108-b18b-55b1a67734c6',
+      },
+      issueComments: {
+        universalIdentifier: 'ded94e18-47ed-4805-afeb-dadb6cce328a',
+      },
+      worklogs: {
+        universalIdentifier: '2e5f8197-da23-4336-84d7-495101b0ceba',
+      },
+      attachments: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+        }),
+      },
+    },
+    indexes: {
+      assigneeIdIndex: {
+        universalIdentifier: 'e99fc4ed-39d5-4864-a5f7-6c7122649eae',
+      },
+      reporterIdIndex: {
+        universalIdentifier: 'db480adb-fdcd-4792-a658-4dd9391bc683',
+      },
+      projectIdIndex: {
+        universalIdentifier: '8a2c3728-f10a-4f47-8d72-9a373044f8b7',
+      },
+      sprintIdIndex: {
+        universalIdentifier: '7e8773bb-0a48-4562-8fde-dff731d6db71',
+      },
+      parentIdIndex: {
+        universalIdentifier: '0f908335-064f-43c1-951d-eef07bac75a0',
+      },
+      searchVectorGinIndex: {
+        universalIdentifier: 'f543d87c-eb35-4d4a-9f1b-ddc07e0c6b74',
+      },
+    },
+    views: {
+      allIssues: {
+        universalIdentifier: '410cda21-c8e3-42ae-86c2-715915b81fb0',
+        viewFields: {
+          issueKey: {
+            universalIdentifier: '2d23a593-afd9-4c63-bc23-34f8f5165be1',
+          },
+          title: {
+            universalIdentifier: '9ce0c1fe-ea10-44f4-947b-b420604359a1',
+          },
+          status: {
+            universalIdentifier: '4a34af01-60b7-4db9-9f2f-78d8d78abf5b',
+          },
+          priority: {
+            universalIdentifier: 'ef23167b-3d6d-4226-a4ba-58d711c57250',
+          },
+          assignee: {
+            universalIdentifier: '7251fce7-4f65-4950-a04b-053b24c140e0',
+          },
+          dueDate: {
+            universalIdentifier: '17d9f321-f338-4388-8142-a6b598fd3b34',
+          },
+          createdAt: {
+            universalIdentifier: 'c666a03e-1d31-4e17-b8ae-ffc994b7caba',
+          },
+        },
+      },
+      byStatus: {
+        universalIdentifier: '29063dae-1487-4cfc-89d2-438980dfc340',
+        viewFields: {
+          title: {
+            universalIdentifier: '7e5fa55b-6c6c-461a-9aea-436b61e096b8',
+          },
+          priority: {
+            universalIdentifier: '596ec971-2835-4b33-b4e0-ddcb0c288159',
+          },
+          assignee: {
+            universalIdentifier: '2cb28927-ecf9-4666-af2b-00be4cc03a76',
+          },
+        },
+        viewGroups: {
+          backlog: {
+            universalIdentifier: 'b2022e83-5b29-45b8-a5ed-a41ee1530c3e',
+          },
+          todo: {
+            universalIdentifier: 'f7a0b4e7-4894-4a00-bb58-4de76fabc81e',
+          },
+          inProgress: {
+            universalIdentifier: 'b30dba34-1b2c-4aa7-9869-eb180660a2f3',
+          },
+          inReview: {
+            universalIdentifier: '6d0ce965-eec6-4a6a-82c8-54e828549c45',
+          },
+          done: {
+            universalIdentifier: '1414f011-7ac8-4bb4-bfef-3587170709f8',
+          },
+        },
+      },
+      issueRecordPageFields: {
+        universalIdentifier: '0c1496d8-f692-44fc-bfae-5827943ae4f8',
+        viewFields: {},
+      },
+    },
+  },
+  issueComment: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueComment,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueComment,
+      ),
+      bodyV2: { universalIdentifier: 'e2016fcf-bfb3-437e-9976-06e0e44ad802' },
+      issue: { universalIdentifier: '5a6c596e-eef7-4a9b-9c04-36dd27ea70ba' },
+      author: { universalIdentifier: '26a86ec5-49c3-4426-913b-7a58f7d6186f' },
+      attachments: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueComment,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+        }),
+      },
+    },
+    indexes: {
+      issueIdIndex: {
+        universalIdentifier: 'b925954e-c188-4f94-8ae6-6077595aa9ee',
+      },
+      authorIdIndex: {
+        universalIdentifier: 'b807834c-9291-4c6d-a221-5097a8015e4b',
+      },
+    },
+    views: {
+      allIssueComments: {
+        universalIdentifier: 'b34dac4b-570b-49b6-ac5a-da96d11a6d9e',
+        viewFields: {
+          bodyV2: {
+            universalIdentifier: 'e6694bf3-ac6e-40d6-899f-9de5a84a625a',
+          },
+          issue: {
+            universalIdentifier: '1751cc60-49bd-4399-a9ff-b9a85fd17dbc',
+          },
+          author: {
+            universalIdentifier: 'eb9731de-1830-462d-939e-49ec75fefea4',
+          },
+          createdAt: {
+            universalIdentifier: 'b69a4916-7fa8-487b-bd14-43b69610d2c6',
+          },
+        },
+      },
+      issueCommentRecordPageFields: {
+        universalIdentifier: 'c134b7b4-7a64-409f-9bb0-5ec4ead9c8fe',
+        viewFields: {},
+      },
+    },
+  },
+  worklog: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.worklog,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.worklog,
+      ),
+      description: {
+        universalIdentifier: 'd27d1366-e4fd-4bfd-931e-1981243f6c2d',
+      },
+      timeSpentMinutes: {
+        universalIdentifier: '368bbf52-cc3f-4e65-8bf0-fdf9ae36db36',
+      },
+      startedAt: {
+        universalIdentifier: '55f3a290-2e79-42e4-a6de-634f7398f9b9',
+      },
+      issue: { universalIdentifier: '7afd6d88-94bc-48a9-8c10-1b630327c791' },
+      member: { universalIdentifier: 'bb8f503c-a020-4112-816f-d90c76dd853d' },
+    },
+    indexes: {
+      issueIdIndex: {
+        universalIdentifier: '40ec70bd-7fc8-40fa-9c9b-d3221b0ca083',
+      },
+      memberIdIndex: {
+        universalIdentifier: '5a2cfc6c-52a1-4a90-8f12-72c516f5e293',
+      },
+    },
+    views: {
+      allWorklogs: {
+        universalIdentifier: '1f0b4e5a-55a0-4830-8b2a-d4994ce3450a',
+        viewFields: {
+          description: {
+            universalIdentifier: '7c0de405-9601-4989-a058-e78253650985',
+          },
+          timeSpentMinutes: {
+            universalIdentifier: '4624361d-2b1e-40d1-8f22-0041743d6b3c',
+          },
+          startedAt: {
+            universalIdentifier: '0d567057-8fd6-4ad1-96d6-9898a948f210',
+          },
+          issue: {
+            universalIdentifier: '35fd7f11-fef1-43e6-b98d-261be4d68839',
+          },
+          createdAt: {
+            universalIdentifier: '37b6364e-3914-4000-87b3-7dac92e6794f',
+          },
+        },
+      },
+      worklogRecordPageFields: {
+        universalIdentifier: '6dd98746-e30f-4598-9c01-53595bad2b5b',
+        viewFields: {},
+      },
+    },
+  },
   task: {
     universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.task,
     fields: {
@@ -2848,6 +3252,21 @@ export const STANDARD_OBJECTS = {
       },
       assignedTasks: {
         universalIdentifier: '20202020-61dc-4a1c-99e8-38ebf8d2bbeb',
+      },
+      ledProjects: {
+        universalIdentifier: '7fc50f3f-4899-47ea-b2a7-16be876df920',
+      },
+      assignedIssues: {
+        universalIdentifier: '927b149b-b4f0-4805-b867-42609cd029c6',
+      },
+      reportedIssues: {
+        universalIdentifier: '664aacfe-c0e0-49b1-8f1f-f8cfab07cf2f',
+      },
+      issueComments: {
+        universalIdentifier: 'da781bbf-a15e-4948-9712-3dcc14ab5545',
+      },
+      worklogs: {
+        universalIdentifier: 'c0bf79c9-1bbd-438a-b4de-3a0a7960e212',
       },
       ownedOpportunities: {
         universalIdentifier: '20202020-9e4d-4b3a-8c1f-6d7e8f9a0b1c',

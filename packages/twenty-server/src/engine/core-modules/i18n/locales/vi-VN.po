@@ -88,6 +88,11 @@ msgstr "Email hàng loạt được gửi đến một tập khách hàng, kèm 
 msgid "A cache lock error occurred."
 msgstr "Đã xảy ra lỗi khóa bộ nhớ đệm."
 
+#. js-lingui-id: pQITQZ
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "A comment on an issue"
+msgstr ""
+
 #. js-lingui-id: kZR6+h
 #: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
 msgid "A company"
@@ -153,6 +158,11 @@ msgstr "Thông báo trước khi bản dùng thử Twenty của bạn kết thú
 msgid "A higher version of this application is already installed. Downgrading is not allowed."
 msgstr "Một phiên bản cao hơn của ứng dụng này đã được cài đặt. Không cho phép hạ cấp."
 
+#. js-lingui-id: rZDJCg
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "A logged time entry on an issue"
+msgstr ""
+
 #. js-lingui-id: Nh/ZZe
 #: src/engine/metadata-modules/object-metadata/object-metadata.exception.ts
 msgid "A name conflict occurred."
@@ -204,6 +214,11 @@ msgstr "Một người"
 msgid "A person's membership in a list"
 msgstr "Tư cách thành viên của một người trong một danh sách"
 
+#. js-lingui-id: Iec/zJ
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "A project"
+msgstr ""
+
 #. js-lingui-id: sieBE7
 #: src/engine/twenty-orm/exceptions/twenty-orm.exception.ts
 msgid "A record with this relationship already exists."
@@ -250,6 +265,11 @@ msgstr "Một kỹ năng có tên này đã tồn tại"
 #: src/engine/metadata-modules/skill/skill.exception.ts
 msgid "A skill with this name already exists."
 msgstr "Một kỹ năng có tên này đã tồn tại."
+
+#. js-lingui-id: xPlkph
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "A sprint"
+msgstr ""
 
 #. js-lingui-id: IAfaPi
 #: src/engine/metadata-modules/metadata-side-effect/handlers/object-metadata/services/object-system-relations-on-create-side-effect-handler.service.ts
@@ -387,6 +407,7 @@ msgid "Action Needed to Set Password"
 msgstr "Cần hành động để đặt mật khẩu"
 
 #. js-lingui-id: F6pfE9
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
 msgid "Active"
@@ -546,6 +567,11 @@ msgstr "Đã xảy ra lỗi nội bộ trong khi xử lý dữ liệu được m
 #: src/engine/core-modules/workspace-invitation/workspace-invitation.exception.ts
 msgid "An invitation has already been sent to this email."
 msgstr "Một lời mời đã được gửi tới email này."
+
+#. js-lingui-id: eyFBrc
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "An issue"
+msgstr ""
 
 #. js-lingui-id: CQ5DXU
 #: src/engine/metadata-modules/object-metadata/object-metadata.exception.ts
@@ -745,12 +771,18 @@ msgstr "Lưu trữ"
 msgid "Archived"
 msgstr "Đã lưu trữ"
 
+#. js-lingui-id: xCB19r
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Assigned issues"
+msgstr ""
+
 #. js-lingui-id: Ek7xGj
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Assigned tasks"
 msgstr "Nhiệm vụ được giao"
 
 #. js-lingui-id: ojKCLU
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "Assignee"
 msgstr "Người được giao"
@@ -885,6 +917,11 @@ msgstr "Yêu cầu xác thực."
 msgid "Authentication required."
 msgstr "Yêu cầu xác thực."
 
+#. js-lingui-id: VbeIOx
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+msgid "Author"
+msgstr ""
+
 #. js-lingui-id: cvSznK
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-automated-trigger-standard-flat-field-metadata.util.ts
 msgid "Automated Trigger Type"
@@ -909,6 +946,11 @@ msgstr "Tập tin ảnh đại diện"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Avatar Url"
 msgstr "URL Hình Đại Diện"
+
+#. js-lingui-id: KNKCTb
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Backlog"
+msgstr ""
 
 #. js-lingui-id: /xLNEx
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-participant-standard-flat-field-metadata.util.ts
@@ -979,6 +1021,7 @@ msgid "Blocklists"
 msgstr "Danh sách chặn"
 
 #. js-lingui-id: bGQplw
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
@@ -1015,6 +1058,11 @@ msgstr "Bị trả lại"
 msgid "Bounced count"
 msgstr "Số lượng bị trả lại"
 
+#. js-lingui-id: vXemf6
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Bug"
+msgstr ""
+
 #. js-lingui-id: 8pSVh1
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-front-component-validator.service.ts
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-front-component-validator.service.ts
@@ -1034,6 +1082,7 @@ msgstr "Không cho phép cập nhật hàng loạt các mục trong danh sách c
 
 #. js-lingui-id: 9N+p+g
 #: src/engine/metadata-modules/view-field-group/constants/standard-view-field-group-names.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
 msgid "Business"
 msgstr "Cơ quan"
 
@@ -1435,6 +1484,11 @@ msgstr "Không thể sửa đổi điều kiện để thay đổi vai trò củ
 msgid "Cannot remove the last admin from the workspace."
 msgstr "Không thể loại bỏ quản trị viên cuối cùng khỏi không gian làm việc."
 
+#. js-lingui-id: PC1bVW
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Cannot Reproduce"
+msgstr ""
+
 #. js-lingui-id: wNJvot
 #: src/engine/core-modules/billing/billing.exception.ts
 msgid "Cannot switch subscription interval."
@@ -1479,6 +1533,11 @@ msgstr "Không thể cập nhật các thuộc tính của kỹ năng tiêu chu�
 msgid "Cannot update workflow version status manually"
 msgstr "'Không thể cập nhật trạng thái phiên bản quy trình làm việc theo cách thủ công'"
 
+#. js-lingui-id: K7tIrx
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Category"
+msgstr ""
+
 #. js-lingui-id: RpYfjZ
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-participant-standard-flat-field-metadata.util.ts
 msgid "Cc"
@@ -1504,6 +1563,16 @@ msgstr "Không tìm thấy chuỗi trò chuyện."
 #: src/engine/metadata-modules/ai/ai.exception.ts
 msgid "Chat thread title cannot be empty."
 msgstr "Tiêu đề chuỗi trò chuyện không thể để trống."
+
+#. js-lingui-id: RZyN/L
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Child issues"
+msgstr ""
+
+#. js-lingui-id: rAYksX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Child issues (stories or subtasks)"
+msgstr ""
 
 #. js-lingui-id: NGL+Sl
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-navigation-menu-item-validator.service.ts
@@ -1536,6 +1605,11 @@ msgstr "Thông tin xác thực của ứng dụng khách chưa được cấu h�
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 msgid "Close date"
 msgstr "Ngày đóng"
+
+#. js-lingui-id: D87pha
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Closed"
+msgstr ""
 
 #. js-lingui-id: T9qjpu
 #: src/engine/core-modules/tool-provider/constants/action-tool-label.constant.ts
@@ -1570,6 +1644,26 @@ msgstr "Không tìm thấy mục menu lệnh."
 msgid "Commas and dot"
 msgstr "Dấu phẩy và dấu chấm"
 
+#. js-lingui-id: DFkUSF
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+msgid "Comment author"
+msgstr ""
+
+#. js-lingui-id: 865dGh
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+msgid "Comment body"
+msgstr ""
+
+#. js-lingui-id: RvGi51
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+msgid "Commented issue"
+msgstr ""
+
+#. js-lingui-id: VbyRUy
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Comments"
+msgstr ""
+
 #. js-lingui-id: s2QZS6
 #: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
 msgid "Companies"
@@ -1601,6 +1695,11 @@ msgstr "Đã phàn nàn"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 msgid "Complained count"
 msgstr "Số lần phàn nàn"
+
+#. js-lingui-id: G0XDF6
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Complete date"
+msgstr ""
 
 #. js-lingui-id: qqWcBV
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
@@ -1875,6 +1974,11 @@ msgstr ""
 msgid "Could not resolve the existing object \"{0}\" to rename its default relations"
 msgstr ""
 
+#. js-lingui-id: C7p/K2
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Counter used to generate the next issue key for this project"
+msgstr ""
+
 #. js-lingui-id: hYgDIe
 #: src/engine/core-modules/tool-provider/utils/get-crud-tool-label.util.ts
 #: src/engine/core-modules/tool-provider/utils/get-crud-tool-label.util.ts
@@ -1895,6 +1999,8 @@ msgstr "Tạo sự kiện Lịch"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -1907,12 +2013,15 @@ msgstr "Tạo sự kiện Lịch"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-automated-trigger-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Created by"
 msgstr "Người tạo"
@@ -1939,6 +2048,10 @@ msgstr "Đã tạo siêu dữ liệu trường, không tìm thấy siêu dữ li
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
@@ -1963,6 +2076,10 @@ msgstr "Đã tạo siêu dữ liệu trường, không tìm thấy siêu dữ li
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
@@ -1979,6 +2096,8 @@ msgstr "Đã tạo siêu dữ liệu trường, không tìm thấy siêu dữ li
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Creation date"
@@ -2086,6 +2205,8 @@ msgstr "Định dạng ngày"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -2098,6 +2219,8 @@ msgstr "Định dạng ngày"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -2105,6 +2228,7 @@ msgstr "Định dạng ngày"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Date when the record was deleted"
 msgstr "Ngày hồ sơ đã bị xóa"
@@ -2198,6 +2322,8 @@ msgstr "Xóa"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -2210,6 +2336,8 @@ msgstr "Xóa"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -2217,6 +2345,7 @@ msgstr "Xóa"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Deleted at"
 msgstr "Ngày xóa"
@@ -2229,6 +2358,9 @@ msgstr "Trạng thái phân phối"
 #. js-lingui-id: Nu4oKW
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 msgid "Description"
 msgstr "Mô tả"
 
@@ -2271,6 +2403,8 @@ msgid "Domain Name"
 msgstr "Tên miền"
 
 #. js-lingui-id: DPfwMq
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "Done"
 msgstr "Hoàn thành"
@@ -2292,10 +2426,20 @@ msgstr "Bản nháp"
 msgid "Draft Email"
 msgstr "Email nháp"
 
+#. js-lingui-id: XicmhT
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Due date"
+msgstr ""
+
 #. js-lingui-id: YOowcq
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "Due Date"
 msgstr "Ngày đến hạn"
+
+#. js-lingui-id: euc6Ns
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Duplicate"
+msgstr ""
 
 #. js-lingui-id: UrzTjS
 #: src/engine/core-modules/graphql/hooks/use-validate-graphql-query-complexity.hook.ts
@@ -2430,6 +2574,11 @@ msgstr "Không cho phép quyền trường trống."
 msgid "Enable two-factor authentication in your current workspace to manage server administrators."
 msgstr "Bật xác thực hai yếu tố trong workspace hiện tại của bạn để quản lý quản trị viên máy chủ."
 
+#. js-lingui-id: IrI9pg
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "End date"
+msgstr ""
+
 #. js-lingui-id: VFv2ZC
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
@@ -2481,6 +2630,11 @@ msgstr "Thao tác enum thất bại."
 #: src/engine/core-modules/dns-manager/validator/dns-manager.validate.ts
 msgid "Environment variable CLOUDFLARE_API_KEY must be defined to use this feature."
 msgstr "Biến môi trường CLOUDFLARE_API_KEY phải được định nghĩa để sử dụng tính năng này."
+
+#. js-lingui-id: Tntvhz
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Epic"
+msgstr ""
 
 #. js-lingui-id: SlfejT
 #: src/engine/core-modules/feature-flag/validates/feature-flag.validate.spec.ts
@@ -2923,6 +3077,8 @@ msgstr "Lỗi xác thực kiểu trường."
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -2935,6 +3091,8 @@ msgstr "Lỗi xác thực kiểu trường."
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -2942,6 +3100,7 @@ msgstr "Lỗi xác thực kiểu trường."
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Field used for full-text search"
 msgstr "Trường được sử dụng cho tìm kiếm toàn văn bản"
@@ -3235,6 +3394,11 @@ msgstr "Hàm chưa sẵn sàng."
 msgid "Function not found."
 msgstr "Không tìm thấy hàm."
 
+#. js-lingui-id: sMqaa3
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Future"
+msgstr ""
+
 #. js-lingui-id: Weq9zb
 #: src/engine/metadata-modules/view-field-group/constants/standard-view-field-group-names.ts
 msgid "General"
@@ -3255,6 +3419,11 @@ msgstr "Chỉ mục GIN hoạt động trên các cột multi-select, mảng, JS
 #. js-lingui-id: odCOaU
 #: src/engine/core-modules/application/application-registration/application-registration.exception.ts
 msgid "GitHub authentication failed. Try connecting your GitHub account again."
+msgstr ""
+
+#. js-lingui-id: EEZvNu
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Goal"
 msgstr ""
 
 #. js-lingui-id: cvJ2e6
@@ -3315,6 +3484,16 @@ msgstr "handlerName phải là một định danh JavaScript hợp lệ hoặc m
 msgid "Header message Id"
 msgstr "ID tin nhắn trong phần đầu"
 
+#. js-lingui-id: yx/fMc
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "High"
+msgstr ""
+
+#. js-lingui-id: /WH/9+
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Highest"
+msgstr ""
+
 #. js-lingui-id: i0qMbr
 #: src/engine/metadata-modules/page-layout-tab/constants/standard-page-layout-tab-titles.ts
 msgid "Home"
@@ -3348,6 +3527,10 @@ msgstr "UID iCal"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
@@ -3372,6 +3555,10 @@ msgstr "UID iCal"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
@@ -3386,6 +3573,8 @@ msgstr "UID iCal"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Id"
@@ -3411,6 +3600,16 @@ msgstr "Hình ảnh"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "In progress"
 msgstr "Đang thực hiện"
+
+#. js-lingui-id: WbTDwg
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "In Progress"
+msgstr ""
+
+#. js-lingui-id: sQO5sz
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "In Review"
+msgstr ""
 
 #. js-lingui-id: RAMaAx
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -4297,6 +4496,136 @@ msgstr "Là Người tổ chức"
 msgid "IS_CONFIG_VARIABLES_IN_DB_ENABLED is false on your server. Please add ENTERPRISE_KEY to your .env file manually."
 msgstr "IS_CONFIG_VARIABLES_IN_DB_ENABLED là false trên máy chủ của bạn. Vui lòng thêm ENTERPRISE_KEY vào tệp .env theo cách thủ công."
 
+#. js-lingui-id: DLNgVH
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Issue"
+msgstr ""
+
+#. js-lingui-id: 7PDKhX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue assignee"
+msgstr ""
+
+#. js-lingui-id: iIIWXF
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Issue Comment"
+msgstr ""
+
+#. js-lingui-id: ycdQUH
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+msgid "Issue comment record position"
+msgstr ""
+
+#. js-lingui-id: 4+5pd3
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Issue comments"
+msgstr ""
+
+#. js-lingui-id: 8if9GD
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Issue Comments"
+msgstr ""
+
+#. js-lingui-id: yYcY1K
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Issue comments authored by the workspace member"
+msgstr ""
+
+#. js-lingui-id: LLO/6m
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue description"
+msgstr ""
+
+#. js-lingui-id: E0otPU
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue due date"
+msgstr ""
+
+#. js-lingui-id: rhVYLg
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue key, auto-generated from the project key"
+msgstr ""
+
+#. js-lingui-id: 2bsNn6
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue labels"
+msgstr ""
+
+#. js-lingui-id: JduseB
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue priority"
+msgstr ""
+
+#. js-lingui-id: S8e6Lc
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue record position"
+msgstr ""
+
+#. js-lingui-id: flXUOn
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue reporter"
+msgstr ""
+
+#. js-lingui-id: c3SCne
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue resolution"
+msgstr ""
+
+#. js-lingui-id: 0/buA8
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue status"
+msgstr ""
+
+#. js-lingui-id: BisTMX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue title"
+msgstr ""
+
+#. js-lingui-id: YOmYvx
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue type"
+msgstr ""
+
+#. js-lingui-id: ZRxJvc
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue's comments"
+msgstr ""
+
+#. js-lingui-id: +wxGsC
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue's project"
+msgstr ""
+
+#. js-lingui-id: ft15uQ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue's sprint (null = backlog)"
+msgstr ""
+
+#. js-lingui-id: TE58eS
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Issue's worklogs"
+msgstr ""
+
+#. js-lingui-id: 1718Q+
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Issues"
+msgstr ""
+
+#. js-lingui-id: 00mVMD
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Issues assigned to the workspace member"
+msgstr ""
+
+#. js-lingui-id: c9tqeR
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Issues reported by the workspace member"
+msgstr ""
+
 #. js-lingui-id: rjyWPb
 #: src/engine/api/graphql/graphql-query-runner/group-by/resolvers/utils/format-result-with-group-by-dimension-values.util.ts
 msgid "January"
@@ -4415,6 +4744,12 @@ msgstr "Trường nhóm chính của Kanban phải là trường SELECT hoặc t
 msgid "Kanban view must have a main group by field"
 msgstr "Chế độ xem Kanban phải có một trường nhóm chính"
 
+#. js-lingui-id: 7sMeHQ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Key"
+msgstr ""
+
 #. js-lingui-id: WDgCbh
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-permission-flag-validator.service.ts
 msgid "Key cannot be changed"
@@ -4488,6 +4823,11 @@ msgstr "Nhãn không được để trống"
 msgid "Label must not contain a comma"
 msgstr "Nhãn không được chứa dấu phẩy"
 
+#. js-lingui-id: h8DugX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Labels"
+msgstr ""
+
 #. js-lingui-id: vXIe7J
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Language"
@@ -4507,6 +4847,8 @@ msgstr "Id Phiên bản đã xuất bản cuối cùng"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -4519,6 +4861,8 @@ msgstr "Id Phiên bản đã xuất bản cuối cùng"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -4526,6 +4870,7 @@ msgstr "Id Phiên bản đã xuất bản cuối cùng"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Last time the record was changed"
 msgstr "Lần cuối bản ghi được thay đổi"
@@ -4539,6 +4884,8 @@ msgstr "Lần cuối bản ghi được thay đổi"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -4551,6 +4898,8 @@ msgstr "Lần cuối bản ghi được thay đổi"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -4558,6 +4907,7 @@ msgstr "Lần cuối bản ghi được thay đổi"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Last update"
 msgstr "Cập nhật cuối cùng"
@@ -4571,6 +4921,16 @@ msgstr "Bố cục là bắt buộc cho biểu đồ cột"
 #: src/engine/metadata-modules/flat-page-layout-widget/validators/utils/validate-bar-chart-configuration.util.ts
 msgid "Layout is required for bar chart widget \"{widgetTitle}\""
 msgstr "Bố cục là bắt buộc cho tiện ích biểu đồ cột \"{widgetTitle}\""
+
+#. js-lingui-id: IITbPp
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Lead"
+msgstr ""
+
+#. js-lingui-id: oeUqp0
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Led projects"
+msgstr ""
 
 #. js-lingui-id: oDC0sf
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-navigation-menu-item-validator.service.ts
@@ -4650,6 +5010,11 @@ msgstr "Các danh sách mà liên hệ thuộc về"
 msgid "Location"
 msgstr "Địa điểm"
 
+#. js-lingui-id: OjoORy
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Logged issue"
+msgstr ""
+
 #. js-lingui-id: V5AXjr
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-logic-function-validator.service.ts
 msgid "Logic function already exists"
@@ -4693,6 +5058,16 @@ msgstr "Không tìm thấy hàm logic."
 msgid "Logic function with same universal identifier already exists"
 msgstr "Hàm logic có cùng định danh phổ quát đã tồn tại"
 
+#. js-lingui-id: nTWWCZ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Low"
+msgstr ""
+
+#. js-lingui-id: 05qZg8
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Lowest"
+msgstr ""
+
 #. js-lingui-id: Mwvtvf
 #: src/engine/workspace-manager/workspace-migration/interceptors/utils/__tests__/build-metadata-validation-error-payload.util.spec.ts
 #: src/engine/workspace-manager/workspace-migration/interceptors/utils/build-metadata-validation-error-payload.util.ts
@@ -4734,6 +5109,11 @@ msgstr "maxNumberOfValues phải được định nghĩa trong cài đặt và l
 msgid "May"
 msgstr "Tháng Năm"
 
+#. js-lingui-id: agPptk
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Medium"
+msgstr ""
+
 #. js-lingui-id: EnfPm2
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
@@ -4749,6 +5129,11 @@ msgstr "Cuộc họp"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 msgid "Meeting title from the calendar event"
 msgstr "Tiêu đề cuộc họp từ sự kiện lịch"
+
+#. js-lingui-id: OvoEq7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Member"
+msgstr ""
 
 #. js-lingui-id: wlQNTg
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-list-standard-flat-field-metadata.util.ts
@@ -5037,6 +5422,8 @@ msgstr "Tìm thấy nhiều đăng ký trong khi chỉ mong đợi một."
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-list-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
@@ -5155,6 +5542,11 @@ msgstr "Mới"
 #. js-lingui-id: TYhxR+
 #: src/engine/core-modules/user/services/user.service.ts
 msgid "New email must be different from current email"
+msgstr ""
+
+#. js-lingui-id: ot44Q7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Next issue number"
 msgstr ""
 
 #. js-lingui-id: 1UzENP
@@ -5748,6 +6140,16 @@ msgstr "Giá trị tuỳ chọn phải là một chuỗi có ít nhất một k�
 msgid "Options are required for enum fields"
 msgstr "Cần các tùy chọn cho trường enum"
 
+#. js-lingui-id: f5aAc1
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Original estimate (minutes)"
+msgstr ""
+
+#. js-lingui-id: oHDix7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Original time estimate in minutes"
+msgstr ""
+
 #. js-lingui-id: /IX/7x
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-attachment-standard-flat-field-metadata.util.ts
 msgid "Other"
@@ -5885,6 +6287,16 @@ msgstr "Mục menu điều hướng PAGE_LAYOUT phải tham chiếu đến bố 
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-navigation-menu-item-validator.service.ts
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-navigation-menu-item-validator.service.ts
 msgid "pageLayoutId is required for PAGE_LAYOUT type"
+msgstr ""
+
+#. js-lingui-id: jYYEm0
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Parent issue"
+msgstr ""
+
+#. js-lingui-id: XWH4gl
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Parent issue (epic link for a story, story for a subtask)"
 msgstr ""
 
 #. js-lingui-id: T1gSWA
@@ -6183,6 +6595,8 @@ msgstr "Điểm liên hệ"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -6195,6 +6609,8 @@ msgstr "Điểm liên hệ"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -6202,6 +6618,7 @@ msgstr "Điểm liên hệ"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Position"
 msgstr "Vị trí"
@@ -6259,10 +6676,72 @@ msgstr "Trường nhóm theo trục chính là bắt buộc cho biểu đồ đ�
 msgid "Primary axis group by field is required for line chart widget \"{widgetTitle}\""
 msgstr "Trường nhóm theo trục chính là bắt buộc cho tiện ích biểu đồ đường \"{widgetTitle}\""
 
+#. js-lingui-id: 1hKEom
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Priority"
+msgstr ""
+
 #. js-lingui-id: vrnnn9
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 msgid "Processing"
 msgstr "Đang xử lý"
+
+#. js-lingui-id: e0NrBM
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Project"
+msgstr ""
+
+#. js-lingui-id: nesOsq
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project category"
+msgstr ""
+
+#. js-lingui-id: CFJiDF
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project description"
+msgstr ""
+
+#. js-lingui-id: Bp+stR
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project key, used as the issue key prefix"
+msgstr ""
+
+#. js-lingui-id: Fyta7/
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project lead"
+msgstr ""
+
+#. js-lingui-id: OyIC0Q
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project name"
+msgstr ""
+
+#. js-lingui-id: s+P9BG
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project record position"
+msgstr ""
+
+#. js-lingui-id: zf/bgS
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project's issues"
+msgstr ""
+
+#. js-lingui-id: +Dfyp5
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Project's sprints"
+msgstr ""
+
+#. js-lingui-id: +0B+ue
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Projects"
+msgstr ""
+
+#. js-lingui-id: SIjCZJ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Projects led by the workspace member"
+msgstr ""
 
 #. js-lingui-id: t/0e9D
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/utils/validate-agent-required-properties.util.ts
@@ -6477,6 +6956,16 @@ msgstr "Quan hệ không được bật cho trường này."
 msgid "Relations"
 msgstr "Mối quan hệ"
 
+#. js-lingui-id: DwVECj
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Remaining estimate (minutes)"
+msgstr ""
+
+#. js-lingui-id: 19RDWk
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Remaining time estimate in minutes"
+msgstr ""
+
 #. js-lingui-id: PWdFkY
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/services/flat-field-metadata-validator.service.ts
 msgid "Remote objects are not production ready yet"
@@ -6500,6 +6989,16 @@ msgstr "Hãy xóa quyền này khỏi tất cả các vai trò trước khi xóa
 msgid "Reply To"
 msgstr "Trả lời đến"
 
+#. js-lingui-id: hAgOLM
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Reported issues"
+msgstr ""
+
+#. js-lingui-id: 6LNArx
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Reporter"
+msgstr ""
+
 #. js-lingui-id: pCsIQQ
 #: src/engine/core-modules/email-verification/email-verification-exception-filter.util.ts
 msgid "Request has expired, please try again."
@@ -6514,6 +7013,11 @@ msgstr "Trạng thái yêu cầu"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 msgid "Requested"
 msgstr "Đã được yêu cầu"
+
+#. js-lingui-id: FmN5me
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Resolution"
+msgstr ""
 
 #. js-lingui-id: MU8Slt
 #: src/engine/core-modules/server-route-trigger/exceptions/server-route-trigger.exception.ts
@@ -6887,6 +7391,8 @@ msgstr "Tìm kiếm Trung tâm trợ giúp"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -6899,6 +7405,8 @@ msgstr "Tìm kiếm Trung tâm trợ giúp"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -6906,6 +7414,7 @@ msgstr "Tìm kiếm Trung tâm trợ giúp"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Search vector"
 msgstr "Vector tìm kiếm"
@@ -7039,6 +7548,11 @@ msgstr "Bị bỏ qua"
 msgid "Social"
 msgstr "Mạng xã hội"
 
+#. js-lingui-id: bRN5nm
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+msgid "Software"
+msgstr ""
+
 #. js-lingui-id: RyE+Of
 #: src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/utils/validate-role-required-properties-are-defined.util.ts
 msgid "Some of the information provided is invalid. Please check your input and try again."
@@ -7101,6 +7615,63 @@ msgstr "Dấu cách và dấu phẩy"
 msgid "Spreadsheet"
 msgstr "Bảng tính"
 
+#. js-lingui-id: VNbzs6
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Sprint"
+msgstr ""
+
+#. js-lingui-id: hSZntM
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint complete date"
+msgstr ""
+
+#. js-lingui-id: 4x58Wi
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint end date"
+msgstr ""
+
+#. js-lingui-id: lh7ueX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint goal"
+msgstr ""
+
+#. js-lingui-id: YiRPai
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint name"
+msgstr ""
+
+#. js-lingui-id: Hov8iM
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint record position"
+msgstr ""
+
+#. js-lingui-id: Qd57FV
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint start date"
+msgstr ""
+
+#. js-lingui-id: foDpgH
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint state"
+msgstr ""
+
+#. js-lingui-id: 2HAeIi
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint's issues"
+msgstr ""
+
+#. js-lingui-id: tlB30C
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Sprint's project"
+msgstr ""
+
+#. js-lingui-id: K8jNOX
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Sprints"
+msgstr ""
+
 #. js-lingui-id: IP+RN5
 #: src/engine/core-modules/sso/sso.exception.ts
 msgid "SSO configuration error."
@@ -7137,6 +7708,11 @@ msgstr "Không thể sửa đổi các cờ quyền tiêu chuẩn."
 msgid "Standard skills cannot be modified."
 msgstr "Không thể sửa đổi các kỹ năng tiêu chuẩn."
 
+#. js-lingui-id: WAjFYI
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
+msgid "Start date"
+msgstr ""
+
 #. js-lingui-id: D3iCkb
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
@@ -7148,12 +7724,18 @@ msgstr "Ngày bắt đầu"
 msgid "Start of the week"
 msgstr "Đầu tuần"
 
+#. js-lingui-id: YgkVxJ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Started at"
+msgstr ""
+
 #. js-lingui-id: 0zMm7e
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 msgid "Started At"
 msgstr "Bắt đầu lúc"
 
 #. js-lingui-id: RS0o7b
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 msgid "State"
 msgstr "Trạng thái"
@@ -7165,6 +7747,7 @@ msgstr "Trạng thái của lần chạy Quy trình làm việc"
 
 #. js-lingui-id: uAQUqI
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "Status"
@@ -7205,6 +7788,21 @@ msgstr "Đã dừng"
 msgid "Stopping"
 msgstr "Đang dừng"
 
+#. js-lingui-id: FsTRPS
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Story"
+msgstr ""
+
+#. js-lingui-id: VSx5z7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Story points"
+msgstr ""
+
+#. js-lingui-id: dLrzwx
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Story points estimate"
+msgstr ""
+
 #. js-lingui-id: An2IAh
 #: src/engine/core-modules/workspace/workspace.exception.ts
 msgid "Subdomain not found."
@@ -7238,6 +7836,11 @@ msgstr "Không tìm thấy đăng ký."
 #: src/engine/core-modules/billing/billing.exception.ts
 msgid "Subscription phase not found."
 msgstr "Không tìm thấy giai đoạn đăng ký."
+
+#. js-lingui-id: RMVrCV
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Subtask"
+msgstr ""
 
 #. js-lingui-id: dXoieq
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
@@ -7339,6 +7942,7 @@ msgstr "targetRecordId và targetObjectMetadataId là bắt buộc đối với 
 #. js-lingui-id: Q3P/4s
 #: src/engine/metadata-modules/page-layout-widget/constants/standard-page-layout-widget-titles.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-attachment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
@@ -7553,6 +8157,8 @@ msgstr "Tệp manifest của connection-provider thiếu các trường bắt bu
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -7565,12 +8171,15 @@ msgstr "Tệp manifest của connection-provider thiếu các trường bắt bu
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-automated-trigger-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "The creator of the record"
 msgstr "Người tạo bản ghi"
@@ -7832,6 +8441,8 @@ msgstr "Trạng thái phiên bản quy trình làm việc"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -7844,6 +8455,8 @@ msgstr "Trạng thái phiên bản quy trình làm việc"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -7851,6 +8464,7 @@ msgstr "Trạng thái phiên bản quy trình làm việc"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "The workspace member who last updated the record"
 msgstr "Thành viên trong không gian làm việc đã cập nhật bản ghi lần cuối"
@@ -8237,6 +8851,17 @@ msgstr "Thứ Năm"
 msgid "Time format"
 msgstr "Định dạng thời gian"
 
+#. js-lingui-id: jpI8m7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Time logged in minutes"
+msgstr ""
+
+#. js-lingui-id: K3K8QV
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Time spent (minutes)"
+msgstr ""
+
 #. js-lingui-id: Mz2JN2
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Time zone"
@@ -8309,6 +8934,7 @@ msgstr "Vị trí bản ghi hoạt động dòng thời gian"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-calendar-event-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "Title"
@@ -8323,6 +8949,11 @@ msgstr "Đến"
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 msgid "To do"
 msgstr "Cần làm"
+
+#. js-lingui-id: RoTUlL
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Todo"
+msgstr ""
 
 #. js-lingui-id: /ObxXq
 #: src/engine/metadata-modules/permissions/permissions.exception.ts
@@ -8353,6 +8984,11 @@ msgstr "Quá nhiều yêu cầu. Vui lòng thử lại sau."
 #. js-lingui-id: mfqtz7
 #: src/engine/core-modules/workspace-invitation/services/workspace-invitation.service.ts
 msgid "Too many workspace invitations sent. Please try again later."
+msgstr ""
+
+#. js-lingui-id: gRdVuO
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Total time logged in minutes"
 msgstr ""
 
 #. js-lingui-id: DDziIo
@@ -8508,6 +9144,8 @@ msgstr "Giới hạn trường cập nhật chỉ áp dụng cho các đối tư
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-call-recording-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-company-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-dashboard-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-campaign-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-message-folder-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-channel-message-association-standard-flat-field-metadata.util.ts
@@ -8520,6 +9158,8 @@ msgstr "Giới hạn trường cập nhật chỉ áp dụng cho các đối tư
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util.ts
@@ -8527,6 +9167,7 @@ msgstr "Giới hạn trường cập nhật chỉ áp dụng cho các đối tư
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-run-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workflow-version-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Updated by"
 msgstr "Cập nhật bởi"
@@ -9120,6 +9761,11 @@ msgstr "Chào mừng đến với Twenty: Vui lòng xác nhận email của bạ
 msgid "When the campaign finished sending"
 msgstr "Thời điểm chiến dịch hoàn tất việc gửi"
 
+#. js-lingui-id: hfTgkO
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "When the logged work started"
+msgstr ""
+
 #. js-lingui-id: xm/brR
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-standard-flat-field-metadata.util.ts
 msgid "Whether this message is an unsent draft synced from the provider"
@@ -9174,6 +9820,11 @@ msgstr "Loại tiện ích VIEW chưa được hỗ trợ."
 #. js-lingui-id: s8y6wj
 #: src/engine/metadata-modules/view/services/view-widget-upsert.service.ts
 msgid "Widget views must use a widget view type"
+msgstr ""
+
+#. js-lingui-id: 94YnJE
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+msgid "Won't Do"
 msgstr ""
 
 #. js-lingui-id: qRILxq
@@ -9405,6 +10056,33 @@ msgstr "Không được đặt workflowVersionId đối với khóa thành phầ
 msgid "workflowVersionId must not be set when engineComponentKey is FRONT_COMPONENT_RENDERER"
 msgstr "Không được đặt workflowVersionId khi engineComponentKey là FRONT_COMPONENT_RENDERER"
 
+#. js-lingui-id: h0eWaO
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Worklog"
+msgstr ""
+
+#. js-lingui-id: hvuea7
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Worklog description"
+msgstr ""
+
+#. js-lingui-id: NXGfLQ
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Worklog record position"
+msgstr ""
+
+#. js-lingui-id: umL473
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+#: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts
+msgid "Worklogs"
+msgstr ""
+
+#. js-lingui-id: wov1J0
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
+msgid "Worklogs logged by the workspace member"
+msgstr ""
+
 #. js-lingui-id: bK8AyJ
 #: src/engine/core-modules/billing-webhook/services/billing-webhook-subscription.service.ts
 #: src/engine/core-modules/billing-webhook/services/billing-webhook-subscription.service.ts
@@ -9486,6 +10164,11 @@ msgstr "Không tìm thấy thành viên không gian làm việc."
 #: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-workspace-member-standard-flat-field-metadata.util.ts
 msgid "Workspace member position"
 msgstr "Vị trí thành viên không gian làm việc"
+
+#. js-lingui-id: srgX/F
+#: src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util.ts
+msgid "Workspace member who logged the time"
+msgstr ""
 
 #. js-lingui-id: YCAEr+
 #: src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-flat-object-metadata.util.ts

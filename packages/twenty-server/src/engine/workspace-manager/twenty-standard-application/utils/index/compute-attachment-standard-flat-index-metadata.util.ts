@@ -100,4 +100,40 @@ export const buildAttachmentStandardFlatIndexMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  issueIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'issueIdIndex',
+      relatedFieldNames: ['targetIssue'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
+  issueCommentIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'issueCommentIdIndex',
+      relatedFieldNames: ['targetIssueComment'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
+  projectIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'projectIdIndex',
+      relatedFieldNames: ['targetProject'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
 });

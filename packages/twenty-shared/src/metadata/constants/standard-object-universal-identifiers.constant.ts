@@ -19,6 +19,11 @@ export const STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = {
   dashboard: '20202020-3840-4b6d-9425-0c5188b05ca8',
   messageList: '826561ea-4816-411c-baa0-eec5e6ca8866',
   messageCampaign: '238acb94-dd4c-4036-bc55-19b99d821efd',
+  project: 'bf773e17-d100-40b8-9e8d-ef476c1d2fb8',
+  sprint: '6acc95fa-4a04-49f1-ac53-50efe1032cbf',
+  issue: 'e14a5928-2bbe-4e20-b766-ea8975ee819f',
+  issueComment: '860287e4-e447-4e1b-85e4-4952c02f57dd',
+  worklog: '8e4d81e8-6ab8-42c4-9e61-16b98bab83fa',
 } as const;
 
 export type StandardObjectWithUniversalIdentifierName =

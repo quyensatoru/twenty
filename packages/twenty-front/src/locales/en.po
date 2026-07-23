@@ -236,6 +236,12 @@ msgstr "{0} have no relation to {loadBalancePoolObjectLabel}. Pick a different o
 msgid "{0} in this list — {1} sendable"
 msgstr "{0} in this list — {1} sendable"
 
+#. js-lingui-id: S2OwOY
+#. placeholder {0}: issues.length
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "{0} issues"
+msgstr "{0} issues"
+
 #. js-lingui-id: T8aKxO
 #. placeholder {0}: layout.name
 #: src/modules/settings/applications/hooks/useComputeApplicationContentForLayoutAndLogic.ts
@@ -1110,6 +1116,11 @@ msgstr "Active installs"
 msgid "Active Sync"
 msgstr "Active Sync"
 
+#. js-lingui-id: XJOV1Y
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Activity"
+msgstr "Activity"
+
 #. js-lingui-id: m16xKo
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Add"
@@ -1980,6 +1991,11 @@ msgstr "All Objects"
 #: src/modules/navigation-menu-item/edit/side-panel/components/SidePanelObjectPickerSubView.tsx
 msgid "All objects are already in the sidebar"
 msgstr "All objects are already in the sidebar"
+
+#. js-lingui-id: zG6Ooi
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "All projects"
+msgstr "All projects"
 
 #. js-lingui-id: Hm90t3
 #: src/modules/settings/roles/components/SettingsRolesList.tsx
@@ -2975,6 +2991,12 @@ msgstr "Background"
 msgid "Background Colors"
 msgstr "Background Colors"
 
+#. js-lingui-id: KNKCTb
+#: src/modules/task-manager/backlog/components/TaskManagerBacklog.tsx
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Backlog"
+msgstr "Backlog"
+
 #. js-lingui-id: uayqnb
 #: src/modules/workflow/workflow-steps/workflow-actions/pick-record-action/components/WorkflowEditActionPickRecord.tsx
 msgid "Balance by"
@@ -3118,6 +3140,11 @@ msgstr "Blocklist"
 #: src/modules/settings/data-model/fields/forms/select/components/SettingsDataModelFieldSelectFormOptionRow.tsx
 msgid "Blue"
 msgstr "Blue"
+
+#. js-lingui-id: QD8opX
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Board"
+msgstr "Board"
 
 #. js-lingui-id: bGQplw
 #: src/modules/workflow/workflow-run/observability/WorkflowRunStepLogsEmailDetail.tsx
@@ -4098,9 +4125,15 @@ msgid "Commas and dot"
 msgstr "Commas and dot"
 
 #. js-lingui-id: NBdIgR
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/ai/SettingsAgentTurnDetail.tsx
 msgid "Comment"
 msgstr "Comment"
+
+#. js-lingui-id: VbyRUy
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Comments"
+msgstr "Comments"
 
 #. js-lingui-id: hZotg6
 #: src/modules/settings/accounts/components/SettingsAccountsNewEmailGroupChannel.tsx
@@ -4147,6 +4180,11 @@ msgstr "Compare plans"
 #: src/modules/settings/accounts/components/SettingsAccountsRowDropdownMenu.tsx
 msgid "Complete setup"
 msgstr "Complete setup"
+
+#. js-lingui-id: AO98YG
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "Complete sprint"
+msgstr "Complete sprint"
 
 #. js-lingui-id: 2PsTzL
 #: src/modules/workflow/workflow-diagram/utils/generateNodesAndEdgesForIteratorNode.ts
@@ -6191,6 +6229,7 @@ msgstr "Describe what you want the AI to do..."
 #: src/modules/settings/logic-functions/components/SettingsLogicFunctionNewForm.tsx
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentTable.tsx
 #: src/modules/settings/roles/role-permissions/permission-flags/components/SettingsRolePermissionsSettingsTableHeader.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workflow/workflow-steps/workflow-actions/components/WorkflowEditActionCreateCalendarEvent.tsx
 #: src/pages/settings/ai/SettingsToolDetail.tsx
 #: src/pages/settings/applications/components/SettingsApplicationsTable.tsx
@@ -8449,6 +8488,11 @@ msgstr "File label"
 #: src/modules/ui/field/display/components/FileChip.tsx
 msgid "File no longer exists - {label}"
 msgstr "File no longer exists - {label}"
+
+#. js-lingui-id: sER+bs
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Files"
+msgstr "Files"
 
 #. js-lingui-id: BZGmTs
 #: src/modules/settings/logic-functions/components/tabs/SettingsLogicFunctionTestTab.tsx
@@ -12406,6 +12450,11 @@ msgstr "No description available for this application"
 msgid "No email exchange has occurred with this record yet."
 msgstr "No email exchange has occurred with this record yet."
 
+#. js-lingui-id: qsTUTV
+#: src/modules/task-manager/roadmap/components/TaskManagerRoadmap.tsx
+msgid "No epic"
+msgstr "No epic"
+
 #. js-lingui-id: p3Hivn
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "No evaluation inputs yet. Add your first test input above."
@@ -12486,6 +12535,11 @@ msgstr "No input"
 #: src/modules/workflow/workflow-steps/workflow-actions/logic-function-action/components/WorkflowEditActionLogicFunction.tsx
 msgid "No input fields for this action"
 msgstr "No input fields for this action"
+
+#. js-lingui-id: g/dkGM
+#: src/modules/task-manager/roadmap/components/TaskManagerRoadmap.tsx
+msgid "No issues yet."
+msgstr "No issues yet."
 
 #. js-lingui-id: lj3GoP
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminQueueJobsTable.tsx
@@ -15269,6 +15323,11 @@ msgstr "Revoking this key will invalidate every JWT signed with it. Users with a
 msgid "Rich Text"
 msgstr "Rich Text"
 
+#. js-lingui-id: /gaSVU
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Roadmap"
+msgstr "Roadmap"
+
 #. js-lingui-id: E1BXUR
 #: src/modules/metadata-error-handler/hooks/useMetadataErrorHandler.ts
 #: src/pages/settings/applications/SettingsAvailableApplicationDetails.tsx
@@ -16949,6 +17008,11 @@ msgstr "Start a new enterprise subscription."
 #: src/modules/settings/event-logs/components/EventLogFilters.tsx
 msgid "Start date"
 msgstr "Start date"
+
+#. js-lingui-id: f9gtg/
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "Start sprint"
+msgstr "Start sprint"
 
 #. js-lingui-id: s+K73L
 #: src/modules/settings/billing/components/internal/SettingsBillingSubscriptionInfoModals.tsx
@@ -18794,6 +18858,7 @@ msgstr "Universal identifier"
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminUpgradeStatusRightContainer.tsx
 #: src/modules/settings/admin-panel/utils/getUpgradeHealthStatusBadge.ts
 #: src/modules/settings/billing/components/SettingsBillingSubscriptionInfo.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/admin-panel/SettingsAdminInferredVersion.tsx
 #: src/pages/settings/applications/components/SettingsApplicationVersionContainer.tsx
 #: src/pages/settings/emailing-domains/utils/getEmailingDomainStatusText.ts
@@ -20399,6 +20464,11 @@ msgstr "Would you like to remove {recordIndexRecordGroupSort} group sorting?"
 #: src/modules/settings/data-model/fields/forms/components/text/SettingsDataModelFieldTextForm.tsx
 msgid "Wrap on record pages"
 msgstr "Wrap on record pages"
+
+#. js-lingui-id: cztSrw
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Write a comment..."
+msgstr "Write a comment..."
 
 #. js-lingui-id: Q9pNST
 #: src/modules/settings/data-model/fields/forms/components/SettingsDataModelFieldDescriptionForm.tsx

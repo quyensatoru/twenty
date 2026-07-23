@@ -46,6 +46,14 @@ import {
   EMPLOYMENT_HISTORY_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/employment-history-data-seeds.constant';
 import {
+  ISSUE_COMMENT_DATA_SEED_COLUMNS,
+  ISSUE_COMMENT_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-comment-data-seeds.constant';
+import {
+  ISSUE_DATA_SEED_COLUMNS,
+  ISSUE_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-data-seeds.constant';
+import {
   MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_DATA_SEED_COLUMNS,
   MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/message-channel-message-association-data-seeds.constant';
@@ -86,9 +94,17 @@ import {
   PET_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/pet-data-seeds.constant';
 import {
+  PROJECT_DATA_SEED_COLUMNS,
+  PROJECT_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/project-data-seeds.constant';
+import {
   ROCKET_DATA_SEED_COLUMNS,
   ROCKET_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/rocket-data-seeds.constant';
+import {
+  SPRINT_DATA_SEED_COLUMNS,
+  SPRINT_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/sprint-data-seeds.constant';
 import {
   SURVEY_RESULT_DATA_SEED_COLUMNS,
   SURVEY_RESULT_DATA_SEEDS,
@@ -105,6 +121,10 @@ import {
   getWorkspaceMemberDataSeeds,
   WORKSPACE_MEMBER_DATA_SEED_COLUMNS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/workspace-member-data-seeds.constant';
+import {
+  WORKLOG_DATA_SEED_COLUMNS,
+  WORKLOG_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/worklog-data-seeds.constant';
 import { TimelineActivitySeederService } from 'src/engine/workspace-manager/dev-seeder/data/services/timeline-activity-seeder.service';
 import { prefillFrontComponentCommandMenuItems } from 'src/engine/workspace-manager/standard-objects-prefill-data/utils/prefill-front-component-command-menu-items.util';
 import { prefillWorkflowCommandMenuItems } from 'src/engine/workspace-manager/standard-objects-prefill-data/utils/prefill-workflow-command-menu-items.util';
@@ -155,6 +175,11 @@ const getRecordSeedsBatches = (
       pgColumns: DASHBOARD_DATA_SEED_COLUMNS,
       recordSeeds: getDashboardDataSeeds(workspaceId),
     },
+    {
+      tableName: 'project',
+      pgColumns: PROJECT_DATA_SEED_COLUMNS,
+      recordSeeds: PROJECT_DATA_SEEDS,
+    },
   ];
 
   // Batch 3: Depends on company
@@ -168,6 +193,11 @@ const getRecordSeedsBatches = (
       tableName: '_pet',
       pgColumns: PET_DATA_SEED_COLUMNS,
       recordSeeds: PET_DATA_SEEDS,
+    },
+    {
+      tableName: 'sprint',
+      pgColumns: SPRINT_DATA_SEED_COLUMNS,
+      recordSeeds: SPRINT_DATA_SEEDS,
     },
   ];
 
@@ -198,6 +228,11 @@ const getRecordSeedsBatches = (
       pgColumns: MESSAGE_THREAD_DATA_SEED_COLUMNS,
       recordSeeds: MESSAGE_THREAD_DATA_SEEDS,
     },
+    {
+      tableName: 'issue',
+      pgColumns: ISSUE_DATA_SEED_COLUMNS,
+      recordSeeds: ISSUE_DATA_SEEDS,
+    },
     // Junction tables
     {
       tableName: '_employmentHistory',
@@ -222,6 +257,16 @@ const getRecordSeedsBatches = (
       tableName: 'taskTarget',
       pgColumns: TASK_TARGET_DATA_SEED_COLUMNS,
       recordSeeds: TASK_TARGET_DATA_SEEDS,
+    },
+    {
+      tableName: 'issueComment',
+      pgColumns: ISSUE_COMMENT_DATA_SEED_COLUMNS,
+      recordSeeds: ISSUE_COMMENT_DATA_SEEDS,
+    },
+    {
+      tableName: 'worklog',
+      pgColumns: WORKLOG_DATA_SEED_COLUMNS,
+      recordSeeds: WORKLOG_DATA_SEEDS,
     },
     {
       tableName: 'calendarChannelEventAssociation',

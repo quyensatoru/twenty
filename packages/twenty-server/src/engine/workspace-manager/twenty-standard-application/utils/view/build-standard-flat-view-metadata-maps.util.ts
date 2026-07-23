@@ -20,8 +20,13 @@ import { computeStandardMessageThreadViews } from 'src/engine/workspace-manager/
 import { computeStandardMessageViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-message-views.util';
 import { computeStandardNoteTargetViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-note-target-views.util';
 import { computeStandardNoteViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-note-views.util';
+import { computeStandardIssueCommentViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-issue-comment-views.util';
+import { computeStandardIssueViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-issue-views.util';
+import { computeStandardWorklogViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-worklog-views.util';
 import { computeStandardOpportunityViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-opportunity-views.util';
 import { computeStandardPersonViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-person-views.util';
+import { computeStandardProjectViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-project-views.util';
+import { computeStandardSprintViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-sprint-views.util';
 import { computeStandardTaskTargetViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-task-target-views.util';
 import { computeStandardTaskViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-task-views.util';
 import { computeStandardTimelineActivityViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-timeline-activity-views.util';
@@ -58,7 +63,12 @@ const STANDARD_FLAT_VIEW_METADATA_BUILDERS_BY_OBJECT_NAME = {
   note: computeStandardNoteViews,
   noteTarget: computeStandardNoteTargetViews,
   opportunity: computeStandardOpportunityViews,
+  issue: computeStandardIssueViews,
+  issueComment: computeStandardIssueCommentViews,
+  worklog: computeStandardWorklogViews,
   person: computeStandardPersonViews,
+  project: computeStandardProjectViews,
+  sprint: computeStandardSprintViews,
   task: computeStandardTaskViews,
   taskTarget: computeStandardTaskTargetViews,
   timelineActivity: computeStandardTimelineActivityViews,

@@ -241,6 +241,12 @@ msgstr "{0} ei liity kohteeseen {loadBalancePoolObjectLabel}. Valitse toinen obj
 msgid "{0} in this list — {1} sendable"
 msgstr "{0} tässä luettelossa — {1} lähetettävissä"
 
+#. js-lingui-id: S2OwOY
+#. placeholder {0}: issues.length
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "{0} issues"
+msgstr ""
+
 #. js-lingui-id: T8aKxO
 #. placeholder {0}: layout.name
 #: src/modules/settings/applications/hooks/useComputeApplicationContentForLayoutAndLogic.ts
@@ -1115,6 +1121,11 @@ msgstr "Aktiiviset asennukset"
 msgid "Active Sync"
 msgstr "Aktiiviset synkronoinnit"
 
+#. js-lingui-id: XJOV1Y
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Activity"
+msgstr ""
+
 #. js-lingui-id: m16xKo
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Add"
@@ -1984,6 +1995,11 @@ msgstr "Kaikki objektit"
 #. js-lingui-id: RoFE84
 #: src/modules/navigation-menu-item/edit/side-panel/components/SidePanelObjectPickerSubView.tsx
 msgid "All objects are already in the sidebar"
+msgstr ""
+
+#. js-lingui-id: zG6Ooi
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "All projects"
 msgstr ""
 
 #. js-lingui-id: Hm90t3
@@ -2980,6 +2996,12 @@ msgstr "Tausta"
 msgid "Background Colors"
 msgstr "Taustavärit"
 
+#. js-lingui-id: KNKCTb
+#: src/modules/task-manager/backlog/components/TaskManagerBacklog.tsx
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Backlog"
+msgstr ""
+
 #. js-lingui-id: uayqnb
 #: src/modules/workflow/workflow-steps/workflow-actions/pick-record-action/components/WorkflowEditActionPickRecord.tsx
 msgid "Balance by"
@@ -3123,6 +3145,11 @@ msgstr "Estoluettelo"
 #: src/modules/settings/data-model/fields/forms/select/components/SettingsDataModelFieldSelectFormOptionRow.tsx
 msgid "Blue"
 msgstr "Sininen"
+
+#. js-lingui-id: QD8opX
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Board"
+msgstr ""
 
 #. js-lingui-id: bGQplw
 #: src/modules/workflow/workflow-run/observability/WorkflowRunStepLogsEmailDetail.tsx
@@ -4103,8 +4130,14 @@ msgid "Commas and dot"
 msgstr "Pilkut ja piste"
 
 #. js-lingui-id: NBdIgR
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/ai/SettingsAgentTurnDetail.tsx
 msgid "Comment"
+msgstr ""
+
+#. js-lingui-id: VbyRUy
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Comments"
 msgstr ""
 
 #. js-lingui-id: hZotg6
@@ -4152,6 +4185,11 @@ msgstr "Vertaile paketteja"
 #: src/modules/settings/accounts/components/SettingsAccountsRowDropdownMenu.tsx
 msgid "Complete setup"
 msgstr "Viimeistele määritys"
+
+#. js-lingui-id: AO98YG
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "Complete sprint"
+msgstr ""
 
 #. js-lingui-id: 2PsTzL
 #: src/modules/workflow/workflow-diagram/utils/generateNodesAndEdgesForIteratorNode.ts
@@ -6196,6 +6234,7 @@ msgstr "Kuvaile mitä haluat, että tekoäly tekee..."
 #: src/modules/settings/logic-functions/components/SettingsLogicFunctionNewForm.tsx
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentTable.tsx
 #: src/modules/settings/roles/role-permissions/permission-flags/components/SettingsRolePermissionsSettingsTableHeader.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workflow/workflow-steps/workflow-actions/components/WorkflowEditActionCreateCalendarEvent.tsx
 #: src/pages/settings/ai/SettingsToolDetail.tsx
 #: src/pages/settings/applications/components/SettingsApplicationsTable.tsx
@@ -8454,6 +8493,11 @@ msgstr "Tiedoston otsikko"
 #: src/modules/ui/field/display/components/FileChip.tsx
 msgid "File no longer exists - {label}"
 msgstr "Tiedosto ei ole enää olemassa - {label}"
+
+#. js-lingui-id: sER+bs
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Files"
+msgstr ""
 
 #. js-lingui-id: BZGmTs
 #: src/modules/settings/logic-functions/components/tabs/SettingsLogicFunctionTestTab.tsx
@@ -12411,6 +12455,11 @@ msgstr "Tälle sovellukselle ei ole saatavilla kuvausta"
 msgid "No email exchange has occurred with this record yet."
 msgstr "Sähköpostiviestintää tämän tietueen kanssa ei ole vielä tapahtunut."
 
+#. js-lingui-id: qsTUTV
+#: src/modules/task-manager/roadmap/components/TaskManagerRoadmap.tsx
+msgid "No epic"
+msgstr ""
+
 #. js-lingui-id: p3Hivn
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "No evaluation inputs yet. Add your first test input above."
@@ -12491,6 +12540,11 @@ msgstr ""
 #: src/modules/workflow/workflow-steps/workflow-actions/logic-function-action/components/WorkflowEditActionLogicFunction.tsx
 msgid "No input fields for this action"
 msgstr "Tälle toiminnolle ei ole syötekenttiä"
+
+#. js-lingui-id: g/dkGM
+#: src/modules/task-manager/roadmap/components/TaskManagerRoadmap.tsx
+msgid "No issues yet."
+msgstr ""
 
 #. js-lingui-id: lj3GoP
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminQueueJobsTable.tsx
@@ -15274,6 +15328,11 @@ msgstr "Tämän avaimen kumoaminen mitätöi kaikki sillä allekirjoitetut JWT:t
 msgid "Rich Text"
 msgstr "Muotoiltu teksti"
 
+#. js-lingui-id: /gaSVU
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "Roadmap"
+msgstr ""
+
 #. js-lingui-id: E1BXUR
 #: src/modules/metadata-error-handler/hooks/useMetadataErrorHandler.ts
 #: src/pages/settings/applications/SettingsAvailableApplicationDetails.tsx
@@ -16954,6 +17013,11 @@ msgstr "Aloita uusi Enterprise-tilaus."
 #: src/modules/settings/event-logs/components/EventLogFilters.tsx
 msgid "Start date"
 msgstr "Aloituspäivä"
+
+#. js-lingui-id: f9gtg/
+#: src/modules/task-manager/backlog/components/BacklogSprintSection.tsx
+msgid "Start sprint"
+msgstr ""
 
 #. js-lingui-id: s+K73L
 #: src/modules/settings/billing/components/internal/SettingsBillingSubscriptionInfoModals.tsx
@@ -18797,6 +18861,7 @@ msgstr "Universaali tunniste"
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminUpgradeStatusRightContainer.tsx
 #: src/modules/settings/admin-panel/utils/getUpgradeHealthStatusBadge.ts
 #: src/modules/settings/billing/components/SettingsBillingSubscriptionInfo.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/admin-panel/SettingsAdminInferredVersion.tsx
 #: src/pages/settings/applications/components/SettingsApplicationVersionContainer.tsx
 #: src/pages/settings/emailing-domains/utils/getEmailingDomainStatusText.ts
@@ -20402,6 +20467,11 @@ msgstr "Haluatko poistaa {recordIndexRecordGroupSort}-ryhmän lajittelun?"
 #: src/modules/settings/data-model/fields/forms/components/text/SettingsDataModelFieldTextForm.tsx
 msgid "Wrap on record pages"
 msgstr "Kääri tietuesivuilla"
+
+#. js-lingui-id: cztSrw
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Write a comment..."
+msgstr ""
 
 #. js-lingui-id: Q9pNST
 #: src/modules/settings/data-model/fields/forms/components/SettingsDataModelFieldDescriptionForm.tsx

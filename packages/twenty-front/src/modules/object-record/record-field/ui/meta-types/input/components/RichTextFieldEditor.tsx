@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useStore } from 'jotai';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
+import { type Attachment } from '@/activities/files/types/Attachment';
+import { getActivityTargetObjectFieldIdName } from '@/activities/utils/getActivityTargetObjectFieldIdName';
 import { BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { BlockEditor } from '@/blocknote-editor/components/BlockEditor';
 import { BLOCK_EDITOR_GLOBAL_HOTKEYS_CONFIG } from '@/blocknote-editor/constants/BlockEditorGlobalHotkeysConfig';
@@ -8,26 +11,23 @@ import { useAttachmentSync } from '@/blocknote-editor/hooks/useAttachmentSync';
 import { useReplaceBlockEditorContent } from '@/blocknote-editor/hooks/useReplaceBlockEditorContent';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
 import { prepareBodyWithSignedUrls } from '@/blocknote-editor/utils/prepareBodyWithSignedUrls';
-import { type Attachment } from '@/activities/files/types/Attachment';
-import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
-import { getActivityTargetObjectFieldIdName } from '@/activities/utils/getActivityTargetObjectFieldIdName';
-import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { useApolloCoreClient } from '@/object-metadata/hooks/useApolloCoreClient';
-import { CoreObjectNameSingular } from 'twenty-shared/types';
+import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { modifyRecordFromCache } from '@/object-record/cache/utils/modifyRecordFromCache';
 import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
-import { recordStoreFamilyState } from '@/object-record/record-store/states/recordStoreFamilyState';
 import { useIsRecordFieldReadOnly } from '@/object-record/read-only/hooks/useIsRecordFieldReadOnly';
+import { recordStoreFamilyState } from '@/object-record/record-store/states/recordStoreFamilyState';
 import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack';
 import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
 import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
 import { useHotkeysOnFocusedElement } from '@/ui/utilities/hotkey/hooks/useHotkeysOnFocusedElement';
-import { t } from '@lingui/core/macro';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import '@blocknote/react/style.css';
+import { t } from '@lingui/core/macro';
 import { Key } from 'ts-key-enum';
+import { CoreObjectNameSingular } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -192,8 +192,10 @@ export const RichTextFieldEditor = ({
       ]
     : null;
 
+  const isFieldValueLoaded = isDefined(fieldValue);
+
   const initialBody = useMemo(() => {
-    if (!isDefined(fieldValue)) {
+    if (!isFieldValueLoaded) {
       return undefined;
     }
 
@@ -202,7 +204,7 @@ export const RichTextFieldEditor = ({
       `Failed to parse body for field ${fieldName} on record ${recordId}`,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldName, recordId]);
+  }, [fieldName, recordId, isFieldValueLoaded]);
 
   const editor = useCreateBlockNote({
     initialContent: initialBody,
@@ -212,6 +214,11 @@ export const RichTextFieldEditor = ({
     placeholders: {
       default: t`Type '/' for commands, '@' for mentions`,
     },
+    pasteHandler: ({ defaultPasteHandler }) =>
+      defaultPasteHandler({
+        plainTextAsMarkdown: true,
+        prioritizeMarkdownOverHTML: true,
+      }),
   });
 
   if (editorRef) {
@@ -231,6 +238,17 @@ export const RichTextFieldEditor = ({
       setCurrentRecordId(recordId);
     }
   }, [recordId, currentRecordId, replaceBlockEditorContent]);
+
+  // useCreateBlockNote only reads initialContent once, at creation. If the
+  // record hadn't loaded into the store yet on that first render, the editor
+  // is stuck with an empty document forever — hydrate it once the record
+  // data actually arrives.
+  useEffect(() => {
+    if (isFieldValueLoaded) {
+      replaceBlockEditorContent(recordId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFieldValueLoaded, recordId, replaceBlockEditorContent]);
 
   useHotkeysOnFocusedElement({
     keys: Key.Escape,

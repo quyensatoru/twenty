@@ -15,6 +15,7 @@ import {
 const FLAT_NAVIGATION_MENU_ITEM_NAMES = [
   'allCompanies',
   'allDashboards',
+  'allIssues',
   'allNotes',
   'allOpportunities',
   'allPeople',

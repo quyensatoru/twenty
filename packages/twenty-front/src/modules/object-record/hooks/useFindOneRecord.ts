@@ -19,11 +19,13 @@ export const useFindOneRecord = <T extends ObjectRecord = ObjectRecord>({
   recordGqlFields,
   skip,
   withSoftDeleted = false,
+  pollInterval,
 }: ObjectMetadataItemIdentifier & {
   objectRecordId: string | undefined;
   recordGqlFields?: RecordGqlOperationGqlRecordFields;
   skip?: boolean;
   withSoftDeleted?: boolean;
+  pollInterval?: number;
 }) => {
   const { objectMetadataItem } = useObjectMetadataItem({
     objectNameSingular,
@@ -61,6 +63,7 @@ export const useFindOneRecord = <T extends ObjectRecord = ObjectRecord>({
       !hasReadPermission,
     variables: { objectRecordId },
     client: apolloCoreClient,
+    pollInterval,
   });
 
   // TODO: Remove connection from record

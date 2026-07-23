@@ -23,8 +23,13 @@ import { buildMessageStandardFlatFieldMetadatas } from 'src/engine/workspace-man
 import { buildMessageThreadStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-message-thread-standard-flat-field-metadata.util';
 import { buildNoteStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-standard-flat-field-metadata.util';
 import { buildNoteTargetStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-note-target-standard-flat-field-metadata.util';
+import { buildIssueCommentStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-comment-standard-flat-field-metadata.util';
+import { buildIssueStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util';
+import { buildWorklogStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util';
 import { buildOpportunityStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util';
 import { buildPersonStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util';
+import { buildProjectStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-project-standard-flat-field-metadata.util';
+import { buildSprintStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-sprint-standard-flat-field-metadata.util';
 import { buildTaskStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-standard-flat-field-metadata.util';
 import { buildTaskTargetStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-task-target-standard-flat-field-metadata.util';
 import { buildTimelineActivityStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-timeline-activity-standard-flat-field-metadata.util';
@@ -63,7 +68,12 @@ const STANDARD_FLAT_FIELD_METADATA_BUILDERS_BY_OBJECT_NAME = {
   note: buildNoteStandardFlatFieldMetadatas,
   noteTarget: buildNoteTargetStandardFlatFieldMetadatas,
   opportunity: buildOpportunityStandardFlatFieldMetadatas,
+  issue: buildIssueStandardFlatFieldMetadatas,
+  issueComment: buildIssueCommentStandardFlatFieldMetadatas,
+  worklog: buildWorklogStandardFlatFieldMetadatas,
   person: buildPersonStandardFlatFieldMetadatas,
+  project: buildProjectStandardFlatFieldMetadatas,
+  sprint: buildSprintStandardFlatFieldMetadatas,
   task: buildTaskStandardFlatFieldMetadatas,
   taskTarget: buildTaskTargetStandardFlatFieldMetadatas,
   timelineActivity: buildTimelineActivityStandardFlatFieldMetadatas,

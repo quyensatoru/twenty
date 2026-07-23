@@ -630,4 +630,69 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
       },
     },
   },
+  projectRecordPage: {
+    universalIdentifier: '1b1204ab-f0ca-41aa-ac9f-2174d85af3ec',
+    tabs: {
+      home: {
+        universalIdentifier: 'f6ca20a1-9f20-4dd4-aa7b-4f2c0598eae6',
+        widgets: {
+          fields: {
+            universalIdentifier: 'b187d9cf-2416-4e6f-a43e-0599880c6bde',
+          },
+        },
+      },
+    },
+  },
+  sprintRecordPage: {
+    universalIdentifier: 'd43665dc-d6e6-4521-9f8f-9473b37c5334',
+    tabs: {
+      home: {
+        universalIdentifier: '448fc205-52a6-4e68-868a-6fb5e672cf66',
+        widgets: {
+          fields: {
+            universalIdentifier: '874c7912-618b-412e-a84e-3c0ecba72910',
+          },
+        },
+      },
+    },
+  },
+  issueRecordPage: {
+    universalIdentifier: '54851c38-c3f6-4853-a40e-18e942e97e55',
+    tabs: {
+      home: {
+        universalIdentifier: 'c133e103-4229-47f9-b977-993d4e7d8555',
+        widgets: {
+          fields: {
+            universalIdentifier: '5d8b1f0f-d3ad-4b66-89b5-b81b7b92608c',
+          },
+        },
+      },
+    },
+  },
+  issueCommentRecordPage: {
+    universalIdentifier: '57108a33-5331-4a0b-9649-171d0bfd4d40',
+    tabs: {
+      home: {
+        universalIdentifier: '8c5e17d3-96b6-4857-84df-fad20de3d4d4',
+        widgets: {
+          fields: {
+            universalIdentifier: '083d7abc-b699-4e64-b65f-f595b0f780da',
+          },
+        },
+      },
+    },
+  },
+  worklogRecordPage: {
+    universalIdentifier: '07b7478a-ac07-42f2-b551-31f5f7a84f32',
+    tabs: {
+      home: {
+        universalIdentifier: 'e59f540d-fc58-4f4b-b47f-b37b31149b51',
+        widgets: {
+          fields: {
+            universalIdentifier: '26181cd9-cbeb-4f5e-9ef2-2b8ae51771c5',
+          },
+        },
+      },
+    },
+  },
 };

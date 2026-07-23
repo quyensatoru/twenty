@@ -111,6 +111,30 @@ const StandalonePageLayoutPage = lazy(() =>
   })),
 );
 
+const TaskManagerBoardPage = lazy(() =>
+  import('~/pages/task-manager/TaskManagerBoardPage').then((module) => ({
+    default: module.TaskManagerBoardPage,
+  })),
+);
+
+const TaskManagerBacklogPage = lazy(() =>
+  import('~/pages/task-manager/TaskManagerBacklogPage').then((module) => ({
+    default: module.TaskManagerBacklogPage,
+  })),
+);
+
+const TaskManagerRoadmapPage = lazy(() =>
+  import('~/pages/task-manager/TaskManagerRoadmapPage').then((module) => ({
+    default: module.TaskManagerRoadmapPage,
+  })),
+);
+
+const TaskManagerIssuePage = lazy(() =>
+  import('~/pages/task-manager/TaskManagerIssuePage').then((module) => ({
+    default: module.TaskManagerIssuePage,
+  })),
+);
+
 const NotFound = lazy(() =>
   import('~/pages/not-found/NotFound').then((module) => ({
     default: module.NotFound,
@@ -163,6 +187,38 @@ const createWorkspaceAppRouter = (
                 element={
                   <LazyRoute>
                     <StandalonePageLayoutPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.TaskManagerBoardPage}
+                element={
+                  <LazyRoute>
+                    <TaskManagerBoardPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.TaskManagerBacklogPage}
+                element={
+                  <LazyRoute>
+                    <TaskManagerBacklogPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.TaskManagerRoadmapPage}
+                element={
+                  <LazyRoute>
+                    <TaskManagerRoadmapPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.TaskManagerIssuePage}
+                element={
+                  <LazyRoute>
+                    <TaskManagerIssuePage />
                   </LazyRoute>
                 }
               />
