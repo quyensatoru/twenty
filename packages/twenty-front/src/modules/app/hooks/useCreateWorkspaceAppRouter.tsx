@@ -135,6 +135,12 @@ const TaskManagerIssuePage = lazy(() =>
   })),
 );
 
+const WorkspaceSetup = lazyWithPreload(() =>
+  import('~/pages/onboarding/WorkspaceSetup').then((module) => ({
+    default: module.WorkspaceSetup,
+  })),
+);
+
 const NotFound = lazy(() =>
   import('~/pages/not-found/NotFound').then((module) => ({
     default: module.NotFound,
@@ -148,6 +154,7 @@ const preloadOnboardingPages = () => {
   void InstallApps.preload();
   void InviteTeam.preload();
   void ChooseYourPlan.preload();
+  void WorkspaceSetup.preload();
 
   return null;
 };
@@ -164,8 +171,19 @@ const createWorkspaceAppRouter = (
       >
         <Route element={<MinimalMetadataGate />}>
           <Route element={<DefaultLayout />}>
+            <Route
+              path={AppPath.WorkspaceSetup}
+              element={
+                <LazyRoute fallback={null}>
+                  <WorkspaceSetup />
+                </LazyRoute>
+              }
+            />
             <Route element={<MainAppLayoutWithSidePanel />}>
-              <Route path={indexAppPath.getIndexAppPath()} element={<></>} />
+              <Route
+                path={indexAppPath.getIndexAppPath()}
+                element={<RecordIndexSkeletonLoader />}
+              />
               <Route
                 path={AppPath.RecordIndexPage}
                 element={
@@ -264,7 +282,7 @@ const createWorkspaceAppRouter = (
           <Route
             path={AppPath.PlanRequiredSuccess}
             element={
-              <LazyRoute fallback={null}>
+              <LazyRoute fallback={<OnboardingPageLoader />}>
                 <PaymentSuccess />
               </LazyRoute>
             }
@@ -272,7 +290,7 @@ const createWorkspaceAppRouter = (
           <Route
             path={AppPath.BookCall}
             element={
-              <LazyRoute fallback={null}>
+              <LazyRoute fallback={<OnboardingPageLoader />}>
                 <BookCall />
               </LazyRoute>
             }
