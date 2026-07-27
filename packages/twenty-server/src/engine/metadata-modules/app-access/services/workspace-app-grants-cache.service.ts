@@ -87,14 +87,14 @@ export class WorkspaceAppGrantsCacheService extends WorkspaceCacheProvider<AppSc
       }
 
       const grantsByAppId = (grantsByMemberId[memberId] ??= {});
-      const grantedPermissions = (grantsByAppId[appId] ??= new Set());
+      const grantedPermissions = (grantsByAppId[appId] ??= []);
 
       for (const permission of permissions ?? []) {
         const operation =
           APP_SCOPE_OPERATION_BY_PERMISSION_OPTION_VALUE[permission];
 
-        if (isDefined(operation)) {
-          grantedPermissions.add(operation);
+        if (isDefined(operation) && !grantedPermissions.includes(operation)) {
+          grantedPermissions.push(operation);
         }
       }
     }

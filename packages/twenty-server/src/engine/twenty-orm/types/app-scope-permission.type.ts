@@ -4,10 +4,13 @@
 // field itself stores the uppercase option values (READ/WRITE/SOFT_DELETE/DESTROY).
 export type AppScopeOperation = 'read' | 'write' | 'softDelete' | 'destroy';
 
-// memberId -> appId -> set of permissions granted to that member on that app.
+// memberId -> appId -> permissions granted to that member on that app.
+// Array, not Set: this is cached through Redis (see WorkspaceCacheService),
+// which round-trips values through JSON — a Set serializes to `{}` and loses
+// its `.has()` method on the way back.
 export type AppScopeGrantsByMemberId = Record<
   string,
-  Record<string, Set<AppScopeOperation>>
+  Record<string, AppScopeOperation[]>
 >;
 
 // roleId -> raw `canXAllObjectRecords` flags off RoleEntity. Distinct from the

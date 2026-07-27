@@ -83,7 +83,7 @@ export const applyAppScopeFilter = ({
     : {};
 
   const grantedAppIds = Object.entries(grantsByAppId)
-    .filter(([, permissions]) => permissions.has(operation))
+    .filter(([, permissions]) => permissions.includes(operation))
     .map(([appId]) => appId);
 
   // Nothing granted for this member/operation: every row is out of scope.

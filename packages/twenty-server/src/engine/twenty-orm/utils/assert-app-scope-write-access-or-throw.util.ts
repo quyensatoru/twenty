@@ -99,7 +99,7 @@ export const assertAppScopeWriteAccessOrThrow = async ({
         ? context.appScopeGrantsByMemberId[memberId]?.[effectiveAppId]
         : undefined;
 
-    if (!grantedPermissions?.has('write')) {
+    if (!grantedPermissions?.includes('write')) {
       throw new PermissionsException(
         PermissionsExceptionMessage.PERMISSION_DENIED,
         PermissionsExceptionCode.PERMISSION_DENIED,
