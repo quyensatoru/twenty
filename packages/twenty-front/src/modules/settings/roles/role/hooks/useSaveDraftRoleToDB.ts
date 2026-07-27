@@ -1,3 +1,5 @@
+import { useDeleteRecordVisibilityPolicyMutation } from '@/settings/roles/graphql/hooks/useDeleteRecordVisibilityPolicyMutation';
+import { useUpsertRecordVisibilityPolicyMutation } from '@/settings/roles/graphql/hooks/useUpsertRecordVisibilityPolicyMutation';
 import { useUpsertRowLevelPermissionPredicatesMutation } from '@/settings/roles/graphql/hooks/useUpsertRowLevelPermissionPredicatesMutation';
 import { GET_ROLES } from '@/settings/roles/graphql/queries/getRolesQuery';
 import { useUpdateAgentRole } from '@/settings/roles/hooks/useUpdateAgentRole';
@@ -56,6 +58,10 @@ export const useSaveDraftRoleToDB = ({
   const [upsertFieldPermissions] = useMutation(UpsertFieldPermissionsDocument);
   const [upsertRowLevelPermissionPredicates] =
     useUpsertRowLevelPermissionPredicatesMutation();
+  const [upsertRecordVisibilityPolicy] =
+    useUpsertRecordVisibilityPolicyMutation();
+  const [deleteRecordVisibilityPolicy] =
+    useDeleteRecordVisibilityPolicyMutation();
   const { addWorkspaceMembersToRole } = useUpdateWorkspaceMemberRole(roleId);
   const { addAgentsToRole } = useUpdateAgentRole(roleId);
   const { addApiKeysToRole } = useUpdateApiKeyRole(roleId);
@@ -253,6 +259,10 @@ export const useSaveDraftRoleToDB = ({
     ) {
       await upsertRowLevelPermissionPredicatesForRole(roleId);
     }
+
+    if (isDefined(dirtyFields.recordVisibilityPolicies)) {
+      await upsertRecordVisibilityPoliciesForRole(roleId);
+    }
   };
 
   const upsertRowLevelPermissionPredicatesForRole = async (
@@ -360,6 +370,47 @@ export const useSaveDraftRoleToDB = ({
     }
   };
 
+  const upsertRecordVisibilityPoliciesForRole = async (
+    targetRoleId: string,
+  ) => {
+    const draftPolicies = settingsDraftRole.recordVisibilityPolicies ?? [];
+    const persistedPolicies =
+      settingsPersistedRole?.recordVisibilityPolicies ?? [];
+
+    const draftByObjectMetadataId = new Map(
+      draftPolicies.map((policy) => [policy.objectMetadataId, policy]),
+    );
+    const persistedObjectMetadataIds = new Set(
+      persistedPolicies.map((policy) => policy.objectMetadataId),
+    );
+
+    for (const [
+      objectMetadataId,
+      policy,
+    ] of draftByObjectMetadataId.entries()) {
+      await upsertRecordVisibilityPolicy({
+        variables: {
+          input: {
+            roleId: targetRoleId,
+            objectMetadataId,
+            filter: policy.filter,
+            currentMemberFieldName: policy.currentMemberFieldName ?? null,
+          },
+        },
+        refetchQueries: [getOperationName(GET_ROLES) ?? ''],
+      });
+    }
+
+    for (const objectMetadataId of persistedObjectMetadataIds) {
+      if (!draftByObjectMetadataId.has(objectMetadataId)) {
+        await deleteRecordVisibilityPolicy({
+          variables: { input: { roleId: targetRoleId, objectMetadataId } },
+          refetchQueries: [getOperationName(GET_ROLES) ?? ''],
+        });
+      }
+    }
+  };
+
   const upsertRolePermissions = async (targetRoleId: string) => {
     if (isDefined(dirtyFields.permissionFlags)) {
       await upsertPermissionFlags({
@@ -420,6 +471,10 @@ export const useSaveDraftRoleToDB = ({
       isDefined(dirtyFields.rowLevelPermissionPredicateGroups)
     ) {
       await upsertRowLevelPermissionPredicatesForRole(targetRoleId);
+    }
+
+    if (isDefined(dirtyFields.recordVisibilityPolicies)) {
+      await upsertRecordVisibilityPoliciesForRole(targetRoleId);
     }
   };
 

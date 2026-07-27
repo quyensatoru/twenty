@@ -25,6 +25,7 @@ export enum TwentyORMExceptionCode {
   INVALID_INPUT = 'INVALID_INPUT',
   ORM_EVENT_DATA_CORRUPTED = 'ORM_EVENT_DATA_CORRUPTED',
   RLS_VALIDATION_FAILED = 'RLS_VALIDATION_FAILED',
+  RECORD_VISIBILITY_POLICY_VALIDATION_FAILED = 'RECORD_VISIBILITY_POLICY_VALIDATION_FAILED',
   NO_ROLE_FOUND_FOR_USER_WORKSPACE = 'NO_ROLE_FOUND_FOR_USER_WORKSPACE',
 }
 
@@ -65,6 +66,8 @@ const getTwentyORMExceptionUserFriendlyMessage = (
     case TwentyORMExceptionCode.INVALID_INPUT:
       return msg`Invalid input provided.`;
     case TwentyORMExceptionCode.RLS_VALIDATION_FAILED:
+      return msg`Record does not satisfy security constraints.`;
+    case TwentyORMExceptionCode.RECORD_VISIBILITY_POLICY_VALIDATION_FAILED:
       return msg`Record does not satisfy security constraints.`;
     case TwentyORMExceptionCode.ENUM_TYPE_NAME_NOT_FOUND:
     case TwentyORMExceptionCode.ORM_EVENT_DATA_CORRUPTED:

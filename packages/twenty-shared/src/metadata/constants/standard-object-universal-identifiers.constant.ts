@@ -4,6 +4,8 @@
 // Each STANDARD_OBJECTS entry involved in the default relations reads its own
 // universalIdentifier from this record so there is a single source of truth.
 export const STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = {
+  app: '4d71d304-ea37-457c-9422-48812659d75e',
+  appAccess: '467cc684-c385-4536-bd9a-dfdf80c2d60f',
   timelineActivity: '20202020-6736-4337-b5c4-8b39fae325a5',
   attachment: '20202020-bd3d-4c60-8dca-571c71d4447a',
   noteTarget: '20202020-fff0-4b44-be82-bda313884400',

@@ -16,6 +16,8 @@ import { type AllFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/
 import { type UserWorkspaceRoleMap } from 'src/engine/metadata-modules/role-target/types/user-workspace-role-map';
 import { type FlatRowLevelPermissionPredicateGroupMaps } from 'src/engine/metadata-modules/row-level-permission-predicate/types/flat-row-level-permission-predicate-group-maps.type';
 import { type FlatRowLevelPermissionPredicateMaps } from 'src/engine/metadata-modules/row-level-permission-predicate/types/flat-row-level-permission-predicate-maps.type';
+import { type AppScopeGrantsCacheData } from 'src/engine/twenty-orm/types/app-scope-permission.type';
+import { type RecordVisibilityPoliciesByRoleId } from 'src/engine/twenty-orm/types/record-visibility-policy.type';
 
 export const WORKSPACE_CACHE_KEYS_V2 = {
   flatObjectMetadataMaps: 'flat-maps:object-metadata',
@@ -64,6 +66,8 @@ export const WORKSPACE_CACHE_KEYS_V2 = {
   graphQLResolverNameMap: 'direct-execution:graphql-resolver-name-map',
   currentBillingSubscription: 'billing:subscription',
   workflowAutomatedTriggerMaps: 'cache:workflow-automated-trigger',
+  appScopeGrants: 'metadata:app-access:grants-by-member',
+  recordVisibilityPolicies: 'metadata:record-visibility:policies-by-role-id',
 } as const satisfies Record<WorkspaceCacheKeyName, string>;
 
 export type AdditionalCacheDataMaps = {
@@ -82,6 +86,8 @@ export type AdditionalCacheDataMaps = {
   graphQLResolverNameMap: Record<string, ResolverNameMapEntry>;
   currentBillingSubscription: CurrentBillingSubscription;
   workflowAutomatedTriggerMaps: WorkflowAutomatedTriggerMaps;
+  appScopeGrants: AppScopeGrantsCacheData;
+  recordVisibilityPolicies: RecordVisibilityPoliciesByRoleId;
 };
 
 export type WorkspaceCacheDataMap = AllFlatEntityMaps<true> &

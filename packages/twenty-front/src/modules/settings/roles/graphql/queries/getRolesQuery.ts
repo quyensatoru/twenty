@@ -6,6 +6,7 @@ import { ROLE_PERMISSION_FLAG_FRAGMENT } from '@/settings/roles/graphql/fragment
 import { ROLE_FRAGMENT } from '@/settings/roles/graphql/fragments/roleFragment';
 import { ROW_LEVEL_PERMISSION_PREDICATE_FRAGMENT } from '@/settings/roles/graphql/fragments/rowLevelPermissionPredicateFragment';
 import { ROW_LEVEL_PERMISSION_PREDICATE_GROUP_FRAGMENT } from '@/settings/roles/graphql/fragments/rowLevelPermissionPredicateGroupFragment';
+import { RECORD_VISIBILITY_POLICY_FRAGMENT } from '@/settings/roles/graphql/fragments/recordVisibilityPolicyFragment';
 import { PARTIAL_WORKSPACE_MEMBER_QUERY_FRAGMENT } from '@/workspace-member/graphql/fragments/partialWorkspaceMemberQueryFragment';
 import { gql } from '@apollo/client';
 
@@ -19,6 +20,7 @@ export const GET_ROLES = gql`
   ${FIELD_PERMISSION_FRAGMENT}
   ${ROW_LEVEL_PERMISSION_PREDICATE_FRAGMENT}
   ${ROW_LEVEL_PERMISSION_PREDICATE_GROUP_FRAGMENT}
+  ${RECORD_VISIBILITY_POLICY_FRAGMENT}
   query GetRoles {
     getRoles {
       ...RoleFragment
@@ -45,6 +47,9 @@ export const GET_ROLES = gql`
       }
       rowLevelPermissionPredicateGroups {
         ...RowLevelPermissionPredicateGroupFragment
+      }
+      recordVisibilityPolicies {
+        ...RecordVisibilityPolicyFragment
       }
     }
   }

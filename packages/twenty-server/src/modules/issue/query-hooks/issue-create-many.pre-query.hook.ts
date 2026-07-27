@@ -9,6 +9,7 @@ import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runne
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
@@ -27,6 +28,23 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
     const workspace = authContext.workspace;
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
+
+    const distinctProjectIds = new Set(
+      payload.data
+        .map((issue) => issue.projectId)
+        .filter((projectId): projectId is string => isDefined(projectId)),
+    );
+
+    await Promise.all(
+      Array.from(distinctProjectIds, (projectId) =>
+        assertAppScopeWriteAccessOrThrow({
+          authContext,
+          globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+          objectNameSingular: 'issue',
+          foreignKeyValue: projectId,
+        }),
+      ),
+    );
 
     const issuesNeedingKeyByProjectId = new Map<
       string,

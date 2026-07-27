@@ -96,6 +96,8 @@ export class GlobalWorkspaceOrmManager {
       apiKeyRoleMap,
       flatRowLevelPermissionPredicateMaps,
       flatRowLevelPermissionPredicateGroupMaps,
+      appScopeGrants,
+      recordVisibilityPolicies,
     } = await this.workspaceCacheService.getOrRecompute(workspaceId, [
       'flatObjectMetadataMaps',
       'flatFieldMetadataMaps',
@@ -107,6 +109,8 @@ export class GlobalWorkspaceOrmManager {
       'apiKeyRoleMap',
       'flatRowLevelPermissionPredicateMaps',
       'flatRowLevelPermissionPredicateGroupMaps',
+      'appScopeGrants',
+      'recordVisibilityPolicies',
     ]);
 
     const { idByNameSingular: objectIdByNameSingular } =
@@ -125,6 +129,10 @@ export class GlobalWorkspaceOrmManager {
       entityMetadatas,
       userWorkspaceRoleMap,
       apiKeyRoleMap,
+      appScopeGrantsByMemberId: appScopeGrants.grantsByMemberId,
+      allObjectRecordsRoleFlagsByRoleId:
+        appScopeGrants.allObjectRecordsRoleFlagsByRoleId,
+      recordVisibilityPoliciesByRoleId: recordVisibilityPolicies,
     };
   }
 
@@ -171,6 +179,9 @@ export class GlobalWorkspaceOrmManager {
       entityMetadatas,
       userWorkspaceRoleMap: {},
       apiKeyRoleMap: {},
+      appScopeGrantsByMemberId: {},
+      allObjectRecordsRoleFlagsByRoleId: {},
+      recordVisibilityPoliciesByRoleId: {},
     };
   }
 }

@@ -18,6 +18,7 @@ import { ObjectPermissionModule } from 'src/engine/metadata-modules/object-permi
 import { RolePermissionFlagEntity } from 'src/engine/metadata-modules/role-permission-flag/role-permission-flag.entity';
 import { RolePermissionFlagModule } from 'src/engine/metadata-modules/role-permission-flag/role-permission-flag.module';
 import { PermissionsModule } from 'src/engine/metadata-modules/permissions/permissions.module';
+import { RecordVisibilityPolicyModule } from 'src/engine/metadata-modules/record-visibility-policy/record-visibility-policy.module';
 import { RoleTargetEntity } from 'src/engine/metadata-modules/role-target/role-target.entity';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { RoleResolver } from 'src/engine/metadata-modules/role/role.resolver';
@@ -55,6 +56,7 @@ import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace
     ObjectPermissionModule,
     RolePermissionFlagModule,
     RowLevelPermissionModule,
+    RecordVisibilityPolicyModule,
     WorkspaceManyOrAllFlatEntityMapsCacheModule,
     WorkspaceMigrationModule,
     UserWorkspaceModule,

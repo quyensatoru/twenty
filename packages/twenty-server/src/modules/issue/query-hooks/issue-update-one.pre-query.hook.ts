@@ -9,6 +9,7 @@ import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runne
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
@@ -32,6 +33,15 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
     const projectId = payload.data.projectId;
+
+    if (isDefined(projectId)) {
+      await assertAppScopeWriteAccessOrThrow({
+        authContext,
+        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        objectNameSingular: 'issue',
+        foreignKeyValue: projectId,
+      });
+    }
 
     if (!isDefined(projectId) || hasIssueKey(payload.data.issueKey)) {
       return payload;

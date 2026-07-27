@@ -11,6 +11,7 @@ import { RolePermissionFlagDTO } from 'src/engine/metadata-modules/role-permissi
 import { type RoleTargetEntity } from 'src/engine/metadata-modules/role-target/role-target.entity';
 import { RowLevelPermissionPredicateGroupDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate-group.dto';
 import { RowLevelPermissionPredicateDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate.dto';
+import { RecordVisibilityPolicyDTO } from 'src/engine/metadata-modules/record-visibility-policy/dtos/record-visibility-policy.dto';
 
 @ObjectType('ApiKeyForRole')
 export class ApiKeyForRoleDTO {
@@ -100,4 +101,7 @@ export class RoleDTO {
 
   @Field(() => [RowLevelPermissionPredicateGroupDTO], { nullable: true })
   rowLevelPermissionPredicateGroups?: RowLevelPermissionPredicateGroupDTO[];
+
+  @Field(() => [RecordVisibilityPolicyDTO], { nullable: true })
+  recordVisibilityPolicies?: RecordVisibilityPolicyDTO[];
 }

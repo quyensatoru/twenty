@@ -57,6 +57,12 @@ import {
 } from 'src/engine/metadata-modules/role/dtos/role.dto';
 import { UpdateRoleInput } from 'src/engine/metadata-modules/role/dtos/update-role.input';
 import { RoleService } from 'src/engine/metadata-modules/role/role.service';
+import {
+  DeleteRecordVisibilityPolicyInput,
+  UpsertRecordVisibilityPolicyInput,
+} from 'src/engine/metadata-modules/record-visibility-policy/dtos/upsert-record-visibility-policy.input';
+import { RecordVisibilityPolicyDTO } from 'src/engine/metadata-modules/record-visibility-policy/dtos/record-visibility-policy.dto';
+import { RecordVisibilityPolicyService } from 'src/engine/metadata-modules/record-visibility-policy/services/record-visibility-policy.service';
 import { UpsertRowLevelPermissionPredicatesInput } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/inputs/upsert-row-level-permission-predicates.input';
 import { RowLevelPermissionPredicateGroupDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate-group.dto';
 import { RowLevelPermissionPredicateDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate.dto';
@@ -94,6 +100,7 @@ export class RoleResolver {
     private readonly applicationService: ApplicationService,
     private readonly rowLevelPermissionPredicateService: RowLevelPermissionPredicateService,
     private readonly rowLevelPermissionPredicateGroupService: RowLevelPermissionPredicateGroupService,
+    private readonly recordVisibilityPolicyService: RecordVisibilityPolicyService,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly workspaceManyOrAllFlatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
   ) {}
@@ -279,6 +286,30 @@ export class RoleResolver {
     );
   }
 
+  @Mutation(() => RecordVisibilityPolicyDTO)
+  async upsertRecordVisibilityPolicy(
+    @AuthWorkspace() workspace: WorkspaceEntity,
+    @Args('input')
+    input: UpsertRecordVisibilityPolicyInput,
+  ): Promise<RecordVisibilityPolicyDTO> {
+    return this.recordVisibilityPolicyService.upsertRecordVisibilityPolicy({
+      workspaceId: workspace.id,
+      input,
+    });
+  }
+
+  @Mutation(() => Boolean)
+  async deleteRecordVisibilityPolicy(
+    @AuthWorkspace() workspace: WorkspaceEntity,
+    @Args('input')
+    input: DeleteRecordVisibilityPolicyInput,
+  ): Promise<boolean> {
+    return this.recordVisibilityPolicyService.deleteRecordVisibilityPolicy({
+      workspaceId: workspace.id,
+      input,
+    });
+  }
+
   @Mutation(() => Boolean)
   async assignRoleToAgent(
     @Args('agentId', { type: () => UUIDScalarType }) agentId: string,
@@ -407,5 +438,19 @@ export class RoleResolver {
       workspace.id,
       role.id,
     );
+  }
+
+  @ResolveField('recordVisibilityPolicies', () => [RecordVisibilityPolicyDTO], {
+    nullable: true,
+  })
+  async getRecordVisibilityPoliciesForRole(
+    @Parent() role: RoleDTO,
+    @AuthWorkspace() workspace: WorkspaceEntity,
+  ): Promise<RecordVisibilityPolicyDTO[]> {
+    const allPolicies = await this.recordVisibilityPolicyService.findByWorkspaceId(
+      workspace.id,
+    );
+
+    return allPolicies.filter((policy) => policy.roleId === role.id);
   }
 }

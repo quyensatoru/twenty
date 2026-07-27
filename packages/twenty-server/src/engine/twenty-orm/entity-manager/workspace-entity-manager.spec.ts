@@ -250,6 +250,9 @@ describe('WorkspaceEntityManager', () => {
       },
       userWorkspaceRoleMap: {},
       apiKeyRoleMap: {},
+      appScopeGrantsByMemberId: {},
+      allObjectRecordsRoleFlagsByRoleId: {},
+      recordVisibilityPoliciesByRoleId: {},
       eventEmitterService: {
         emitMutationEvent: jest.fn(),
         emitDatabaseBatchEvent: jest.fn(),
@@ -313,6 +316,9 @@ describe('WorkspaceEntityManager', () => {
         'user-workspace-id': 'role-id',
       },
       apiKeyRoleMap: {},
+      appScopeGrantsByMemberId: {},
+      allObjectRecordsRoleFlagsByRoleId: {},
+      recordVisibilityPoliciesByRoleId: {},
     };
 
     setWorkspaceContext(mockWorkspaceContext);

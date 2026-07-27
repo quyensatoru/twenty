@@ -1,6 +1,7 @@
 import { TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER } from '@/application/constants/TwentyStandardApplicationUniversalIdentifier';
 import { getSystemRelationFieldUniversalIdentifier } from '@/application/deterministic-identifier/get-system-relation-field-universal-identifier.util';
 import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from '@/metadata/constants/standard-object-universal-identifiers.constant';
+import { buildMinimalStandardObjectSystemFields } from '@/metadata/utils/internal/build-minimal-standard-object-system-fields.util';
 import { buildStandardObjectSystemFields } from '@/metadata/utils/internal/build-standard-object-system-fields.util';
 
 // Important notice:
@@ -12,6 +13,7 @@ import { buildStandardObjectSystemFields } from '@/metadata/utils/internal/build
 //   identifier, the object universal identifier and the field name.
 //   The name field is a default field, not a system field, and keeps its
 //   hardcoded universal identifier.
+
 export const STANDARD_OBJECTS = {
   attachment: {
     universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
@@ -2004,6 +2006,86 @@ export const STANDARD_OBJECTS = {
       },
     },
   },
+  app: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.app,
+    fields: {
+      ...buildMinimalStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.app,
+      ),
+      name: { universalIdentifier: '0b606e4c-6db6-45f8-90b0-4a1ab763115e' },
+      projects: {
+        universalIdentifier: 'feaf1e72-565a-4e98-a501-547e03dcf70b',
+      },
+      appAccesses: {
+        universalIdentifier: 'b045db21-0fa7-4ebd-89be-15d3882aa060',
+      },
+    },
+    indexes: {
+      searchVectorGinIndex: {
+        universalIdentifier: '006c95df-555a-464f-b0f7-22ec7e1f9bad',
+      },
+    },
+    views: {
+      allApps: {
+        universalIdentifier: 'ec2295c9-cdd1-4639-9d15-a0abfc0dcb25',
+        viewFields: {
+          name: {
+            universalIdentifier: '715c6d22-eb95-4120-bb6c-20cd14018499',
+          },
+          createdAt: {
+            universalIdentifier: '5ac243e6-a8c3-4ed0-bf3b-deb05e5b6e0f',
+          },
+        },
+      },
+      appRecordPageFields: {
+        universalIdentifier: '50d4ca86-d236-4d67-9ecf-0093a6050037',
+        viewFields: {},
+      },
+    },
+  },
+  appAccess: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.appAccess,
+    fields: {
+      ...buildMinimalStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.appAccess,
+      ),
+      member: { universalIdentifier: 'b8791f54-d5c3-4ea8-b050-5807a1867403' },
+      app: { universalIdentifier: '5acf2ea8-1d2d-4c54-a9ec-9109563e0d37' },
+      permissions: {
+        universalIdentifier: 'fd277f1c-807f-4845-a895-e5f1d45d2036',
+      },
+    },
+    indexes: {
+      memberIdIndex: {
+        universalIdentifier: '781c730c-4540-41ec-8dd9-74dae7520dce',
+      },
+      appIdIndex: {
+        universalIdentifier: '561123c4-af46-4ecb-ab4e-8889c7236b2b',
+      },
+      searchVectorGinIndex: {
+        universalIdentifier: 'aa1c3d96-e96b-4ae3-ab16-a0815753df0d',
+      },
+    },
+    views: {
+      allAppAccesses: {
+        universalIdentifier: '7744b2dd-bc56-4e88-961f-ed116961249c',
+        viewFields: {
+          id: {
+            universalIdentifier: '6b56183e-cd37-402b-b630-28e735535b97',
+          },
+          member: {
+            universalIdentifier: '0c179af4-4a86-4420-81e3-62f52c32f2b2',
+          },
+          app: {
+            universalIdentifier: '6c91245a-f589-4434-bab4-f84663b03dba',
+          },
+          permissions: {
+            universalIdentifier: 'c0604a89-5a32-466a-b295-5d39fd47d0d5',
+          },
+        },
+      },
+    },
+  },
   project: {
     universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
     fields: {
@@ -2024,6 +2106,7 @@ export const STANDARD_OBJECTS = {
       lead: { universalIdentifier: 'e5e2b42e-4568-4498-96e6-9a35546ac1f9' },
       sprints: { universalIdentifier: 'a980d736-d31e-473e-a599-7702d6f53c22' },
       issues: { universalIdentifier: '8ef104d2-8d9f-436b-8764-7d1b07b65e8d' },
+      app: { universalIdentifier: 'c4dc0e3e-edcf-4b84-8673-f1a3e69d6bb9' },
       attachments: {
         universalIdentifier: getSystemRelationFieldUniversalIdentifier({
           applicationUniversalIdentifier:
@@ -2038,6 +2121,9 @@ export const STANDARD_OBJECTS = {
     indexes: {
       leadIdIndex: {
         universalIdentifier: 'c57bc5a8-1475-418e-ad82-2641bfc6f6a7',
+      },
+      appIdIndex: {
+        universalIdentifier: '4ddfeef7-afb4-4d24-b2a5-d7a44da5a37b',
       },
     },
     views: {
@@ -3267,6 +3353,9 @@ export const STANDARD_OBJECTS = {
       },
       worklogs: {
         universalIdentifier: 'c0bf79c9-1bbd-438a-b4de-3a0a7960e212',
+      },
+      appAccesses: {
+        universalIdentifier: '288d8f20-66ea-40e6-afc8-f2c73aa18d99',
       },
       ownedOpportunities: {
         universalIdentifier: '20202020-9e4d-4b3a-8c1f-6d7e8f9a0b1c',

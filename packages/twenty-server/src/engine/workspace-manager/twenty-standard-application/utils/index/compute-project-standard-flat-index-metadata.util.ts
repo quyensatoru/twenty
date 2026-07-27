@@ -28,4 +28,16 @@ export const buildProjectStandardFlatIndexMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  appIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'appIdIndex',
+      relatedFieldNames: ['app'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
 });
