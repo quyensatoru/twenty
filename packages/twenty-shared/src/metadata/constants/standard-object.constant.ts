@@ -2214,6 +2214,15 @@ export const STANDARD_OBJECTS = {
       name: { universalIdentifier: 'ede3b828-7820-4f7e-a698-ea8ab024ca8b' },
       project: { universalIdentifier: '6d21b491-e9a0-46b2-8714-731bf3ad008d' },
       issues: { universalIdentifier: 'e879d34e-d571-4cf7-a80c-6c9b9618748e' },
+      timelineActivities: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.epic,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
+        }),
+      },
     },
     indexes: {
       projectIdIndex: {
@@ -2301,6 +2310,16 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
           relationTargetObjectUniversalIdentifier:
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+        }),
+      },
+      timelineActivities: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
         }),
       },
     },
@@ -2845,6 +2864,26 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
           relationTargetObjectUniversalIdentifier:
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.note,
+        }),
+      },
+      targetIssue: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
+        }),
+      },
+      targetEpic: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.epic,
         }),
       },
       targetWorkflow: {

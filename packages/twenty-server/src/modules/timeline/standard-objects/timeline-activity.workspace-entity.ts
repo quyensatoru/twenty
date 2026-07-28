@@ -5,6 +5,8 @@ import { type CompanyWorkspaceEntity } from 'src/modules/company/standard-object
 import { type DashboardWorkspaceEntity } from 'src/modules/dashboard/standard-objects/dashboard.workspace-entity';
 import { type MessageCampaignWorkspaceEntity } from 'src/modules/emailing/standard-objects/message-campaign.workspace-entity';
 import { type MessageListWorkspaceEntity } from 'src/modules/emailing/standard-objects/message-list.workspace-entity';
+import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
+import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { type NoteWorkspaceEntity } from 'src/modules/note/standard-objects/note.workspace-entity';
 import { type OpportunityWorkspaceEntity } from 'src/modules/opportunity/standard-objects/opportunity.workspace-entity';
 import { type PersonWorkspaceEntity } from 'src/modules/person/standard-objects/person.workspace-entity';
@@ -33,6 +35,10 @@ export class TimelineActivityWorkspaceEntity extends BaseWorkspaceEntity {
   targetNoteId: string | null;
   targetTask: EntityRelation<TaskWorkspaceEntity> | null;
   targetTaskId: string | null;
+  targetIssue: EntityRelation<IssueWorkspaceEntity> | null;
+  targetIssueId: string | null;
+  targetEpic: EntityRelation<EpicWorkspaceEntity> | null;
+  targetEpicId: string | null;
   targetWorkflow: EntityRelation<WorkflowWorkspaceEntity> | null;
   targetWorkflowId: string | null;
   targetWorkflowVersion: EntityRelation<WorkflowVersionWorkspaceEntity> | null;

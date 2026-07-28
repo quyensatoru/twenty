@@ -6,6 +6,7 @@ import { type AttachmentWorkspaceEntity } from 'src/modules/attachment/standard-
 import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
 import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
+import { type TimelineActivityWorkspaceEntity } from 'src/modules/timeline/standard-objects/timeline-activity.workspace-entity';
 import { type WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/standard-objects/workspace-member.workspace-entity';
 
 export class IssueWorkspaceEntity extends BaseWorkspaceEntity {
@@ -39,5 +40,6 @@ export class IssueWorkspaceEntity extends BaseWorkspaceEntity {
   parentId: string | null;
   children: EntityRelation<IssueWorkspaceEntity[]>;
   attachments: EntityRelation<AttachmentWorkspaceEntity[]>;
+  timelineActivities: EntityRelation<TimelineActivityWorkspaceEntity[]>;
   searchVector: string;
 }
