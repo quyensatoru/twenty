@@ -3,6 +3,7 @@ import { type ActorMetadata, type RichTextMetadata } from 'twenty-shared/types';
 import { BaseWorkspaceEntity } from 'src/engine/twenty-orm/base.workspace-entity';
 import { type EntityRelation } from 'src/engine/workspace-manager/workspace-migration/types/entity-relation.interface';
 import { type AttachmentWorkspaceEntity } from 'src/modules/attachment/standard-objects/attachment.workspace-entity';
+import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
 import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
 import { type WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/standard-objects/workspace-member.workspace-entity';
@@ -32,6 +33,8 @@ export class IssueWorkspaceEntity extends BaseWorkspaceEntity {
   projectId: string;
   sprint: EntityRelation<SprintWorkspaceEntity> | null;
   sprintId: string | null;
+  epic: EntityRelation<EpicWorkspaceEntity> | null;
+  epicId: string | null;
   parent: EntityRelation<IssueWorkspaceEntity> | null;
   parentId: string | null;
   children: EntityRelation<IssueWorkspaceEntity[]>;

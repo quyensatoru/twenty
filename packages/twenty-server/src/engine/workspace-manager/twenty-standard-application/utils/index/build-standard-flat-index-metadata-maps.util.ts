@@ -12,6 +12,7 @@ import { buildCalendarEventParticipantStandardFlatIndexMetadatas } from 'src/eng
 import { buildCallRecordingStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-call-recording-standard-flat-index-metadata.util';
 import { buildCompanyStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-company-standard-flat-index-metadata.util';
 import { buildDashboardStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-dashboard-standard-flat-index-metadata.util';
+import { buildEpicStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-epic-standard-flat-index-metadata.util';
 import { buildMessageCampaignStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-campaign-standard-flat-index-metadata.util';
 import { buildMessageListStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-list-standard-flat-index-metadata.util';
 import { buildMessageListMemberStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-list-member-standard-flat-index-metadata.util';
@@ -72,6 +73,7 @@ const STANDARD_FLAT_INDEX_METADATA_BUILDERS_BY_OBJECT_NAME = {
   person: buildPersonStandardFlatIndexMetadatas,
   project: buildProjectStandardFlatIndexMetadatas,
   sprint: buildSprintStandardFlatIndexMetadatas,
+  epic: buildEpicStandardFlatIndexMetadatas,
   task: buildTaskStandardFlatIndexMetadatas,
   taskTarget: buildTaskTargetStandardFlatIndexMetadatas,
   timelineActivity: buildTimelineActivityStandardFlatIndexMetadatas,

@@ -46,6 +46,10 @@ import {
   EMPLOYMENT_HISTORY_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/employment-history-data-seeds.constant';
 import {
+  EPIC_DATA_SEED_COLUMNS,
+  EPIC_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/epic-data-seeds.constant';
+import {
   ISSUE_COMMENT_DATA_SEED_COLUMNS,
   ISSUE_COMMENT_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-comment-data-seeds.constant';
@@ -198,6 +202,11 @@ const getRecordSeedsBatches = (
       tableName: 'sprint',
       pgColumns: SPRINT_DATA_SEED_COLUMNS,
       recordSeeds: SPRINT_DATA_SEEDS,
+    },
+    {
+      tableName: 'epic',
+      pgColumns: EPIC_DATA_SEED_COLUMNS,
+      recordSeeds: EPIC_DATA_SEEDS,
     },
   ];
 

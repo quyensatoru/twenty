@@ -29,9 +29,9 @@ import { PageLayoutType } from '~/generated-metadata/graphql';
 const RIGHT_COLUMN_WIDTH_CSS_VAR =
   '--task-manager-issue-detail-right-column-width';
 const RIGHT_COLUMN_CONSTRAINTS: ResizablePanelConstraints = {
-  min: 400,
+  min: 430,
   max: 560,
-  default: 400,
+  default: 430,
 };
 
 const StyledPage = styled.div`
@@ -244,6 +244,7 @@ export const TaskManagerIssueDetail = ({
             objectMetadataItem={objectMetadataItem}
             recordIndexId={recordIndexId}
             viewType={ViewType.TABLE}
+            dropdownId="task-manager-issue-detail-object-options-dropdown"
           />
         </StyledHeaderRight>
       </StyledHeader>
@@ -262,6 +263,16 @@ export const TaskManagerIssueDetail = ({
               />
             </StyledTitleWrapper>
           </RecordFieldsScopeContextProvider>
+
+          {isInSidePanel && (
+            <StyledSidePanelFieldPanel>
+              <IssueFieldPanel
+                recordId={issueId}
+                objectMetadataItem={objectMetadataItem}
+                recordIndexId={recordIndexId}
+              />
+            </StyledSidePanelFieldPanel>
+          )}
 
           <div>
             <StyledSectionTitle>
@@ -305,15 +316,7 @@ export const TaskManagerIssueDetail = ({
             </div>
           </LayoutRenderingProvider>
         </StyledLeftColumn>
-        {isInSidePanel ? (
-          <StyledSidePanelFieldPanel>
-            <IssueFieldPanel
-              recordId={issueId}
-              objectMetadataItem={objectMetadataItem}
-              recordIndexId={recordIndexId}
-            />
-          </StyledSidePanelFieldPanel>
-        ) : (
+        {!isInSidePanel && (
           <>
             <ResizablePanelGap
               side="left"

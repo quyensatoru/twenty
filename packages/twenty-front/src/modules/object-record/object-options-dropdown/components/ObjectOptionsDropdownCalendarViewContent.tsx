@@ -1,5 +1,4 @@
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
-import { OBJECT_OPTIONS_DROPDOWN_ID } from '@/object-record/object-options-dropdown/constants/ObjectOptionsDropdownId';
 import { useObjectOptionsDropdown } from '@/object-record/object-options-dropdown/hooks/useObjectOptionsDropdown';
 import { getSupportedRecordCalendarLayout } from '@/object-record/record-calendar/utils/getSupportedRecordCalendarLayout';
 import { recordIndexCalendarLayoutComponentState } from '@/object-record/record-index/states/recordIndexCalendarLayoutComponentState';
@@ -31,7 +30,7 @@ import {
 const RECORD_CALENDAR_TIMELINE_VIEW_ID = 'record-calendar-timeline-view';
 
 export const ObjectOptionsDropdownCalendarViewContent = () => {
-  const { resetContent } = useObjectOptionsDropdown();
+  const { resetContent, dropdownId } = useObjectOptionsDropdown();
   const recordIndexCalendarLayout = useAtomComponentStateValue(
     recordIndexCalendarLayoutComponentState,
   );
@@ -49,7 +48,7 @@ export const ObjectOptionsDropdownCalendarViewContent = () => {
 
   const selectedItemId = useAtomComponentStateValue(
     selectedItemIdComponentState,
-    OBJECT_OPTIONS_DROPDOWN_ID,
+    dropdownId,
   );
 
   const { closeDropdown } = useObjectOptionsDropdown();
@@ -96,8 +95,8 @@ export const ObjectOptionsDropdownCalendarViewContent = () => {
       </DropdownMenuHeader>
       <DropdownMenuItemsContainer>
         <SelectableList
-          selectableListInstanceId={OBJECT_OPTIONS_DROPDOWN_ID}
-          focusId={OBJECT_OPTIONS_DROPDOWN_ID}
+          selectableListInstanceId={dropdownId}
+          focusId={dropdownId}
           selectableItemIdArray={selectableItemIdArray}
         >
           <SelectableListItem

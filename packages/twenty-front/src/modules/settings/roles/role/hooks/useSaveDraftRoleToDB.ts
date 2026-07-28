@@ -398,6 +398,7 @@ export const useSaveDraftRoleToDB = ({
           },
         },
         refetchQueries: [getOperationName(GET_ROLES) ?? ''],
+        awaitRefetchQueries: true,
       });
     }
 
@@ -406,6 +407,7 @@ export const useSaveDraftRoleToDB = ({
         await deleteRecordVisibilityPolicy({
           variables: { input: { roleId: targetRoleId, objectMetadataId } },
           refetchQueries: [getOperationName(GET_ROLES) ?? ''],
+          awaitRefetchQueries: true,
         });
       }
     }

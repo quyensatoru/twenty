@@ -10,7 +10,9 @@ import {
   type FieldInputEvent,
 } from '@/object-record/record-field/ui/contexts/FieldInputEventContext';
 import { usePersistField } from '@/object-record/record-field/ui/hooks/usePersistField';
+import { useOpenRelationToOneFieldInput } from '@/object-record/record-field/ui/meta-types/input/hooks/useOpenRelationToOneFieldInput';
 import { RecordFieldComponentInstanceContext } from '@/object-record/record-field/ui/states/contexts/RecordFieldComponentInstanceContext';
+import { isFieldRelationManyToOne } from '@/object-record/record-field/ui/types/guards/isFieldRelationManyToOne';
 import { RecordInlineCell } from '@/object-record/record-inline-cell/components/RecordInlineCell';
 import { RecordInlineCellAnchoredPortal } from '@/object-record/record-inline-cell/components/RecordInlineCellAnchoredPortal';
 import { RecordInlineCellEditMode } from '@/object-record/record-inline-cell/components/RecordInlineCellEditMode';
@@ -38,6 +40,10 @@ type TaskManagerFieldCellProps = {
 // RecordFieldList's edit-mode portal: that portal resolves "which field is
 // open" from a position index into RecordFieldList's own alphabetically
 // sorted field set, which doesn't match this panel's curated/reordered list.
+// For many-to-one relation fields, opening edit mode must also seed
+// SingleRecordPicker's selected-id state from the record's current value
+// (openRelationToOneFieldInput) — otherwise the picker has no way to know
+// what's currently selected and always shows "No X" checked.
 export const TaskManagerFieldCell = ({
   recordId,
   fieldMetadataItem,
@@ -66,6 +72,19 @@ export const TaskManagerFieldCell = ({
     objectMetadataItemId: objectMetadataItem.id,
   });
 
+  const { openRelationToOneFieldInput } = useOpenRelationToOneFieldInput();
+
+  const openEditMode = () => {
+    if (isFieldRelationManyToOne(fieldDefinition)) {
+      openRelationToOneFieldInput({
+        fieldName: fieldMetadataItem.name,
+        recordId,
+        prefix: instanceIdPrefix,
+      });
+    }
+    setIsEditing(true);
+  };
+
   const closeEditMode = () => setIsEditing(false);
 
   const handleFieldInputEvent: FieldInputEvent = ({
@@ -87,7 +106,7 @@ export const TaskManagerFieldCell = ({
         isDisplayModeFixHeight: true,
         isRecordFieldReadOnly: readOnly,
         anchorId: instanceId,
-        onOpenEditMode: readOnly ? undefined : () => setIsEditing(true),
+        onOpenEditMode: readOnly ? undefined : openEditMode,
         onCloseEditMode: closeEditMode,
       }}
     >

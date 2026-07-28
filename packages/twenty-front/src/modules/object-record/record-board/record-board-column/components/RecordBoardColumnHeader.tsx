@@ -94,7 +94,7 @@ const StyledColumn = styled.div`
     ${RECORD_BOARD_COLUMN_WIDTH}px
   );
 
-  padding: ${themeCssVariables.spacing[2]};
+  padding: ${themeCssVariables.spacing[2]} ${themeCssVariables.spacing[3]};
 
   position: relative;
 

@@ -715,6 +715,31 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
       twentyStandardApplicationId,
       now,
     }),
+  epic: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<CreateStandardObjectArgs<'epic'>, 'context' | 'objectName'>) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'epic',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.epic.universalIdentifier,
+        nameSingular: 'epic',
+        namePlural: 'epics',
+        labelSingular: i18nLabel(msg`Epic`),
+        labelPlural: i18nLabel(msg`Epics`),
+        description: i18nLabel(msg`An epic`),
+        icon: 'IconStack2',
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
   issue: ({
     now,
     workspaceId,

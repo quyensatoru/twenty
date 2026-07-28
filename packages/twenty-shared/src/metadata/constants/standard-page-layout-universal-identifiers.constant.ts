@@ -656,6 +656,19 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
       },
     },
   },
+  epicRecordPage: {
+    universalIdentifier: 'ab505298-a470-46e4-813e-5a552fe26eed',
+    tabs: {
+      home: {
+        universalIdentifier: '1384251a-9ce2-4850-9502-f14a6bb5a058',
+        widgets: {
+          fields: {
+            universalIdentifier: 'f953d36c-5086-4d0d-b259-5268800b10d3',
+          },
+        },
+      },
+    },
+  },
   issueRecordPage: {
     universalIdentifier: '54851c38-c3f6-4853-a40e-18e942e97e55',
     tabs: {

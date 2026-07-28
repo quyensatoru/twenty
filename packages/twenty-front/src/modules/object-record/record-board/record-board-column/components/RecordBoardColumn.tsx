@@ -29,7 +29,7 @@ const StyledColumn = styled.div`
     ${RECORD_BOARD_COLUMN_WIDTH_CSS_VARIABLE_NAME},
     ${RECORD_BOARD_COLUMN_WIDTH}px
   );
-  padding: ${themeCssVariables.spacing[2]};
+  padding: ${themeCssVariables.spacing[2]} ${themeCssVariables.spacing[3]};
   padding-top: 0px;
   position: relative;
 `;

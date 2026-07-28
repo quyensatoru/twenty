@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { ViewFilterOperand } from 'twenty-shared/types';
+import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { ObjectOptionsDropdown } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdown';
 import { RecordBoardContainer } from '@/object-record/record-board/components/RecordBoardContainer';
@@ -17,6 +18,7 @@ const TASK_MANAGER_BOARD_PROJECT_FILTER_ID =
   'task-manager-board-project-filter';
 
 const StyledPage = styled.div`
+  background-color: ${themeCssVariables.background.primary};
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -78,6 +80,7 @@ export const TaskManagerBoard = () => {
             objectMetadataItem={objectMetadataItem}
             recordIndexId={recordIndexId}
             viewType={ViewType.KANBAN}
+            dropdownId="task-manager-board-object-options-dropdown"
           />
         }
       />

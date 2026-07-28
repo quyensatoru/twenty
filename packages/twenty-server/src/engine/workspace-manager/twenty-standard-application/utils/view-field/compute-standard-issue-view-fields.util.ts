@@ -81,6 +81,18 @@ export const computeStandardIssueViewFields = (
         size: 150,
       },
     }),
+    allIssuesEpic: createStandardViewFieldFlatMetadata({
+      ...args,
+      objectName: 'issue',
+      context: {
+        viewName: 'allIssues',
+        viewFieldName: 'epic',
+        fieldName: 'epic',
+        position: 6,
+        isVisible: true,
+        size: 150,
+      },
+    }),
     allIssuesCreatedAt: createStandardViewFieldFlatMetadata({
       ...args,
       objectName: 'issue',
@@ -88,7 +100,7 @@ export const computeStandardIssueViewFields = (
         viewName: 'allIssues',
         viewFieldName: 'createdAt',
         fieldName: 'createdAt',
-        position: 6,
+        position: 7,
         isVisible: true,
         size: 150,
       },

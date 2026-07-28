@@ -47,6 +47,10 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRo
       value: field.name,
     }));
 
+    const currentField = fields.find(
+      (field) => field.name === condition.fieldName,
+    );
+
     const handleFieldChange = (fieldName: string) => {
       const field = fields.find((candidate) => candidate.name === fieldName);
 
@@ -85,7 +89,24 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRo
               onChange={(value) => onChange({ value })}
               fullWidth
             />
+          ) : condition.fieldType === FieldMetadataType.SELECT ? (
+            <Select
+              dropdownId={`record-visibility-policy-value-${condition.id}`}
+              // Comparing the option's raw value (not its display label) against
+              // the stored column, so a free-text input here would silently
+              // never match any record.
+              options={(currentField?.options ?? []).map((option) => ({
+                label: option.label,
+                value: option.value,
+              }))}
+              value={condition.value}
+              onChange={(value) => onChange({ value })}
+              fullWidth
+            />
           ) : (
+            // ponytail: MULTI_SELECT still takes raw comma-separated option
+            // values here (same label-vs-value pitfall SELECT had) — upgrade
+            // to an option-aware multi-picker if that trips people up too.
             <TextInput
               value={condition.value}
               onChange={(value) => onChange({ value })}

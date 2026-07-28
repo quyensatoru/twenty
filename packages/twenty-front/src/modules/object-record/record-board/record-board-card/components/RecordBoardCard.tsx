@@ -47,7 +47,7 @@ const StyledCardContainer = styled.div<{ isPrimaryMultiDrag?: boolean }>`
 `;
 
 const StyledBoardCardWrapper = styled.div`
-  padding-bottom: ${themeCssVariables.spacing[2]};
+  padding-bottom: ${themeCssVariables.spacing[3]};
   width: 100%;
 `;
 

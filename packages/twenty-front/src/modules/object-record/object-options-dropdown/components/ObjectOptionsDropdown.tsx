@@ -18,19 +18,25 @@ type ObjectOptionsDropdownProps = {
   viewType: ViewType;
   objectMetadataItem: EnrichedObjectMetadataItem;
   recordIndexId: string;
+  // Only needed when more than one ObjectOptionsDropdown can be mounted at
+  // the same time (e.g. Task Manager's board + side panel) — every instance
+  // otherwise shares OBJECT_OPTIONS_DROPDOWN_ID's open/close state, so
+  // opening one opens all of them.
+  dropdownId?: string;
 };
 
 export const ObjectOptionsDropdown = ({
   recordIndexId,
   objectMetadataItem,
   viewType,
+  dropdownId = OBJECT_OPTIONS_DROPDOWN_ID,
 }: ObjectOptionsDropdownProps) => {
   const { currentContentId, handleContentChange, handleResetContent } =
     useDropdownContextCurrentContentId<ObjectOptionsContentId>();
 
   const isDropdownOpen = useAtomComponentStateValue(
     isDropdownOpenComponentState,
-    OBJECT_OPTIONS_DROPDOWN_ID,
+    dropdownId,
   );
 
   const {
@@ -43,7 +49,7 @@ export const ObjectOptionsDropdown = ({
   return (
     <>
       <Dropdown
-        dropdownId={OBJECT_OPTIONS_DROPDOWN_ID}
+        dropdownId={dropdownId}
         dropdownOffset={{ y: DROPDOWN_OFFSET_Y }}
         clickableComponent={
           <StyledHeaderDropdownButton isUnfolded={isDropdownOpen}>
@@ -60,7 +66,7 @@ export const ObjectOptionsDropdown = ({
               currentContentId,
               onContentChange: handleContentChange,
               resetContent: handleResetContent,
-              dropdownId: OBJECT_OPTIONS_DROPDOWN_ID,
+              dropdownId,
               handleRecordGroupOrderChangeWithModal,
             }}
           >

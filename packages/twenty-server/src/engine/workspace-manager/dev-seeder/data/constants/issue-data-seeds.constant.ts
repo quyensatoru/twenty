@@ -1,3 +1,4 @@
+import { EPIC_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/epic-data-seeds.constant';
 import { PROJECT_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/project-data-seeds.constant';
 import { SPRINT_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/sprint-data-seeds.constant';
 import { WORKSPACE_MEMBER_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/workspace-member-data-seeds.constant';
@@ -20,6 +21,7 @@ type IssueDataSeed = {
   reporterId: string | null;
   projectId: string;
   sprintId: string | null;
+  epicId: string | null;
   parentId: string | null;
   createdBySource: string;
   createdByWorkspaceMemberId: string;
@@ -47,6 +49,7 @@ export const ISSUE_DATA_SEED_COLUMNS: (keyof IssueDataSeed)[] = [
   'reporterId',
   'projectId',
   'sprintId',
+  'epicId',
   'parentId',
   'createdBySource',
   'createdByWorkspaceMemberId',
@@ -57,13 +60,11 @@ export const ISSUE_DATA_SEED_COLUMNS: (keyof IssueDataSeed)[] = [
 ];
 
 export const ISSUE_DATA_SEED_IDS = {
-  ID_1: '77777772-0001-4e7c-8001-123456789abc',
   ID_2: '77777772-0002-4e7c-8001-123456789abc',
   ID_3: '77777772-0003-4e7c-8001-123456789abc',
   ID_4: '77777772-0004-4e7c-8001-123456789abc',
   ID_5: '77777772-0005-4e7c-8001-123456789abc',
   ID_6: '77777772-0006-4e7c-8001-123456789abc',
-  ID_7: '77777772-0007-4e7c-8001-123456789abc',
   ID_8: '77777772-0008-4e7c-8001-123456789abc',
   ID_9: '77777772-0009-4e7c-8001-123456789abc',
   ID_10: '77777772-0010-4e7c-8001-123456789abc',
@@ -99,30 +100,6 @@ const BUILD_CREATED_UPDATED_BY = (workspaceMemberId: string, name: string) => ({
 
 export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
   {
-    id: ISSUE_DATA_SEED_IDS.ID_1,
-    position: 1,
-    title: 'Redesign homepage',
-    issueKey: 'WEB-1',
-    descriptionBlocknote: BUILD_BLOCKNOTE_BODY(
-      'Overhaul the homepage layout and messaging to improve conversion.',
-    ),
-    descriptionMarkdown:
-      'Overhaul the homepage layout and messaging to improve conversion.',
-    issueType: 'EPIC',
-    status: 'IN_PROGRESS',
-    priority: 'HIGH',
-    storyPoints: null,
-    originalEstimateMinutes: null,
-    remainingEstimateMinutes: null,
-    timeSpentMinutes: 0,
-    assigneeId: TIM,
-    reporterId: JONY,
-    projectId: PROJECT_DATA_SEED_IDS.ID_1,
-    sprintId: null,
-    parentId: null,
-    ...BUILD_CREATED_UPDATED_BY(JONY, 'Jony Ive'),
-  },
-  {
     id: ISSUE_DATA_SEED_IDS.ID_2,
     position: 2,
     title: 'Implement new nav bar',
@@ -143,7 +120,8 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_1,
     sprintId: SPRINT_DATA_SEED_IDS.ID_1,
-    parentId: ISSUE_DATA_SEED_IDS.ID_1,
+    epicId: EPIC_DATA_SEED_IDS.ID_1,
+    parentId: null,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
   },
   {
@@ -167,7 +145,8 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_1,
     sprintId: SPRINT_DATA_SEED_IDS.ID_2,
-    parentId: ISSUE_DATA_SEED_IDS.ID_1,
+    epicId: EPIC_DATA_SEED_IDS.ID_1,
+    parentId: null,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
   },
   {
@@ -190,6 +169,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_1,
     sprintId: SPRINT_DATA_SEED_IDS.ID_2,
+    epicId: null,
     parentId: null,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
   },
@@ -213,6 +193,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: JANE,
     projectId: PROJECT_DATA_SEED_IDS.ID_1,
     sprintId: SPRINT_DATA_SEED_IDS.ID_2,
+    epicId: null,
     parentId: null,
     ...BUILD_CREATED_UPDATED_BY(JANE, 'Jane Austen'),
   },
@@ -237,32 +218,9 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_1,
     sprintId: null,
+    epicId: null,
     parentId: null,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
-  },
-  {
-    id: ISSUE_DATA_SEED_IDS.ID_7,
-    position: 7,
-    title: 'Launch onboarding flow',
-    issueKey: 'MOB-1',
-    descriptionBlocknote: BUILD_BLOCKNOTE_BODY(
-      'Guide new users through account setup and core features.',
-    ),
-    descriptionMarkdown:
-      'Guide new users through account setup and core features.',
-    issueType: 'EPIC',
-    status: 'TODO',
-    priority: 'HIGH',
-    storyPoints: null,
-    originalEstimateMinutes: null,
-    remainingEstimateMinutes: null,
-    timeSpentMinutes: 0,
-    assigneeId: JONY,
-    reporterId: PHIL,
-    projectId: PROJECT_DATA_SEED_IDS.ID_2,
-    sprintId: null,
-    parentId: null,
-    ...BUILD_CREATED_UPDATED_BY(PHIL, 'Phil Schiler'),
   },
   {
     id: ISSUE_DATA_SEED_IDS.ID_8,
@@ -284,7 +242,8 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: JONY,
     projectId: PROJECT_DATA_SEED_IDS.ID_2,
     sprintId: SPRINT_DATA_SEED_IDS.ID_3,
-    parentId: ISSUE_DATA_SEED_IDS.ID_7,
+    epicId: EPIC_DATA_SEED_IDS.ID_2,
+    parentId: null,
     ...BUILD_CREATED_UPDATED_BY(JONY, 'Jony Ive'),
   },
   {
@@ -308,7 +267,8 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: JONY,
     projectId: PROJECT_DATA_SEED_IDS.ID_2,
     sprintId: SPRINT_DATA_SEED_IDS.ID_4,
-    parentId: ISSUE_DATA_SEED_IDS.ID_7,
+    epicId: EPIC_DATA_SEED_IDS.ID_2,
+    parentId: null,
     ...BUILD_CREATED_UPDATED_BY(JONY, 'Jony Ive'),
   },
   {
@@ -332,6 +292,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: PHIL,
     projectId: PROJECT_DATA_SEED_IDS.ID_2,
     sprintId: SPRINT_DATA_SEED_IDS.ID_4,
+    epicId: null,
     parentId: null,
     ...BUILD_CREATED_UPDATED_BY(PHIL, 'Phil Schiler'),
   },
@@ -355,6 +316,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_2,
     sprintId: SPRINT_DATA_SEED_IDS.ID_4,
+    epicId: null,
     parentId: null,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
   },
@@ -379,6 +341,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     reporterId: TIM,
     projectId: PROJECT_DATA_SEED_IDS.ID_2,
     sprintId: SPRINT_DATA_SEED_IDS.ID_4,
+    epicId: null,
     parentId: ISSUE_DATA_SEED_IDS.ID_11,
     ...BUILD_CREATED_UPDATED_BY(TIM, 'Tim Apple'),
   },

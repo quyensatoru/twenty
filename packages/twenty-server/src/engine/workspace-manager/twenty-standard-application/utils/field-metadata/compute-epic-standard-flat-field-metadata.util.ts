@@ -8,7 +8,6 @@ import {
 } from 'twenty-shared/types';
 
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT } from 'src/engine/metadata-modules/object-metadata/constants/standard-relation-field-properties.constant';
 import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
 import {
   type CreateStandardFieldArgs,
@@ -16,17 +15,17 @@ import {
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
 
-export const buildProjectStandardFlatFieldMetadatas = ({
+export const buildEpicStandardFlatFieldMetadatas = ({
   now,
   objectName,
   workspaceId,
   standardObjectMetadataRelatedEntityIds,
   dependencyFlatEntityMaps,
   twentyStandardApplicationId,
-}: Omit<
-  CreateStandardFieldArgs<'project', FieldMetadataType>,
-  'context'
->): Record<AllStandardObjectFieldName<'project'>, FlatFieldMetadata> => ({
+}: Omit<CreateStandardFieldArgs<'epic', FieldMetadataType>, 'context'>): Record<
+  AllStandardObjectFieldName<'epic'>,
+  FlatFieldMetadata
+> => ({
   id: createStandardFieldFlatMetadata({
     objectName,
     workspaceId,
@@ -112,7 +111,7 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     now,
   }),
 
-  // Project-specific fields
+  // Epic-specific fields
   position: createStandardFieldFlatMetadata({
     objectName,
     workspaceId,
@@ -120,7 +119,7 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
       label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Project record position`),
+      description: i18nLabel(msg`Epic record position`),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -138,96 +137,9 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
       label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Project name`),
-      icon: 'IconListDetails',
+      description: i18nLabel(msg`Epic name`),
+      icon: 'IconStack2',
       isNullable: true,
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  key: createStandardFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      fieldName: 'key',
-      type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Key`),
-      description: i18nLabel(msg`Project key, used as the issue key prefix`),
-      icon: 'IconKey',
-      isNullable: true,
-      isUnique: true,
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  nextIssueNumber: createStandardFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      fieldName: 'nextIssueNumber',
-      type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Next issue number`),
-      description: i18nLabel(
-        msg`Counter used to generate the next issue key for this project`,
-      ),
-      icon: 'IconHash',
-      isSystem: true,
-      isNullable: false,
-      isUIEditable: false,
-      defaultValue: 1,
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  description: createStandardFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      fieldName: 'description',
-      type: FieldMetadataType.RICH_TEXT,
-      label: i18nLabel(msg`Description`),
-      description: i18nLabel(msg`Project description`),
-      icon: 'IconFilePencil',
-      isNullable: true,
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  category: createStandardFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      fieldName: 'category',
-      type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Category`),
-      description: i18nLabel(msg`Project category`),
-      icon: 'IconCategory',
-      isNullable: true,
-      defaultValue: "'SOFTWARE'",
-      options: [
-        {
-          id: '1ece839f-faf9-48cc-8d39-4d569a923a65',
-          value: 'SOFTWARE',
-          label: i18nLabel(msg`Software`),
-          position: 0,
-          color: 'blue',
-        },
-        {
-          id: 'a803abc1-085d-4fce-9ea1-7e8346fdf0ff',
-          value: 'BUSINESS',
-          label: i18nLabel(msg`Business`),
-          position: 1,
-          color: 'orange',
-        },
-      ],
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -301,46 +213,23 @@ export const buildProjectStandardFlatFieldMetadatas = ({
   }),
 
   // Relation fields
-  lead: createStandardRelationFieldFlatMetadata({
+  project: createStandardRelationFieldFlatMetadata({
     objectName,
     workspaceId,
     context: {
       type: FieldMetadataType.RELATION,
       morphId: null,
-      fieldName: 'lead',
-      label: i18nLabel(msg`Lead`),
-      description: i18nLabel(msg`Project lead`),
-      icon: 'IconUserCircle',
-      isNullable: true,
-      targetObjectName: 'workspaceMember',
-      targetFieldName: 'ledProjects',
+      fieldName: 'project',
+      label: i18nLabel(msg`Project`),
+      description: i18nLabel(msg`Epic's project`),
+      icon: 'IconListDetails',
+      isNullable: false,
+      targetObjectName: 'project',
+      targetFieldName: 'epics',
       settings: {
         relationType: RelationType.MANY_TO_ONE,
-        onDelete: RelationOnDeleteAction.SET_NULL,
-        joinColumnName: 'leadId',
-      },
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  sprints: createStandardRelationFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      type: FieldMetadataType.RELATION,
-      morphId: null,
-      fieldName: 'sprints',
-      label: i18nLabel(msg`Sprints`),
-      description: i18nLabel(msg`Project's sprints`),
-      icon: 'IconRun',
-      isNullable: false,
-      isUIEditable: false,
-      targetObjectName: 'sprint',
-      targetFieldName: 'project',
-      settings: {
-        relationType: RelationType.ONE_TO_MANY,
+        onDelete: RelationOnDeleteAction.CASCADE,
+        joinColumnName: 'projectId',
       },
     },
     standardObjectMetadataRelatedEntityIds,
@@ -356,85 +245,12 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       morphId: null,
       fieldName: 'issues',
       label: i18nLabel(msg`Issues`),
-      description: i18nLabel(msg`Project's issues`),
+      description: i18nLabel(msg`Epic's issues`),
       icon: 'IconLayoutKanban',
-      isNullable: false,
+      isNullable: true,
       isUIEditable: false,
       targetObjectName: 'issue',
-      targetFieldName: 'project',
-      settings: {
-        relationType: RelationType.ONE_TO_MANY,
-      },
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  epics: createStandardRelationFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      type: FieldMetadataType.RELATION,
-      morphId: null,
-      fieldName: 'epics',
-      label: i18nLabel(msg`Epics`),
-      description: i18nLabel(msg`Project's epics`),
-      icon: 'IconStack2',
-      isNullable: false,
-      isUIEditable: false,
-      targetObjectName: 'epic',
-      targetFieldName: 'project',
-      settings: {
-        relationType: RelationType.ONE_TO_MANY,
-      },
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  app: createStandardRelationFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      type: FieldMetadataType.RELATION,
-      morphId: null,
-      fieldName: 'app',
-      label: i18nLabel(msg`App`),
-      description: i18nLabel(msg`App this project belongs to`),
-      icon: 'IconApps',
-      isNullable: true,
-      targetObjectName: 'app',
-      targetFieldName: 'projects',
-      settings: {
-        relationType: RelationType.MANY_TO_ONE,
-        onDelete: RelationOnDeleteAction.SET_NULL,
-        joinColumnName: 'appId',
-      },
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  attachments: createStandardRelationFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      type: FieldMetadataType.RELATION,
-      morphId: null,
-      fieldName: 'attachments',
-      isSystemSideEffect: true,
-      label: i18nLabel(
-        STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
-      ),
-      description: i18nLabel(msg`Project attachments`),
-      icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
-        .icon,
-      isNullable: true,
-      targetObjectName: 'attachment',
-      targetFieldName: 'targetProject',
+      targetFieldName: 'epic',
       settings: {
         relationType: RelationType.ONE_TO_MANY,
       },

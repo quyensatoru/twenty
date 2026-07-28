@@ -1,5 +1,4 @@
 import { ObjectOptionsDropdownMenuViewName } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdownMenuViewName';
-import { OBJECT_OPTIONS_DROPDOWN_ID } from '@/object-record/object-options-dropdown/constants/ObjectOptionsDropdownId';
 import { useObjectOptionsDropdown } from '@/object-record/object-options-dropdown/hooks/useObjectOptionsDropdown';
 import { useObjectOptionsForBoard } from '@/object-record/object-options-dropdown/hooks/useObjectOptionsForBoard';
 import { getSupportedRecordCalendarLayout } from '@/object-record/record-calendar/utils/getSupportedRecordCalendarLayout';
@@ -51,8 +50,13 @@ export const ObjectOptionsDropdownCustomView = ({
   onBackToDefault,
 }: ObjectOptionsDropdownCustomViewProps) => {
   const { t } = useLingui();
-  const { recordIndexId, objectMetadataItem, onContentChange, closeDropdown } =
-    useObjectOptionsDropdown();
+  const {
+    recordIndexId,
+    objectMetadataItem,
+    onContentChange,
+    closeDropdown,
+    dropdownId,
+  } = useObjectOptionsDropdown();
 
   const { currentView } = useGetCurrentViewOnly();
 
@@ -140,7 +144,7 @@ export const ObjectOptionsDropdownCustomView = ({
 
   const selectedItemId = useAtomComponentStateValue(
     selectedItemIdComponentState,
-    OBJECT_OPTIONS_DROPDOWN_ID,
+    dropdownId,
   );
 
   if (!customViewData) {
@@ -152,8 +156,8 @@ export const ObjectOptionsDropdownCustomView = ({
       <ObjectOptionsDropdownMenuViewName currentView={customViewData} />
       <DropdownMenuSeparator />
       <SelectableList
-        selectableListInstanceId={OBJECT_OPTIONS_DROPDOWN_ID}
-        focusId={OBJECT_OPTIONS_DROPDOWN_ID}
+        selectableListInstanceId={dropdownId}
+        focusId={dropdownId}
         selectableItemIdArray={selectableItemIdArray}
       >
         <DropdownMenuItemsContainer scrollable={false}>

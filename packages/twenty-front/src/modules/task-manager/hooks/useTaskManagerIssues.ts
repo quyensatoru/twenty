@@ -23,6 +23,7 @@ const ISSUE_BASE_RECORD_GQL_FIELDS = {
   dueDate: true,
   projectId: true,
   sprintId: true,
+  epicId: true,
   parentId: true,
   assignee: true,
   reporter: true,

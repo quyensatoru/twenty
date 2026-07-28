@@ -65,6 +65,18 @@ export const buildIssueStandardFlatIndexMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  epicIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'epicIdIndex',
+      relatedFieldNames: ['epic'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
   parentIdIndex: createStandardIndexFlatMetadata({
     objectName,
     workspaceId,

@@ -197,6 +197,8 @@ export enum MessageChannelVisibility {
 export type Mutation = {
   __typename?: 'Mutation';
   activateWorkflowVersion: Scalars['Boolean']['output'];
+  /** Close a sprint and move its unfinished issues to the backlog or to another sprint. */
+  completeSprint: Scalars['Int']['output'];
   computeStepOutputSchema: Scalars['JSON']['output'];
   createDraftFromWorkflowVersion: WorkflowVersionDto;
   createWorkflowVersionEdge: WorkflowVersionStepChanges;
@@ -223,6 +225,12 @@ export type Mutation = {
 
 export type MutationActivateWorkflowVersionArgs = {
   workflowVersionId: Scalars['UUID']['input'];
+};
+
+
+export type MutationCompleteSprintArgs = {
+  sprintId: Scalars['UUID']['input'];
+  targetSprintId?: InputMaybe<Scalars['UUID']['input']>;
 };
 
 

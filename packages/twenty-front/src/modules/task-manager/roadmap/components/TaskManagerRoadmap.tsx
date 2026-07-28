@@ -10,6 +10,7 @@ import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
+import { useTaskManagerEpics } from '@/task-manager/hooks/useTaskManagerEpics';
 import { useTaskManagerIssues } from '@/task-manager/hooks/useTaskManagerIssues';
 
 const StyledPage = styled.div`
@@ -95,9 +96,7 @@ const EpicGroup = ({
   return (
     <StyledEpicCard>
       <StyledEpicHeader>
-        <StyledEpicTitle>
-          {epic.issueKey} — {epic.title}
-        </StyledEpicTitle>
+        <StyledEpicTitle>{epic.name as string}</StyledEpicTitle>
         <StyledProgressLabel>
           {doneCount}/{childIssues.length}
         </StyledProgressLabel>
@@ -138,15 +137,10 @@ export const TaskManagerRoadmap = () => {
   const projectId = searchParams.get('project') ?? undefined;
 
   const { issues } = useTaskManagerIssues({ projectId });
-
-  const epics = useMemo(
-    () => issues.filter((issue) => issue.issueType === 'EPIC'),
-    [issues],
-  );
+  const { epics } = useTaskManagerEpics({ projectId });
 
   const issuesWithoutEpic = useMemo(
-    () =>
-      issues.filter((issue) => issue.issueType !== 'EPIC' && !issue.parentId),
+    () => issues.filter((issue) => !issue.epicId && !issue.parentId),
     [issues],
   );
 
@@ -162,7 +156,7 @@ export const TaskManagerRoadmap = () => {
           <EpicGroup
             key={epic.id}
             epic={epic}
-            childIssues={issues.filter((issue) => issue.parentId === epic.id)}
+            childIssues={issues.filter((issue) => issue.epicId === epic.id)}
             onNavigateToIssue={handleNavigateToIssue}
           />
         ))}

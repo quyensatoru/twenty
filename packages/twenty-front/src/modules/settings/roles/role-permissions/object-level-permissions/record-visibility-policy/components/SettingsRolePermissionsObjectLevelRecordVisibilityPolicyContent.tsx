@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isDefined } from 'twenty-shared/utils';
@@ -75,6 +75,12 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
       (policy) => policy.objectMetadataId === objectMetadataItem.id,
     );
 
+    // settingsDraftRoleFamilyState defaults to an empty stub (id: '') until
+    // the GetRoles query resolves — initializing from that stub before real
+    // data arrives would permanently lock in an empty condition list, since
+    // the init effect below only ever runs once.
+    const isRoleLoaded = settingsDraftRole.id === roleId;
+
     const [hasInitialized, setHasInitialized] = useState(false);
     const [staticConditions, setStaticConditions] = useState<
       RecordVisibilityPolicyStaticCondition[]
@@ -82,13 +88,13 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
     const [currentMemberFieldName, setCurrentMemberFieldName] = useState<
       string | null
     >(null);
-    // Tracks the persisted policy's own id across renders without forcing
-    // the sync effect below to depend on `existingPolicy` (which is a fresh
-    // derived value every render) — set once we know it, on init.
-    const existingPolicyIdRef = useRef<string | undefined>(undefined);
+    // Reuses the persisted policy's own id if there is one, otherwise mints
+    // one client-side — computed once on mount (not regenerated on every
+    // keystroke) so the draft policy's id stays stable across edits.
+    const [policyId] = useState(() => existingPolicy?.id ?? uuidv4());
 
     useEffect(() => {
-      if (hasInitialized) {
+      if (hasInitialized || !isRoleLoaded) {
         return;
       }
 
@@ -98,12 +104,11 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
         fields: objectMetadataItem.fields,
       });
 
-      existingPolicyIdRef.current = existingPolicy?.id;
       setStaticConditions(draft.staticConditions);
       setCurrentMemberFieldName(draft.currentMemberFieldName);
       setHasInitialized(true);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [hasInitialized]);
+    }, [hasInitialized, isRoleLoaded]);
 
     useEffect(() => {
       if (!hasInitialized) {
@@ -139,7 +144,7 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
             ...otherObjectPolicies,
             {
               __typename: 'RecordVisibilityPolicy' as const,
-              id: existingPolicyIdRef.current ?? uuidv4(),
+              id: policyId,
               roleId,
               objectMetadataId: objectMetadataItem.id,
               filter,

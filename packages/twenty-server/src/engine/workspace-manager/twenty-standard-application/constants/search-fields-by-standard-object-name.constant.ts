@@ -44,6 +44,7 @@ export const SEARCH_FIELDS_BY_STANDARD_OBJECT_NAME = {
     { name: 'name', type: FieldMetadataType.TEXT },
     { name: 'goal', type: FieldMetadataType.TEXT },
   ],
+  epic: [{ name: 'name', type: FieldMetadataType.TEXT }],
   issue: [
     { name: 'title', type: FieldMetadataType.TEXT },
     { name: 'issueKey', type: FieldMetadataType.TEXT },
