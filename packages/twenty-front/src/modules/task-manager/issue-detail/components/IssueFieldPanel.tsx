@@ -7,17 +7,28 @@ import { visibleRecordFieldsComponentSelector } from '@/object-record/record-fie
 import { useAtomComponentSelectorValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentSelectorValue';
 import { TaskManagerFieldCell } from '@/task-manager/components/TaskManagerFieldCell';
 
-const FIELD_PANEL_EXCLUDED_FIELD_NAMES = new Set(['title', 'description']);
+// title/description are edited in the main column; status/priority/issueKey
+// already show as pills in the page header — listing them again here would
+// just be visual noise.
+const FIELD_PANEL_EXCLUDED_FIELD_NAMES = new Set([
+  'title',
+  'description',
+  'status',
+  'priority',
+  'issueKey',
+]);
 
 const StyledPanel = styled.div`
   display: flex;
   flex-direction: column;
+  padding-bottom: ${themeCssVariables.spacing['4']};
 `;
 
 const StyledHeader = styled.div`
   align-items: center;
   display: flex;
-  padding: ${themeCssVariables.spacing['2']};
+  padding: ${themeCssVariables.spacing['4']} ${themeCssVariables.spacing['2']}
+    ${themeCssVariables.spacing['2']};
 `;
 
 const StyledHeaderTitle = styled.span`
@@ -30,8 +41,15 @@ const StyledHeaderTitle = styled.span`
 const StyledFieldList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${themeCssVariables.spacing['1']};
-  padding: 0 ${themeCssVariables.spacing['2']};
+  padding: 0 ${themeCssVariables.spacing['1']};
+`;
+
+const StyledFieldRow = styled.div`
+  border-radius: ${themeCssVariables.border.radius.sm};
+
+  &:hover {
+    background: ${themeCssVariables.background.transparent.light};
+  }
 `;
 
 type IssueFieldPanelProps = {
@@ -74,13 +92,14 @@ export const IssueFieldPanel = ({
       >
         <StyledFieldList>
           {visibleFieldMetadataItems.map((fieldMetadataItem) => (
-            <TaskManagerFieldCell
-              key={fieldMetadataItem.id}
-              recordId={recordId}
-              fieldMetadataItem={fieldMetadataItem}
-              objectMetadataItem={objectMetadataItem}
-              instanceIdPrefix={recordIndexId}
-            />
+            <StyledFieldRow key={fieldMetadataItem.id}>
+              <TaskManagerFieldCell
+                recordId={recordId}
+                fieldMetadataItem={fieldMetadataItem}
+                objectMetadataItem={objectMetadataItem}
+                instanceIdPrefix={recordIndexId}
+              />
+            </StyledFieldRow>
           ))}
         </StyledFieldList>
       </RecordFieldsScopeContextProvider>

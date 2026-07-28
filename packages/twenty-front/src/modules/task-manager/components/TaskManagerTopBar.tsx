@@ -1,12 +1,17 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { styled } from '@linaria/react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
+import { IconPlus } from 'twenty-ui/icon';
+import { Button, type SelectOption } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
+import { useCreateOneRecord } from '@/object-record/hooks/useCreateOneRecord';
+import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { useTaskManagerProjects } from '@/task-manager/hooks/useTaskManagerProjects';
+import { Select } from '@/ui/input/components/Select';
 
 const StyledTopBar = styled.div`
   align-items: center;
@@ -16,13 +21,8 @@ const StyledTopBar = styled.div`
   padding: ${themeCssVariables.spacing['2']} ${themeCssVariables.spacing['4']};
 `;
 
-const StyledSelect = styled.select`
-  background: ${themeCssVariables.background.transparent.lighter};
-  border: 1px solid ${themeCssVariables.border.color.medium};
-  border-radius: ${themeCssVariables.border.radius.sm};
-  color: ${themeCssVariables.font.color.primary};
-  font-size: ${themeCssVariables.font.size.md};
-  padding: ${themeCssVariables.spacing['1']} ${themeCssVariables.spacing['2']};
+const StyledProjectSelect = styled.div`
+  min-width: 160px;
 `;
 
 const StyledTabs = styled.div`
@@ -66,13 +66,27 @@ type TaskManagerTopBarProps = {
 };
 
 export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
+  const { t } = useLingui();
   const goToTab = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { projects } = useTaskManagerProjects();
+  const { createOneRecord } = useCreateOneRecord({
+    objectNameSingular: 'issue',
+  });
+  const { openRecordInSidePanel } = useOpenRecordInSidePanel();
 
   const selectedProjectId = searchParams.get('project') ?? '';
+
+  const projectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      projects.map((project) => ({
+        label: project.name as string,
+        value: project.id,
+      })),
+    [projects],
+  );
 
   const handleProjectChange = (projectId: string) => {
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -93,21 +107,35 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
     });
   };
 
+  const handleCreateIssue = async () => {
+    const targetProjectId = selectedProjectId || projects[0]?.id;
+
+    if (!targetProjectId) {
+      return;
+    }
+
+    const newIssue = await createOneRecord({ projectId: targetProjectId });
+
+    openRecordInSidePanel({
+      recordId: newIssue.id,
+      objectNameSingular: 'issue',
+      isNewRecord: true,
+    });
+  };
+
   return (
     <StyledTopBar>
-      <StyledSelect
-        value={selectedProjectId}
-        onChange={(event) => handleProjectChange(event.target.value)}
-      >
-        <option value="">
-          <Trans>All projects</Trans>
-        </option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.name as string}
-          </option>
-        ))}
-      </StyledSelect>
+      <StyledProjectSelect>
+        <Select
+          dropdownId="task-manager-project-select"
+          options={projectOptions}
+          value={selectedProjectId}
+          emptyOption={{ label: t`All projects`, value: '' }}
+          onChange={handleProjectChange}
+          withSearchInput={projectOptions.length > 5}
+          fullWidth
+        />
+      </StyledProjectSelect>
       <StyledTabs>
         {TABS.map((tab) => (
           <StyledTab
@@ -120,7 +148,16 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
           </StyledTab>
         ))}
       </StyledTabs>
-      <StyledRightSlot>{rightSlot}</StyledRightSlot>
+      <StyledRightSlot>
+        {rightSlot}
+        <Button
+          title={t`New Issue`}
+          Icon={IconPlus}
+          accent="blue"
+          onClick={handleCreateIssue}
+          disabled={projects.length === 0}
+        />
+      </StyledRightSlot>
     </StyledTopBar>
   );
 };
