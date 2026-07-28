@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { styled } from '@linaria/react';
@@ -100,6 +100,16 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
     setSearchParams(nextSearchParams);
   };
 
+  // A member scoped to a single project has nothing to pick — auto-select it
+  // instead of defaulting to the "All projects" option, which would misleadingly
+  // suggest there's a broader scope to switch away from.
+  useEffect(() => {
+    if (projects.length === 1 && !selectedProjectId) {
+      handleProjectChange(projects[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, selectedProjectId]);
+
   const handleTabClick = (path: AppPath) => {
     goToTab({
       pathname: path,
@@ -130,7 +140,11 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
           dropdownId="task-manager-project-select"
           options={projectOptions}
           value={selectedProjectId}
-          emptyOption={{ label: t`All projects`, value: '' }}
+          emptyOption={
+            projects.length === 1
+              ? undefined
+              : { label: t`All projects`, value: '' }
+          }
           onChange={handleProjectChange}
           withSearchInput={projectOptions.length > 5}
           fullWidth

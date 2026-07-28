@@ -24,6 +24,8 @@ import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/typ
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { type WorkspaceSelectQueryBuilder } from 'src/engine/twenty-orm/repository/workspace-select-query-builder';
+import { applyAppScopeFilter } from 'src/engine/twenty-orm/utils/apply-app-scope-filter.util';
+import { applyRecordVisibilityFilter } from 'src/engine/twenty-orm/utils/apply-record-visibility-filter.util';
 import { applyRowLevelPermissionPredicates } from 'src/engine/twenty-orm/utils/apply-row-level-permission-predicates.util';
 import { type WorkspaceRepository } from 'src/engine/twenty-orm/repository/workspace.repository';
 
@@ -92,6 +94,25 @@ export class GroupByWithRecordsService {
       internalContext: queryBuilderWithFiltersAndWithoutGroupBy.internalContext,
       authContext: queryBuilderWithFiltersAndWithoutGroupBy.authContext,
       featureFlagMap: queryBuilderWithFiltersAndWithoutGroupBy.featureFlagMap,
+    });
+
+    if (!queryBuilderWithFiltersAndWithoutGroupBy.shouldBypassPermissionChecks) {
+      applyRecordVisibilityFilter({
+        queryBuilder: queryBuilderWithFiltersAndWithoutGroupBy,
+        objectMetadata: flatObjectMetadata,
+        internalContext: queryBuilderWithFiltersAndWithoutGroupBy.internalContext,
+        authContext: queryBuilderWithFiltersAndWithoutGroupBy.authContext,
+      });
+    }
+
+    applyAppScopeFilter({
+      queryBuilder: queryBuilderWithFiltersAndWithoutGroupBy,
+      objectMetadata: flatObjectMetadata,
+      internalContext: queryBuilderWithFiltersAndWithoutGroupBy.internalContext,
+      authContext: queryBuilderWithFiltersAndWithoutGroupBy.authContext,
+      shouldBypassPermissionChecks:
+        queryBuilderWithFiltersAndWithoutGroupBy.shouldBypassPermissionChecks,
+      operation: 'read',
     });
 
     const queryBuilderWithPartitionBy = this.addPartitionByToQueryBuilder({

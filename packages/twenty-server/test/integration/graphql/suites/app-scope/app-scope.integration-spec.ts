@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { createOneOperationFactory } from 'test/integration/graphql/utils/create-one-operation-factory.util';
 import { findManyOperationFactory } from 'test/integration/graphql/utils/find-many-operation-factory.util';
+import { groupByOperationFactory } from 'test/integration/graphql/utils/group-by-operation-factory.util';
 import { makeGraphqlAPIRequest } from 'test/integration/graphql/utils/make-graphql-api-request.util';
 import { findManyObjectMetadata } from 'test/integration/metadata/suites/object-metadata/utils/find-many-object-metadata.util';
 import { upsertObjectPermissions } from 'test/integration/metadata/suites/object-permission/utils/upsert-object-permissions.util';
@@ -327,6 +328,28 @@ describe('app-scope permission enforcement', () => {
 
     const ids = response.body.data.issues.edges.map(
       (edge: any) => edge.node.id,
+    );
+
+    expect(ids).toContain(blueIssueId);
+    expect(ids).not.toContain(otherIssueId);
+  });
+
+  it('AC-13b: transitive read filter (1 hop) also applies in the Kanban board group-by-with-records query — Jony sees the BLOY issue but not Fraud, even though both default to the same "TODO" status group', async () => {
+    const response = await makeGraphqlAPIRequest(
+      groupByOperationFactory({
+        objectMetadataSingularName: 'issue',
+        objectMetadataPluralName: 'issues',
+        groupBy: [{ status: true }],
+        gqlFields: 'edges { node { id } }',
+      }),
+      APPLE_JONY_MEMBER_ACCESS_TOKEN,
+    );
+
+    expect(response.body.errors).toBeUndefined();
+
+    const ids = response.body.data.issuesGroupBy.flatMap(
+      (group: { edges: { node: { id: string } }[] }) =>
+        group.edges.map((edge) => edge.node.id),
     );
 
     expect(ids).toContain(blueIssueId);
