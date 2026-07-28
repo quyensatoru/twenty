@@ -2541,6 +2541,11 @@ msgstr "{sourceHandle} öğesini silmek istediğinizden emin misiniz? Bu adrese 
 msgid "Are you sure you want to delete {topicName}? Recipients will no longer be able to opt out of this category."
 msgstr "{topicName} öğesini silmek istediğinizden emin misiniz? Alıcılar artık bu kategoriden çıkış yapamayacak."
 
+#. js-lingui-id: qJfJfb
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Are you sure you want to delete this comment? This action cannot be undone."
+msgstr ""
+
 #. js-lingui-id: 4CHeVx
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Are you sure you want to delete this evaluation input?"
@@ -3429,6 +3434,7 @@ msgstr "Tarayamaz mısınız? Kopyalayın."
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/ValidationStep/ValidationStep.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/ui/feedback/snack-bar-manager/components/SnackBar.tsx
 #: src/modules/ui/layout/modal/components/ConfirmationModal.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationDangerZone.tsx
@@ -5984,6 +5990,7 @@ msgstr "sil"
 #: src/modules/settings/security/components/SSO/SettingsSecuritySSORowDropdownMenu.tsx
 #: src/modules/side-panel/pages/page-layout/components/RegularTabSettingsContent.tsx
 #: src/modules/side-panel/pages/page-layout/components/SoloTabSettingsContent.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/views/view-picker/components/ViewPickerCreateButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerEditButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
@@ -6068,6 +6075,12 @@ msgstr "Uygulamayı sil"
 #: src/modules/ai/components/AiChatThreadDeleteConfirmationModal.tsx
 msgid "Delete chat"
 msgstr "Sohbeti sil"
+
+#. js-lingui-id: VhDbAh
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Delete Comment"
+msgstr ""
 
 #. js-lingui-id: 4xlcyV
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -6778,6 +6791,7 @@ msgstr "eddy@gmail.com, @apple.com"
 #: src/modules/settings/roles/role-permissions/object-level-permissions/components/SettingsRolePermissionsObjectLevelTableRowOptionsDropdown.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/field-permissions/components/SettingsRolePermissionsObjectLevelObjectFieldPermissionTable.tsx
 #: src/modules/side-panel/hooks/useSidePanelMenu.ts
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
 msgid "Edit"
 msgstr "Düzenle"
@@ -12125,6 +12139,11 @@ msgstr "Yeni Grup"
 msgid "New Index"
 msgstr "Yeni dizin"
 
+#. js-lingui-id: LnJljZ
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "New Issue"
+msgstr ""
+
 #. js-lingui-id: o8MyXb
 #: src/pages/settings/developers/api-keys/SettingsDevelopersApiKeysNew.tsx
 msgid "New key"
@@ -13562,6 +13581,11 @@ msgstr "Açık"
 msgid "Open in app"
 msgstr "Uygulamada aç"
 
+#. js-lingui-id: D/Ckos
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Open in full page"
+msgstr ""
+
 #. js-lingui-id: DP5C7w
 #: src/modules/settings/members/components/MemberPermissionsTab.tsx
 msgid "Open in Roles"
@@ -14479,6 +14503,11 @@ msgstr "Profil - Ayarlar"
 msgid "Profile Picture"
 msgstr ""
 
+#. js-lingui-id: e0NrBM
+#: src/modules/task-manager/board/components/TaskManagerBoard.tsx
+msgid "Project"
+msgstr ""
+
 #. js-lingui-id: W9uQXX
 #: src/modules/workflow/workflow-steps/workflow-actions/ai-agent-action/components/WorkflowEditActionAiAgent.tsx
 msgid "Prompt"
@@ -15206,6 +15235,8 @@ msgstr "Replit kurulum bağlantıları, HTTPS MCP URL'si gerektirir."
 #: src/modules/activities/emails/components/EmailThreadBottomBar.tsx
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadComposer.tsx
 #: src/modules/side-panel/hooks/useOpenComposeEmailInSidePanel.ts
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 msgid "Reply"
 msgstr "Cevapla"
 
@@ -15648,6 +15679,7 @@ msgstr "Cumartesi"
 
 #. js-lingui-id: tfDRzk
 #: src/modules/settings/components/SaveAndCancelButtons/SaveButton.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/data-model/new-field/SettingsObjectNewFieldConfigure.tsx
 msgid "Save"
 msgstr "Kaydet"
@@ -20704,6 +20736,11 @@ msgstr "Bir açıklama yazın"
 #: src/pages/settings/ai/forms/components/SettingsAiAgentForm.tsx
 msgid "Write a description for this agent"
 msgstr "Bu temsilci için bir açıklama yazın"
+
+#. js-lingui-id: kuuS0x
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Write a reply..."
+msgstr ""
 
 #. js-lingui-id: zeCIJi
 #: src/modules/settings/logic-functions/components/tabs/SettingsLogicFunctionCodeEditorTab.tsx

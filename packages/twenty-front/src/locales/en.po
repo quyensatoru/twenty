@@ -2536,6 +2536,11 @@ msgstr "Are you sure you want to delete {sourceHandle}? Inbound mail forwarded t
 msgid "Are you sure you want to delete {topicName}? Recipients will no longer be able to opt out of this category."
 msgstr "Are you sure you want to delete {topicName}? Recipients will no longer be able to opt out of this category."
 
+#. js-lingui-id: qJfJfb
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Are you sure you want to delete this comment? This action cannot be undone."
+msgstr "Are you sure you want to delete this comment? This action cannot be undone."
+
 #. js-lingui-id: 4CHeVx
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Are you sure you want to delete this evaluation input?"
@@ -3424,6 +3429,7 @@ msgstr "Can't scan? Copy the"
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/ValidationStep/ValidationStep.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/ui/feedback/snack-bar-manager/components/SnackBar.tsx
 #: src/modules/ui/layout/modal/components/ConfirmationModal.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationDangerZone.tsx
@@ -5979,6 +5985,7 @@ msgstr "delete"
 #: src/modules/settings/security/components/SSO/SettingsSecuritySSORowDropdownMenu.tsx
 #: src/modules/side-panel/pages/page-layout/components/RegularTabSettingsContent.tsx
 #: src/modules/side-panel/pages/page-layout/components/SoloTabSettingsContent.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/views/view-picker/components/ViewPickerCreateButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerEditButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
@@ -6063,6 +6070,12 @@ msgstr "Delete app"
 #: src/modules/ai/components/AiChatThreadDeleteConfirmationModal.tsx
 msgid "Delete chat"
 msgstr "Delete chat"
+
+#. js-lingui-id: VhDbAh
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Delete Comment"
+msgstr "Delete Comment"
 
 #. js-lingui-id: 4xlcyV
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -6773,6 +6786,7 @@ msgstr "eddy@gmail.com, @apple.com"
 #: src/modules/settings/roles/role-permissions/object-level-permissions/components/SettingsRolePermissionsObjectLevelTableRowOptionsDropdown.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/field-permissions/components/SettingsRolePermissionsObjectLevelObjectFieldPermissionTable.tsx
 #: src/modules/side-panel/hooks/useSidePanelMenu.ts
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
 msgid "Edit"
 msgstr "Edit"
@@ -12120,6 +12134,11 @@ msgstr "New Group"
 msgid "New Index"
 msgstr "New Index"
 
+#. js-lingui-id: LnJljZ
+#: src/modules/task-manager/components/TaskManagerTopBar.tsx
+msgid "New Issue"
+msgstr "New Issue"
+
 #. js-lingui-id: o8MyXb
 #: src/pages/settings/developers/api-keys/SettingsDevelopersApiKeysNew.tsx
 msgid "New key"
@@ -13557,6 +13576,11 @@ msgstr "Open in"
 msgid "Open in app"
 msgstr "Open in app"
 
+#. js-lingui-id: D/Ckos
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Open in full page"
+msgstr "Open in full page"
+
 #. js-lingui-id: DP5C7w
 #: src/modules/settings/members/components/MemberPermissionsTab.tsx
 msgid "Open in Roles"
@@ -14474,6 +14498,11 @@ msgstr "Profile - Settings"
 msgid "Profile Picture"
 msgstr "Profile Picture"
 
+#. js-lingui-id: e0NrBM
+#: src/modules/task-manager/board/components/TaskManagerBoard.tsx
+msgid "Project"
+msgstr "Project"
+
 #. js-lingui-id: W9uQXX
 #: src/modules/workflow/workflow-steps/workflow-actions/ai-agent-action/components/WorkflowEditActionAiAgent.tsx
 msgid "Prompt"
@@ -15201,6 +15230,8 @@ msgstr "Replit install links require an HTTPS MCP URL."
 #: src/modules/activities/emails/components/EmailThreadBottomBar.tsx
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadComposer.tsx
 #: src/modules/side-panel/hooks/useOpenComposeEmailInSidePanel.ts
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 msgid "Reply"
 msgstr "Reply"
 
@@ -15643,6 +15674,7 @@ msgstr "Saturday"
 
 #. js-lingui-id: tfDRzk
 #: src/modules/settings/components/SaveAndCancelButtons/SaveButton.tsx
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/data-model/new-field/SettingsObjectNewFieldConfigure.tsx
 msgid "Save"
 msgstr "Save"
@@ -20701,6 +20733,11 @@ msgstr "Write a description"
 #: src/pages/settings/ai/forms/components/SettingsAiAgentForm.tsx
 msgid "Write a description for this agent"
 msgstr "Write a description for this agent"
+
+#. js-lingui-id: kuuS0x
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+msgid "Write a reply..."
+msgstr "Write a reply..."
 
 #. js-lingui-id: zeCIJi
 #: src/modules/settings/logic-functions/components/tabs/SettingsLogicFunctionCodeEditorTab.tsx
