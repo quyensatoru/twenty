@@ -14,5 +14,8 @@ export class IssueCommentWorkspaceEntity extends BaseWorkspaceEntity {
   issueId: string;
   author: EntityRelation<WorkspaceMemberWorkspaceEntity> | null;
   authorId: string | null;
+  parentComment: EntityRelation<IssueCommentWorkspaceEntity> | null;
+  parentCommentId: string | null;
+  replies: EntityRelation<IssueCommentWorkspaceEntity[]>;
   searchVector: string;
 }

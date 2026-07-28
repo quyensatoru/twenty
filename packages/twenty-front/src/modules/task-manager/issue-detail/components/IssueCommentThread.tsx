@@ -5,16 +5,34 @@ import { useCreateBlockNote } from '@blocknote/react';
 import '@blocknote/react/style.css';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
+import { createPortal } from 'react-dom';
+import { isDefined } from 'twenty-shared/utils';
 import { Avatar } from 'twenty-ui/data-display';
-import { Button } from 'twenty-ui/input';
+import {
+  IconArrowBackUp,
+  IconDotsVertical,
+  IconPencil,
+  IconTrash,
+} from 'twenty-ui/icon';
+import { Button, LightIconButton } from 'twenty-ui/input';
+import { MenuItem } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { BlockEditor } from '@/blocknote-editor/components/BlockEditor';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
+import {
+  type IssueCommentRecord,
+  useIssueComments,
+} from '@/task-manager/issue-detail/hooks/useIssueComments';
+import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
+import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
+import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
+import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
+import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
+import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
-import { useIssueComments } from '@/task-manager/issue-detail/hooks/useIssueComments';
 
 const EMPTY_PARAGRAPH = [{ type: 'paragraph' as const, content: '' }];
 
@@ -24,9 +42,26 @@ const StyledContainer = styled.div`
   gap: ${themeCssVariables.spacing['3']};
 `;
 
+const StyledThread = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${themeCssVariables.spacing['2']};
+`;
+
 const StyledComment = styled.div`
   display: flex;
   gap: ${themeCssVariables.spacing['2']};
+`;
+
+const StyledReplies = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${themeCssVariables.spacing['2']};
+  margin-left: ${themeCssVariables.spacing['8']};
+`;
+
+const StyledReplyComposer = styled.div`
+  margin-left: ${themeCssVariables.spacing['8']};
 `;
 
 const StyledCommentBody = styled.div`
@@ -53,6 +88,13 @@ const StyledCommentDate = styled.span`
   font-size: ${themeCssVariables.font.size.sm};
 `;
 
+const StyledCommentActions = styled.div`
+  align-items: center;
+  display: flex;
+  gap: ${themeCssVariables.spacing['1']};
+  margin-left: auto;
+`;
+
 const StyledCommentBodyEditor = styled.div`
   & .editor {
     min-height: 0;
@@ -75,10 +117,23 @@ const StyledComposerEditor = styled.div`
   }
 `;
 
+const StyledComposerActions = styled.div`
+  display: flex;
+  gap: ${themeCssVariables.spacing['2']};
+`;
+
 const isEditorEmpty = (editor: typeof BLOCK_SCHEMA.BlockNoteEditor) =>
   editor.document.every(
     (block) => !Array.isArray(block.content) || block.content.length === 0,
   );
+
+const getAuthorName = (
+  author: IssueCommentRecord['author'],
+  unknownLabel: string,
+) =>
+  author?.name
+    ? `${author.name.firstName ?? ''} ${author.name.lastName ?? ''}`.trim()
+    : unknownLabel;
 
 const CommentBody = ({
   blocknote,
@@ -98,22 +153,69 @@ const CommentBody = ({
   );
 };
 
-type IssueCommentThreadProps = {
-  issueId: string;
+const EditableCommentBody = ({
+  blocknote,
+  onSave,
+  onCancel,
+}: {
+  blocknote: string | null | undefined;
+  onSave: (blocknote: string) => Promise<void>;
+  onCancel: () => void;
+}) => {
+  const { t } = useLingui();
+  const [isSaving, setIsSaving] = useState(false);
+  const editor = useCreateBlockNote({
+    initialContent: parseInitialBlocknote(blocknote) ?? EMPTY_PARAGRAPH,
+    domAttributes: { editor: { class: 'editor' } },
+    schema: BLOCK_SCHEMA,
+  });
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(JSON.stringify(editor.document));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <StyledComposer>
+      <StyledComposerEditor>
+        <BlockEditor editor={editor} />
+      </StyledComposerEditor>
+      <StyledComposerActions>
+        <Button title={t`Cancel`} onClick={onCancel} disabled={isSaving} />
+        <Button
+          title={t`Save`}
+          onClick={handleSave}
+          disabled={isSaving}
+          accent="blue"
+        />
+      </StyledComposerActions>
+    </StyledComposer>
+  );
 };
 
-export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
-  const { t } = useLingui();
-  const { comments, postComment } = useIssueComments(issueId);
-  const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
+type CommentComposerProps = {
+  placeholder: string;
+  submitLabel: string;
+  onSubmit: (blocknote: string) => Promise<void>;
+};
+
+const CommentComposer = ({
+  placeholder,
+  submitLabel,
+  onSubmit,
+}: CommentComposerProps) => {
   const [hasContent, setHasContent] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const composerEditor = useCreateBlockNote({
+  const editor = useCreateBlockNote({
     domAttributes: { editor: { class: 'editor' } },
     schema: BLOCK_SCHEMA,
     placeholders: {
-      default: t`Write a comment...`,
+      default: placeholder,
     },
     pasteHandler: ({ defaultPasteHandler }) =>
       defaultPasteHandler({
@@ -122,22 +224,19 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
       }),
   });
 
-  const handleComposerChange = () => {
-    setHasContent(!isEditorEmpty(composerEditor));
+  const handleChange = () => {
+    setHasContent(!isEditorEmpty(editor));
   };
 
   const handleSend = async () => {
-    if (isEditorEmpty(composerEditor)) {
+    if (isEditorEmpty(editor)) {
       return;
     }
 
     setIsSending(true);
     try {
-      await postComment(
-        JSON.stringify(composerEditor.document),
-        currentWorkspaceMember?.id,
-      );
-      composerEditor.replaceBlocks(composerEditor.document, EMPTY_PARAGRAPH);
+      await onSubmit(JSON.stringify(editor.document));
+      editor.replaceBlocks(editor.document, EMPTY_PARAGRAPH);
       setHasContent(false);
     } finally {
       setIsSending(false);
@@ -145,45 +244,204 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
   };
 
   return (
-    <StyledContainer>
-      {comments.map((comment) => {
-        const author = comment.author as
-          | { name?: { firstName?: string; lastName?: string } }
-          | null
-          | undefined;
-        const authorName = author?.name
-          ? `${author.name.firstName ?? ''} ${author.name.lastName ?? ''}`.trim()
-          : t`Unknown`;
+    <StyledComposer>
+      <StyledComposerEditor>
+        <BlockEditor editor={editor} onChange={handleChange} />
+      </StyledComposerEditor>
+      <Button
+        title={submitLabel}
+        onClick={handleSend}
+        disabled={isSending || !hasContent}
+        accent="blue"
+      />
+    </StyledComposer>
+  );
+};
 
-        return (
-          <StyledComment key={comment.id}>
-            <Avatar placeholder={authorName} type="rounded" size="md" />
-            <StyledCommentBody>
-              <StyledCommentHeader>
-                <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
-                <StyledCommentDate>
-                  {new Date(comment.createdAt as string).toLocaleString()}
-                </StyledCommentDate>
-              </StyledCommentHeader>
-              <CommentBody blocknote={comment.bodyV2?.blocknote} />
-            </StyledCommentBody>
-          </StyledComment>
-        );
-      })}
-      <StyledComposer>
-        <StyledComposerEditor>
-          <BlockEditor
-            editor={composerEditor}
-            onChange={handleComposerChange}
+type CommentRowProps = {
+  comment: IssueCommentRecord;
+  currentWorkspaceMemberId: string | undefined;
+  onUpdate: (commentId: string, blocknote: string) => Promise<void>;
+  onDelete: (commentId: string) => Promise<void>;
+  onReply?: () => void;
+};
+
+const CommentRow = ({
+  comment,
+  currentWorkspaceMemberId,
+  onUpdate,
+  onDelete,
+  onReply,
+}: CommentRowProps) => {
+  const { t } = useLingui();
+  const [isEditing, setIsEditing] = useState(false);
+  const { openModal } = useModal();
+  const { closeDropdown } = useCloseDropdown();
+
+  const dropdownId = `issue-comment-menu-${comment.id}`;
+  const deleteModalId = `issue-comment-delete-modal-${comment.id}`;
+
+  const isAuthor =
+    isDefined(currentWorkspaceMemberId) &&
+    isDefined(comment.authorId) &&
+    comment.authorId === currentWorkspaceMemberId;
+
+  const authorName = getAuthorName(comment.author, t`Unknown`);
+
+  const handleEdit = () => {
+    closeDropdown(dropdownId);
+    setIsEditing(true);
+  };
+
+  const handleDeleteClick = () => {
+    closeDropdown(dropdownId);
+    openModal(deleteModalId);
+  };
+
+  const handleSaveEdit = async (blocknote: string) => {
+    await onUpdate(comment.id, blocknote);
+    setIsEditing(false);
+  };
+
+  return (
+    <StyledComment>
+      <Avatar placeholder={authorName} type="rounded" size="md" />
+      <StyledCommentBody>
+        <StyledCommentHeader>
+          <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
+          <StyledCommentDate>
+            {new Date(comment.createdAt).toLocaleString()}
+          </StyledCommentDate>
+          <StyledCommentActions>
+            {isDefined(onReply) && (
+              <LightIconButton
+                className="displayOnHover"
+                Icon={IconArrowBackUp}
+                accent="tertiary"
+                title={t`Reply`}
+                onClick={onReply}
+              />
+            )}
+            {isAuthor && (
+              <Dropdown
+                dropdownId={dropdownId}
+                dropdownPlacement="bottom-end"
+                clickableComponent={
+                  <LightIconButton
+                    className="displayOnHover"
+                    Icon={IconDotsVertical}
+                    accent="tertiary"
+                  />
+                }
+                dropdownComponents={
+                  <DropdownContent>
+                    <DropdownMenuItemsContainer>
+                      <MenuItem
+                        LeftIcon={IconPencil}
+                        text={t`Edit`}
+                        onClick={handleEdit}
+                      />
+                      <MenuItem
+                        LeftIcon={IconTrash}
+                        text={t`Delete`}
+                        accent="danger"
+                        onClick={handleDeleteClick}
+                      />
+                    </DropdownMenuItemsContainer>
+                  </DropdownContent>
+                }
+              />
+            )}
+          </StyledCommentActions>
+        </StyledCommentHeader>
+        {isEditing ? (
+          <EditableCommentBody
+            blocknote={comment.bodyV2?.blocknote}
+            onSave={handleSaveEdit}
+            onCancel={() => setIsEditing(false)}
           />
-        </StyledComposerEditor>
-        <Button
-          title={t`Comment`}
-          onClick={handleSend}
-          disabled={isSending || !hasContent}
-          accent="blue"
-        />
-      </StyledComposer>
+        ) : (
+          <CommentBody blocknote={comment.bodyV2?.blocknote} />
+        )}
+      </StyledCommentBody>
+      {createPortal(
+        <ConfirmationModal
+          modalInstanceId={deleteModalId}
+          title={t`Delete Comment`}
+          subtitle={t`Are you sure you want to delete this comment? This action cannot be undone.`}
+          onConfirmClick={() => onDelete(comment.id)}
+          confirmButtonText={t`Delete Comment`}
+        />,
+        document.body,
+      )}
+    </StyledComment>
+  );
+};
+
+type IssueCommentThreadProps = {
+  issueId: string;
+};
+
+export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
+  const { t } = useLingui();
+  const { comments, postComment, postReply, updateComment, deleteComment } =
+    useIssueComments(issueId);
+  const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+
+  return (
+    <StyledContainer>
+      {comments.map((comment) => (
+        <StyledThread key={comment.id}>
+          <CommentRow
+            comment={comment}
+            currentWorkspaceMemberId={currentWorkspaceMember?.id}
+            onUpdate={updateComment}
+            onDelete={deleteComment}
+            onReply={() =>
+              setReplyingToId((current) =>
+                current === comment.id ? null : comment.id,
+              )
+            }
+          />
+          {comment.replies.length > 0 && (
+            <StyledReplies>
+              {comment.replies.map((reply) => (
+                <CommentRow
+                  key={reply.id}
+                  comment={reply}
+                  currentWorkspaceMemberId={currentWorkspaceMember?.id}
+                  onUpdate={updateComment}
+                  onDelete={deleteComment}
+                />
+              ))}
+            </StyledReplies>
+          )}
+          {replyingToId === comment.id && (
+            <StyledReplyComposer>
+              <CommentComposer
+                placeholder={t`Write a reply...`}
+                submitLabel={t`Reply`}
+                onSubmit={async (blocknote) => {
+                  await postReply(
+                    comment.id,
+                    blocknote,
+                    currentWorkspaceMember?.id,
+                  );
+                  setReplyingToId(null);
+                }}
+              />
+            </StyledReplyComposer>
+          )}
+        </StyledThread>
+      ))}
+      <CommentComposer
+        placeholder={t`Write a comment...`}
+        submitLabel={t`Comment`}
+        onSubmit={(blocknote) =>
+          postComment(blocknote, currentWorkspaceMember?.id)
+        }
+      />
     </StyledContainer>
   );
 };

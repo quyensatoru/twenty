@@ -2359,6 +2359,12 @@ export const STANDARD_OBJECTS = {
       bodyV2: { universalIdentifier: 'e2016fcf-bfb3-437e-9976-06e0e44ad802' },
       issue: { universalIdentifier: '5a6c596e-eef7-4a9b-9c04-36dd27ea70ba' },
       author: { universalIdentifier: '26a86ec5-49c3-4426-913b-7a58f7d6186f' },
+      parentComment: {
+        universalIdentifier: '9ba28755-5027-4181-bb3c-6c24686a9906',
+      },
+      replies: {
+        universalIdentifier: '786c8e13-fc3e-4739-9770-cc4211458765',
+      },
       attachments: {
         universalIdentifier: getSystemRelationFieldUniversalIdentifier({
           applicationUniversalIdentifier:
@@ -2376,6 +2382,9 @@ export const STANDARD_OBJECTS = {
       },
       authorIdIndex: {
         universalIdentifier: 'b807834c-9291-4c6d-a221-5097a8015e4b',
+      },
+      parentCommentIdIndex: {
+        universalIdentifier: '6a9645b0-f8c7-41fc-9375-80c660aa31ed',
       },
     },
     views: {

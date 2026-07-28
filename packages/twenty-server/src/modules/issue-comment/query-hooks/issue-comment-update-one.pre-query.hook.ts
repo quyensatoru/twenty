@@ -9,9 +9,11 @@ import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runne
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
+import { assertIssueCommentAuthorOrAppScopeAccessOrThrow } from 'src/modules/issue-comment/utils/assert-issue-comment-author-or-app-scope-access-or-throw.util';
 import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/standard-objects/issue-comment.workspace-entity';
 
-// Only checked when `issueId` is being reassigned.
+// `issueId` reassignment is app-scope gated; editing the comment itself is
+// restricted to its author (or a role with blanket write access).
 @Injectable()
 @WorkspaceQueryHook(`issueComment.updateOne`)
 export class IssueCommentUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance {
@@ -32,6 +34,13 @@ export class IssueCommentUpdateOnePreQueryHook implements WorkspacePreQueryHookI
         foreignKeyValue: payload.data.issueId,
       });
     }
+
+    await assertIssueCommentAuthorOrAppScopeAccessOrThrow({
+      authContext,
+      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      issueCommentId: payload.id,
+      operation: 'write',
+    });
 
     return payload;
   }

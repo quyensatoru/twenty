@@ -40,4 +40,16 @@ export const buildIssueCommentStandardFlatIndexMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  parentCommentIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'parentCommentIdIndex',
+      relatedFieldNames: ['parentComment'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
 });
