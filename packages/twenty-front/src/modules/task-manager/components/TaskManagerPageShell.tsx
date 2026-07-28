@@ -1,5 +1,8 @@
 import { type ReactNode, useEffect } from 'react';
 
+import { AppPath } from 'twenty-shared/types';
+import { getAppPath } from 'twenty-shared/utils';
+
 import { ContextStoreComponentInstanceContext } from '@/context-store/states/contexts/ContextStoreComponentInstanceContext';
 import { contextStoreCurrentObjectMetadataItemIdComponentState } from '@/context-store/states/contextStoreCurrentObjectMetadataItemIdComponentState';
 import { contextStoreCurrentViewIdComponentState } from '@/context-store/states/contextStoreCurrentViewIdComponentState';
@@ -14,7 +17,13 @@ import { useAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useAtomC
 import { useTaskManagerIssueViews } from '@/task-manager/hooks/useTaskManagerIssueViews';
 import { ViewComponentInstanceContext } from '@/views/states/contexts/ViewComponentInstanceContext';
 
-const TASK_MANAGER_CONTEXT_STORE_INSTANCE_ID = 'task-manager';
+// Scoped per viewId (not a single shared constant): the side panel can mount
+// a second TaskManagerPageShell (issue detail, tableView) while a full-page
+// one is already mounted underneath (e.g. Board, kanbanView). A shared
+// instance id would make them stomp each other's contextStoreCurrentViewId,
+// failing the gate below for whichever one didn't write last (blank page).
+const getTaskManagerContextStoreInstanceId = (viewId: string) =>
+  `task-manager-${viewId}`;
 
 // Mounts the same instance-context provider stack RecordIndexPage uses, so
 // the reused field-system hooks (visibility/order, ObjectOptionsDropdown,
@@ -33,18 +42,19 @@ const TaskManagerContextStoreGate = ({
   children: ReactNode;
 }) => {
   const { issueObjectMetadataItem } = useTaskManagerIssueViews();
+  const contextStoreInstanceId = getTaskManagerContextStoreInstanceId(viewId);
 
   const [
     contextStoreCurrentObjectMetadataItemId,
     setContextStoreCurrentObjectMetadataItemId,
   ] = useAtomComponentState(
     contextStoreCurrentObjectMetadataItemIdComponentState,
-    TASK_MANAGER_CONTEXT_STORE_INSTANCE_ID,
+    contextStoreInstanceId,
   );
   const [contextStoreCurrentViewId, setContextStoreCurrentViewId] =
     useAtomComponentState(
       contextStoreCurrentViewIdComponentState,
-      TASK_MANAGER_CONTEXT_STORE_INSTANCE_ID,
+      contextStoreInstanceId,
     );
 
   useEffect(() => {
@@ -102,7 +112,7 @@ export const TaskManagerPageShell = ({
 
   return (
     <ContextStoreComponentInstanceContext.Provider
-      value={{ instanceId: TASK_MANAGER_CONTEXT_STORE_INSTANCE_ID }}
+      value={{ instanceId: getTaskManagerContextStoreInstanceId(viewId) }}
     >
       <TaskManagerContextStoreGate viewId={viewId}>
         <RecordIndexContextProvider
@@ -114,7 +124,8 @@ export const TaskManagerPageShell = ({
             objectNameSingular: issueObjectMetadataItem.nameSingular,
             objectMetadataItem: issueObjectMetadataItem,
             onIndexRecordsLoaded: () => {},
-            indexIdentifierUrl: (recordId) => `/task-manager/issue/${recordId}`,
+            indexIdentifierUrl: (recordId) =>
+              getAppPath(AppPath.TaskManagerIssuePage, { issueId: recordId }),
             recordFieldByFieldMetadataItemId,
             labelIdentifierFieldMetadataItem,
             fieldMetadataItemByFieldMetadataItemId,

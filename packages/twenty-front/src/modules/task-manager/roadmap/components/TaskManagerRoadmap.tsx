@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -8,6 +8,7 @@ import { ProgressBar } from 'twenty-ui/feedback';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
 import { useTaskManagerIssues } from '@/task-manager/hooks/useTaskManagerIssues';
 
@@ -132,7 +133,7 @@ const EpicGroup = ({
 
 export const TaskManagerRoadmap = () => {
   const { t } = useLingui();
-  const goToIssuePage = useNavigate();
+  const { openRecordInSidePanel } = useOpenRecordInSidePanel();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project') ?? undefined;
 
@@ -150,7 +151,7 @@ export const TaskManagerRoadmap = () => {
   );
 
   const handleNavigateToIssue = (issueId: string) => {
-    goToIssuePage(`/task-manager/issue/${issueId}`);
+    openRecordInSidePanel({ recordId: issueId, objectNameSingular: 'issue' });
   };
 
   return (

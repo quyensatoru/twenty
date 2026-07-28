@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom';
-
 import { Draggable } from '@hello-pangea/dnd';
 import { styled } from '@linaria/react';
 import { Avatar, Tag } from 'twenty-ui/data-display';
@@ -7,6 +5,7 @@ import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { getCssCompatibleDraggableProps } from '@/ui/layout/draggable-list/utils/getCssCompatibleDraggableProps';
 
 const StyledRow = styled.div<{ isDragging: boolean }>`
@@ -46,7 +45,7 @@ export const BacklogIssueRow = ({
   index,
   priorityField,
 }: BacklogIssueRowProps) => {
-  const goToIssuePage = useNavigate();
+  const { openRecordInSidePanel } = useOpenRecordInSidePanel();
 
   const priorityOption = priorityField?.options?.find(
     (option) => option.value === issue.priority,
@@ -70,7 +69,12 @@ export const BacklogIssueRow = ({
           // oxlint-disable-next-line react/jsx-props-no-spreading
           {...provided.dragHandleProps}
           isDragging={snapshot.isDragging}
-          onClick={() => goToIssuePage(`/task-manager/issue/${issue.id}`)}
+          onClick={() =>
+            openRecordInSidePanel({
+              recordId: issue.id,
+              objectNameSingular: 'issue',
+            })
+          }
         >
           <StyledIssueKey>{issue.issueKey}</StyledIssueKey>
           <StyledTitle>{issue.title}</StyledTitle>

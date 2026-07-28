@@ -26,10 +26,10 @@ export enum AppPath {
   RecordShowPage = '/object/:objectNameSingular/:objectRecordId',
   PageLayoutPage = '/page/:pageLayoutId',
 
-  TaskManagerBoardPage = '/task-manager',
-  TaskManagerBacklogPage = '/task-manager/backlog',
-  TaskManagerRoadmapPage = '/task-manager/roadmap',
-  TaskManagerIssuePage = '/task-manager/issue/:issueId',
+  TaskManagerBoardPage = '/task',
+  TaskManagerBacklogPage = '/task/backlog',
+  TaskManagerRoadmapPage = '/task/roadmap',
+  TaskManagerIssuePage = '/task/issue/:issueId',
 
   Settings = `settings`,
   SettingsCatchAll = `/${Settings}/*`,

@@ -9,6 +9,7 @@ import { RecordComponentInstanceContextsWrapper } from '@/object-record/componen
 import { PageLayoutRecordPageRenderer } from '@/object-record/record-show/components/PageLayoutRecordPageRenderer';
 import { useRecordShowPage } from '@/object-record/record-show/hooks/useRecordShowPage';
 import { recordStoreFamilySelector } from '@/object-record/record-store/states/selectors/recordStoreFamilySelector';
+import { SidePanelTaskManagerIssueView } from '@/side-panel/pages/task-manager-issue/components/SidePanelTaskManagerIssueView';
 import { useComponentInstanceStateContext } from '@/ui/utilities/state/component-state/hooks/useComponentInstanceStateContext';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { styled } from '@linaria/react';
@@ -81,13 +82,17 @@ export const SidePanelRecordPage = () => {
                 recordId: objectRecordId,
               }}
             >
-              <PageLayoutRecordPageRenderer
-                targetRecordIdentifier={{
-                  id: objectRecordId,
-                  targetObjectNameSingular: objectNameSingular,
-                }}
-                isInSidePanel
-              />
+              {objectNameSingular === 'issue' ? (
+                <SidePanelTaskManagerIssueView issueId={objectRecordId} />
+              ) : (
+                <PageLayoutRecordPageRenderer
+                  targetRecordIdentifier={{
+                    id: objectRecordId,
+                    targetObjectNameSingular: objectNameSingular,
+                  }}
+                  isInSidePanel
+                />
+              )}
             </TimelineActivityContext.Provider>
           </StyledSidePanelRecord>
         </CommandMenuComponentInstanceContext.Provider>

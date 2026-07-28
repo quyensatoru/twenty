@@ -84,6 +84,14 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
     folderUniversalIdentifier: '20202020-b007-4b07-8b07-c0aba11c0007',
     position: 2,
   },
+  taskManager: {
+    universalIdentifier: '20202020-b00b-4b0b-8b0b-c0aba11c000b',
+    type: NavigationMenuItemType.LINK,
+    name: 'Task Manager',
+    link: '/task',
+    icon: 'IconLayoutKanban',
+    position: 8,
+  },
 } as const;
 
 export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
@@ -95,6 +103,7 @@ export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
   allNotes: 'turquoise',
   allIssues: 'turquoise',
   allOpportunities: 'red',
+  taskManager: 'turquoise',
   workflowsFolder: 'orange',
   allDashboards: 'gray',
   workflowsFolderAllWorkflows: 'gray',
