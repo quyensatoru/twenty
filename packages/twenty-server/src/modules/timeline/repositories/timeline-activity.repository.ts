@@ -5,6 +5,10 @@ import { isDefined } from 'twenty-shared/utils';
 import { In, MoreThan } from 'typeorm';
 
 import { objectRecordDiffMerge } from 'src/engine/core-modules/event-emitter/utils/object-record-diff-merge';
+import { getFlatFieldsFromFlatObjectMetadata } from 'src/engine/api/graphql/workspace-schema-builder/utils/get-flat-fields-for-flat-object-metadata.util';
+import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
+import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
+import { getObjectMetadataIdByName } from 'src/engine/metadata-modules/flat-object-metadata/utils/get-object-metadata-id-by-name.util';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
 import { type TimelineActivityPayload } from 'src/modules/timeline/types/timeline-activity-payload';
@@ -18,10 +22,18 @@ type TimelineActivityPayloadWorkspaceIdAndObjectSingularName = {
   objectSingularName: string;
 };
 
+type TimelineActivityPayloadWorkspaceIdAndPropertyName = Omit<
+  TimelineActivityPayloadWorkspaceIdAndObjectSingularName,
+  'objectSingularName'
+> & {
+  timelineActivityPropertyName: string;
+};
+
 @Injectable()
 export class TimelineActivityRepository {
   constructor(
     private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly workspaceManyOrAllFlatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
   ) {}
 
   async upsertTimelineActivities({
@@ -29,11 +41,24 @@ export class TimelineActivityRepository {
     workspaceId,
     payloads,
   }: TimelineActivityPayloadWorkspaceIdAndObjectSingularName) {
+    const timelineActivityPropertyName =
+      await this.getTimelineActivityPropertyName(
+        objectSingularName,
+        workspaceId,
+      );
+
+    // timelineActivity has no target field wired for this object type (e.g. a
+    // new standard object added without its target<Object> relation) — skip
+    // rather than crash, since the activity feed is a non-critical side effect.
+    if (!isDefined(timelineActivityPropertyName)) {
+      return;
+    }
+
     const authContext = buildSystemAuthContext(workspaceId);
 
     await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
       const recentTimelineActivities = await this.findRecentTimelineActivities({
-        objectSingularName,
+        timelineActivityPropertyName,
         workspaceId,
         payloads,
       });
@@ -58,9 +83,6 @@ export class TimelineActivityRepository {
 
       const payloadsToInsert: TimelineActivityPayloadWorkspaceIdAndObjectSingularName['payloads'] =
         [];
-
-      const timelineActivityPropertyName =
-        await this.getTimelineActivityPropertyName(objectSingularName);
 
       for (const payload of payloadsToUpsert) {
         const recentTimelineActivity = recentTimelineActivities.find(
@@ -91,7 +113,7 @@ export class TimelineActivityRepository {
       }
 
       await this.insertTimelineActivities({
-        objectSingularName,
+        timelineActivityPropertyName,
         payloads: payloadsToInsert,
         workspaceId,
       });
@@ -99,10 +121,10 @@ export class TimelineActivityRepository {
   }
 
   private async findRecentTimelineActivities({
-    objectSingularName,
+    timelineActivityPropertyName,
     workspaceId,
     payloads,
-  }: TimelineActivityPayloadWorkspaceIdAndObjectSingularName) {
+  }: TimelineActivityPayloadWorkspaceIdAndPropertyName) {
     const timelineActivityTypeORMRepository =
       await this.globalWorkspaceOrmManager.getRepository(
         workspaceId,
@@ -113,9 +135,6 @@ export class TimelineActivityRepository {
       );
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-
-    const timelineActivityPropertyName =
-      await this.getTimelineActivityPropertyName(objectSingularName);
 
     const whereConditions: Record<string, unknown> = {
       [timelineActivityPropertyName]: In(
@@ -136,10 +155,10 @@ export class TimelineActivityRepository {
   }
 
   public async insertTimelineActivities({
-    objectSingularName,
+    timelineActivityPropertyName,
     workspaceId,
     payloads,
-  }: TimelineActivityPayloadWorkspaceIdAndObjectSingularName) {
+  }: TimelineActivityPayloadWorkspaceIdAndPropertyName) {
     if (payloads.length === 0) {
       return;
     }
@@ -152,9 +171,6 @@ export class TimelineActivityRepository {
           shouldBypassPermissionChecks: true,
         },
       );
-
-    const timelineActivityPropertyName =
-      await this.getTimelineActivityPropertyName(objectSingularName);
 
     return timelineActivityTypeORMRepository.insert(
       payloads.map((payload) => ({
@@ -195,7 +211,46 @@ export class TimelineActivityRepository {
     });
   }
 
-  private async getTimelineActivityPropertyName(objectSingularName: string) {
-    return `${buildTimelineActivityRelatedMorphFieldMetadataName(objectSingularName)}Id`;
+  private async getTimelineActivityPropertyName(
+    objectSingularName: string,
+    workspaceId: string,
+  ): Promise<string | undefined> {
+    const relationFieldName =
+      buildTimelineActivityRelatedMorphFieldMetadataName(objectSingularName);
+
+    const { flatObjectMetadataMaps, flatFieldMetadataMaps } =
+      await this.workspaceManyOrAllFlatEntityMapsCacheService.getOrRecomputeManyOrAllFlatEntityMaps(
+        {
+          workspaceId,
+          flatMapsKeys: ['flatObjectMetadataMaps', 'flatFieldMetadataMaps'],
+        },
+      );
+
+    const timelineActivityObjectMetadataId = getObjectMetadataIdByName({
+      flatObjectMetadataMaps,
+      objectName: 'timelineActivity',
+    });
+
+    const timelineActivityObjectMetadata = isDefined(
+      timelineActivityObjectMetadataId,
+    )
+      ? findFlatEntityByIdInFlatEntityMaps({
+          flatEntityId: timelineActivityObjectMetadataId,
+          flatEntityMaps: flatObjectMetadataMaps,
+        })
+      : undefined;
+
+    // Field metadata is named after the relation (e.g. 'targetIssue'); the
+    // 'Id'-suffixed column name only exists as the relation's joinColumnName.
+    const relationFieldExistsOnTimelineActivity =
+      isDefined(timelineActivityObjectMetadata) &&
+      getFlatFieldsFromFlatObjectMetadata(
+        timelineActivityObjectMetadata,
+        flatFieldMetadataMaps,
+      ).some((field) => field.name === relationFieldName);
+
+    return relationFieldExistsOnTimelineActivity
+      ? `${relationFieldName}Id`
+      : undefined;
   }
 }

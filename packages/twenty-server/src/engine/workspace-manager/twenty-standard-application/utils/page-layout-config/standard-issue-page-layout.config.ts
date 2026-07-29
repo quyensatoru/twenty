@@ -28,6 +28,20 @@ const ISSUE_PAGE_TABS = {
       },
     },
   },
+  timeline: {
+    universalIdentifier:
+      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.issueRecordPage.tabs.timeline
+        .universalIdentifier,
+    ...TAB_PROPS.timeline,
+    widgets: {
+      timeline: {
+        universalIdentifier:
+          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.issueRecordPage.tabs
+            .timeline.widgets.timeline.universalIdentifier,
+        ...WIDGET_PROPS.timeline,
+      },
+    },
+  },
 } as const satisfies Record<string, StandardPageLayoutTabConfig>;
 
 export const STANDARD_ISSUE_PAGE_LAYOUT_CONFIG = {

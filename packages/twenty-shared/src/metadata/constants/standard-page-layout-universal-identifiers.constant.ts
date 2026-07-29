@@ -667,6 +667,14 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
           },
         },
       },
+      timeline: {
+        universalIdentifier: '9ed67505-a5ff-4742-9ff3-e760170c0d86',
+        widgets: {
+          timeline: {
+            universalIdentifier: 'd8aa7c29-0d36-4e3e-baf1-9c2643950d0b',
+          },
+        },
+      },
     },
   },
   issueRecordPage: {
@@ -677,6 +685,14 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
         widgets: {
           fields: {
             universalIdentifier: '5d8b1f0f-d3ad-4b66-89b5-b81b7b92608c',
+          },
+        },
+      },
+      timeline: {
+        universalIdentifier: '9dd0bd67-8d35-4e23-b07c-0583e7b0b197',
+        widgets: {
+          timeline: {
+            universalIdentifier: '4b77d8d2-6464-45a8-9497-7cdb94ce908d',
           },
         },
       },

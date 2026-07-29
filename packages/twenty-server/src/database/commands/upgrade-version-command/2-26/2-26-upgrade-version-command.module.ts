@@ -5,6 +5,7 @@ import { WorkspaceIteratorModule } from 'src/database/commands/command-runners/w
 import { BackfillEpicIssueDataCommand } from 'src/database/commands/upgrade-version-command/2-26/2-26-workspace-command-1784910001000-backfill-epic-issue-data.command';
 import { BackfillEpicSearchFieldMetadataCommand } from 'src/database/commands/upgrade-version-command/2-26/2-26-workspace-command-1784910000500-backfill-epic-search-field-metadata.command';
 import { SyncTimelineActivityIssueEpicTargetsCommand } from 'src/database/commands/upgrade-version-command/2-26/2-26-workspace-command-1784910002000-sync-timeline-activity-issue-epic-targets.command';
+import { SyncIssueEpicTimelineTabCommand } from 'src/database/commands/upgrade-version-command/2-26/2-26-workspace-command-1784910003000-sync-issue-epic-timeline-tab.command';
 import { SyncEpicStandardObjectsCommand } from 'src/database/commands/upgrade-version-command/2-26/2-26-workspace-command-1784910000000-sync-epic-standard-objects.command';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import { ApplicationModule } from 'src/engine/core-modules/application/application.module';
@@ -27,6 +28,7 @@ import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace
     BackfillEpicSearchFieldMetadataCommand,
     BackfillEpicIssueDataCommand,
     SyncTimelineActivityIssueEpicTargetsCommand,
+    SyncIssueEpicTimelineTabCommand,
   ],
 })
 export class V2_26_UpgradeVersionCommandModule {}
