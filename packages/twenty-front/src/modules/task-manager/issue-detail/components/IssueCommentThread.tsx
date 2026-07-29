@@ -18,6 +18,7 @@ import { Button, LightIconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
+import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { BlockEditor } from '@/blocknote-editor/components/BlockEditor';
@@ -154,20 +155,34 @@ const CommentBody = ({
 };
 
 const EditableCommentBody = ({
+  commentId,
   blocknote,
   onSave,
   onCancel,
 }: {
+  commentId: string;
   blocknote: string | null | undefined;
   onSave: (blocknote: string) => Promise<void>;
   onCancel: () => void;
 }) => {
   const { t } = useLingui();
   const [isSaving, setIsSaving] = useState(false);
+  const { uploadAttachmentFile } = useUploadAttachmentFile();
+
+  const handleUploadFile = async (file: File) => {
+    const { attachmentAbsoluteURL } = await uploadAttachmentFile(file, {
+      id: commentId,
+      targetObjectNameSingular: 'issueComment',
+    });
+
+    return attachmentAbsoluteURL;
+  };
+
   const editor = useCreateBlockNote({
     initialContent: parseInitialBlocknote(blocknote) ?? EMPTY_PARAGRAPH,
     domAttributes: { editor: { class: 'editor' } },
     schema: BLOCK_SCHEMA,
+    uploadFile: handleUploadFile,
   });
 
   const handleSave = async () => {
@@ -198,22 +213,37 @@ const EditableCommentBody = ({
 };
 
 type CommentComposerProps = {
+  issueId: string;
   placeholder: string;
   submitLabel: string;
   onSubmit: (blocknote: string) => Promise<void>;
 };
 
 const CommentComposer = ({
+  issueId,
   placeholder,
   submitLabel,
   onSubmit,
 }: CommentComposerProps) => {
   const [hasContent, setHasContent] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const { uploadAttachmentFile } = useUploadAttachmentFile();
+
+  // The comment doesn't exist yet, so attachments uploaded while composing
+  // are targeted at the parent issue instead of the not-yet-created comment.
+  const handleUploadFile = async (file: File) => {
+    const { attachmentAbsoluteURL } = await uploadAttachmentFile(file, {
+      id: issueId,
+      targetObjectNameSingular: 'issue',
+    });
+
+    return attachmentAbsoluteURL;
+  };
 
   const editor = useCreateBlockNote({
     domAttributes: { editor: { class: 'editor' } },
     schema: BLOCK_SCHEMA,
+    uploadFile: handleUploadFile,
     placeholders: {
       default: placeholder,
     },
@@ -356,6 +386,7 @@ const CommentRow = ({
         </StyledCommentHeader>
         {isEditing ? (
           <EditableCommentBody
+            commentId={comment.id}
             blocknote={comment.bodyV2?.blocknote}
             onSave={handleSaveEdit}
             onCancel={() => setIsEditing(false)}
@@ -420,6 +451,7 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
           {replyingToId === comment.id && (
             <StyledReplyComposer>
               <CommentComposer
+                issueId={issueId}
                 placeholder={t`Write a reply...`}
                 submitLabel={t`Reply`}
                 onSubmit={async (blocknote) => {
@@ -436,6 +468,7 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
         </StyledThread>
       ))}
       <CommentComposer
+        issueId={issueId}
         placeholder={t`Write a comment...`}
         submitLabel={t`Comment`}
         onSubmit={(blocknote) =>
