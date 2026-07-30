@@ -1,5 +1,8 @@
 import { useState } from 'react';
 
+import { isDefined } from 'twenty-shared/utils';
+import { FeatureFlagKey } from '~/generated-metadata/graphql';
+
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { formatFieldMetadataItemAsColumnDefinition } from '@/object-metadata/utils/formatFieldMetadataItemAsColumnDefinition';
@@ -9,14 +12,19 @@ import {
   FieldInputEventContext,
   type FieldInputEvent,
 } from '@/object-record/record-field/ui/contexts/FieldInputEventContext';
+import { useOpenJunctionRelationFieldInput } from '@/object-record/record-field/ui/hooks/useOpenJunctionRelationFieldInput';
 import { usePersistField } from '@/object-record/record-field/ui/hooks/usePersistField';
+import { useOpenRelationFromManyFieldInput } from '@/object-record/record-field/ui/meta-types/input/hooks/useOpenRelationFromManyFieldInput';
 import { useOpenRelationToOneFieldInput } from '@/object-record/record-field/ui/meta-types/input/hooks/useOpenRelationToOneFieldInput';
 import { RecordFieldComponentInstanceContext } from '@/object-record/record-field/ui/states/contexts/RecordFieldComponentInstanceContext';
 import { isFieldRelationManyToOne } from '@/object-record/record-field/ui/types/guards/isFieldRelationManyToOne';
+import { isFieldRelationOneToMany } from '@/object-record/record-field/ui/types/guards/isFieldRelationOneToMany';
+import { hasJunctionConfig } from '@/object-record/record-field/ui/utils/junction/hasJunctionConfig';
 import { RecordInlineCell } from '@/object-record/record-inline-cell/components/RecordInlineCell';
 import { RecordInlineCellAnchoredPortal } from '@/object-record/record-inline-cell/components/RecordInlineCellAnchoredPortal';
 import { RecordInlineCellEditMode } from '@/object-record/record-inline-cell/components/RecordInlineCellEditMode';
 import { getRecordFieldInputInstanceId } from '@/object-record/utils/getRecordFieldInputId';
+import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
 
 type TaskManagerFieldCellProps = {
   recordId: string;
@@ -30,7 +38,7 @@ type TaskManagerFieldCellProps = {
 // Minimal single-field version of RecordFieldList's inline-cell wiring
 // (formatFieldMetadataItemAsColumnDefinition -> FieldContext ->
 // RecordFieldComponentInstanceContext -> RecordInlineCell), for a custom
-// panel that only ever shows a curated list of scalar/many-to-one fields —
+// panel that shows a curated list of scalar/many-to-one/one-to-many fields —
 // callers must wrap a RecordFieldsScopeContextProvider once around the panel.
 // readOnly reuses the same FieldDisplay/FieldInput type-aware rendering for
 // the Kanban card badges (display only, no click-to-edit).
@@ -43,7 +51,15 @@ type TaskManagerFieldCellProps = {
 // For many-to-one relation fields, opening edit mode must also seed
 // SingleRecordPicker's selected-id state from the record's current value
 // (openRelationToOneFieldInput) — otherwise the picker has no way to know
-// what's currently selected and always shows "No X" checked.
+// what's currently selected and always shows "No X" checked. For one-to-many
+// relation fields, opening edit mode must seed MultipleRecordPicker's
+// searchable-object-metadata-items state (openRelationFromManyFieldInput) —
+// otherwise the picker's search always returns zero results regardless of
+// what records actually exist. A one-to-many field pointing at a junction
+// object with junctionTargetFieldId configured (many-to-many via junction)
+// needs the junction-aware variant instead (openJunctionRelationFieldInput),
+// which resolves the picker to the junction's target object rather than the
+// junction object itself.
 export const TaskManagerFieldCell = ({
   recordId,
   fieldMetadataItem,
@@ -73,11 +89,39 @@ export const TaskManagerFieldCell = ({
   });
 
   const { openRelationToOneFieldInput } = useOpenRelationToOneFieldInput();
+  const { openRelationFromManyFieldInput } =
+    useOpenRelationFromManyFieldInput();
+  const { openJunctionRelationFieldInput } =
+    useOpenJunctionRelationFieldInput();
+  const isJunctionRelationsEnabled = useIsFeatureEnabled(
+    FeatureFlagKey.IS_JUNCTION_RELATIONS_ENABLED,
+  );
 
   const openEditMode = () => {
     if (isFieldRelationManyToOne(fieldDefinition)) {
       openRelationToOneFieldInput({
         fieldName: fieldMetadataItem.name,
+        recordId,
+        prefix: instanceIdPrefix,
+      });
+    } else if (
+      isJunctionRelationsEnabled &&
+      isFieldRelationOneToMany(fieldDefinition) &&
+      hasJunctionConfig(fieldDefinition.metadata.settings)
+    ) {
+      openJunctionRelationFieldInput({
+        fieldDefinition,
+        recordId,
+        prefix: instanceIdPrefix,
+      });
+    } else if (
+      isFieldRelationOneToMany(fieldDefinition) &&
+      isDefined(fieldDefinition.metadata.relationObjectMetadataNameSingular)
+    ) {
+      openRelationFromManyFieldInput({
+        fieldName: fieldMetadataItem.name,
+        objectNameSingular:
+          fieldDefinition.metadata.relationObjectMetadataNameSingular,
         recordId,
         prefix: instanceIdPrefix,
       });
