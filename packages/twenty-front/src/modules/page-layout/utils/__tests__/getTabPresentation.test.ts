@@ -8,20 +8,22 @@ import {
 const widgetOfType = (type: WidgetType) => ({ type }) as PageLayoutWidget;
 
 describe('getTabPresentation', () => {
-  it('returns solo for any single widget on a list tab', () => {
+  it('returns solo for a single non-Fields widget on a list tab', () => {
     expect(
       getTabPresentation({
         widgets: [widgetOfType(WidgetType.TASKS)],
         layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       }),
     ).toBe('solo');
+  });
 
+  it('keeps a lone Fields widget boxed instead of full-bleed', () => {
     expect(
       getTabPresentation({
         widgets: [widgetOfType(WidgetType.FIELDS)],
         layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       }),
-    ).toBe('solo');
+    ).toBe('stack');
   });
 
   it('treats a legacy CANVAS tab with a single widget as solo', () => {
