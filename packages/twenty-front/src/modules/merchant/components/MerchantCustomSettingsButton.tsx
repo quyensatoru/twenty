@@ -41,6 +41,7 @@ type CustomSettingFieldSchemaEntry = {
   label: string;
   type: CustomSettingFieldType;
   options?: string[];
+  default?: unknown;
 };
 
 const NO_SELECT_VALUE = '';
@@ -91,8 +92,32 @@ const StyledNativeTextarea = styled.textarea`
 
 const StyledFooter = styled.div`
   display: flex;
+  flex-shrink: 0;
   gap: ${themeCssVariables.spacing[2]};
   margin-top: ${themeCssVariables.spacing[6]};
+`;
+
+const StyledModalContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  max-height: 70dvh;
+`;
+
+const StyledScrollableSection = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: ${themeCssVariables.border.color.medium} transparent;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${themeCssVariables.border.color.medium};
+    border-radius: ${themeCssVariables.border.radius.pill};
+  }
 `;
 
 const formatValueForInput = (
@@ -172,7 +197,7 @@ export const MerchantCustomSettingsButton = ({
     fieldSchema.forEach((entry) => {
       initialValues[entry.key] = formatValueForInput(
         entry,
-        currentCustomSettings[entry.key],
+        currentCustomSettings[entry.key] ?? entry.default,
       );
     });
     setSchemaValues(initialValues);
@@ -224,113 +249,118 @@ export const MerchantCustomSettingsButton = ({
         padding="large"
         renderInDocumentBody
       >
-        <div onClick={stopClickPropagation} onMouseDown={stopClickPropagation}>
+        <StyledModalContent
+          onClick={stopClickPropagation}
+          onMouseDown={stopClickPropagation}
+        >
           <H1Title
             title={t`Custom Settings`}
             fontColor={H1TitleFontColor.Primary}
           />
-          <Section alignment={SectionAlignment.Center}>
-            {!hasSchema ? (
-              <InputLabel>
-                {t`No custom settings configured for this app.`}
-              </InputLabel>
-            ) : (
-              <StyledFieldGrid>
-                {fieldSchema.map((entry) => {
-                  const selectOptions: SelectOption[] = [
-                    { label: t`None`, value: NO_SELECT_VALUE },
-                    ...(entry.options ?? []).map((option) => ({
-                      label: option,
-                      value: option,
-                    })),
-                  ];
-                  const currentValue = String(schemaValues[entry.key] ?? '');
-                  const selectedOption =
-                    selectOptions.find(
-                      (option) => option.value === currentValue,
-                    ) ?? selectOptions[0];
+          <StyledScrollableSection>
+            <Section alignment={SectionAlignment.Center}>
+              {!hasSchema ? (
+                <InputLabel>
+                  {t`No custom settings configured for this app.`}
+                </InputLabel>
+              ) : (
+                <StyledFieldGrid>
+                  {fieldSchema.map((entry) => {
+                    const selectOptions: SelectOption[] = [
+                      { label: t`None`, value: NO_SELECT_VALUE },
+                      ...(entry.options ?? []).map((option) => ({
+                        label: option,
+                        value: option,
+                      })),
+                    ];
+                    const currentValue = String(schemaValues[entry.key] ?? '');
+                    const selectedOption =
+                      selectOptions.find(
+                        (option) => option.value === currentValue,
+                      ) ?? selectOptions[0];
 
-                  return (
-                    <Fragment key={entry.key}>
-                      <StyledFieldLabel>
-                        <InputLabel>{entry.label}</InputLabel>
-                      </StyledFieldLabel>
-                      <div>
-                        {entry.type === 'BOOLEAN' ? (
-                          <Checkbox
-                            checked={Boolean(schemaValues[entry.key])}
-                            onCheckedChange={(value) =>
-                              handleSchemaValueChange(entry.key, value)
-                            }
-                          />
-                        ) : entry.type === 'SELECT' ? (
-                          <DropdownMenuInnerSelect
-                            dropdownId={`merchant-custom-setting-select-${entry.key}`}
-                            options={selectOptions}
-                            selectedOption={selectedOption}
-                            isDropdownInModal
-                            onChange={(option) =>
-                              handleSchemaValueChange(
-                                entry.key,
-                                option.value as string,
-                              )
-                            }
-                          />
-                        ) : entry.type === 'DATE' ? (
-                          <StyledNativeInput
-                            type="date"
-                            value={currentValue}
-                            onChange={(event) =>
-                              handleSchemaValueChange(
-                                entry.key,
-                                event.target.value,
-                              )
-                            }
-                          />
-                        ) : entry.type === 'NUMBER' ? (
-                          <StyledNativeInput
-                            type="number"
-                            value={currentValue}
-                            onChange={(event) =>
-                              handleSchemaValueChange(
-                                entry.key,
-                                event.target.value,
-                              )
-                            }
-                          />
-                        ) : entry.type === 'RICH_TEXT' ? (
-                          <StyledNativeTextarea
-                            value={currentValue}
-                            onChange={(event) =>
-                              handleSchemaValueChange(
-                                entry.key,
-                                event.target.value,
-                              )
-                            }
-                          />
-                        ) : (
-                          <SettingsTextInput
-                            instanceId={`merchant-custom-setting-${entry.key}`}
-                            value={currentValue}
-                            onChange={(value) =>
-                              handleSchemaValueChange(entry.key, value ?? '')
-                            }
-                            placeholder={
-                              entry.type === 'ARRAY'
-                                ? t`Comma-separated values`
-                                : entry.label
-                            }
-                            disableHotkeys
-                            fullWidth
-                          />
-                        )}
-                      </div>
-                    </Fragment>
-                  );
-                })}
-              </StyledFieldGrid>
-            )}
-          </Section>
+                    return (
+                      <Fragment key={entry.key}>
+                        <StyledFieldLabel>
+                          <InputLabel>{entry.label}</InputLabel>
+                        </StyledFieldLabel>
+                        <div>
+                          {entry.type === 'BOOLEAN' ? (
+                            <Checkbox
+                              checked={Boolean(schemaValues[entry.key])}
+                              onCheckedChange={(value) =>
+                                handleSchemaValueChange(entry.key, value)
+                              }
+                            />
+                          ) : entry.type === 'SELECT' ? (
+                            <DropdownMenuInnerSelect
+                              dropdownId={`merchant-custom-setting-select-${entry.key}`}
+                              options={selectOptions}
+                              selectedOption={selectedOption}
+                              isDropdownInModal
+                              onChange={(option) =>
+                                handleSchemaValueChange(
+                                  entry.key,
+                                  option.value as string,
+                                )
+                              }
+                            />
+                          ) : entry.type === 'DATE' ? (
+                            <StyledNativeInput
+                              type="date"
+                              value={currentValue}
+                              onChange={(event) =>
+                                handleSchemaValueChange(
+                                  entry.key,
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          ) : entry.type === 'NUMBER' ? (
+                            <StyledNativeInput
+                              type="number"
+                              value={currentValue}
+                              onChange={(event) =>
+                                handleSchemaValueChange(
+                                  entry.key,
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          ) : entry.type === 'RICH_TEXT' ? (
+                            <StyledNativeTextarea
+                              value={currentValue}
+                              onChange={(event) =>
+                                handleSchemaValueChange(
+                                  entry.key,
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          ) : (
+                            <SettingsTextInput
+                              instanceId={`merchant-custom-setting-${entry.key}`}
+                              value={currentValue}
+                              onChange={(value) =>
+                                handleSchemaValueChange(entry.key, value ?? '')
+                              }
+                              placeholder={
+                                entry.type === 'ARRAY'
+                                  ? t`Comma-separated values`
+                                  : entry.label
+                              }
+                              disableHotkeys
+                              fullWidth
+                            />
+                          )}
+                        </div>
+                      </Fragment>
+                    );
+                  })}
+                </StyledFieldGrid>
+              )}
+            </Section>
+          </StyledScrollableSection>
           <StyledFooter>
             <Button
               onClick={() => closeModal(modalInstanceId)}
@@ -348,7 +378,7 @@ export const MerchantCustomSettingsButton = ({
               />
             )}
           </StyledFooter>
-        </div>
+        </StyledModalContent>
       </ModalStatefulWrapper>
     </>
   );
