@@ -52,28 +52,6 @@ export class BackfillEpicIssueDataCommand extends ProvisionedWorkspaceCommandRun
       return;
     }
 
-    let legacyEpicIssues: IssueWorkspaceEntity[];
-    const issueRepository = dataSource.getRepository<IssueWorkspaceEntity>(
-      'issue',
-      { shouldBypassPermissionChecks: true },
-    );
-
-    try {
-      legacyEpicIssues = await issueRepository.find({
-        where: { issueType: 'EPIC' },
-      });
-    } catch (error) {
-      if (error instanceof EntityMetadataNotFoundError) {
-        this.logger.log(
-          `issue object does not exist for workspace ${workspaceId}, skipping`,
-        );
-
-        return;
-      }
-
-      throw error;
-    }
-
     const { flatFieldMetadataMaps } =
       await this.workspaceCacheService.getOrRecompute(workspaceId, [
         'flatFieldMetadataMaps',
@@ -89,6 +67,34 @@ export class BackfillEpicIssueDataCommand extends ProvisionedWorkspaceCommandRun
       (issueTypeFlatFieldMetadata.options ?? []).some(
         (option) => option.value === 'EPIC',
       );
+
+    const issueRepository = dataSource.getRepository<IssueWorkspaceEntity>(
+      'issue',
+      { shouldBypassPermissionChecks: true },
+    );
+
+    let legacyEpicIssues: IssueWorkspaceEntity[] = [];
+
+    // Querying issueType='EPIC' throws a Postgres invalid-enum-value error
+    // on workspaces whose issueType enum never had that member, so only run
+    // it when the field metadata confirms the option still exists.
+    if (hasEpicOption) {
+      try {
+        legacyEpicIssues = await issueRepository.find({
+          where: { issueType: 'EPIC' },
+        });
+      } catch (error) {
+        if (error instanceof EntityMetadataNotFoundError) {
+          this.logger.log(
+            `issue object does not exist for workspace ${workspaceId}, skipping`,
+          );
+
+          return;
+        }
+
+        throw error;
+      }
+    }
 
     if (legacyEpicIssues.length === 0 && !hasEpicOption) {
       this.logger.log(
