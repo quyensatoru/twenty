@@ -129,6 +129,16 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
         }),
       },
+      targetMerchant: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+        }),
+      },
     },
     morphIds: {
       targetMorphId: { morphId: '20202020-f634-435d-ab8d-e1168b375c69' },
@@ -1580,6 +1590,16 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.opportunity,
         }),
       },
+      targetMerchant: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.noteTarget,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+        }),
+      },
     },
     morphIds: {
       targetMorphId: { morphId: '20202020-f635-435d-ab8d-e1168b375c70' },
@@ -2019,6 +2039,10 @@ export const STANDARD_OBJECTS = {
       appAccesses: {
         universalIdentifier: 'b045db21-0fa7-4ebd-89be-15d3882aa060',
       },
+      merchants: { universalIdentifier: '47a89700-ba35-4c37-84da-afca9f43bd8c' },
+      fieldSchema: {
+        universalIdentifier: '33cdb6b1-afbb-4074-a695-996956e49cab',
+      },
     },
     indexes: {
       searchVectorGinIndex: {
@@ -2150,6 +2174,81 @@ export const STANDARD_OBJECTS = {
       },
       projectRecordPageFields: {
         universalIdentifier: '96e24b69-a724-4dfa-aa0f-d3e3d903ff26',
+        viewFields: {},
+      },
+    },
+  },
+  merchant: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+      ),
+      name: { universalIdentifier: 'a9bc9790-aece-4df3-b22a-6bdf26f079a1' },
+      app: { universalIdentifier: '050c5e37-f2b2-452f-84f3-6d9396ccfbe4' },
+      customSettings: {
+        universalIdentifier: '0ff00e57-a471-4cb7-baa5-f9f7b4a49418',
+      },
+      attachments: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.attachment,
+        }),
+      },
+      noteTargets: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.noteTarget,
+        }),
+      },
+      taskTargets: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.taskTarget,
+        }),
+      },
+      timelineActivities: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
+        }),
+      },
+    },
+    indexes: {
+      appIdIndex: {
+        universalIdentifier: 'dfae531a-75a7-4810-babc-b75d3f6c6b4f',
+      },
+    },
+    views: {
+      allMerchants: {
+        universalIdentifier: '26fdf9c2-a9fb-4ee4-b480-9c2b370b179a',
+        viewFields: {
+          name: {
+            universalIdentifier: '5c1d2ebf-d8fb-4972-be96-66a5ca426cc1',
+          },
+          createdAt: {
+            universalIdentifier: 'ccb0a9d6-2ede-4cb0-88da-a447d4bea573',
+          },
+        },
+      },
+      merchantRecordPageFields: {
+        universalIdentifier: '58e3910e-f640-498a-b9db-932459bc9e64',
         viewFields: {},
       },
     },
@@ -2759,6 +2858,16 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.opportunity,
         }),
       },
+      targetMerchant: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.taskTarget,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
+        }),
+      },
     },
     morphIds: {
       targetMorphId: { morphId: '20202020-f636-435d-ab8d-e1168b375c71' },
@@ -2944,6 +3053,16 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
           relationTargetObjectUniversalIdentifier:
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.messageCampaign,
+        }),
+      },
+      targetMerchant: {
+        universalIdentifier: getSystemRelationFieldUniversalIdentifier({
+          applicationUniversalIdentifier:
+            TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+          objectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
+          relationTargetObjectUniversalIdentifier:
+            STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
         }),
       },
       linkedRecordCachedName: {

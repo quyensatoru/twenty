@@ -15,6 +15,7 @@ import { computeStandardCompanyViews } from 'src/engine/workspace-manager/twenty
 import { computeStandardDashboardViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-dashboard-views.util';
 import { computeStandardEpicViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-epic-views.util';
 import { computeStandardMessageCampaignViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-message-campaign-views.util';
+import { computeStandardMerchantViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-merchant-views.util';
 import { computeStandardMessageChannelMessageAssociationMessageFolderViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-message-channel-message-association-message-folder-views.util';
 import { computeStandardMessageChannelMessageAssociationViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-message-channel-message-association-views.util';
 import { computeStandardMessageListViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-message-list-views.util';
@@ -73,6 +74,7 @@ const STANDARD_FLAT_VIEW_METADATA_BUILDERS_BY_OBJECT_NAME = {
   worklog: computeStandardWorklogViews,
   person: computeStandardPersonViews,
   project: computeStandardProjectViews,
+  merchant: computeStandardMerchantViews,
   sprint: computeStandardSprintViews,
   epic: computeStandardEpicViews,
   task: computeStandardTaskViews,

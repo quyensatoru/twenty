@@ -724,4 +724,49 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
       },
     },
   },
+  merchantRecordPage: {
+    universalIdentifier: '41a5a300-b048-4aba-8709-b45cc2c394d7',
+    tabs: {
+      home: {
+        universalIdentifier: 'eb3851ec-a8ac-497f-b9d1-fb9ffbed0919',
+        widgets: {
+          fields: {
+            universalIdentifier: 'f846ce25-18c2-4e7d-94ec-087ddde09396',
+          },
+        },
+      },
+      timeline: {
+        universalIdentifier: 'd78224b7-c09c-49b2-b9d1-4eaf6d62e978',
+        widgets: {
+          timeline: {
+            universalIdentifier: '0dcbd900-cb34-4bba-8597-a511f2f788b0',
+          },
+        },
+      },
+      tasks: {
+        universalIdentifier: 'ae2a3830-0503-4573-b0e7-c8a58cde7334',
+        widgets: {
+          tasks: {
+            universalIdentifier: 'bca6819d-53d3-4d6c-afa3-e4edc9205fee',
+          },
+        },
+      },
+      notes: {
+        universalIdentifier: 'f4e56c49-a12b-4b3a-8918-031b162c115f',
+        widgets: {
+          notes: {
+            universalIdentifier: '9c324267-9e20-4b98-91d3-a5dba740ad27',
+          },
+        },
+      },
+      files: {
+        universalIdentifier: 'c4835f3b-128c-4f16-86d8-c50db38d494d',
+        widgets: {
+          files: {
+            universalIdentifier: 'a22110f2-1cfc-4987-b4db-d15af445673e',
+          },
+        },
+      },
+    },
+  },
 };

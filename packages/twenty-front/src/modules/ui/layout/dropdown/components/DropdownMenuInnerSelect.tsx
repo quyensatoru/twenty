@@ -35,6 +35,7 @@ export type DropdownMenuInnerSelectProps = {
   options: SelectOption[];
   dropdownId: string;
   widthInPixels?: number;
+  isDropdownInModal?: boolean;
 };
 
 export const DropdownMenuInnerSelect = ({
@@ -43,6 +44,7 @@ export const DropdownMenuInnerSelect = ({
   options,
   dropdownId,
   widthInPixels,
+  isDropdownInModal,
 }: DropdownMenuInnerSelectProps) => {
   const { theme } = useContext(ThemeContext);
   const { closeDropdown } = useCloseDropdown();
@@ -81,6 +83,7 @@ export const DropdownMenuInnerSelect = ({
       dropdownOffset={{
         x: 8,
       }}
+      isDropdownInModal={isDropdownInModal}
     />
   );
 };

@@ -3422,6 +3422,7 @@ msgstr "No pots escanejar? Copia la"
 
 #. js-lingui-id: dEgA5A
 #: src/modules/applications/components/AuthorizeActionButtons.tsx
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/object-record/record-update-multiple/components/UpdateMultipleRecordsFooter.tsx
 #: src/modules/settings/billing/components/AddCreditCardModal.tsx
 #: src/modules/settings/billing/components/internal/ResourceCreditPackagePickerModal.tsx
@@ -3959,6 +3960,7 @@ msgstr "El porta-retalls requereix una connexió segura (HTTPS). Accedeix a aque
 
 #. js-lingui-id: yz7wBu
 #: src/modules/ai/components/AiChatCloseButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/ui/feedback/snack-bar-manager/components/SnackBar.tsx
 msgid "Close"
 msgstr "Tanca"
@@ -4075,6 +4077,7 @@ msgid "Columns shown in this view, in display order"
 msgstr "Columnes mostrades en aquesta vista, en ordre de visualització"
 
 #. js-lingui-id: AQ/ifz
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-visibility-policy/components/SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRow.tsx
 msgid "Comma-separated values"
 msgstr ""
@@ -5468,6 +5471,16 @@ msgstr "Proveïdor personalitzat"
 #: src/modules/settings/admin-panel/ai/components/SettingsAdminAI.tsx
 msgid "Custom Providers"
 msgstr "Proveïdors personalitzats"
+
+#. js-lingui-id: XJ1mLl
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "Custom settings"
+msgstr ""
+
+#. js-lingui-id: 0XRiZv
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "Custom Settings"
+msgstr ""
 
 #. js-lingui-id: BjGDEB
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
@@ -12489,6 +12502,11 @@ msgstr "No s'ha registrat cap consum de crèdits per a aquest usuari."
 msgid "No currency"
 msgstr "Sense moneda"
 
+#. js-lingui-id: EIq3MU
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "No custom settings configured for this app."
+msgstr ""
+
 #. js-lingui-id: DKVJFE
 #: src/modules/navigation-menu-item/edit/side-panel/components/SidePanelNewSidebarItemViewPickerSubView.tsx
 msgid "No custom views available"
@@ -13045,6 +13063,7 @@ msgstr "Node"
 
 #. js-lingui-id: EdQY6l
 #: src/modules/ai/constants/AgentChatThreadGroupByLabels.ts
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCalendarEndFieldsContent.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownLayoutContent.tsx
@@ -15678,6 +15697,7 @@ msgid "Saturday"
 msgstr "Dissabte"
 
 #. js-lingui-id: tfDRzk
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/settings/components/SaveAndCancelButtons/SaveButton.tsx
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/data-model/new-field/SettingsObjectNewFieldConfigure.tsx

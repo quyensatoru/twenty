@@ -630,6 +630,32 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
       twentyStandardApplicationId,
       now,
     }),
+  merchant: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<CreateStandardObjectArgs<'merchant'>, 'context' | 'objectName'>) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'merchant',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.merchant.universalIdentifier,
+        nameSingular: 'merchant',
+        namePlural: 'merchants',
+        labelSingular: i18nLabel(msg`Merchant`),
+        labelPlural: i18nLabel(msg`Merchants`),
+        description: i18nLabel(msg`A merchant`),
+        icon: 'IconBuildingStore',
+        isSearchable: true,
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
   opportunity: ({
     now,
     workspaceId,

@@ -147,6 +147,25 @@ export const buildAppStandardFlatFieldMetadatas = ({
     now,
   }),
 
+  fieldSchema: createStandardFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      fieldName: 'fieldSchema',
+      type: FieldMetadataType.RAW_JSON,
+      label: i18nLabel(msg`Field Schema`),
+      description: i18nLabel(
+        msg`Schema (key/label/type) driving the Custom Settings form on this app's merchants`,
+      ),
+      icon: 'IconForms',
+      isNullable: true,
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
+
   // Relation fields
   projects: createStandardRelationFieldFlatMetadata({
     objectName,
@@ -182,6 +201,29 @@ export const buildAppStandardFlatFieldMetadatas = ({
       icon: 'IconLock',
       isNullable: false,
       targetObjectName: 'appAccess',
+      targetFieldName: 'app',
+      settings: {
+        relationType: RelationType.ONE_TO_MANY,
+      },
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
+  merchants: createStandardRelationFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      type: FieldMetadataType.RELATION,
+      morphId: null,
+      fieldName: 'merchants',
+      label: i18nLabel(msg`Merchants`),
+      description: i18nLabel(msg`Merchants using this app`),
+      icon: 'IconBuildingStore',
+      isNullable: false,
+      isUIEditable: false,
+      targetObjectName: 'merchant',
       targetFieldName: 'app',
       settings: {
         relationType: RelationType.ONE_TO_MANY,

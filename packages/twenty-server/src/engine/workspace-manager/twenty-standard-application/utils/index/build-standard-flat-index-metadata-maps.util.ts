@@ -20,6 +20,7 @@ import { buildMessageChannelMessageAssociationMessageFolderStandardFlatIndexMeta
 import { buildMessageChannelMessageAssociationStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-channel-message-association-standard-flat-index-metadata.util';
 import { buildMessageParticipantStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-participant-standard-flat-index-metadata.util';
 import { buildMessageStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-message-standard-flat-index-metadata.util';
+import { buildMerchantStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-merchant-standard-flat-index-metadata.util';
 import { buildNoteStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-note-standard-flat-index-metadata.util';
 import { buildNoteTargetStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-note-target-standard-flat-index-metadata.util';
 import { buildIssueCommentStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-comment-standard-flat-index-metadata.util';
@@ -72,6 +73,7 @@ const STANDARD_FLAT_INDEX_METADATA_BUILDERS_BY_OBJECT_NAME = {
   worklog: buildWorklogStandardFlatIndexMetadatas,
   person: buildPersonStandardFlatIndexMetadatas,
   project: buildProjectStandardFlatIndexMetadatas,
+  merchant: buildMerchantStandardFlatIndexMetadatas,
   sprint: buildSprintStandardFlatIndexMetadatas,
   epic: buildEpicStandardFlatIndexMetadatas,
   task: buildTaskStandardFlatIndexMetadatas,

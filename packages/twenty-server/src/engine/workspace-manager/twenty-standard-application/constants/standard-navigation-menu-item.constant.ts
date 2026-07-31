@@ -92,6 +92,13 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
     icon: 'IconLayoutKanban',
     position: 8,
   },
+  allMerchants: {
+    universalIdentifier: '30e9b078-09a8-4bbe-b42f-5dbebe56fe9b',
+    type: NavigationMenuItemType.OBJECT,
+    viewUniversalIdentifier:
+      STANDARD_OBJECTS.merchant.views.allMerchants.universalIdentifier,
+    position: 9,
+  },
 } as const;
 
 export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
@@ -102,6 +109,7 @@ export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
   allTasks: 'turquoise',
   allNotes: 'turquoise',
   allIssues: 'turquoise',
+  allMerchants: 'green',
   allOpportunities: 'red',
   taskManager: 'turquoise',
   workflowsFolder: 'orange',

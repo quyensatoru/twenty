@@ -54,6 +54,8 @@ import { isFieldRawJson } from '@/object-record/record-field/ui/types/guards/isF
 import { isFieldSelect } from '@/object-record/record-field/ui/types/guards/isFieldSelect';
 import { isFieldText } from '@/object-record/record-field/ui/types/guards/isFieldText';
 import { isFieldUuid } from '@/object-record/record-field/ui/types/guards/isFieldUuid';
+import { MerchantCustomSettingsButton } from '@/merchant/components/MerchantCustomSettingsButton';
+import { isMerchantCustomSettingsField } from '@/merchant/utils/isMerchantCustomSettingsField';
 
 export const FieldDisplay = () => {
   const {
@@ -61,6 +63,7 @@ export const FieldDisplay = () => {
     isLabelIdentifier,
     isForbidden,
     isRecordFieldReadOnly,
+    recordId,
   } = useContext(FieldContext);
 
   const isChipDisplay = isFieldIdentifierDisplay(
@@ -72,7 +75,9 @@ export const FieldDisplay = () => {
     return <ForbiddenFieldDisplay />;
   }
 
-  return isChipDisplay ? (
+  return isMerchantCustomSettingsField(fieldDefinition) ? (
+    <MerchantCustomSettingsButton recordId={recordId} />
+  ) : isChipDisplay ? (
     <ChipFieldDisplay />
   ) : isFieldRelationManyToOne(fieldDefinition) ? (
     <RelationToOneFieldDisplay />

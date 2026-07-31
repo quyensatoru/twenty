@@ -40,6 +40,7 @@ export const SEARCH_FIELDS_BY_STANDARD_OBJECT_NAME = {
     { name: 'key', type: FieldMetadataType.TEXT },
     { name: 'description', type: FieldMetadataType.RICH_TEXT },
   ],
+  merchant: [{ name: 'name', type: FieldMetadataType.TEXT }],
   sprint: [
     { name: 'name', type: FieldMetadataType.TEXT },
     { name: 'goal', type: FieldMetadataType.TEXT },

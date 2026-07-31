@@ -9,6 +9,7 @@ export { STANDARD_EPIC_PAGE_LAYOUT_CONFIG } from './standard-epic-page-layout.co
 export { STANDARD_MESSAGE_CAMPAIGN_PAGE_LAYOUT_CONFIG } from './standard-message-campaign-page-layout.config';
 export { STANDARD_MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER_PAGE_LAYOUT_CONFIG } from './standard-message-channel-message-association-message-folder-page-layout.config';
 export { STANDARD_MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_PAGE_LAYOUT_CONFIG } from './standard-message-channel-message-association-page-layout.config';
+export { STANDARD_MERCHANT_PAGE_LAYOUT_CONFIG } from './standard-merchant-page-layout.config';
 export { STANDARD_MESSAGE_PARTICIPANT_PAGE_LAYOUT_CONFIG } from './standard-message-participant-page-layout.config';
 export { STANDARD_MESSAGE_LIST_PAGE_LAYOUT_CONFIG } from './standard-message-list-page-layout.config';
 export { STANDARD_ISSUE_COMMENT_PAGE_LAYOUT_CONFIG } from './standard-issue-comment-page-layout.config';

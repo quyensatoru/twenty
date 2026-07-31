@@ -3422,6 +3422,7 @@ msgstr "无法扫描？复制"
 
 #. js-lingui-id: dEgA5A
 #: src/modules/applications/components/AuthorizeActionButtons.tsx
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/object-record/record-update-multiple/components/UpdateMultipleRecordsFooter.tsx
 #: src/modules/settings/billing/components/AddCreditCardModal.tsx
 #: src/modules/settings/billing/components/internal/ResourceCreditPackagePickerModal.tsx
@@ -3959,6 +3960,7 @@ msgstr "剪贴板功能需要安全连接 (HTTPS)。请通过 HTTPS 访问此应
 
 #. js-lingui-id: yz7wBu
 #: src/modules/ai/components/AiChatCloseButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/ui/feedback/snack-bar-manager/components/SnackBar.tsx
 msgid "Close"
 msgstr "关闭"
@@ -4075,6 +4077,7 @@ msgid "Columns shown in this view, in display order"
 msgstr "此视图中显示的列（按显示顺序）"
 
 #. js-lingui-id: AQ/ifz
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-visibility-policy/components/SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRow.tsx
 msgid "Comma-separated values"
 msgstr ""
@@ -5468,6 +5471,16 @@ msgstr "自定义提供商"
 #: src/modules/settings/admin-panel/ai/components/SettingsAdminAI.tsx
 msgid "Custom Providers"
 msgstr "自定义提供商"
+
+#. js-lingui-id: XJ1mLl
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "Custom settings"
+msgstr ""
+
+#. js-lingui-id: 0XRiZv
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "Custom Settings"
+msgstr ""
 
 #. js-lingui-id: BjGDEB
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
@@ -12466,6 +12479,11 @@ msgstr "未记录到该用户的积分消耗。"
 msgid "No currency"
 msgstr "无货币"
 
+#. js-lingui-id: EIq3MU
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+msgid "No custom settings configured for this app."
+msgstr ""
+
 #. js-lingui-id: DKVJFE
 #: src/modules/navigation-menu-item/edit/side-panel/components/SidePanelNewSidebarItemViewPickerSubView.tsx
 msgid "No custom views available"
@@ -13022,6 +13040,7 @@ msgstr "节点"
 
 #. js-lingui-id: EdQY6l
 #: src/modules/ai/constants/AgentChatThreadGroupByLabels.ts
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCalendarEndFieldsContent.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownLayoutContent.tsx
@@ -15655,6 +15674,7 @@ msgid "Saturday"
 msgstr "星期六"
 
 #. js-lingui-id: tfDRzk
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/settings/components/SaveAndCancelButtons/SaveButton.tsx
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 #: src/pages/settings/data-model/new-field/SettingsObjectNewFieldConfigure.tsx
