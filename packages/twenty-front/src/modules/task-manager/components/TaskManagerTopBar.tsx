@@ -91,20 +91,18 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
   const handleProjectChange = (projectId: string) => {
     const nextSearchParams = new URLSearchParams(searchParams);
 
-    if (projectId) {
-      nextSearchParams.set('project', projectId);
-    } else {
-      nextSearchParams.delete('project');
-    }
+    nextSearchParams.set('project', projectId);
 
     setSearchParams(nextSearchParams);
   };
 
-  // A member scoped to a single project has nothing to pick — auto-select it
-  // instead of defaulting to the "All projects" option, which would misleadingly
-  // suggest there's a broader scope to switch away from.
+  // There's no "All projects" option (below): each project seeds its own
+  // Kanban view with its own status columns, so there's no single status
+  // grouping that makes sense across projects. Auto-select the first
+  // accessible project whenever none is selected, rather than leaving the
+  // page in an ambiguous no-project state.
   useEffect(() => {
-    if (projects.length === 1 && !selectedProjectId) {
+    if (projects.length > 0 && !selectedProjectId) {
       handleProjectChange(projects[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,11 +138,6 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
           dropdownId="task-manager-project-select"
           options={projectOptions}
           value={selectedProjectId}
-          emptyOption={
-            projects.length === 1
-              ? undefined
-              : { label: t`All projects`, value: '' }
-          }
           onChange={handleProjectChange}
           withSearchInput={projectOptions.length > 5}
           fullWidth

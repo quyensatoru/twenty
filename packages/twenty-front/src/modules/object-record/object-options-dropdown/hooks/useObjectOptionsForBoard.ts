@@ -147,9 +147,9 @@ export const useObjectOptionsForBoard = ({
         'fieldMetadataId' | 'isVisible'
       >,
     ) => {
-      const lastPosition = currentRecordFields.toSorted(
-        sortByProperty('position', 'desc'),
-      )[0].position;
+      const lastPosition =
+        currentRecordFields.toSorted(sortByProperty('position', 'desc'))?.[0]
+          ?.position ?? 0;
 
       const shouldShowFieldMetadataItem =
         updatedFieldDefinition.isVisible === true;
