@@ -18,7 +18,7 @@ const NEVER_MATCHING_ID = '00000000-0000-0000-0000-000000000000';
 // must resolve to a candidate-id list first (via useFindManyRecords on the
 // TARGET object's own, fully-featured filter type) and always hand the
 // picker a plain `{ id: { in } }`.
-const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
+export const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
   id: { in: ids.length > 0 ? ids : [NEVER_MATCHING_ID] },
 });
 

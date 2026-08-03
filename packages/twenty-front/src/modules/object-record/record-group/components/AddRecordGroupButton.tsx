@@ -12,17 +12,20 @@ import { isNonEmptyString } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
 import { IconPlus } from 'twenty-ui/icon';
 import { LightButton } from 'twenty-ui/input';
+import { type ObjectRecordFilterInput } from '~/generated/graphql';
 
 type AddRecordGroupButtonProps = {
   fieldMetadataItem: FieldMetadataItem;
   dropdownId: string;
   dropdownOffset?: DropdownOffset;
+  filter?: ObjectRecordFilterInput;
 };
 
 export const AddRecordGroupButton = ({
   fieldMetadataItem,
   dropdownId,
   dropdownOffset,
+  filter,
 }: AddRecordGroupButtonProps) => {
   const { currentView } = useGetCurrentViewOnly();
   const { addRecordGroup } = useAddRecordGroup();
@@ -68,6 +71,7 @@ export const AddRecordGroupButton = ({
           onMorphItemSelected={handleRecordSelected}
           objectNameSingulars={[targetObjectNameSingular]}
           excludedRecordIds={excludedRecordIds}
+          filter={filter}
         />
       }
     />

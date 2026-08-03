@@ -21,13 +21,16 @@ import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-object
 
 // Direct port of the hardcoded global Issue.status SELECT options this
 // object replaces (colors copied 1:1 from the old field so existing Kanban
-// columns keep the same look, now duplicated per project).
+// columns keep the same look, now duplicated per project). `color` values
+// are the SELECT option values from
+// compute-issue-status-standard-flat-field-metadata.util.ts (uppercase,
+// enforced by isSnakeCaseString).
 const DEFAULT_ISSUE_STATUSES = [
-  { name: 'Backlog', color: 'gray', category: 'UNSTARTED' },
-  { name: 'Todo', color: 'sky', category: 'UNSTARTED' },
-  { name: 'In Progress', color: 'purple', category: 'STARTED' },
-  { name: 'In Review', color: 'orange', category: 'STARTED' },
-  { name: 'Done', color: 'green', category: 'DONE' },
+  { name: 'Backlog', color: 'GRAY', category: 'UNSTARTED' },
+  { name: 'Todo', color: 'SKY', category: 'UNSTARTED' },
+  { name: 'In Progress', color: 'PURPLE', category: 'STARTED' },
+  { name: 'In Review', color: 'ORANGE', category: 'STARTED' },
+  { name: 'Done', color: 'GREEN', category: 'DONE' },
 ] as const;
 
 // This inserts via the repository directly, bypassing the createOne resolver

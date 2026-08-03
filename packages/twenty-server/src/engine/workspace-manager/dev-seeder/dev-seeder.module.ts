@@ -33,6 +33,7 @@ import { DevSeederService } from 'src/engine/workspace-manager/dev-seeder/servic
 import { StandardObjectsPrefillModule } from 'src/engine/workspace-manager/standard-objects-prefill-data/standard-objects-prefill.module';
 import { TwentyStandardApplicationModule } from 'src/engine/workspace-manager/twenty-standard-application/twenty-standard-application.module';
 import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace-migration/workspace-migration.module';
+import { ProjectQueryHookModule } from 'src/modules/project/query-hooks/project-query-hook.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace
     SdkClientModule,
     SecretEncryptionModule,
     UpgradeModule,
+    ProjectQueryHookModule,
   ],
   exports: [DevSeederService],
   providers: [

@@ -16,6 +16,8 @@ import { UpgradeSequenceReaderService } from 'src/engine/core-modules/upgrade/se
 import { type UpgradeMigrationStatus } from 'src/engine/core-modules/upgrade/upgrade-migration.entity';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
+import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
 import { WorkspaceCacheStorageService } from 'src/engine/workspace-cache-storage/workspace-cache-storage.service';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceDataSourceService } from 'src/engine/workspace-datasource/workspace-datasource.service';
@@ -45,6 +47,8 @@ import { getSeedFrontComponentDefinitions } from 'src/engine/workspace-manager/s
 import { getCreateCompanyWhenAddingNewPersonCodeStepLogicFunctionDefinitions } from 'src/engine/workspace-manager/standard-objects-prefill-data/utils/prefill-workflow-code-step-logic-functions.util';
 import { TwentyStandardApplicationService } from 'src/engine/workspace-manager/twenty-standard-application/services/twenty-standard-application.service';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
+import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
+import { ProjectPostQueryHookService } from 'src/modules/project/query-hooks/project-post-query-hook.service';
 
 @Injectable()
 export class DevSeederService {
@@ -66,6 +70,8 @@ export class DevSeederService {
     private readonly prefillFrontComponentService: PrefillFrontComponentService,
     private readonly prefillLogicFunctionService: PrefillLogicFunctionService,
     private readonly secretEncryptionService: SecretEncryptionService,
+    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly projectPostQueryHookService: ProjectPostQueryHookService,
     @InjectDataSource()
     private readonly coreDataSource: DataSource,
     @InjectRepository(WorkspaceEntity)
@@ -191,7 +197,41 @@ export class DevSeederService {
       light,
     });
 
+    await this.seedProjectKanbanViews(workspaceId);
+
     await this.workspaceCacheStorageService.flush(workspaceId);
+  }
+
+  // The dev-seeder inserts `project`/`issueStatus` rows directly (raw
+  // inserts, see DevSeederDataService), bypassing the project.createOne
+  // post-query hook that normally creates each project's dedicated Kanban
+  // view + view groups. Without this, /tasks falls back to the generic
+  // "byStatus" Kanban view (no project filter, no view groups), which is
+  // shared across every project. Reusing the exact same, independently
+  // idempotent service method the hook and the 2-28 backfill command use.
+  private async seedProjectKanbanViews(workspaceId: string): Promise<void> {
+    const authContext = buildSystemAuthContext(workspaceId);
+
+    const projects = await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      async () => {
+        const projectRepository =
+          await this.globalWorkspaceOrmManager.getRepository<ProjectWorkspaceEntity>(
+            workspaceId,
+            'project',
+            { shouldBypassPermissionChecks: true },
+          );
+
+        return projectRepository.find();
+      },
+      authContext,
+    );
+
+    for (const project of projects) {
+      await this.projectPostQueryHookService.seedDefaultIssueStatuses(
+        authContext,
+        project,
+      );
+    }
   }
 
   private async seedCoreSchema({

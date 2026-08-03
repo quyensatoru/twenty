@@ -5,6 +5,7 @@ import { SingleRecordPickerMenuItemsWithSearch } from '@/object-record/record-pi
 import { SingleRecordPickerComponentInstanceContext } from '@/object-record/record-picker/single-record-picker/states/contexts/SingleRecordPickerComponentInstanceContext';
 import { singleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/single-record-picker/states/singleRecordPickerSearchFilterComponentState';
 import { type RecordPickerPickableMorphItem } from '@/object-record/record-picker/types/RecordPickerPickableMorphItem';
+import { useTaskManagerAddRecordGroupAppScopeFilter } from '@/task-manager/hooks/useTaskManagerAddRecordGroupAppScopeFilter';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
 import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components/DropdownMenuHeader/internal/DropdownMenuHeaderLeftComponent';
@@ -21,7 +22,7 @@ export const ADD_RECORD_GROUP_PICKER_INSTANCE_ID =
 
 export const ObjectOptionsDropdownAddRecordGroupContent = () => {
   const { t } = useLingui();
-  const { onContentChange } = useObjectOptionsDropdown();
+  const { onContentChange, objectMetadataItem } = useObjectOptionsDropdown();
   const { currentView } = useGetCurrentViewOnly();
 
   const recordIndexGroupFieldMetadataItem = useAtomComponentStateValue(
@@ -38,6 +39,17 @@ export const ObjectOptionsDropdownAddRecordGroupContent = () => {
   const targetObjectNameSingular =
     recordIndexGroupFieldMetadataItem?.relation?.targetObjectMetadata
       .nameSingular;
+
+  const projectFieldMetadataId = objectMetadataItem.fields.find(
+    (field) => field.name === 'project',
+  )?.id;
+
+  const appScopeFilter = useTaskManagerAddRecordGroupAppScopeFilter({
+    objectNameSingular: objectMetadataItem.nameSingular,
+    groupByFieldName: recordIndexGroupFieldMetadataItem?.name,
+    projectFieldMetadataId,
+    viewFilters: currentView?.viewFilters ?? [],
+  });
 
   const excludedRecordIds = (currentView?.viewGroups ?? [])
     .map((viewGroup) => viewGroup.fieldValue)
@@ -83,6 +95,7 @@ export const ObjectOptionsDropdownAddRecordGroupContent = () => {
           onMorphItemSelected={handleRecordSelected}
           objectNameSingulars={[targetObjectNameSingular]}
           excludedRecordIds={excludedRecordIds}
+          filter={appScopeFilter}
         />
       </DropdownContent>
     </SingleRecordPickerComponentInstanceContext.Provider>

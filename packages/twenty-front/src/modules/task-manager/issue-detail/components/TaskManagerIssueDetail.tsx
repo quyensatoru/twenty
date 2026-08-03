@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
-import { getAppPath } from 'twenty-shared/utils';
+import { getAppPath, isDefined } from 'twenty-shared/utils';
+import { Tag } from 'twenty-ui/data-display';
 import { IconArrowLeft, IconBrowserMaximize } from 'twenty-ui/icon';
 import { LightIconButton } from 'twenty-ui/input';
+import { type ThemeColor } from 'twenty-ui/theme';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { FilesCard } from '@/activities/files/components/FilesCard';
 import { TimelineCard } from '@/activities/timeline-activities/components/TimelineCard';
+import { TimelineActivityContext } from '@/activities/timeline-activities/contexts/TimelineActivityContext';
 import { ObjectOptionsDropdown } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdown';
 import { RecordFieldsScopeContextProvider } from '@/object-record/record-field-list/contexts/RecordFieldsScopeContext';
 import { RichTextFieldEditor } from '@/object-record/record-field/ui/meta-types/input/components/RichTextFieldEditor';
@@ -93,6 +96,7 @@ const StyledLeftColumn = styled.div<{ isInSidePanel: boolean }>`
   flex: 1;
   flex-direction: column;
   gap: ${themeCssVariables.spacing['6']};
+  min-height: 0;
   overflow-y: ${({ isInSidePanel }) => (isInSidePanel ? 'visible' : 'auto')};
   padding: ${themeCssVariables.spacing['4']};
 `;
@@ -138,6 +142,16 @@ const StyledHeaderPill = styled.div`
   flex-shrink: 0;
 `;
 
+type IssueStatusValue = { name?: string; color?: string } | null;
+
+// IssueStatus.color is a free-text field (users can rename/recolor statuses
+// per project), not a FieldMetadataType.SELECT option — so it isn't
+// guaranteed to be a valid ThemeColor key. Normalize casing/whitespace since
+// the seeded defaults ('gray', 'sky', 'purple', 'orange', 'green') are
+// lowercase; Tag already falls back to gray for anything else unrecognized.
+const getIssueStatusTagColor = (color: string | undefined): ThemeColor =>
+  (color?.trim().toLowerCase() as ThemeColor | undefined) || 'gray';
+
 type TaskManagerIssueDetailProps = {
   issueId: string;
   isInSidePanel?: boolean;
@@ -175,6 +189,8 @@ export const TaskManagerIssueDetail = ({
 
   const getField = (fieldName: string) =>
     objectMetadataItem.fields.find((field) => field.name === fieldName)!;
+
+  const issueStatus = issue.status as IssueStatusValue;
 
   return (
     <StyledPage>
@@ -228,6 +244,16 @@ export const TaskManagerIssueDetail = ({
                 objectMetadataItem={objectMetadataItem}
                 instanceIdPrefix={`header-${recordIndexId}`}
                 showLabel={false}
+                customDisplay={
+                  <Tag
+                    text={issueStatus?.name ?? t`No status`}
+                    color={
+                      isDefined(issueStatus)
+                        ? getIssueStatusTagColor(issueStatus.color)
+                        : 'transparent'
+                    }
+                  />
+                }
               />
             </StyledHeaderPill>
           </RecordFieldsScopeContextProvider>
@@ -294,27 +320,29 @@ export const TaskManagerIssueDetail = ({
             <IssueCommentThread issueId={issueId} />
           </div>
 
-          <LayoutRenderingProvider
-            value={{
-              targetRecordIdentifier: {
-                id: issueId,
-                targetObjectNameSingular: 'issue',
-              },
-              layoutType: PageLayoutType.RECORD_PAGE,
-              isInSidePanel,
-            }}
-          >
-            <div>
-              <StyledSectionTitle>
-                <Trans>Activity</Trans>
-              </StyledSectionTitle>
-              <TimelineCard />
-            </div>
-            <div>
-              <StyledSectionTitle>{t`Files`}</StyledSectionTitle>
-              <FilesCard />
-            </div>
-          </LayoutRenderingProvider>
+          <TimelineActivityContext.Provider value={{ recordId: issueId }}>
+            <LayoutRenderingProvider
+              value={{
+                targetRecordIdentifier: {
+                  id: issueId,
+                  targetObjectNameSingular: 'issue',
+                },
+                layoutType: PageLayoutType.RECORD_PAGE,
+                isInSidePanel,
+              }}
+            >
+              <div>
+                <StyledSectionTitle>
+                  <Trans>Activity</Trans>
+                </StyledSectionTitle>
+                <TimelineCard />
+              </div>
+              <div>
+                <StyledSectionTitle>{t`Files`}</StyledSectionTitle>
+                <FilesCard />
+              </div>
+            </LayoutRenderingProvider>
+          </TimelineActivityContext.Provider>
         </StyledLeftColumn>
         {!isInSidePanel && (
           <>

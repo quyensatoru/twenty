@@ -22,21 +22,21 @@ export const ISSUE_STATUS_DATA_SEED_COLUMNS: (keyof IssueStatusDataSeed)[] = [
 // project now gets its own copy of these 5 statuses as real IssueStatus
 // records, matching what project.createOne seeds for real projects.
 const DEFAULT_ISSUE_STATUSES = [
-  { legacyValue: 'BACKLOG', name: 'Backlog', color: 'gray', category: 'UNSTARTED' },
-  { legacyValue: 'TODO', name: 'Todo', color: 'sky', category: 'UNSTARTED' },
+  { legacyValue: 'BACKLOG', name: 'Backlog', color: 'GRAY', category: 'UNSTARTED' },
+  { legacyValue: 'TODO', name: 'Todo', color: 'SKY', category: 'UNSTARTED' },
   {
     legacyValue: 'IN_PROGRESS',
     name: 'In Progress',
-    color: 'purple',
+    color: 'PURPLE',
     category: 'STARTED',
   },
   {
     legacyValue: 'IN_REVIEW',
     name: 'In Review',
-    color: 'orange',
+    color: 'ORANGE',
     category: 'STARTED',
   },
-  { legacyValue: 'DONE', name: 'Done', color: 'green', category: 'DONE' },
+  { legacyValue: 'DONE', name: 'Done', color: 'GREEN', category: 'DONE' },
 ] as const;
 
 type LegacyIssueStatusValue = (typeof DEFAULT_ISSUE_STATUSES)[number]['legacyValue'];
