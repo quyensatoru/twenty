@@ -10,8 +10,44 @@ import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/wo
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
+import {
+  type RelationTargetAppScopeEntry,
+  assertRelationTargetAppScopeOrThrow,
+} from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
+
+const buildIssueRelationTargetAppScopeEntries = (
+  data: Partial<IssueWorkspaceEntity>,
+): RelationTargetAppScopeEntry[] => {
+  const entries: RelationTargetAppScopeEntry[] = [];
+
+  if (isDefined(data.assigneeId)) {
+    entries.push({
+      fieldName: 'assigneeId',
+      kind: 'workspaceMember',
+      targetId: data.assigneeId,
+    });
+  }
+
+  if (isDefined(data.reporterId)) {
+    entries.push({
+      fieldName: 'reporterId',
+      kind: 'workspaceMember',
+      targetId: data.reporterId,
+    });
+  }
+
+  if (isDefined(data.merchantId)) {
+    entries.push({
+      fieldName: 'merchantId',
+      kind: 'merchant',
+      targetId: data.merchantId,
+    });
+  }
+
+  return entries;
+};
 
 @Injectable()
 @WorkspaceQueryHook(`issue.createMany`)
@@ -42,6 +78,18 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
           globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
           objectNameSingular: 'issue',
           foreignKeyValue: projectId,
+        }),
+      ),
+    );
+
+    await Promise.all(
+      payload.data.map((issue) =>
+        assertRelationTargetAppScopeOrThrow({
+          authContext,
+          globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+          objectNameSingular: 'issue',
+          projectId: issue.projectId,
+          targets: buildIssueRelationTargetAppScopeEntries(issue),
         }),
       ),
     );

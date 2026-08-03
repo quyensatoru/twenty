@@ -16,6 +16,18 @@ export const buildSprintStandardFlatIndexMetadatas = ({
   AllStandardObjectIndexName<'sprint'>,
   FlatIndexMetadata
 > => ({
+  ownerIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'ownerIdIndex',
+      relatedFieldNames: ['owner'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
   projectIdIndex: createStandardIndexFlatMetadata({
     objectName,
     workspaceId,

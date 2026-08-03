@@ -317,6 +317,30 @@ export const buildSprintStandardFlatFieldMetadatas = ({
   }),
 
   // Relation fields
+  owner: createStandardRelationFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      type: FieldMetadataType.RELATION,
+      morphId: null,
+      fieldName: 'owner',
+      label: i18nLabel(msg`Owner`),
+      description: i18nLabel(msg`Sprint owner`),
+      icon: 'IconUserCircle',
+      isNullable: true,
+      targetObjectName: 'workspaceMember',
+      targetFieldName: 'ownedSprints',
+      settings: {
+        relationType: RelationType.MANY_TO_ONE,
+        onDelete: RelationOnDeleteAction.SET_NULL,
+        joinColumnName: 'ownerId',
+      },
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
   project: createStandardRelationFieldFlatMetadata({
     objectName,
     workspaceId,

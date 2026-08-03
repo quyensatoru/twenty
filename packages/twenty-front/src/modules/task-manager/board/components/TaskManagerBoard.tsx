@@ -1,21 +1,11 @@
-import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-
 import { styled } from '@linaria/react';
-import { t } from '@lingui/core/macro';
-import { ViewFilterOperand } from 'twenty-shared/types';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { ObjectOptionsDropdown } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdown';
 import { RecordBoardContainer } from '@/object-record/record-board/components/RecordBoardContainer';
-import { useRemoveRecordFilter } from '@/object-record/record-filter/hooks/useRemoveRecordFilter';
-import { useUpsertRecordFilter } from '@/object-record/record-filter/hooks/useUpsertRecordFilter';
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
 import { ViewType } from '@/views/types/ViewType';
-
-const TASK_MANAGER_BOARD_PROJECT_FILTER_ID =
-  'task-manager-board-project-filter';
 
 const StyledPage = styled.div`
   background-color: ${themeCssVariables.background.primary};
@@ -32,45 +22,11 @@ const StyledBoardContainer = styled.div`
 `;
 
 export const TaskManagerBoard = () => {
-  const [searchParams] = useSearchParams();
-  const projectId = searchParams.get('project') ?? undefined;
-
+  // The Kanban view resolved in TaskManagerBoardPage already carries a
+  // permanent `project` filter (seeded per-project on the server), so no
+  // runtime filter injection is needed here anymore.
   const { objectMetadataItem, recordIndexId, objectNameSingular } =
     useRecordIndexContextOrThrow();
-
-  const { upsertRecordFilter } = useUpsertRecordFilter(recordIndexId);
-  const { removeRecordFilter } = useRemoveRecordFilter(recordIndexId);
-
-  useEffect(() => {
-    const projectFieldMetadataItem = objectMetadataItem.fields.find(
-      (field) => field.name === 'project',
-    );
-
-    if (!projectFieldMetadataItem) {
-      return;
-    }
-
-    if (projectId) {
-      upsertRecordFilter({
-        id: TASK_MANAGER_BOARD_PROJECT_FILTER_ID,
-        fieldMetadataId: projectFieldMetadataItem.id,
-        type: 'RELATION',
-        operand: ViewFilterOperand.IS,
-        value: JSON.stringify({ selectedRecordIds: [projectId] }),
-        displayValue: '',
-        label: t`Project`,
-      });
-    } else {
-      removeRecordFilter({
-        recordFilterId: TASK_MANAGER_BOARD_PROJECT_FILTER_ID,
-      });
-    }
-  }, [
-    projectId,
-    objectMetadataItem.fields,
-    upsertRecordFilter,
-    removeRecordFilter,
-  ]);
 
   return (
     <StyledPage>

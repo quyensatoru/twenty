@@ -359,4 +359,27 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  issues: createStandardRelationFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      type: FieldMetadataType.RELATION,
+      morphId: null,
+      fieldName: 'issues',
+      label: i18nLabel(msg`Issues`),
+      description: i18nLabel(msg`Issues linked to the merchant`),
+      icon: 'IconLayoutKanban',
+      isNullable: true,
+      isUIEditable: false,
+      targetObjectName: 'issue',
+      targetFieldName: 'merchant',
+      settings: {
+        relationType: RelationType.ONE_TO_MANY,
+      },
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
 });

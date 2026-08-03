@@ -214,6 +214,30 @@ export const buildEpicStandardFlatFieldMetadatas = ({
   }),
 
   // Relation fields
+  assignee: createStandardRelationFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      type: FieldMetadataType.RELATION,
+      morphId: null,
+      fieldName: 'assignee',
+      label: i18nLabel(msg`Assignee`),
+      description: i18nLabel(msg`Epic assignee`),
+      icon: 'IconUserCircle',
+      isNullable: true,
+      targetObjectName: 'workspaceMember',
+      targetFieldName: 'assignedEpics',
+      settings: {
+        relationType: RelationType.MANY_TO_ONE,
+        onDelete: RelationOnDeleteAction.SET_NULL,
+        joinColumnName: 'assigneeId',
+      },
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
   project: createStandardRelationFieldFlatMetadata({
     objectName,
     workspaceId,

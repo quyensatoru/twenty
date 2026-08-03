@@ -12,6 +12,7 @@ import { type RecordPickerPickableMorphItem } from '@/object-record/record-picke
 import { getObjectPermissionsFromMapByObjectMetadataId } from '@/settings/roles/role-permissions/objects-permissions/utils/getObjectPermissionsFromMapByObjectMetadataId';
 import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/component-state/hooks/useAvailableComponentInstanceIdOrThrow';
 import { CustomError, isDefined } from 'twenty-shared/utils';
+import { type ObjectRecordFilterInput } from '~/generated/graphql';
 
 export const useSingleRecordPickerPerformSearch = ({
   selectedIds,
@@ -19,12 +20,14 @@ export const useSingleRecordPickerPerformSearch = ({
   excludedRecordIds = [],
   objectNameSingulars,
   searchFilter,
+  filter,
 }: {
   selectedIds: string[];
   limit?: number;
   excludedRecordIds?: string[];
   objectNameSingulars: string[];
   searchFilter?: string;
+  filter?: ObjectRecordFilterInput;
 }): {
   pickableMorphItems: RecordPickerPickableMorphItem[];
   loading: boolean;
@@ -83,10 +86,15 @@ export const useSingleRecordPickerPerformSearch = ({
   const notFilter = notFilterIds.length
     ? { not: { id: { in: notFilterIds } } }
     : undefined;
+  // `filter` only narrows the pool of NEW candidates to pick from — the
+  // already-selected value is looked up unfiltered above so it still
+  // renders even if it's since fallen out of scope.
+  const recordsToSelectFilter =
+    notFilter && filter ? { and: [notFilter, filter] } : (notFilter ?? filter);
   const { loading: recordsToSelectLoading, searchRecords: recordsToSelect } =
     useObjectRecordSearchRecords({
       objectNameSingulars: readableObjectNameSingulars,
-      filter: notFilter,
+      filter: recordsToSelectFilter,
       limit: limit ?? DEFAULT_SEARCH_REQUEST_LIMIT,
       searchInput: searchFilter,
       fetchPolicy: 'cache-and-network',

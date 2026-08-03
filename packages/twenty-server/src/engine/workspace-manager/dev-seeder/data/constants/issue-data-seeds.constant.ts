@@ -1,4 +1,5 @@
 import { EPIC_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/epic-data-seeds.constant';
+import { getIssueStatusDataSeedId } from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-status-data-seeds.constant';
 import { PROJECT_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/project-data-seeds.constant';
 import { SPRINT_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/sprint-data-seeds.constant';
 import { WORKSPACE_MEMBER_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/data/constants/workspace-member-data-seeds.constant';
@@ -11,7 +12,7 @@ type IssueDataSeed = {
   descriptionBlocknote: string;
   descriptionMarkdown: string;
   issueType: string;
-  status: string;
+  statusId: string;
   priority: string;
   storyPoints: number | null;
   originalEstimateMinutes: number | null;
@@ -39,7 +40,7 @@ export const ISSUE_DATA_SEED_COLUMNS: (keyof IssueDataSeed)[] = [
   'descriptionBlocknote',
   'descriptionMarkdown',
   'issueType',
-  'status',
+  'statusId',
   'priority',
   'storyPoints',
   'originalEstimateMinutes',
@@ -110,7 +111,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'Build the responsive nav bar matching the new design system.',
     issueType: 'STORY',
-    status: 'DONE',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_1, 'DONE'),
     priority: 'MEDIUM',
     storyPoints: 5,
     originalEstimateMinutes: 480,
@@ -135,7 +136,10 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'Design and build the homepage hero section with the new brand colors.',
     issueType: 'STORY',
-    status: 'IN_PROGRESS',
+    statusId: getIssueStatusDataSeedId(
+      PROJECT_DATA_SEED_IDS.ID_1,
+      'IN_PROGRESS',
+    ),
     priority: 'MEDIUM',
     storyPoints: 3,
     originalEstimateMinutes: 240,
@@ -159,7 +163,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     ),
     descriptionMarkdown: 'Replace the favicon with the new logo mark.',
     issueType: 'TASK',
-    status: 'TODO',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_1, 'TODO'),
     priority: 'LOW',
     storyPoints: null,
     originalEstimateMinutes: 30,
@@ -183,7 +187,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     ),
     descriptionMarkdown: 'The privacy policy link in the footer returns a 404.',
     issueType: 'BUG',
-    status: 'IN_REVIEW',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_1, 'IN_REVIEW'),
     priority: 'HIGH',
     storyPoints: null,
     originalEstimateMinutes: 60,
@@ -208,7 +212,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'Add meta title/description tags for every marketing page.',
     issueType: 'TASK',
-    status: 'BACKLOG',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_1, 'BACKLOG'),
     priority: 'LOWEST',
     storyPoints: null,
     originalEstimateMinutes: null,
@@ -232,7 +236,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     ),
     descriptionMarkdown: 'Design and implement the 3-screen welcome carousel.',
     issueType: 'STORY',
-    status: 'DONE',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_2, 'DONE'),
     priority: 'MEDIUM',
     storyPoints: 5,
     originalEstimateMinutes: 360,
@@ -257,7 +261,10 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'Ask users to opt in to push notifications after onboarding.',
     issueType: 'STORY',
-    status: 'IN_PROGRESS',
+    statusId: getIssueStatusDataSeedId(
+      PROJECT_DATA_SEED_IDS.ID_2,
+      'IN_PROGRESS',
+    ),
     priority: 'MEDIUM',
     storyPoints: 3,
     originalEstimateMinutes: 240,
@@ -282,7 +289,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'App crashes when submitting the login form with an empty password.',
     issueType: 'BUG',
-    status: 'IN_REVIEW',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_2, 'IN_REVIEW'),
     priority: 'HIGHEST',
     storyPoints: null,
     originalEstimateMinutes: 120,
@@ -306,7 +313,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     ),
     descriptionMarkdown: 'Replace the app icon with the refreshed brand mark.',
     issueType: 'TASK',
-    status: 'TODO',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_2, 'TODO'),
     priority: 'LOW',
     storyPoints: null,
     originalEstimateMinutes: 45,
@@ -331,7 +338,7 @@ export const ISSUE_DATA_SEEDS: IssueDataSeed[] = [
     descriptionMarkdown:
       'The new app icon has inconsistent padding on Android.',
     issueType: 'SUBTASK',
-    status: 'TODO',
+    statusId: getIssueStatusDataSeedId(PROJECT_DATA_SEED_IDS.ID_2, 'TODO'),
     priority: 'LOW',
     storyPoints: null,
     originalEstimateMinutes: 20,

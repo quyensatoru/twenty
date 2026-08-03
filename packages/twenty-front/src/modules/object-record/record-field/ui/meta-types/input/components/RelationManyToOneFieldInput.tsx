@@ -12,6 +12,7 @@ import { SingleRecordPicker } from '@/object-record/record-picker/single-record-
 import { singleRecordPickerSelectedIdComponentState } from '@/object-record/record-picker/single-record-picker/states/singleRecordPickerSelectedIdComponentState';
 import { type RecordPickerPickableMorphItem } from '@/object-record/record-picker/types/RecordPickerPickableMorphItem';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
+import { useTaskManagerRelationTargetAppScopeFilter } from '@/task-manager/hooks/useTaskManagerRelationTargetAppScopeFilter';
 import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/component-state/hooks/useAvailableComponentInstanceIdOrThrow';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
@@ -98,6 +99,12 @@ export const RelationManyToOneFieldInput = () => {
     }
   };
 
+  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
+    objectNameSingular: objectMetadataItem.nameSingular,
+    fieldName: fieldMetadataItem.name,
+    recordId,
+  });
+
   if (recordFieldInputLayoutDirectionLoading) {
     return <></>;
   }
@@ -123,6 +130,7 @@ export const RelationManyToOneFieldInput = () => {
           ? 'search-bar-on-top'
           : 'search-bar-on-bottom'
       }
+      filter={appScopeFilter}
     />
   );
 };

@@ -20,6 +20,7 @@ import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/use
 import { isDefined } from 'twenty-shared/utils';
 import { t } from '@lingui/core/macro';
 import { IconPlus } from 'twenty-ui/icon';
+import { type ObjectRecordFilterInput } from '~/generated/graphql';
 
 export type SingleRecordPickerMenuItemsWithSearchProps = {
   excludedRecordIds?: string[];
@@ -28,6 +29,7 @@ export type SingleRecordPickerMenuItemsWithSearchProps = {
   recordPickerInstanceId?: string;
   layoutDirection?: RecordPickerLayoutDirection;
   focusId: string;
+  filter?: ObjectRecordFilterInput;
 } & Pick<
   SingleRecordPickerMenuItemsProps,
   'EmptyIcon' | 'emptyLabel' | 'onCancel' | 'onMorphItemSelected'
@@ -43,6 +45,7 @@ export const SingleRecordPickerMenuItemsWithSearch = ({
   objectNameSingulars,
   layoutDirection = 'search-bar-on-top',
   focusId,
+  filter,
 }: SingleRecordPickerMenuItemsWithSearchProps) => {
   const { handleSearchFilterChange } = useSingleRecordPickerSearch();
 
@@ -58,6 +61,7 @@ export const SingleRecordPickerMenuItemsWithSearch = ({
   const { pickableMorphItems, loading } = useSingleRecordPickerRecords({
     objectNameSingulars,
     excludedRecordIds,
+    filter,
   });
 
   const { objectMetadataItems: allObjectMetadataItems } =

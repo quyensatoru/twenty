@@ -10,11 +10,47 @@ import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/wo
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
+import {
+  type RelationTargetAppScopeEntry,
+  assertRelationTargetAppScopeOrThrow,
+} from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
 const hasIssueKey = (issueKey: string | null | undefined): boolean =>
   isDefined(issueKey) && issueKey.length > 0;
+
+const buildIssueRelationTargetAppScopeEntries = (
+  data: Partial<IssueWorkspaceEntity>,
+): RelationTargetAppScopeEntry[] => {
+  const entries: RelationTargetAppScopeEntry[] = [];
+
+  if (isDefined(data.assigneeId)) {
+    entries.push({
+      fieldName: 'assigneeId',
+      kind: 'workspaceMember',
+      targetId: data.assigneeId,
+    });
+  }
+
+  if (isDefined(data.reporterId)) {
+    entries.push({
+      fieldName: 'reporterId',
+      kind: 'workspaceMember',
+      targetId: data.reporterId,
+    });
+  }
+
+  if (isDefined(data.merchantId)) {
+    entries.push({
+      fieldName: 'merchantId',
+      kind: 'merchant',
+      targetId: data.merchantId,
+    });
+  }
+
+  return entries;
+};
 
 @Injectable()
 @WorkspaceQueryHook(`issue.updateOne`)
@@ -32,6 +68,8 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
+    const workspaceId = workspace.id;
+    const issueId = payload.id;
     const projectId = payload.data.projectId;
 
     if (isDefined(projectId)) {
@@ -43,12 +81,45 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
       });
     }
 
+    const relationTargetAppScopeEntries =
+      buildIssueRelationTargetAppScopeEntries(payload.data);
+
+    if (relationTargetAppScopeEntries.length > 0) {
+      // projectId isn't necessarily part of this update payload — fall back
+      // to the record's current project so the guard still fires.
+      const effectiveProjectId = isDefined(projectId)
+        ? projectId
+        : await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+            async () => {
+              const issueRepository =
+                await this.globalWorkspaceOrmManager.getRepository(
+                  workspaceId,
+                  IssueWorkspaceEntity,
+                  { shouldBypassPermissionChecks: true },
+                );
+
+              const issue = await issueRepository.findOne({
+                where: { id: issueId },
+                select: ['id', 'projectId'],
+              });
+
+              return issue?.projectId ?? null;
+            },
+            authContext,
+          );
+
+      await assertRelationTargetAppScopeOrThrow({
+        authContext,
+        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        objectNameSingular: 'issue',
+        projectId: effectiveProjectId,
+        targets: relationTargetAppScopeEntries,
+      });
+    }
+
     if (!isDefined(projectId) || hasIssueKey(payload.data.issueKey)) {
       return payload;
     }
-
-    const workspaceId = workspace.id;
-    const issueId = payload.id;
 
     const generatedIssueKey =
       await this.globalWorkspaceOrmManager.executeInWorkspaceContext(

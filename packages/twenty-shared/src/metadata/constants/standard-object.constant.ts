@@ -2131,6 +2131,9 @@ export const STANDARD_OBJECTS = {
       sprints: { universalIdentifier: 'a980d736-d31e-473e-a599-7702d6f53c22' },
       issues: { universalIdentifier: '8ef104d2-8d9f-436b-8764-7d1b07b65e8d' },
       epics: { universalIdentifier: 'f36c7cb9-591d-4edd-8e21-89e2f3872779' },
+      issueStatuses: {
+        universalIdentifier: '802294d3-be17-4e77-9271-0ca81f40bd20',
+      },
       app: { universalIdentifier: 'c4dc0e3e-edcf-4b84-8673-f1a3e69d6bb9' },
       attachments: {
         universalIdentifier: getSystemRelationFieldUniversalIdentifier({
@@ -2229,6 +2232,7 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
         }),
       },
+      issues: { universalIdentifier: '19dfe96d-49c9-477d-891b-568fdc4d2cde' },
     },
     indexes: {
       appIdIndex: {
@@ -2269,10 +2273,14 @@ export const STANDARD_OBJECTS = {
       completeDate: {
         universalIdentifier: 'a1896ecc-77e8-4e13-8b47-732bf3dcaf72',
       },
+      owner: { universalIdentifier: '3d1fb297-a26d-4261-90d1-e831822f491c' },
       project: { universalIdentifier: '490bf2b4-6329-4b6e-9439-9a8b8f665f65' },
       issues: { universalIdentifier: '6c883b2e-192a-4ccc-aa18-b8845b49ebaf' },
     },
     indexes: {
+      ownerIdIndex: {
+        universalIdentifier: '18fd19f9-03d1-44de-830a-31b60bc0f16a',
+      },
       projectIdIndex: {
         universalIdentifier: 'f56963a7-0c8a-440e-8087-d4995473a62c',
       },
@@ -2311,6 +2319,7 @@ export const STANDARD_OBJECTS = {
         STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.epic,
       ),
       name: { universalIdentifier: 'ede3b828-7820-4f7e-a698-ea8ab024ca8b' },
+      assignee: { universalIdentifier: 'b5b99d32-cff8-4b09-b8a5-671104ccd7a6' },
       project: { universalIdentifier: '6d21b491-e9a0-46b2-8714-731bf3ad008d' },
       issues: { universalIdentifier: 'e879d34e-d571-4cf7-a80c-6c9b9618748e' },
       timelineActivities: {
@@ -2324,6 +2333,9 @@ export const STANDARD_OBJECTS = {
       },
     },
     indexes: {
+      assigneeIdIndex: {
+        universalIdentifier: '2bb103c0-fc1a-45e9-924e-7ebc072f897a',
+      },
       projectIdIndex: {
         universalIdentifier: '6191217a-a13b-4a4f-9e54-45c7343f1e65',
       },
@@ -2345,6 +2357,46 @@ export const STANDARD_OBJECTS = {
       },
       epicRecordPageFields: {
         universalIdentifier: '8c2c40a5-5f77-4cde-bf32-8e7b7cb4ff6d',
+        viewFields: {},
+      },
+    },
+  },
+  issueStatus: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueStatus,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueStatus,
+      ),
+      name: { universalIdentifier: '27c289c3-34f8-4062-9a13-38486a3a0e5e' },
+      color: { universalIdentifier: '4b980ce6-15ce-45d4-9d5c-a2bc969dc0f9' },
+      category: {
+        universalIdentifier: '04311de5-09f0-4b4e-ae49-7840648f97ce',
+      },
+      project: { universalIdentifier: 'f0d5b889-710a-4dc0-816a-9f551259ee8a' },
+      issues: { universalIdentifier: '885d3691-a8b2-4f48-8b9d-447daf9a62f1' },
+    },
+    indexes: {
+      projectIdIndex: {
+        universalIdentifier: '194eb3e9-808d-4d7b-a5e7-506378d0fdf0',
+      },
+    },
+    views: {
+      allIssueStatuses: {
+        universalIdentifier: '9ebd66bd-03cf-4e6b-b19b-e4b14c2f41e4',
+        viewFields: {
+          name: {
+            universalIdentifier: '39a2420d-539f-40e6-b8fd-82d9f4309682',
+          },
+          project: {
+            universalIdentifier: '05a5f9af-5482-4c77-8d25-9864fd2958d3',
+          },
+          createdAt: {
+            universalIdentifier: '0a2c0d4b-9da1-4b0c-86e5-b5a006fa4add',
+          },
+        },
+      },
+      issueStatusRecordPageFields: {
+        universalIdentifier: 'ef6c5f68-28f3-4dc3-8149-a18338e82bbe',
         viewFields: {},
       },
     },
@@ -2388,6 +2440,7 @@ export const STANDARD_OBJECTS = {
       },
       assignee: { universalIdentifier: 'e73c84a8-d843-4029-8d87-6ce1506b09cd' },
       reporter: { universalIdentifier: 'a7b3391d-bbb2-4913-8b48-42190b5f950c' },
+      merchant: { universalIdentifier: '5180b84c-0866-4018-9fba-aeb7d661804a' },
       project: { universalIdentifier: '3c15d323-c131-4e6f-ad8c-86515f55420e' },
       sprint: { universalIdentifier: 'fc7e57b3-900e-423d-beda-0ab1edcd1248' },
       epic: { universalIdentifier: 'de86605c-2590-4f74-b30e-631dba1aa097' },
@@ -2428,6 +2481,9 @@ export const STANDARD_OBJECTS = {
       },
       reporterIdIndex: {
         universalIdentifier: 'db480adb-fdcd-4792-a658-4dd9391bc683',
+      },
+      merchantIdIndex: {
+        universalIdentifier: '978c4541-360b-4c5f-a6d9-4572f7cdb741',
       },
       projectIdIndex: {
         universalIdentifier: '8a2c3728-f10a-4f47-8d72-9a373044f8b7',
@@ -3558,6 +3614,12 @@ export const STANDARD_OBJECTS = {
       },
       reportedIssues: {
         universalIdentifier: '664aacfe-c0e0-49b1-8f1f-f8cfab07cf2f',
+      },
+      assignedEpics: {
+        universalIdentifier: 'a5f85db6-3ecb-47bd-8dd3-854a3fdb0160',
+      },
+      ownedSprints: {
+        universalIdentifier: 'efcc2e97-f62b-4994-8c14-84053fd0d67c',
       },
       issueComments: {
         universalIdentifier: 'da781bbf-a15e-4948-9712-3dcc14ab5545',

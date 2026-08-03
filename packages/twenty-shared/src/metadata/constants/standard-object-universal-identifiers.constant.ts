@@ -25,6 +25,7 @@ export const STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = {
   merchant: '5d9a58bd-983c-4ca4-9f0a-b53cdec4cfca',
   sprint: '6acc95fa-4a04-49f1-ac53-50efe1032cbf',
   epic: '4aef1443-d2b0-42a9-9ce9-f08891b93430',
+  issueStatus: '3439277b-2995-4a5c-b497-1b75396533a4',
   issue: 'e14a5928-2bbe-4e20-b766-ea8975ee819f',
   issueComment: '860287e4-e447-4e1b-85e4-4952c02f57dd',
   worklog: '8e4d81e8-6ab8-42c4-9e61-16b98bab83fa',

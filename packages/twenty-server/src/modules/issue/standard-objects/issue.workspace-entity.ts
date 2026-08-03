@@ -4,6 +4,8 @@ import { BaseWorkspaceEntity } from 'src/engine/twenty-orm/base.workspace-entity
 import { type EntityRelation } from 'src/engine/workspace-manager/workspace-migration/types/entity-relation.interface';
 import { type AttachmentWorkspaceEntity } from 'src/modules/attachment/standard-objects/attachment.workspace-entity';
 import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
+import { type IssueStatusWorkspaceEntity } from 'src/modules/issue-status/standard-objects/issue-status.workspace-entity';
+import { type MerchantWorkspaceEntity } from 'src/modules/merchant/standard-objects/merchant.workspace-entity';
 import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
 import { type TimelineActivityWorkspaceEntity } from 'src/modules/timeline/standard-objects/timeline-activity.workspace-entity';
@@ -15,7 +17,8 @@ export class IssueWorkspaceEntity extends BaseWorkspaceEntity {
   issueKey: string | null;
   description: RichTextMetadata | null;
   issueType: string | null;
-  status: string | null;
+  status: EntityRelation<IssueStatusWorkspaceEntity> | null;
+  statusId: string | null;
   priority: string | null;
   resolution: string | null;
   storyPoints: number | null;
@@ -30,6 +33,8 @@ export class IssueWorkspaceEntity extends BaseWorkspaceEntity {
   assigneeId: string | null;
   reporter: EntityRelation<WorkspaceMemberWorkspaceEntity> | null;
   reporterId: string | null;
+  merchant: EntityRelation<MerchantWorkspaceEntity> | null;
+  merchantId: string | null;
   project: EntityRelation<ProjectWorkspaceEntity>;
   projectId: string;
   sprint: EntityRelation<SprintWorkspaceEntity> | null;

@@ -9,7 +9,9 @@ import { AppAccessQueryHookModule } from 'src/modules/app-access/query-hooks/app
 import { BlocklistQueryHookModule } from 'src/modules/blocklist/query-hooks/blocklist-query-hook.module';
 import { CalendarQueryHookModule } from 'src/modules/calendar/common/query-hooks/calendar-query-hook.module';
 import { DashboardQueryHookModule } from 'src/modules/dashboard/query-hooks/dashboard-query-hook.module';
+import { EpicQueryHookModule } from 'src/modules/epic/query-hooks/epic-query-hook.module';
 import { IssueCommentQueryHookModule } from 'src/modules/issue-comment/query-hooks/issue-comment-query-hook.module';
+import { IssueStatusQueryHookModule } from 'src/modules/issue-status/query-hooks/issue-status-query-hook.module';
 import { IssueQueryHookModule } from 'src/modules/issue/query-hooks/issue-query-hook.module';
 import { MessagingQueryHookModule } from 'src/modules/messaging/common/query-hooks/messaging-query-hook.module';
 import { NoteQueryHookModule } from 'src/modules/note/query-hooks/note-query-hook.module';
@@ -32,7 +34,9 @@ import { WorkspaceMemberQueryHookModule } from 'src/modules/workspace-member/que
     WorklogQueryHookModule,
     ProjectQueryHookModule,
     SprintQueryHookModule,
+    EpicQueryHookModule,
     IssueCommentQueryHookModule,
+    IssueStatusQueryHookModule,
     AppAccessQueryHookModule,
     DiscoveryModule,
   ],

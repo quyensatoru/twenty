@@ -9,7 +9,8 @@ import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runne
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
-import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
+import { assertRelationTargetAppScopeOrThrow } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
+import { SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
 
 // Only checked when `projectId` is being reassigned.
 @Injectable()
@@ -24,12 +25,55 @@ export class SprintUpdateOnePreQueryHook implements WorkspacePreQueryHookInstanc
     _objectName: string,
     payload: UpdateOneResolverArgs<SprintWorkspaceEntity>,
   ): Promise<UpdateOneResolverArgs<SprintWorkspaceEntity>> {
-    if (isDefined(payload.data.projectId)) {
+    const projectId = payload.data.projectId;
+
+    if (isDefined(projectId)) {
       await assertAppScopeWriteAccessOrThrow({
         authContext,
         globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
         objectNameSingular: 'sprint',
-        foreignKeyValue: payload.data.projectId,
+        foreignKeyValue: projectId,
+      });
+    }
+
+    if (isDefined(payload.data.ownerId)) {
+      const workspace = authContext.workspace;
+
+      // ownerId can be changed without projectId in the same payload — fall
+      // back to the record's current project so the guard still fires.
+      const effectiveProjectId = isDefined(projectId)
+        ? projectId
+        : await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+            async () => {
+              const sprintRepository =
+                await this.globalWorkspaceOrmManager.getRepository(
+                  workspace.id,
+                  SprintWorkspaceEntity,
+                  { shouldBypassPermissionChecks: true },
+                );
+
+              const sprint = await sprintRepository.findOne({
+                where: { id: payload.id },
+                select: ['id', 'projectId'],
+              });
+
+              return sprint?.projectId ?? null;
+            },
+            authContext,
+          );
+
+      await assertRelationTargetAppScopeOrThrow({
+        authContext,
+        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        objectNameSingular: 'sprint',
+        projectId: effectiveProjectId,
+        targets: [
+          {
+            fieldName: 'ownerId',
+            kind: 'workspaceMember',
+            targetId: payload.data.ownerId,
+          },
+        ],
       });
     }
 

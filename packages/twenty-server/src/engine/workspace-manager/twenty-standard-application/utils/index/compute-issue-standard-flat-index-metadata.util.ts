@@ -41,6 +41,18 @@ export const buildIssueStandardFlatIndexMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
+  merchantIdIndex: createStandardIndexFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      indexName: 'merchantIdIndex',
+      relatedFieldNames: ['merchant'],
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
   projectIdIndex: createStandardIndexFlatMetadata({
     objectName,
     workspaceId,

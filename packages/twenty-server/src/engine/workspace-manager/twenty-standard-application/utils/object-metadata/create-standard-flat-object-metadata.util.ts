@@ -766,6 +766,31 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
       twentyStandardApplicationId,
       now,
     }),
+  issueStatus: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<CreateStandardObjectArgs<'issueStatus'>, 'context' | 'objectName'>) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'issueStatus',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.issueStatus.universalIdentifier,
+        nameSingular: 'issueStatus',
+        namePlural: 'issueStatuses',
+        labelSingular: i18nLabel(msg`Issue status`),
+        labelPlural: i18nLabel(msg`Issue statuses`),
+        description: i18nLabel(msg`A per-project status an issue can be in`),
+        icon: 'IconProgressCheck',
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
   issue: ({
     now,
     workspaceId,

@@ -76,6 +76,11 @@ const StyledDueDate = styled.span`
 const formatDueDate = (dueDate: unknown): string | null =>
   typeof dueDate === 'string' ? new Date(dueDate).toLocaleDateString() : null;
 
+type IssueStatusValue = { name?: string; category?: string } | null;
+
+const getIssueStatusLabel = (status: unknown): string =>
+  (status as IssueStatusValue)?.name ?? '';
+
 const EpicGroup = ({
   epic,
   childIssues,
@@ -86,7 +91,7 @@ const EpicGroup = ({
   onNavigateToIssue: (issueId: string) => void;
 }) => {
   const doneCount = childIssues.filter(
-    (child) => child.status === 'DONE',
+    (child) => (child.status as IssueStatusValue)?.category === 'DONE',
   ).length;
   const progress =
     childIssues.length === 0
@@ -117,7 +122,7 @@ const EpicGroup = ({
             key={child.id}
             onClick={() => onNavigateToIssue(child.id)}
           >
-            <Tag text={child.status as string} color="gray" />
+            <Tag text={getIssueStatusLabel(child.status)} color="gray" />
             <StyledChildTitle>
               {child.issueKey} {child.title}
             </StyledChildTitle>
@@ -172,7 +177,7 @@ export const TaskManagerRoadmap = () => {
                 key={issue.id}
                 onClick={() => handleNavigateToIssue(issue.id)}
               >
-                <Tag text={issue.status as string} color="gray" />
+                <Tag text={getIssueStatusLabel(issue.status)} color="gray" />
                 <StyledChildTitle>
                   {issue.issueKey} {issue.title}
                 </StyledChildTitle>

@@ -16,7 +16,7 @@ const ISSUE_BASE_RECORD_GQL_FIELDS = {
   title: true,
   issueKey: true,
   issueType: true,
-  status: true,
+  status: { id: true, name: true, category: true, color: true },
   priority: true,
   storyPoints: true,
   position: true,

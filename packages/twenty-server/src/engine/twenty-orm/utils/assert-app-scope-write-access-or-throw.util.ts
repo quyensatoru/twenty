@@ -115,7 +115,10 @@ export const assertAppScopeWriteAccessOrThrow = async ({
 // - scopePath.length > 0: walk the remaining chain via bypass-permission
 //   repository lookups down to the app-scope root's own row, then read its
 //   app join column.
-const resolveEffectiveAppId = async ({
+// Exported for reuse by assert-relation-target-app-scope-or-throw.util.ts,
+// which needs the same project -> app resolution but checks a relation
+// TARGET's app instead of the acting member's write permission.
+export const resolveEffectiveAppId = async ({
   globalWorkspaceOrmManager,
   workspaceId,
   objectMetadata,
@@ -190,7 +193,9 @@ const resolveEffectiveAppId = async ({
   });
 };
 
-const fetchColumnValue = async ({
+// Exported for reuse by assert-relation-target-app-scope-or-throw.util.ts
+// (reads a Merchant's `appId` column directly, without hydrating the entity).
+export const fetchColumnValue = async ({
   globalWorkspaceOrmManager,
   workspaceId,
   objectNameSingular,

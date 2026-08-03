@@ -25,6 +25,7 @@ import { buildNoteStandardFlatIndexMetadatas } from 'src/engine/workspace-manage
 import { buildNoteTargetStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-note-target-standard-flat-index-metadata.util';
 import { buildIssueCommentStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-comment-standard-flat-index-metadata.util';
 import { buildIssueStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-standard-flat-index-metadata.util';
+import { buildIssueStatusStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-status-standard-flat-index-metadata.util';
 import { buildWorklogStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-worklog-standard-flat-index-metadata.util';
 import { buildOpportunityStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-opportunity-standard-flat-index-metadata.util';
 import { buildPersonStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-person-standard-flat-index-metadata.util';
@@ -69,6 +70,7 @@ const STANDARD_FLAT_INDEX_METADATA_BUILDERS_BY_OBJECT_NAME = {
   noteTarget: buildNoteTargetStandardFlatIndexMetadatas,
   opportunity: buildOpportunityStandardFlatIndexMetadatas,
   issue: buildIssueStandardFlatIndexMetadatas,
+  issueStatus: buildIssueStatusStandardFlatIndexMetadatas,
   issueComment: buildIssueCommentStandardFlatIndexMetadatas,
   worklog: buildWorklogStandardFlatIndexMetadatas,
   person: buildPersonStandardFlatIndexMetadatas,

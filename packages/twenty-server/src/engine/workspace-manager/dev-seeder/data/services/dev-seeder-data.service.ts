@@ -54,6 +54,10 @@ import {
   ISSUE_COMMENT_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-comment-data-seeds.constant';
 import {
+  ISSUE_STATUS_DATA_SEED_COLUMNS,
+  ISSUE_STATUS_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-status-data-seeds.constant';
+import {
   ISSUE_DATA_SEED_COLUMNS,
   ISSUE_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/issue-data-seeds.constant';
@@ -207,6 +211,11 @@ const getRecordSeedsBatches = (
       tableName: 'epic',
       pgColumns: EPIC_DATA_SEED_COLUMNS,
       recordSeeds: EPIC_DATA_SEEDS,
+    },
+    {
+      tableName: 'issueStatus',
+      pgColumns: ISSUE_STATUS_DATA_SEED_COLUMNS,
+      recordSeeds: ISSUE_STATUS_DATA_SEEDS,
     },
   ];
 
