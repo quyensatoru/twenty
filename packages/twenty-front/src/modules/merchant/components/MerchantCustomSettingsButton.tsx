@@ -13,6 +13,7 @@ import { Section, SectionAlignment } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
+import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';
 import { useFindOneRecord } from '@/object-record/hooks/useFindOneRecord';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
 import { InputLabel } from '@/ui/input/components/InputLabel';
@@ -20,6 +21,8 @@ import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
 import { DropdownMenuInnerSelect } from '@/ui/layout/dropdown/components/DropdownMenuInnerSelect';
 import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { isDefined } from 'twenty-shared/utils';
+import { FileFolder } from '~/generated-metadata/graphql';
 
 type MerchantCustomSettingsButtonProps = {
   recordId: string;
@@ -34,7 +37,8 @@ type CustomSettingFieldType =
   | 'DATE'
   | 'ARRAY'
   | 'RICH_TEXT'
-  | 'SELECT';
+  | 'SELECT'
+  | 'FILE';
 
 type CustomSettingFieldSchemaEntry = {
   key: string;
@@ -43,6 +47,25 @@ type CustomSettingFieldSchemaEntry = {
   options?: string[];
   default?: unknown;
 };
+
+// Persisted shape for a FILE-type value — the file itself is never stored on
+// the record, only a reference to it plus a signed download URL minted once
+// at upload time (see useDirectFileUpload / FileFolder.MerchantCustomSetting).
+type CustomSettingFileValue = {
+  fileId: string;
+  label: string;
+  extension: string;
+  url: string;
+};
+
+type CustomSettingValue = string | boolean | CustomSettingFileValue;
+
+const isCustomSettingFileValue = (
+  value: unknown,
+): value is CustomSettingFileValue =>
+  isDefined(value) &&
+  typeof value === 'object' &&
+  'fileId' in (value as Record<string, unknown>);
 
 const NO_SELECT_VALUE = '';
 const ARRAY_VALUE_SEPARATOR = ',';
@@ -90,6 +113,19 @@ const StyledNativeTextarea = styled.textarea`
   width: 100%;
 `;
 
+const StyledFileRow = styled.div`
+  align-items: center;
+  display: flex;
+  gap: ${themeCssVariables.spacing[2]};
+`;
+
+const StyledFileLink = styled.a`
+  color: ${themeCssVariables.font.color.primary};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const StyledFooter = styled.div`
   display: flex;
   flex-shrink: 0;
@@ -123,7 +159,7 @@ const StyledScrollableSection = styled.div`
 const formatValueForInput = (
   entry: CustomSettingFieldSchemaEntry,
   existingValue: unknown,
-): string | boolean => {
+): CustomSettingValue => {
   if (entry.type === 'BOOLEAN') {
     return Boolean(existingValue);
   }
@@ -132,12 +168,15 @@ const formatValueForInput = (
       ? existingValue.join(ARRAY_VALUE_SEPARATOR)
       : '';
   }
+  if (entry.type === 'FILE') {
+    return isCustomSettingFileValue(existingValue) ? existingValue : '';
+  }
   return existingValue?.toString() ?? '';
 };
 
 const parseValueForSave = (
   entry: CustomSettingFieldSchemaEntry,
-  value: string | boolean,
+  value: CustomSettingValue,
 ): unknown => {
   if (entry.type === 'NUMBER') {
     return Number(value) || 0;
@@ -147,6 +186,9 @@ const parseValueForSave = (
       .split(ARRAY_VALUE_SEPARATOR)
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
+  }
+  if (entry.type === 'FILE') {
+    return isCustomSettingFileValue(value) ? value : undefined;
   }
   return value;
 };
@@ -173,16 +215,21 @@ export const MerchantCustomSettingsButton = ({
   const hasSchema = fieldSchema.length > 0;
 
   const { updateOneRecord } = useUpdateOneRecord();
+  const { uploadFile } = useDirectFileUpload();
 
   const [schemaValues, setSchemaValues] = useState<
-    Record<string, string | boolean>
+    Record<string, CustomSettingValue>
   >({});
+  const [uploadingKeys, setUploadingKeys] = useState<Record<string, boolean>>(
+    {},
+  );
 
-  // Portalled modal content still bubbles clicks up the REACT tree (not the
-  // DOM tree) to the record field's own click-to-edit handler, which would
-  // otherwise flip the underlying customSettings field into raw JSON edit
-  // mode on every click inside this form. Stopping propagation here, once,
-  // at the root of the portalled content, guards every control beneath it.
+  // Portalled modal content (including the backdrop click-outside-to-close
+  // area) still bubbles clicks up the REACT tree (not the DOM tree) to the
+  // record field's own click-to-edit handler, which would otherwise flip the
+  // underlying customSettings field into raw JSON edit mode every time this
+  // modal is dismissed. Stopping propagation here, once, around the whole
+  // modal wrapper, guards both the content and the backdrop beneath it.
   const stopClickPropagation = (event: React.SyntheticEvent) => {
     event.stopPropagation();
   };
@@ -193,7 +240,7 @@ export const MerchantCustomSettingsButton = ({
     const currentCustomSettings =
       (record?.customSettings as Record<string, unknown> | null) ?? {};
 
-    const initialValues: Record<string, string | boolean> = {};
+    const initialValues: Record<string, CustomSettingValue> = {};
     fieldSchema.forEach((entry) => {
       initialValues[entry.key] = formatValueForInput(
         entry,
@@ -204,8 +251,34 @@ export const MerchantCustomSettingsButton = ({
     openModal(modalInstanceId);
   };
 
-  const handleSchemaValueChange = (key: string, value: string | boolean) => {
+  const handleSchemaValueChange = (key: string, value: CustomSettingValue) => {
     setSchemaValues((previousValues) => ({ ...previousValues, [key]: value }));
+  };
+
+  const handleFileSelected = async (key: string, file: File | undefined) => {
+    if (!isDefined(file)) {
+      return;
+    }
+
+    setUploadingKeys((previousValues) => ({ ...previousValues, [key]: true }));
+
+    try {
+      const uploadedFile = await uploadFile(file, {
+        fileFolder: FileFolder.MerchantCustomSetting,
+      });
+
+      handleSchemaValueChange(key, {
+        fileId: uploadedFile.id,
+        label: file.name,
+        extension: uploadedFile.path.split('.').pop() ?? '',
+        url: uploadedFile.url,
+      });
+    } finally {
+      setUploadingKeys((previousValues) => ({
+        ...previousValues,
+        [key]: false,
+      }));
+    }
   };
 
   const handleSave = async () => {
@@ -242,144 +315,176 @@ export const MerchantCustomSettingsButton = ({
         ariaLabel={t`Custom settings`}
         onClick={handleOpen}
       />
-      <ModalStatefulWrapper
-        modalInstanceId={modalInstanceId}
-        size="medium"
-        isClosable
-        padding="large"
-        renderInDocumentBody
-      >
-        <StyledModalContent
-          onClick={stopClickPropagation}
-          onMouseDown={stopClickPropagation}
+      <div onClick={stopClickPropagation} onMouseDown={stopClickPropagation}>
+        <ModalStatefulWrapper
+          modalInstanceId={modalInstanceId}
+          size="medium"
+          isClosable
+          padding="large"
+          renderInDocumentBody
         >
-          <H1Title
-            title={t`Custom Settings`}
-            fontColor={H1TitleFontColor.Primary}
-          />
-          <StyledScrollableSection>
-            <Section alignment={SectionAlignment.Center}>
-              {!hasSchema ? (
-                <InputLabel>
-                  {t`No custom settings configured for this app.`}
-                </InputLabel>
-              ) : (
-                <StyledFieldGrid>
-                  {fieldSchema.map((entry) => {
-                    const selectOptions: SelectOption[] = [
-                      { label: t`None`, value: NO_SELECT_VALUE },
-                      ...(entry.options ?? []).map((option) => ({
-                        label: option,
-                        value: option,
-                      })),
-                    ];
-                    const currentValue = String(schemaValues[entry.key] ?? '');
-                    const selectedOption =
-                      selectOptions.find(
-                        (option) => option.value === currentValue,
-                      ) ?? selectOptions[0];
-
-                    return (
-                      <Fragment key={entry.key}>
-                        <StyledFieldLabel>
-                          <InputLabel>{entry.label}</InputLabel>
-                        </StyledFieldLabel>
-                        <div>
-                          {entry.type === 'BOOLEAN' ? (
-                            <Checkbox
-                              checked={Boolean(schemaValues[entry.key])}
-                              onCheckedChange={(value) =>
-                                handleSchemaValueChange(entry.key, value)
-                              }
-                            />
-                          ) : entry.type === 'SELECT' ? (
-                            <DropdownMenuInnerSelect
-                              dropdownId={`merchant-custom-setting-select-${entry.key}`}
-                              options={selectOptions}
-                              selectedOption={selectedOption}
-                              isDropdownInModal
-                              onChange={(option) =>
-                                handleSchemaValueChange(
-                                  entry.key,
-                                  option.value as string,
-                                )
-                              }
-                            />
-                          ) : entry.type === 'DATE' ? (
-                            <StyledNativeInput
-                              type="date"
-                              value={currentValue}
-                              onChange={(event) =>
-                                handleSchemaValueChange(
-                                  entry.key,
-                                  event.target.value,
-                                )
-                              }
-                            />
-                          ) : entry.type === 'NUMBER' ? (
-                            <StyledNativeInput
-                              type="number"
-                              value={currentValue}
-                              onChange={(event) =>
-                                handleSchemaValueChange(
-                                  entry.key,
-                                  event.target.value,
-                                )
-                              }
-                            />
-                          ) : entry.type === 'RICH_TEXT' ? (
-                            <StyledNativeTextarea
-                              value={currentValue}
-                              onChange={(event) =>
-                                handleSchemaValueChange(
-                                  entry.key,
-                                  event.target.value,
-                                )
-                              }
-                            />
-                          ) : (
-                            <SettingsTextInput
-                              instanceId={`merchant-custom-setting-${entry.key}`}
-                              value={currentValue}
-                              onChange={(value) =>
-                                handleSchemaValueChange(entry.key, value ?? '')
-                              }
-                              placeholder={
-                                entry.type === 'ARRAY'
-                                  ? t`Comma-separated values`
-                                  : entry.label
-                              }
-                              disableHotkeys
-                              fullWidth
-                            />
-                          )}
-                        </div>
-                      </Fragment>
-                    );
-                  })}
-                </StyledFieldGrid>
-              )}
-            </Section>
-          </StyledScrollableSection>
-          <StyledFooter>
-            <Button
-              onClick={() => closeModal(modalInstanceId)}
-              title={hasSchema ? t`Cancel` : t`Close`}
-              variant="secondary"
-              fullWidth
+          <StyledModalContent>
+            <H1Title
+              title={t`Custom Settings`}
+              fontColor={H1TitleFontColor.Primary}
             />
-            {hasSchema && (
+            <StyledScrollableSection>
+              <Section alignment={SectionAlignment.Center}>
+                {!hasSchema ? (
+                  <InputLabel>
+                    {t`No custom settings configured for this app.`}
+                  </InputLabel>
+                ) : (
+                  <StyledFieldGrid>
+                    {fieldSchema.map((entry) => {
+                      const selectOptions: SelectOption[] = [
+                        { label: t`None`, value: NO_SELECT_VALUE },
+                        ...(entry.options ?? []).map((option) => ({
+                          label: option,
+                          value: option,
+                        })),
+                      ];
+                      const currentValue = String(
+                        schemaValues[entry.key] ?? '',
+                      );
+                      const selectedOption =
+                        selectOptions.find(
+                          (option) => option.value === currentValue,
+                        ) ?? selectOptions[0];
+                      const rawValue = schemaValues[entry.key];
+                      const currentFileValue = isCustomSettingFileValue(
+                        rawValue,
+                      )
+                        ? rawValue
+                        : undefined;
+
+                      return (
+                        <Fragment key={entry.key}>
+                          <StyledFieldLabel>
+                            <InputLabel>{entry.label}</InputLabel>
+                          </StyledFieldLabel>
+                          <div>
+                            {entry.type === 'BOOLEAN' ? (
+                              <Checkbox
+                                checked={Boolean(schemaValues[entry.key])}
+                                onCheckedChange={(value) =>
+                                  handleSchemaValueChange(entry.key, value)
+                                }
+                              />
+                            ) : entry.type === 'SELECT' ? (
+                              <DropdownMenuInnerSelect
+                                dropdownId={`merchant-custom-setting-select-${entry.key}`}
+                                options={selectOptions}
+                                selectedOption={selectedOption}
+                                isDropdownInModal
+                                onChange={(option) =>
+                                  handleSchemaValueChange(
+                                    entry.key,
+                                    option.value as string,
+                                  )
+                                }
+                              />
+                            ) : entry.type === 'DATE' ? (
+                              <StyledNativeInput
+                                type="date"
+                                value={currentValue}
+                                onChange={(event) =>
+                                  handleSchemaValueChange(
+                                    entry.key,
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            ) : entry.type === 'NUMBER' ? (
+                              <StyledNativeInput
+                                type="number"
+                                value={currentValue}
+                                onChange={(event) =>
+                                  handleSchemaValueChange(
+                                    entry.key,
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            ) : entry.type === 'RICH_TEXT' ? (
+                              <StyledNativeTextarea
+                                value={currentValue}
+                                onChange={(event) =>
+                                  handleSchemaValueChange(
+                                    entry.key,
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            ) : entry.type === 'FILE' ? (
+                              <StyledFileRow>
+                                {isDefined(currentFileValue) && (
+                                  <StyledFileLink
+                                    href={currentFileValue.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {currentFileValue.label}
+                                  </StyledFileLink>
+                                )}
+                                <input
+                                  type="file"
+                                  disabled={uploadingKeys[entry.key]}
+                                  onChange={(event) =>
+                                    handleFileSelected(
+                                      entry.key,
+                                      event.target.files?.[0],
+                                    )
+                                  }
+                                />
+                              </StyledFileRow>
+                            ) : (
+                              <SettingsTextInput
+                                instanceId={`merchant-custom-setting-${entry.key}`}
+                                value={currentValue}
+                                onChange={(value) =>
+                                  handleSchemaValueChange(
+                                    entry.key,
+                                    value ?? '',
+                                  )
+                                }
+                                placeholder={
+                                  entry.type === 'ARRAY'
+                                    ? t`Comma-separated values`
+                                    : entry.label
+                                }
+                                disableHotkeys
+                                fullWidth
+                              />
+                            )}
+                          </div>
+                        </Fragment>
+                      );
+                    })}
+                  </StyledFieldGrid>
+                )}
+              </Section>
+            </StyledScrollableSection>
+            <StyledFooter>
               <Button
-                onClick={handleSave}
-                title={t`Save`}
-                variant="primary"
-                accent="blue"
+                onClick={() => closeModal(modalInstanceId)}
+                title={hasSchema ? t`Cancel` : t`Close`}
+                variant="secondary"
                 fullWidth
               />
-            )}
-          </StyledFooter>
-        </StyledModalContent>
-      </ModalStatefulWrapper>
+              {hasSchema && (
+                <Button
+                  onClick={handleSave}
+                  title={t`Save`}
+                  variant="primary"
+                  accent="blue"
+                  fullWidth
+                />
+              )}
+            </StyledFooter>
+          </StyledModalContent>
+        </ModalStatefulWrapper>
+      </div>
     </>
   );
 };

@@ -12,4 +12,5 @@ export enum FileFolder {
   AppTarball = 'app-tarball',
   GeneratedSdkClient = 'generated-sdk-client',
   Dpa = 'dpa',
+  MerchantCustomSetting = 'merchant-custom-setting',
 }

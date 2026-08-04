@@ -1939,6 +1939,7 @@ export enum FileFolder {
   EmailAttachment = 'EmailAttachment',
   FilesField = 'FilesField',
   GeneratedSdkClient = 'GeneratedSdkClient',
+  MerchantCustomSetting = 'MerchantCustomSetting',
   PublicAsset = 'PublicAsset',
   Source = 'Source',
   Workflow = 'Workflow'

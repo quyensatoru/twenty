@@ -73,4 +73,8 @@ export const fileFolderConfigs: Record<FileFolder, FileFolderConfig> = {
     ignoreExpirationToken: false,
     cacheControl: IMMUTABLE_FILE_CACHE_CONTROL,
   },
+  [FileFolder.MerchantCustomSetting]: {
+    ignoreExpirationToken: true,
+    cacheControl: IMMUTABLE_FILE_CACHE_CONTROL,
+  },
 };

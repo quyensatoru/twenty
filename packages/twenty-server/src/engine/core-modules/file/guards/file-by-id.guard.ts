@@ -15,6 +15,7 @@ export const SUPPORTED_FILE_FOLDERS = [
   FileFolder.EmailAttachment,
   FileFolder.AppTarball,
   FileFolder.Dpa,
+  FileFolder.MerchantCustomSetting,
 ] as const;
 
 export type SupportedFileFolder = (typeof SUPPORTED_FILE_FOLDERS)[number];
