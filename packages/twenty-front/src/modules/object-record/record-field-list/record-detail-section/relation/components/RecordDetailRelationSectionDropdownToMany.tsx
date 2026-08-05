@@ -9,6 +9,7 @@ import { useCreateOneRecord } from '@/object-record/hooks/useCreateOneRecord';
 import { useRecordFieldsScopeContextOrThrow } from '@/object-record/record-field-list/contexts/RecordFieldsScopeContext';
 import { FieldContext } from '@/object-record/record-field/ui/contexts/FieldContext';
 import { useUpdateJunctionRelationFromCell } from '@/object-record/record-field/ui/hooks/useUpdateJunctionRelationFromCell';
+import { useTaskManagerRelationTargetAppScopeFilter } from '@/task-manager/hooks/useTaskManagerRelationTargetAppScopeFilter';
 import { useAddNewRecordAndOpenSidePanel } from '@/object-record/record-field/ui/meta-types/input/hooks/useAddNewRecordAndOpenSidePanel';
 import { useUpdateRelationOneToManyFieldInput } from '@/object-record/record-field/ui/meta-types/input/hooks/useUpdateRelationOneToManyFieldInput';
 import { type FieldDefinition } from '@/object-record/record-field/ui/types/FieldDefinition';
@@ -20,6 +21,7 @@ import { hasJunctionConfig } from '@/object-record/record-field/ui/utils/junctio
 import { MultipleRecordPicker } from '@/object-record/record-picker/multiple-record-picker/components/MultipleRecordPicker';
 import { useMultipleRecordPickerOpen } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerOpen';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
+import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
 import { multipleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchFilterComponentState';
 import { multipleRecordPickerSearchableObjectMetadataItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchableObjectMetadataItemsComponentState';
@@ -180,6 +182,17 @@ export const RecordDetailRelationSectionDropdownToMany = ({
       dropdownId,
     );
 
+  const setMultipleRecordPickerFilter = useSetAtomComponentState(
+    multipleRecordPickerFilterComponentState,
+    dropdownId,
+  );
+
+  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
+    objectNameSingular: objectMetadataItem.nameSingular,
+    fieldName,
+    recordId,
+  });
+
   const multipleRecordPickerPickableMorphItemsCallbackState =
     useAtomComponentStateCallbackState(
       multipleRecordPickerPickableMorphItemsComponentState,
@@ -231,6 +244,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
     ]);
     setMultipleRecordPickerSearchFilter('');
     setMultipleRecordPickerPickableMorphItems(pickableMorphItems);
+    setMultipleRecordPickerFilter(appScopeFilter);
 
     openMultipleRecordPicker(dropdownId);
 
@@ -239,6 +253,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
       forceSearchFilter: '',
       forceSearchableObjectMetadataItems: [pickerObjectMetadataItem],
       forcePickableMorphItems: pickableMorphItems,
+      forceFilter: appScopeFilter,
     });
   };
 
@@ -269,6 +284,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
           forceSearchFilter: searchString,
           forceSearchableObjectMetadataItems: [pickerObjectMetadataItem],
           forcePickableMorphItems: newMorphItems,
+          forceFilter: appScopeFilter,
         });
       };
 
@@ -324,6 +340,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
       createNewRecordAndOpenSidePanel?.(searchString);
     },
     [
+      appScopeFilter,
       closeDropdown,
       createJunctionRecord,
       createNewRecordAndOpenSidePanel,

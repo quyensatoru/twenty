@@ -3,6 +3,7 @@ import { useApolloCoreClient } from '@/object-metadata/hooks/useApolloCoreClient
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { useObjectPermissions } from '@/object-record/hooks/useObjectPermissions';
 import { usePerformCombinedFindManyRecords } from '@/object-record/multiple-objects/hooks/usePerformCombinedFindManyRecords';
+import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerIsLoadingComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerIsLoadingComponentState';
 import { multipleRecordPickerPaginationState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPaginationState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
@@ -17,7 +18,11 @@ import { isNonEmptyArray } from '@sniptt/guards';
 import { useStore } from 'jotai';
 import { useCallback } from 'react';
 import { capitalize, isDefined } from 'twenty-shared/utils';
-import { type SearchRecord, type SearchResultEdge } from '~/generated/graphql';
+import {
+  type ObjectRecordFilterInput,
+  type SearchRecord,
+  type SearchResultEdge,
+} from '~/generated/graphql';
 
 const MULTIPLE_RECORD_PICKER_PAGE_SIZE = 30;
 
@@ -36,12 +41,14 @@ export const useMultipleRecordPickerPerformSearch = () => {
       forceSearchFilter = '',
       forceSearchableObjectMetadataItems = [],
       forcePickableMorphItems = [],
+      forceFilter,
       loadMore = false,
     }: {
       multipleRecordPickerInstanceId: string;
       forceSearchFilter?: string;
       forceSearchableObjectMetadataItems?: EnrichedObjectMetadataItem[];
       forcePickableMorphItems?: RecordPickerPickableMorphItem[];
+      forceFilter?: ObjectRecordFilterInput;
       loadMore?: boolean;
     }) => {
       const atomFamilyKey = { instanceId: multipleRecordPickerInstanceId };
@@ -80,6 +87,14 @@ export const useMultipleRecordPickerPerformSearch = () => {
           ? forceSearchableObjectMetadataItems
           : recordPickerSearchableObjectMetadataItems;
 
+      const recordPickerFilter = store.get(
+        multipleRecordPickerFilterComponentState.atomFamily(atomFamilyKey),
+      );
+
+      const scopeFilter = isDefined(forceFilter)
+        ? forceFilter
+        : recordPickerFilter;
+
       const recordPickerPickableMorphItems = store.get(
         multipleRecordPickerPickableMorphItemsComponentState.atomFamily(
           atomFamilyKey,
@@ -114,6 +129,7 @@ export const useMultipleRecordPickerPerformSearch = () => {
         pickedRecordIds: selectedPickableMorphItems.map(
           ({ recordId }) => recordId,
         ),
+        scopeFilter,
         after: loadMore ? paginationState.endCursor : null,
       });
 
@@ -375,6 +391,7 @@ const performSearchQueries = async ({
   searchFilter,
   searchableObjectMetadataItems,
   pickedRecordIds,
+  scopeFilter,
   limit = MULTIPLE_RECORD_PICKER_PAGE_SIZE,
   after = null,
 }: {
@@ -382,6 +399,7 @@ const performSearchQueries = async ({
   searchFilter: string;
   searchableObjectMetadataItems: EnrichedObjectMetadataItem[];
   pickedRecordIds: string[];
+  scopeFilter?: ObjectRecordFilterInput;
   limit?: number;
   after?: string | null;
 }): Promise<
@@ -395,7 +413,12 @@ const performSearchQueries = async ({
     return [[], [], { hasNextPage: false, endCursor: null }];
   }
 
-  const searchRecords = async (filter: any) => {
+  const searchRecords = async (idFilter?: ObjectRecordFilterInput) => {
+    const filter =
+      isDefined(scopeFilter) && isDefined(idFilter)
+        ? { and: [scopeFilter, idFilter] }
+        : (scopeFilter ?? idFilter);
+
     const { data } = await client.query({
       query: SEARCH_QUERY,
       variables: {
