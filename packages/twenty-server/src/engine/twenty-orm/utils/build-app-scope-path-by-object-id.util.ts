@@ -15,6 +15,14 @@ import { buildObjectIdByNameMaps } from 'src/engine/metadata-modules/flat-object
 const APP_OBJECT_NAME_SINGULAR = 'app';
 const DEFAULT_MAX_APP_SCOPE_DEPTH = 4;
 
+// `appAccess` holds a MANY_TO_ONE to `app` too, but only to record which app
+// a permission grant is FOR — it isn't app-scoped content. Left in
+// `appHolderObjectIds`, deleting an appAccess row would require the acting
+// member to already hold a grant on that same app, which is circular and
+// blocks legitimate deletes. Exclude it so appAccess falls through to
+// `null` (unscoped) and is governed only by normal object permissions.
+const APP_SCOPE_ROOT_EXCLUDED_NAMES_SINGULAR = new Set(['appAccess']);
+
 // objectMetadataId -> ordered relation field names to traverse (MANY_TO_ONE,
 // "many" side only) from that object down to the app-scope root (the object
 // that directly holds the FK to `app` — `project`, today).
@@ -58,9 +66,21 @@ export const buildAppScopePathByObjectId = ({
     flatFieldMetadataMaps,
   });
 
+  const excludedObjectIds = new Set(
+    Object.entries(idByNameSingular)
+      .filter(([nameSingular]) =>
+        APP_SCOPE_ROOT_EXCLUDED_NAMES_SINGULAR.has(nameSingular),
+      )
+      .map(([, id]) => id),
+  );
+
   const appHolderObjectIds = new Set<string>();
 
   for (const [objectId, edges] of Object.entries(manyToOneEdgesByObjectId)) {
+    if (excludedObjectIds.has(objectId)) {
+      continue;
+    }
+
     if (edges.some((edge) => edge.targetObjectId === appObjectId)) {
       appHolderObjectIds.add(objectId);
     }
