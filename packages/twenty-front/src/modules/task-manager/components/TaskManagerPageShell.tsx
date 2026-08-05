@@ -3,9 +3,13 @@ import { type ReactNode, useEffect } from 'react';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath } from 'twenty-shared/utils';
 
+import { getCommandMenuIdFromRecordIndexId } from '@/command-menu-item/utils/getCommandMenuIdFromRecordIndexId';
+import { CommandMenuComponentInstanceContext } from '@/command-menu/states/contexts/CommandMenuComponentInstanceContext';
 import { ContextStoreComponentInstanceContext } from '@/context-store/states/contexts/ContextStoreComponentInstanceContext';
 import { contextStoreCurrentObjectMetadataItemIdComponentState } from '@/context-store/states/contextStoreCurrentObjectMetadataItemIdComponentState';
 import { contextStoreCurrentViewIdComponentState } from '@/context-store/states/contextStoreCurrentViewIdComponentState';
+import { contextStoreNumberOfSelectedRecordsComponentState } from '@/context-store/states/contextStoreNumberOfSelectedRecordsComponentState';
+import { contextStoreTargetedRecordsRuleComponentState } from '@/context-store/states/contextStoreTargetedRecordsRuleComponentState';
 import { getObjectPermissionsForObject } from '@/object-metadata/utils/getObjectPermissionsForObject';
 import { RecordComponentInstanceContextsWrapper } from '@/object-record/components/RecordComponentInstanceContextsWrapper';
 import { useObjectPermissions } from '@/object-record/hooks/useObjectPermissions';
@@ -14,8 +18,35 @@ import { RecordIndexContextProvider } from '@/object-record/record-index/context
 import { useRecordIndexFieldMetadataDerivedStates } from '@/object-record/record-index/hooks/useRecordIndexFieldMetadataDerivedStates';
 import { getRecordIndexIdFromObjectNamePluralAndViewId } from '@/object-record/utils/getRecordIndexIdFromObjectNamePluralAndViewId';
 import { useAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentState';
+import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
+import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
 import { useTaskManagerIssueViews } from '@/task-manager/hooks/useTaskManagerIssueViews';
 import { ViewComponentInstanceContext } from '@/views/states/contexts/ViewComponentInstanceContext';
+
+// The generic RecordIndexContainerContextStoreNumberOfSelectedRecordsEffect also
+// resolves "select all" totals via useFindManyRecordIndexTableParams, which needs
+// filter/sort instance contexts this shell doesn't set up. Task Manager's board
+// selection never produces exclusion mode, so a plain selectedRecordIds.length
+// mirror covers the only case that occurs here.
+const TaskManagerNumberOfSelectedRecordsEffect = () => {
+  const contextStoreTargetedRecordsRule = useAtomComponentStateValue(
+    contextStoreTargetedRecordsRuleComponentState,
+  );
+
+  const setContextStoreNumberOfSelectedRecords = useSetAtomComponentState(
+    contextStoreNumberOfSelectedRecordsComponentState,
+  );
+
+  useEffect(() => {
+    setContextStoreNumberOfSelectedRecords(
+      contextStoreTargetedRecordsRule.mode === 'selection'
+        ? contextStoreTargetedRecordsRule.selectedRecordIds.length
+        : 0,
+    );
+  }, [contextStoreTargetedRecordsRule, setContextStoreNumberOfSelectedRecords]);
+
+  return null;
+};
 
 // Scoped per viewId (not a single shared constant): the side panel can mount
 // a second TaskManagerPageShell (issue detail, tableView) while a full-page
@@ -138,9 +169,16 @@ export const TaskManagerPageShell = ({
             <RecordComponentInstanceContextsWrapper
               componentInstanceId={recordIndexId}
             >
-              {objectPermissions.canReadObjectRecords ? children : null}
+              <CommandMenuComponentInstanceContext.Provider
+                value={{
+                  instanceId: getCommandMenuIdFromRecordIndexId(recordIndexId),
+                }}
+              >
+                {objectPermissions.canReadObjectRecords ? children : null}
+              </CommandMenuComponentInstanceContext.Provider>
             </RecordComponentInstanceContextsWrapper>
             <RecordIndexLoadBaseOnContextStoreEffect />
+            <TaskManagerNumberOfSelectedRecordsEffect />
           </ViewComponentInstanceContext.Provider>
         </RecordIndexContextProvider>
       </TaskManagerContextStoreGate>

@@ -1,6 +1,7 @@
 import { styled } from '@linaria/react';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
+import { RecordIndexCommandMenu } from '@/command-menu-item/components/RecordIndexCommandMenu';
 import { ObjectOptionsDropdown } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdown';
 import { RecordBoardContainer } from '@/object-record/record-board/components/RecordBoardContainer';
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
@@ -32,12 +33,15 @@ export const TaskManagerBoard = () => {
     <StyledPage>
       <TaskManagerTopBar
         rightSlot={
-          <ObjectOptionsDropdown
-            objectMetadataItem={objectMetadataItem}
-            recordIndexId={recordIndexId}
-            viewType={ViewType.KANBAN}
-            dropdownId="task-manager-board-object-options-dropdown"
-          />
+          <>
+            <RecordIndexCommandMenu />
+            <ObjectOptionsDropdown
+              objectMetadataItem={objectMetadataItem}
+              recordIndexId={recordIndexId}
+              viewType={ViewType.KANBAN}
+              dropdownId="task-manager-board-object-options-dropdown"
+            />
+          </>
         }
       />
       <StyledBoardContainer>
