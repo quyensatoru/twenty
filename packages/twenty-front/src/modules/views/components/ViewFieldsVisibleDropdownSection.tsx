@@ -94,9 +94,14 @@ export const ViewFieldsVisibleDropdownSection = () => {
             draggableItems={
               <>
                 {draggableRecordFields.map((recordField, index) => {
+                  // Offset by 1 only when the label identifier field (Title)
+                  // actually occupies a slot in the same visibleRecordFields
+                  // array the reorder handlers index into — not merely
+                  // whether the object has a label identifier field at all.
+                  // Some record indexes (e.g. Kanban board) never give Title
+                  // its own RecordField entry, so there's no slot to offset for.
                   const fieldIndex =
-                    index +
-                    (isDefined(fieldMetadataItemLabelIdentifier) ? 1 : 0);
+                    index + (isDefined(nonDraggableRecordField) ? 1 : 0);
 
                   const { fieldMetadataItem } = getFieldMetadataItemByIdOrThrow(
                     recordField.fieldMetadataItemId,
