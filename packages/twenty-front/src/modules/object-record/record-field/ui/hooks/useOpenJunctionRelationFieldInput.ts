@@ -1,3 +1,4 @@
+import { useApolloCoreClient } from '@/object-metadata/hooks/useApolloCoreClient';
 import { objectMetadataItemsSelector } from '@/object-metadata/states/objectMetadataItemsSelector';
 import { type FieldDefinition } from '@/object-record/record-field/ui/types/FieldDefinition';
 import {
@@ -10,11 +11,13 @@ import { getJunctionConfig } from '@/object-record/record-field/ui/utils/junctio
 import { getSearchableObjectMetadataItems } from '@/object-record/record-field/ui/utils/junction/getSearchableObjectMetadataItems';
 import { useMultipleRecordPickerOpen } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerOpen';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
+import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
 import { multipleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchFilterComponentState';
 import { multipleRecordPickerSearchableObjectMetadataItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchableObjectMetadataItemsComponentState';
 import { recordStoreFamilySelector } from '@/object-record/record-store/states/selectors/recordStoreFamilySelector';
 import { getRecordFieldInputInstanceId } from '@/object-record/utils/getRecordFieldInputId';
+import { fetchIssueMerchantsAppScopeFilter } from '@/task-manager/utils/fetchIssueMerchantsAppScopeFilter';
 import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack';
 import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
 import { useStore } from 'jotai';
@@ -25,6 +28,7 @@ export const useOpenJunctionRelationFieldInput = () => {
   const { performSearch } = useMultipleRecordPickerPerformSearch();
   const { openMultipleRecordPicker } = useMultipleRecordPickerOpen();
   const { pushFocusItemToFocusStack } = usePushFocusItemToFocusStack();
+  const apolloCoreClient = useApolloCoreClient();
   const store = useStore();
 
   const openJunctionRelationFieldInput = useCallback(
@@ -124,6 +128,39 @@ export const useOpenJunctionRelationFieldInput = () => {
         forcePickableMorphItems: pickableMorphItems,
       });
 
+      // Issue.merchants is the only junction field scoped to the record's
+      // app; fetched after the initial (unscoped) search so opening the
+      // picker isn't blocked on this extra round-trip.
+      const isIssueMerchantsField =
+        fieldDefinition.metadata.objectMetadataNameSingular === 'issue' &&
+        fieldDefinition.metadata.fieldName === 'merchants';
+
+      if (isIssueMerchantsField) {
+        fetchIssueMerchantsAppScopeFilter({
+          apolloClient: apolloCoreClient,
+          issueId: recordId,
+        }).then((appScopeFilter) => {
+          if (!isDefined(appScopeFilter)) {
+            return;
+          }
+
+          store.set(
+            multipleRecordPickerFilterComponentState.atomFamily({
+              instanceId: recordPickerInstanceId,
+            }),
+            appScopeFilter,
+          );
+
+          performSearch({
+            multipleRecordPickerInstanceId: recordPickerInstanceId,
+            forceSearchFilter: '',
+            forceSearchableObjectMetadataItems: searchableObjectMetadataItems,
+            forcePickableMorphItems: pickableMorphItems,
+            forceFilter: appScopeFilter,
+          });
+        });
+      }
+
       pushFocusItemToFocusStack({
         focusId: recordPickerInstanceId,
         component: {
@@ -135,7 +172,13 @@ export const useOpenJunctionRelationFieldInput = () => {
         },
       });
     },
-    [openMultipleRecordPicker, performSearch, pushFocusItemToFocusStack, store],
+    [
+      apolloCoreClient,
+      openMultipleRecordPicker,
+      performSearch,
+      pushFocusItemToFocusStack,
+      store,
+    ],
   );
 
   return { openJunctionRelationFieldInput };

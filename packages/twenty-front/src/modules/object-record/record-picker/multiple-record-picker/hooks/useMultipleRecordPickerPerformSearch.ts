@@ -154,8 +154,14 @@ export const useMultipleRecordPickerPerformSearch = () => {
         [] as typeof allPickedItems,
       );
 
+      // An empty search box only means "show everything already loaded" when
+      // there's no structural scope filter either — with a scopeFilter set,
+      // the fresh search results are the authoritative scoped list, so stale
+      // items must be re-checked against them instead of trusted as-is.
+      const hasNoActiveFilter = !searchFilter && !isDefined(scopeFilter);
+
       const updatedPickedItems = uniquePickedItems.map((morphItem) => {
-        if (!searchFilter) {
+        if (hasNoActiveFilter) {
           return {
             ...morphItem,
             isMatchingSearchFilter: true,
@@ -179,7 +185,7 @@ export const useMultipleRecordPickerPerformSearch = () => {
       const updatedNonPickedExistingItems = existingMorphItems
         .filter((item) => !item.isSelected)
         .map((morphItem) => {
-          if (!searchFilter) {
+          if (hasNoActiveFilter) {
             return {
               ...morphItem,
               isMatchingSearchFilter: true,
