@@ -52,6 +52,7 @@ export const SEARCH_FIELDS_BY_STANDARD_OBJECT_NAME = {
   ],
   issueStatus: [{ name: 'name', type: FieldMetadataType.TEXT }],
   issueComment: [{ name: 'bodyV2', type: FieldMetadataType.RICH_TEXT }],
+  issueMerchant: [{ name: 'id', type: FieldMetadataType.UUID }],
   worklog: [{ name: 'description', type: FieldMetadataType.TEXT }],
   person: [
     { name: 'name', type: FieldMetadataType.FULL_NAME },

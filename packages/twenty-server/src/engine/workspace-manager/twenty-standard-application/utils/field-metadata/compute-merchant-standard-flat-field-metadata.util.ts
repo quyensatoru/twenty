@@ -1,5 +1,6 @@
 import { msg } from '@lingui/core/macro';
 import { i18nLabel } from 'src/engine/workspace-manager/twenty-standard-application/utils/i18n-label.util';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 import {
   DateDisplayFormat,
   FieldMetadataType,
@@ -370,12 +371,13 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Issues linked to the merchant`),
       icon: 'IconLayoutKanban',
       isNullable: true,
-      isUIEditable: false,
-      targetObjectName: 'issue',
+      targetObjectName: 'issueMerchant',
       targetFieldName: 'merchant',
       settings: {
         relationType: RelationType.ONE_TO_MANY,
       },
+      junctionTargetFieldUniversalIdentifier:
+        STANDARD_OBJECTS.issueMerchant.fields.issue.universalIdentifier,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,

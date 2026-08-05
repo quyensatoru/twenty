@@ -817,6 +817,35 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
       twentyStandardApplicationId,
       now,
     }),
+  issueMerchant: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<
+    CreateStandardObjectArgs<'issueMerchant'>,
+    'context' | 'objectName'
+  >) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'issueMerchant',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.issueMerchant.universalIdentifier,
+        nameSingular: 'issueMerchant',
+        namePlural: 'issueMerchants',
+        labelSingular: i18nLabel(msg`Issue Merchant`),
+        labelPlural: i18nLabel(msg`Issue Merchants`),
+        description: i18nLabel(msg`An issue's link to a merchant`),
+        icon: 'IconBuildingStore',
+        isSystem: true,
+        labelIdentifierFieldMetadataName: 'id',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
   issueComment: ({
     now,
     workspaceId,

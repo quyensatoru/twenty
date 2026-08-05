@@ -1,5 +1,6 @@
 import { msg } from '@lingui/core/macro';
 import { i18nLabel } from 'src/engine/workspace-manager/twenty-standard-application/utils/i18n-label.util';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 import {
   DateDisplayFormat,
   FieldMetadataType,
@@ -564,24 +565,24 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     twentyStandardApplicationId,
     now,
   }),
-  merchant: createStandardRelationFieldFlatMetadata({
+  merchants: createStandardRelationFieldFlatMetadata({
     objectName,
     workspaceId,
     context: {
       type: FieldMetadataType.RELATION,
       morphId: null,
-      fieldName: 'merchant',
-      label: i18nLabel(msg`Merchant`),
-      description: i18nLabel(msg`Issue's merchant`),
+      fieldName: 'merchants',
+      label: i18nLabel(msg`Merchants`),
+      description: i18nLabel(msg`Merchants linked to this issue`),
       icon: 'IconBuildingStore',
       isNullable: true,
-      targetObjectName: 'merchant',
-      targetFieldName: 'issues',
+      targetObjectName: 'issueMerchant',
+      targetFieldName: 'issue',
       settings: {
-        relationType: RelationType.MANY_TO_ONE,
-        onDelete: RelationOnDeleteAction.SET_NULL,
-        joinColumnName: 'merchantId',
+        relationType: RelationType.ONE_TO_MANY,
       },
+      junctionTargetFieldUniversalIdentifier:
+        STANDARD_OBJECTS.issueMerchant.fields.merchant.universalIdentifier,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,

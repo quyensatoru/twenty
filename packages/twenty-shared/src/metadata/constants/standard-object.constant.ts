@@ -2232,7 +2232,7 @@ export const STANDARD_OBJECTS = {
             STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.timelineActivity,
         }),
       },
-      issues: { universalIdentifier: '19dfe96d-49c9-477d-891b-568fdc4d2cde' },
+      issues: { universalIdentifier: 'bbdb64fd-f399-45b0-bf07-8c913e52ed73' },
     },
     indexes: {
       appIdIndex: {
@@ -2440,7 +2440,7 @@ export const STANDARD_OBJECTS = {
       },
       assignee: { universalIdentifier: 'e73c84a8-d843-4029-8d87-6ce1506b09cd' },
       reporter: { universalIdentifier: 'a7b3391d-bbb2-4913-8b48-42190b5f950c' },
-      merchant: { universalIdentifier: '5180b84c-0866-4018-9fba-aeb7d661804a' },
+      merchants: { universalIdentifier: '4c7b2f4a-f668-4f5c-ab30-52e5127aa1db' },
       project: { universalIdentifier: '3c15d323-c131-4e6f-ad8c-86515f55420e' },
       sprint: { universalIdentifier: 'fc7e57b3-900e-423d-beda-0ab1edcd1248' },
       epic: { universalIdentifier: 'de86605c-2590-4f74-b30e-631dba1aa097' },
@@ -2481,9 +2481,6 @@ export const STANDARD_OBJECTS = {
       },
       reporterIdIndex: {
         universalIdentifier: 'db480adb-fdcd-4792-a658-4dd9391bc683',
-      },
-      merchantIdIndex: {
-        universalIdentifier: '978c4541-360b-4c5f-a6d9-4572f7cdb741',
       },
       projectIdIndex: {
         universalIdentifier: '8a2c3728-f10a-4f47-8d72-9a373044f8b7',
@@ -2565,6 +2562,29 @@ export const STANDARD_OBJECTS = {
       issueRecordPageFields: {
         universalIdentifier: '0c1496d8-f692-44fc-bfae-5827943ae4f8',
         viewFields: {},
+      },
+    },
+  },
+  // Junction object backing the Issue<->Merchant many-to-many. Hidden
+  // (isSystem) — never browsed directly, only surfaced via Issue.merchants /
+  // Merchant.issues relation pickers.
+  issueMerchant: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueMerchant,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueMerchant,
+      ),
+      issue: { universalIdentifier: '146b6f20-9357-43be-8149-1d94968e5530' },
+      merchant: {
+        universalIdentifier: '04541d26-3c33-43d8-9d9b-d70788c71dd4',
+      },
+    },
+    indexes: {
+      issueIdIndex: {
+        universalIdentifier: 'c02503bc-259a-4118-9e3d-4fc9747b154b',
+      },
+      merchantIssueUniqueIndex: {
+        universalIdentifier: '0a544ae5-b2d6-442f-826b-66e21f1648d7',
       },
     },
   },

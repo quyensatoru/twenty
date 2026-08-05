@@ -29,11 +29,10 @@ export const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
 // framework.
 const SCOPED_RELATION_FIELD_KIND_BY_KEY: Record<
   string,
-  'merchant' | 'workspaceMember' | 'sprint' | 'epic' | 'issueStatus'
+  'workspaceMember' | 'sprint' | 'epic' | 'issueStatus'
 > = {
   'issue.assignee': 'workspaceMember',
   'issue.reporter': 'workspaceMember',
-  'issue.merchant': 'merchant',
   'issue.sprint': 'sprint',
   'issue.epic': 'epic',
   'issue.status': 'issueStatus',
@@ -70,8 +69,7 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
 
   const projectId: string | undefined = currentRecord?.project?.id;
 
-  const needsAppLookup =
-    scopeKind === 'merchant' || scopeKind === 'workspaceMember';
+  const needsAppLookup = scopeKind === 'workspaceMember';
 
   const { record: project } = useFindOneRecord({
     objectNameSingular: 'project',
@@ -81,15 +79,6 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
   });
 
   const projectAppId: string | null | undefined = project?.appId;
-
-  const { records: merchants } = useFindManyRecords({
-    objectNameSingular: 'merchant',
-    filter: isDefined(projectAppId)
-      ? { appId: { eq: projectAppId } }
-      : undefined,
-    recordGqlFields: { id: true },
-    skip: scopeKind !== 'merchant' || !isDefined(projectAppId),
-  });
 
   const { records: appAccesses } = useFindManyRecords({
     objectNameSingular: 'appAccess',
@@ -123,10 +112,6 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
 
   return useMemo(() => {
     switch (scopeKind) {
-      case 'merchant':
-        return isDefined(projectAppId)
-          ? idsToFilter(merchants.map((merchant) => merchant.id))
-          : undefined;
       case 'workspaceMember':
         return isDefined(projectAppId)
           ? idsToFilter(
@@ -154,7 +139,6 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
     scopeKind,
     projectId,
     projectAppId,
-    merchants,
     appAccesses,
     sprints,
     epics,

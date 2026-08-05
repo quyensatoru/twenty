@@ -29,6 +29,7 @@ export const STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS = {
   issue: 'e14a5928-2bbe-4e20-b766-ea8975ee819f',
   issueComment: '860287e4-e447-4e1b-85e4-4952c02f57dd',
   worklog: '8e4d81e8-6ab8-42c4-9e61-16b98bab83fa',
+  issueMerchant: 'a469cd28-a0f7-4132-8f5d-d89fa044f516',
 } as const;
 
 export type StandardObjectWithUniversalIdentifierName =
