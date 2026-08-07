@@ -57,7 +57,8 @@ const StyledComment = styled.div<{ isFocused?: boolean }>`
     isFocused ? themeCssVariables.background.transparent.light : 'transparent'};
   border-radius: ${themeCssVariables.border.radius.sm};
   display: flex;
-  gap: ${themeCssVariables.spacing['2']};
+  flex-direction: column;
+  gap: ${themeCssVariables.spacing['1']};
   padding: ${themeCssVariables.spacing['1']};
   transition: background-color ${themeCssVariables.animation.duration.slow};
 `;
@@ -73,18 +74,22 @@ const StyledReplyComposer = styled.div`
   margin-left: ${themeCssVariables.spacing['8']};
 `;
 
-const StyledCommentBody = styled.div`
+const StyledCommentTopRow = styled.div`
+  align-items: center;
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: ${themeCssVariables.spacing['1']};
-  min-width: 0;
+  gap: ${themeCssVariables.spacing['2']};
+`;
+
+const StyledCommentBody = styled.div`
+  margin-left: calc(16px + ${themeCssVariables.spacing['2']});
 `;
 
 const StyledCommentHeader = styled.div`
-  align-items: baseline;
+  align-items: center;
   display: flex;
+  flex: 1;
   gap: ${themeCssVariables.spacing['2']};
+  min-width: 0;
 `;
 
 const StyledCommentAuthor = styled.span`
@@ -369,8 +374,8 @@ const CommentRow = ({
 
   return (
     <StyledComment ref={commentRowRef} isFocused={isFocused}>
-      <Avatar placeholder={authorName} type="rounded" size="md" />
-      <StyledCommentBody>
+      <StyledCommentTopRow>
+        <Avatar placeholder={authorName} type="rounded" size="md" />
         <StyledCommentHeader>
           <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
           <StyledCommentDate>
@@ -425,6 +430,8 @@ const CommentRow = ({
             )}
           </StyledCommentActions>
         </StyledCommentHeader>
+      </StyledCommentTopRow>
+      <StyledCommentBody>
         {isEditing ? (
           <EditableCommentBody
             commentId={comment.id}
