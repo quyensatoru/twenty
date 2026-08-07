@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hướng dẫn sử dụng Task Manager</title>
+<style>
+  @font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/inter-latin-400-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  }
+  @font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/inter-vietnamese-400-normal.woff2") format("woff2");
+    unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+  }
+  @font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("fonts/inter-latin-600-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  }
+  @font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("fonts/inter-vietnamese-600-normal.woff2") format("woff2");
+    unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+  }
+
+  :root {
+    --paper: #eef1ef;
+    --surface: #ffffff;
+    --surface-line: #d8dfdb;
+    --ink: #1c2a26;
+    --ink-soft: #55655f;
+    --accent: #2f6f4e;
+    --accent-soft: #e3ede8;
+    --warm: #a85f1e;
+    --warm-bg: #fbeee0;
+    --warm-line: #e6c79a;
+
+    --font: "Inter", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #121917;
+      --surface: #182420;
+      --surface-line: #2a3a34;
+      --ink: #e7eeea;
+      --ink-soft: #9fb0a9;
+      --accent: #5cbd8f;
+      --accent-soft: #1f3129;
+      --warm: #e3a05c;
+      --warm-bg: #2c2015;
+      --warm-line: #4a3722;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  .label {
+    font-family: var(--font);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .masthead {
+    border-bottom: 1px solid var(--surface-line);
+    padding: 3.2rem 1.5rem 2.4rem;
+  }
+  .masthead-inner { max-width: 1100px; margin: 0 auto; }
+  .eyebrow {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    background: var(--accent);
+    display: inline-block;
+    transform: rotate(45deg);
+  }
+  h1 {
+    font-weight: 700;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.7rem;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.6rem 1.5rem 6rem;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 700px);
+    gap: 3.2rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side-toc { display: none; }
+  }
+
+  .side-toc { position: sticky; top: 2.6rem; }
+  .side-toc-label { color: var(--ink-soft); margin: 0 0 0.9rem; }
+  .side-toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    border-left: 1px solid var(--surface-line);
+  }
+  .side-toc a {
+    display: block;
+    padding: 0.1rem 0 0.1rem 0.9rem;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .side-toc a:hover { color: var(--ink); border-left-color: var(--surface-line); }
+  .side-toc a .n { color: var(--accent); font-weight: 600; margin-right: 0.45rem; }
+
+  .mobile-toc { display: none; margin: 0 0 2.4rem; }
+  @media (max-width: 900px) { .mobile-toc { display: block; } }
+  .mobile-toc summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.85rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: 10px;
+    list-style: none;
+  }
+  .mobile-toc summary::-webkit-details-marker { display: none; }
+  .mobile-toc[open] summary { border-radius: 10px 10px 0 0; }
+  .mobile-toc-list {
+    border: 1px solid var(--surface-line);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 0.6rem 1.1rem 1rem;
+    background: var(--surface);
+  }
+  .mobile-toc-list a { display: block; padding: 0.35rem 0; color: var(--ink-soft); text-decoration: none; font-size: 0.92rem; }
+  .mobile-toc-list a .n { color: var(--accent); font-weight: 600; margin-right: 0.4rem; }
+
+  main { min-width: 0; max-width: 700px; }
+
+  section { margin-bottom: 3.4rem; scroll-margin-top: 1.5rem; }
+  section .sec-eyebrow { color: var(--accent); margin: 0 0 0.35rem; }
+  h2 {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.005em;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+  p { margin: 0 0 1rem; text-wrap: pretty; }
+  ul { margin: 0 0 1rem; padding-left: 1.35rem; }
+  li { margin-bottom: 0.5rem; }
+  strong, b { font-weight: 600; }
+
+  .glossary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.85rem;
+    margin: 1.2rem 0 1.8rem;
+  }
+  .g-card {
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: 10px;
+    padding: 0.95rem 1.05rem;
+  }
+  .g-card .g-term { font-weight: 600; font-size: 0.94rem; display: block; margin-bottom: 0.25rem; }
+  .g-card .g-def { font-size: 0.87rem; color: var(--ink-soft); line-height: 1.55; }
+
+  .table-wrap { overflow-x: auto; margin: 0.4rem 0 1.6rem; border: 1px solid var(--surface-line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 0.92rem; min-width: 480px; }
+  th, td { text-align: left; padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--surface-line); vertical-align: top; }
+  thead th {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--accent-soft);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .callout {
+    border: 1px solid var(--warm-line);
+    background: var(--warm-bg);
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+    margin: 0 0 1.4rem;
+    display: flex;
+    gap: 0.75rem;
+  }
+  .callout .mark { color: var(--warm); font-weight: 700; flex-shrink: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p { color: var(--ink); }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .dot.todo { background: #9aa6a1; }
+  .dot.wip { background: #c9971f; }
+  .dot.done { background: var(--accent); }
+
+  .tabs-strip { display: flex; gap: 0.6rem; margin: 0.2rem 0 1.5rem; flex-wrap: wrap; }
+  .tab-chip {
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: 8px;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.88rem;
+  }
+  .tab-chip b { display: block; font-size: 1rem; margin-bottom: 0.15rem; }
+  .tab-chip span { color: var(--ink-soft); }
+
+  .board-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 0.2rem 0 1.6rem; }
+  .board-col { background: var(--surface); border: 1px solid var(--surface-line); border-radius: 10px; padding: 0.7rem 0.7rem 0.9rem; }
+  .board-col-title {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .board-card { background: var(--paper); border: 1px solid var(--surface-line); border-radius: 7px; padding: 0.55rem 0.6rem; font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .board-card .key { display: block; font-size: 0.74rem; color: var(--ink-soft); margin-bottom: 0.1rem; }
+  @media (max-width: 640px) { .board-strip { grid-template-columns: 1fr; } }
+
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3.5rem;
+    border-top: 1px solid var(--surface-line);
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="eyebrow label">CRM nội bộ · Task Manager</p>
+    <h1>Hướng dẫn sử dụng Task Manager</h1>
+    <p class="lede">Cách dùng Task Manager để quản lý công việc hằng ngày — dành cho tất cả mọi người, không cần biết kỹ thuật.</p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="side-toc" aria-label="Mục lục">
+    <p class="side-toc-label label">Mục lục</p>
+    <ol>
+      <li><a href="#gioi-thieu"><span class="n">01</span>Task Manager là gì</a></li>
+      <li><a href="#khai-niem"><span class="n">02</span>Các khái niệm chính</a></li>
+      <li><a href="#board"><span class="n">03</span>Board</a></li>
+      <li><a href="#backlog"><span class="n">04</span>Backlog</a></li>
+      <li><a href="#roadmap"><span class="n">05</span>Roadmap</a></li>
+      <li><a href="#tao-issue"><span class="n">06</span>Tạo &amp; sửa issue</a></li>
+      <li><a href="#chi-tiet-issue"><span class="n">07</span>Xem chi tiết 1 issue</a></li>
+      <li><a href="#comment"><span class="n">08</span>Bình luận (Comment)</a></li>
+      <li><a href="#copy-link"><span class="n">09</span>Chia sẻ link</a></li>
+      <li><a href="#luu-y"><span class="n">10</span>Câu hỏi thường gặp</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <details class="mobile-toc">
+      <summary>Mục lục</summary>
+      <div class="mobile-toc-list">
+        <a href="#gioi-thieu"><span class="n">01</span>Task Manager là gì</a>
+        <a href="#khai-niem"><span class="n">02</span>Các khái niệm chính</a>
+        <a href="#board"><span class="n">03</span>Board</a>
+        <a href="#backlog"><span class="n">04</span>Backlog</a>
+        <a href="#roadmap"><span class="n">05</span>Roadmap</a>
+        <a href="#tao-issue"><span class="n">06</span>Tạo &amp; sửa issue</a>
+        <a href="#chi-tiet-issue"><span class="n">07</span>Xem chi tiết 1 issue</a>
+        <a href="#comment"><span class="n">08</span>Bình luận (Comment)</a>
+        <a href="#copy-link"><span class="n">09</span>Chia sẻ link</a>
+        <a href="#luu-y"><span class="n">10</span>Câu hỏi thường gặp</a>
+      </div>
+    </details>
+
+    <section id="gioi-thieu">
+      <p class="sec-eyebrow label">01 — Bắt đầu</p>
+      <h2>Task Manager là gì?</h2>
+      <p>Task Manager là nơi quản lý công việc trong CRM, giống như một danh sách việc cần làm cho cả nhóm. Vào từ mục <strong>Task Manager</strong> ở thanh menu bên trái.</p>
+      <p>Khi vào Task Manager, bạn đang xem công việc của <strong>một dự án (Project)</strong> — chọn dự án ở góc trên. Mỗi dự án có các trạng thái công việc riêng, không lẫn với dự án khác.</p>
+      <p>Có 3 cách xem công việc:</p>
+      <div class="tabs-strip">
+        <div class="tab-chip"><b>Board</b><span>Xem theo cột trạng thái, kéo-thả để đổi trạng thái</span></div>
+        <div class="tab-chip"><b>Backlog</b><span>Xem theo từng đợt làm việc (Sprint)</span></div>
+        <div class="tab-chip"><b>Roadmap</b><span>Xem tiến độ theo từng nhóm việc lớn (Epic)</span></div>
+      </div>
+    </section>
+
+    <section id="khai-niem">
+      <p class="sec-eyebrow label">02 — Từ vựng cần biết</p>
+      <h2>Các khái niệm chính</h2>
+      <p>Bạn sẽ gặp vài từ này khi dùng Task Manager. Đọc qua một lần cho quen:</p>
+      <div class="glossary">
+        <div class="g-card"><span class="g-term">App</span><span class="g-def">Một ứng dụng/cửa hàng cụ thể. Dự án và khách hàng (Merchant) đều gắn với một App.</span></div>
+        <div class="g-card"><span class="g-term">Project</span><span class="g-def">Nơi chứa toàn bộ công việc của một App. Có mã riêng dùng để đánh số issue.</span></div>
+        <div class="g-card"><span class="g-term">Issue</span><span class="g-def">Một công việc cụ thể — có thể là lỗi cần sửa, việc cần làm, hoặc một tính năng nhỏ.</span></div>
+        <div class="g-card"><span class="g-term">Epic</span><span class="g-def">Một nhóm gồm nhiều issue nhỏ, cùng phục vụ một mục tiêu lớn hơn.</span></div>
+        <div class="g-card"><span class="g-term">Sprint</span><span class="g-def">Một đợt làm việc có thời hạn (ví dụ 2 tuần), quản lý ở tab Backlog.</span></div>
+        <div class="g-card"><span class="g-term">Merchant</span><span class="g-def">Cửa hàng hoặc khách hàng mà issue đó liên quan tới.</span></div>
+      </div>
+      <div class="callout">
+        <span class="mark">Mẹo</span>
+        <p>Không thấy tên khách hàng hoặc người mình cần chọn trong danh sách? Thường là do người/khách hàng đó chưa được gắn vào đúng App của dự án. Nhờ admin kiểm tra giúp.</p>
+      </div>
+    </section>
+
+    <section id="board">
+      <p class="sec-eyebrow label">03 — Dùng mỗi ngày</p>
+      <h2>Board</h2>
+      <p>Mỗi cột là một trạng thái công việc. Kéo-thả issue sang cột khác để đổi trạng thái. Bấm chuột phải vào issue để thao tác nhanh (xoá, tạo bản sao...). Bấm vào issue để mở xem chi tiết mà không rời khỏi Board.</p>
+      <div class="board-strip">
+        <div class="board-col">
+          <p class="board-col-title"><span class="dot todo"></span>Chưa làm</p>
+          <div class="board-card"><span class="key">MOB-4</span>Lỗi khi đăng nhập trên app</div>
+          <div class="board-card"><span class="key">MOB-7</span>Cập nhật nội dung trang thanh toán</div>
+        </div>
+        <div class="board-col">
+          <p class="board-col-title"><span class="dot wip"></span>Đang xem lại</p>
+          <div class="board-card"><span class="key">MOB-2</span>Sửa lỗi đồng bộ giỏ hàng</div>
+        </div>
+        <div class="board-col">
+          <p class="board-col-title"><span class="dot done"></span>Hoàn thành</p>
+          <div class="board-card"><span class="key">MOB-1</span>Thêm bộ lọc theo khách hàng</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="backlog">
+      <p class="sec-eyebrow label">04 — Lên kế hoạch</p>
+      <h2>Backlog</h2>
+      <ul>
+        <li>Công việc được chia theo từng Sprint: sprint đang chạy, các sprint sắp tới, và phần chưa xếp vào sprint nào (Backlog).</li>
+        <li>Kéo-thả issue giữa các phần để đưa vào hoặc bỏ ra khỏi một sprint.</li>
+        <li>Bấm <strong>Start sprint</strong> để bắt đầu một sprint sắp tới.</li>
+        <li>Bấm <strong>Complete sprint</strong> khi kết thúc sprint đang chạy — issue chưa hoàn thành sẽ tự chuyển sang sprint kế tiếp hoặc về lại Backlog.</li>
+      </ul>
+    </section>
+
+    <section id="roadmap">
+      <p class="sec-eyebrow label">05 — Nhìn tổng thể</p>
+      <h2>Roadmap</h2>
+      <p>Công việc được nhóm theo Epic, mỗi Epic có một thanh tiến độ cho biết đã hoàn thành bao nhiêu phần trăm. Issue chưa thuộc Epic nào sẽ nằm ở nhóm riêng. Bấm vào issue để xem chi tiết.</p>
+    </section>
+
+    <section id="tao-issue">
+      <p class="sec-eyebrow label">06 — Thao tác</p>
+      <h2>Tạo và chỉnh sửa issue</h2>
+      <p>Bấm <strong>+ New issue</strong> ở phía trên để tạo issue mới. Muốn sửa thông tin, bấm trực tiếp vào phần cần sửa — không cần vào chế độ sửa riêng.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Thông tin</th><th>Ý nghĩa</th></tr></thead>
+          <tbody>
+            <tr><td>Tiêu đề, mô tả</td><td>Tên việc và mô tả chi tiết — có thể dán ảnh, đính kèm file</td></tr>
+            <tr><td>Loại, mức độ ưu tiên, trạng thái</td><td>Đây là việc gì, quan trọng tới đâu, đang ở giai đoạn nào</td></tr>
+            <tr><td>Người xử lý, người báo cáo</td><td>Ai đang làm việc này, ai là người tạo/theo dõi</td></tr>
+            <tr><td>Dự án, Epic, Sprint</td><td>Việc này thuộc dự án nào, nhóm việc lớn nào, đợt làm nào</td></tr>
+            <tr><td>Khách hàng (Merchant)</td><td>Cửa hàng/khách hàng liên quan tới issue này</td></tr>
+            <tr><td>Hạn hoàn thành</td><td>Ngày cần xong</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="chi-tiet-issue">
+      <p class="sec-eyebrow label">07 — Đi sâu vào 1 issue</p>
+      <h2>Xem chi tiết một issue</h2>
+      <p>Mở một issue bất kỳ (bấm vào nó, hoặc mở link người khác gửi) sẽ thấy đầy đủ:</p>
+      <ul>
+        <li><strong>Thông tin chung</strong> — loại issue, mã số, mức ưu tiên, trạng thái, cùng nút chia sẻ link.</li>
+        <li><strong>Tiêu đề và mô tả</strong></li>
+        <li><strong>Chi tiết</strong> — các thông tin khác như người xử lý, sprint, epic, khách hàng, hạn hoàn thành...</li>
+        <li><strong>Bình luận</strong> — nơi mọi người trao đổi về issue này.</li>
+        <li><strong>Lịch sử thay đổi</strong> — ai đã sửa gì, từ lúc nào.</li>
+        <li><strong>File đính kèm</strong></li>
+      </ul>
+      <p>Issue có thể xem theo 2 cách: mở nhanh ngay bên cạnh màn hình đang làm, hoặc mở thành một trang riêng đầy đủ — tiện khi cần gửi link cho người khác. Có nút để chuyển qua lại giữa 2 cách xem này.</p>
+    </section>
+
+    <section id="comment">
+      <p class="sec-eyebrow label">08 — Trao đổi</p>
+      <h2>Bình luận (Comment)</h2>
+      <ul>
+        <li>Gõ bình luận ở khung soạn phía dưới cùng — đính kèm được ảnh, file.</li>
+        <li><strong>Trả lời</strong> — phản hồi trực tiếp một bình luận cụ thể.</li>
+        <li><strong>Sửa / Xoá</strong> — chỉ người viết mới sửa hoặc xoá được bình luận của mình; xoá sẽ có bước xác nhận trước.</li>
+        <li><strong>Chia sẻ link</strong> — ai cũng bấm được. Link này khi mở lên sẽ tự động cuộn tới và tô sáng đúng bình luận đó, rất tiện khi muốn chỉ cho đồng nghiệp xem đúng một câu trả lời trong một cuộc trao đổi dài.</li>
+      </ul>
+    </section>
+
+    <section id="copy-link">
+      <p class="sec-eyebrow label">09 — Chia sẻ</p>
+      <h2>Chia sẻ link một issue</h2>
+      <p>Bấm nút liên kết ở phần thông tin chung của issue để sao chép link. Gửi link này qua chat hoặc email, người nhận bấm vào sẽ mở đúng issue đó.</p>
+    </section>
+
+    <section id="luu-y">
+      <p class="sec-eyebrow label">10 — Câu hỏi thường gặp</p>
+      <h2>Câu hỏi thường gặp</h2>
+      <p><strong>Không thấy khách hàng hoặc người mình cần chọn?</strong><br>Kiểm tra xem khách hàng đó có thuộc đúng App của dự án không, hoặc người đó đã được cấp quyền vào App này chưa. Nếu chưa rõ, hỏi admin.</p>
+      <p><strong>Ô xem nhanh bên cạnh quá hẹp?</strong><br>Có thể kéo giãn ra cho rộng hơn — kéo ở viền bên trái của ô xem nhanh.</p>
+    </section>
+  </main>
+</div>
+
+<footer>Task Manager · Hướng dẫn sử dụng nội bộ</footer>
+
+</body>
+</html>
