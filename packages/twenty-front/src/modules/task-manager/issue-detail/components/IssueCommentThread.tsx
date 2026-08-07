@@ -140,9 +140,9 @@ const authorCardTooltipClass = css`
 // "xl" (40px) is Avatar's largest built-in size — override its fixed
 // dimensions to go bigger, since there's no larger preset to switch to.
 const authorCardAvatarClass = css`
-  font-size: 22px !important;
-  height: 56px !important;
-  width: 56px !important;
+  font-size: 36px !important;
+  height: 96px !important;
+  width: 96px !important;
 `;
 
 const StyledAuthorCard = styled.div`
