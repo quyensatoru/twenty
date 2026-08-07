@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -27,6 +27,7 @@ import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttac
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { BlockEditor } from '@/blocknote-editor/components/BlockEditor';
+import { BLOCK_EDITOR_GLOBAL_HOTKEYS_CONFIG } from '@/blocknote-editor/constants/BlockEditorGlobalHotkeysConfig';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
 import {
   type IssueCommentRecord,
@@ -38,6 +39,9 @@ import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/Drop
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack';
+import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
+import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
@@ -231,6 +235,33 @@ const getAuthorName = (
     ? `${author.name.firstName ?? ''} ${author.name.lastName ?? ''}`.trim()
     : unknownLabel;
 
+// Without this, focusing the comment editor never suppresses global
+// single-letter hotkeys (e/c/m/...), so typing a normal comment or reply
+// fires whatever shortcut happens to share that letter — RichTextFieldEditor
+// wires the exact same push/remove for the Description field's editor.
+const useBlockEditorFocusHandlers = (focusId: string) => {
+  const { pushFocusItemToFocusStack } = usePushFocusItemToFocusStack();
+  const { removeFocusItemFromFocusStackById } =
+    useRemoveFocusItemFromFocusStackById();
+
+  const handleBlockEditorFocus = useCallback(() => {
+    pushFocusItemToFocusStack({
+      component: {
+        instanceId: focusId,
+        type: FocusComponentType.ACTIVITY_RICH_TEXT_EDITOR,
+      },
+      focusId,
+      globalHotkeysConfig: BLOCK_EDITOR_GLOBAL_HOTKEYS_CONFIG,
+    });
+  }, [focusId, pushFocusItemToFocusStack]);
+
+  const handleBlockEditorBlur = useCallback(() => {
+    removeFocusItemFromFocusStackById({ focusId });
+  }, [focusId, removeFocusItemFromFocusStackById]);
+
+  return { handleBlockEditorFocus, handleBlockEditorBlur };
+};
+
 const CommentBody = ({
   blocknote,
 }: {
@@ -263,6 +294,8 @@ const EditableCommentBody = ({
   const { t } = useLingui();
   const [isSaving, setIsSaving] = useState(false);
   const { uploadAttachmentFile } = useUploadAttachmentFile();
+  const { handleBlockEditorFocus, handleBlockEditorBlur } =
+    useBlockEditorFocusHandlers(`comment-edit-${commentId}`);
 
   const handleUploadFile = async (file: File) => {
     const { attachmentAbsoluteURL } = await uploadAttachmentFile(file, {
@@ -292,7 +325,11 @@ const EditableCommentBody = ({
   return (
     <StyledComposer>
       <StyledComposerEditor>
-        <BlockEditor editor={editor} />
+        <BlockEditor
+          editor={editor}
+          onFocus={handleBlockEditorFocus}
+          onBlur={handleBlockEditorBlur}
+        />
       </StyledComposerEditor>
       <StyledComposerActions>
         <Button title={t`Cancel`} onClick={onCancel} disabled={isSaving} />
@@ -309,6 +346,7 @@ const EditableCommentBody = ({
 
 type CommentComposerProps = {
   issueId: string;
+  focusId: string;
   placeholder: string;
   submitLabel: string;
   onSubmit: (blocknote: string) => Promise<void>;
@@ -316,6 +354,7 @@ type CommentComposerProps = {
 
 const CommentComposer = ({
   issueId,
+  focusId,
   placeholder,
   submitLabel,
   onSubmit,
@@ -323,6 +362,8 @@ const CommentComposer = ({
   const [hasContent, setHasContent] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const { uploadAttachmentFile } = useUploadAttachmentFile();
+  const { handleBlockEditorFocus, handleBlockEditorBlur } =
+    useBlockEditorFocusHandlers(focusId);
 
   // The comment doesn't exist yet, so attachments uploaded while composing
   // are targeted at the parent issue instead of the not-yet-created comment.
@@ -371,7 +412,12 @@ const CommentComposer = ({
   return (
     <StyledComposer>
       <StyledComposerEditor>
-        <BlockEditor editor={editor} onChange={handleChange} />
+        <BlockEditor
+          editor={editor}
+          onChange={handleChange}
+          onFocus={handleBlockEditorFocus}
+          onBlur={handleBlockEditorBlur}
+        />
       </StyledComposerEditor>
       <Button
         title={submitLabel}
@@ -621,6 +667,7 @@ export const IssueCommentThread = ({
             <StyledReplyComposer>
               <CommentComposer
                 issueId={issueId}
+                focusId={`comment-reply-${comment.id}`}
                 placeholder={t`Write a reply...`}
                 submitLabel={t`Reply`}
                 onSubmit={async (blocknote) => {
@@ -638,6 +685,7 @@ export const IssueCommentThread = ({
       ))}
       <CommentComposer
         issueId={issueId}
+        focusId={`comment-new-${issueId}`}
         placeholder={t`Write a comment...`}
         submitLabel={t`Comment`}
         onSubmit={(blocknote) =>
