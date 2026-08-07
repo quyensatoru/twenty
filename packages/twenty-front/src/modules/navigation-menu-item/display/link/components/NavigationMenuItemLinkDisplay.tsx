@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import { IconArrowUpRight } from 'twenty-ui/icon';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -22,9 +23,17 @@ export const NavigationMenuItemLinkDisplay = ({
     isLayoutCustomizationModeEnabledState,
   );
   const { theme } = useContext(ThemeContext);
+  const location = useLocation();
 
   const label = getLinkNavigationMenuItemLabel(item);
   const computedLink = getLinkNavigationMenuItemComputedLink(item);
+
+  // Only internal app paths (e.g. Task Manager's "/task") can ever match the
+  // current route — external bookmarks (http/https) never highlight.
+  const isActive =
+    computedLink.startsWith('/') &&
+    (location.pathname === computedLink ||
+      location.pathname.startsWith(`${computedLink}/`));
 
   const defaultRightOptions = !isLayoutCustomizationModeEnabled && (
     <IconArrowUpRight
@@ -48,7 +57,7 @@ export const NavigationMenuItemLinkDisplay = ({
           : undefined
       }
       Icon={() => <NavigationMenuItemIcon navigationMenuItem={item} />}
-      active={false}
+      active={isActive}
       isSelectedInEditMode={editModeProps?.isSelectedInEditMode}
       isDragging={isDragging}
       triggerEvent="CLICK"

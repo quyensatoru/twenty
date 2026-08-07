@@ -6,7 +6,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/data-display';
-import { IconArrowLeft, IconBrowserMaximize } from 'twenty-ui/icon';
+import { IconArrowLeft, IconBrowserMaximize, IconLink } from 'twenty-ui/icon';
 import { LightIconButton } from 'twenty-ui/input';
 import { type ThemeColor } from 'twenty-ui/theme';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -28,6 +28,7 @@ import { ResizablePanelGap } from '@/ui/layout/resizable-panel/components/Resiza
 import { type ResizablePanelConstraints } from '@/ui/layout/resizable-panel/types/ResizablePanelConstraints';
 import { ViewType } from '@/views/types/ViewType';
 import { PageLayoutType } from '~/generated-metadata/graphql';
+import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 
 const RIGHT_COLUMN_WIDTH_CSS_VAR =
   '--task-manager-issue-detail-right-column-width';
@@ -155,21 +156,31 @@ const getIssueStatusTagColor = (color: string | undefined): ThemeColor =>
 type TaskManagerIssueDetailProps = {
   issueId: string;
   isInSidePanel?: boolean;
+  focusedCommentId?: string;
 };
 
 export const TaskManagerIssueDetail = ({
   issueId,
   isInSidePanel = false,
+  focusedCommentId,
 }: TaskManagerIssueDetailProps) => {
   const { t } = useLingui();
   const goToPage = useNavigate();
   const { issue } = useTaskManagerIssue(issueId);
   const { objectMetadataItem, recordIndexId } = useRecordIndexContextOrThrow();
   const { closeSidePanelMenu } = useSidePanelMenu();
+  const { copyToClipboard } = useCopyToClipboard();
 
   const handlePopOutToFullPage = () => {
     closeSidePanelMenu();
     goToPage(getAppPath(AppPath.TaskManagerIssuePage, { issueId }));
+  };
+
+  const handleCopyIssueLink = () => {
+    copyToClipboard(
+      `${window.location.origin}${getAppPath(AppPath.TaskManagerIssuePage, { issueId })}`,
+      t`Link copied to clipboard`,
+    );
   };
 
   const [rightColumnWidth, setRightColumnWidth] = useState(
@@ -258,6 +269,12 @@ export const TaskManagerIssueDetail = ({
             </StyledHeaderPill>
           </RecordFieldsScopeContextProvider>
           <StyledHeaderDivider />
+          <LightIconButton
+            Icon={IconLink}
+            onClick={handleCopyIssueLink}
+            accent="secondary"
+            title={t`Copy link`}
+          />
           {isInSidePanel && (
             <LightIconButton
               Icon={IconBrowserMaximize}
@@ -317,7 +334,10 @@ export const TaskManagerIssueDetail = ({
             <StyledSectionTitle>
               <Trans>Comments</Trans>
             </StyledSectionTitle>
-            <IssueCommentThread issueId={issueId} />
+            <IssueCommentThread
+              issueId={issueId}
+              focusedCommentId={focusedCommentId}
+            />
           </div>
 
           <TimelineActivityContext.Provider value={{ recordId: issueId }}>

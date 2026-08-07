@@ -4,6 +4,10 @@ import gql from 'graphql-tag';
 import { isDefined } from 'twenty-shared/utils';
 import { type ObjectRecordFilterInput } from '~/generated/graphql';
 
+// A project's app can have tens of thousands of merchants, so this must
+// page through all of them rather than cap at one page.
+const MERCHANT_SCOPE_PAGE_SIZE = 1000;
+
 const GET_ISSUE_PROJECT_APP_ID = gql`
   query GetIssueProjectAppIdForMerchantScope($issueId: UUID!) {
     issue(filter: { id: { eq: $issueId } }) {
@@ -17,12 +21,20 @@ const GET_ISSUE_PROJECT_APP_ID = gql`
 `;
 
 const GET_MERCHANT_IDS_BY_APP = gql`
-  query GetMerchantIdsByAppForScope($appId: UUID!) {
-    merchants(filter: { appId: { eq: $appId } }) {
+  query GetMerchantIdsByAppForScope(
+    $appId: UUID!
+    $first: Int
+    $after: String
+  ) {
+    merchants(filter: { appId: { eq: $appId } }, first: $first, after: $after) {
       edges {
         node {
           id
         }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -53,16 +65,28 @@ export const fetchIssueMerchantsAppScopeFilter = async ({
     return undefined;
   }
 
-  const { data: merchantsData } = await apolloClient.query<{
-    merchants: { edges: { node: { id: string } }[] };
-  }>({
-    query: GET_MERCHANT_IDS_BY_APP,
-    variables: { appId },
-  });
+  const merchantIds: string[] = [];
+  let after: string | null = null;
+  let hasNextPage = true;
 
-  const merchantIds: string[] = (merchantsData?.merchants?.edges ?? []).map(
-    (edge) => edge.node.id,
-  );
+  while (hasNextPage) {
+    const { data: merchantsData } = await apolloClient.query<{
+      merchants: {
+        edges: { node: { id: string } }[];
+        pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      };
+    }>({
+      query: GET_MERCHANT_IDS_BY_APP,
+      variables: { appId, first: MERCHANT_SCOPE_PAGE_SIZE, after },
+    });
+
+    merchantIds.push(
+      ...(merchantsData?.merchants?.edges ?? []).map((edge) => edge.node.id),
+    );
+
+    hasNextPage = merchantsData?.merchants?.pageInfo?.hasNextPage ?? false;
+    after = merchantsData?.merchants?.pageInfo?.endCursor ?? null;
+  }
 
   return idsToFilter(merchantIds);
 };

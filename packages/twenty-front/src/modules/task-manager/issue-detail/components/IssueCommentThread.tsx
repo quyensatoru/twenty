@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -6,11 +6,13 @@ import '@blocknote/react/style.css';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { createPortal } from 'react-dom';
-import { isDefined } from 'twenty-shared/utils';
+import { AppPath } from 'twenty-shared/types';
+import { getAppPath, isDefined } from 'twenty-shared/utils';
 import { Avatar } from 'twenty-ui/data-display';
 import {
   IconArrowBackUp,
   IconDotsVertical,
+  IconLink,
   IconPencil,
   IconTrash,
 } from 'twenty-ui/icon';
@@ -34,6 +36,7 @@ import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 
 const EMPTY_PARAGRAPH = [{ type: 'paragraph' as const, content: '' }];
 
@@ -49,9 +52,14 @@ const StyledThread = styled.div`
   gap: ${themeCssVariables.spacing['2']};
 `;
 
-const StyledComment = styled.div`
+const StyledComment = styled.div<{ isFocused?: boolean }>`
+  background-color: ${({ isFocused }) =>
+    isFocused ? themeCssVariables.background.transparent.light : 'transparent'};
+  border-radius: ${themeCssVariables.border.radius.sm};
   display: flex;
   gap: ${themeCssVariables.spacing['2']};
+  padding: ${themeCssVariables.spacing['1']};
+  transition: background-color ${themeCssVariables.animation.duration.slow};
 `;
 
 const StyledReplies = styled.div`
@@ -289,24 +297,30 @@ const CommentComposer = ({
 };
 
 type CommentRowProps = {
+  issueId: string;
   comment: IssueCommentRecord;
   currentWorkspaceMemberId: string | undefined;
   onUpdate: (commentId: string, blocknote: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   onReply?: () => void;
+  isFocused?: boolean;
 };
 
 const CommentRow = ({
+  issueId,
   comment,
   currentWorkspaceMemberId,
   onUpdate,
   onDelete,
   onReply,
+  isFocused = false,
 }: CommentRowProps) => {
   const { t } = useLingui();
   const [isEditing, setIsEditing] = useState(false);
   const { openModal } = useModal();
   const { closeDropdown } = useCloseDropdown();
+  const { copyToClipboard } = useCopyToClipboard();
+  const commentRowRef = useRef<HTMLDivElement>(null);
 
   const dropdownId = `issue-comment-menu-${comment.id}`;
   const deleteModalId = `issue-comment-delete-modal-${comment.id}`;
@@ -317,6 +331,15 @@ const CommentRow = ({
     comment.authorId === currentWorkspaceMemberId;
 
   const authorName = getAuthorName(comment.author, t`Unknown`);
+
+  useEffect(() => {
+    if (isFocused) {
+      commentRowRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [isFocused]);
 
   const handleEdit = () => {
     closeDropdown(dropdownId);
@@ -333,8 +356,19 @@ const CommentRow = ({
     setIsEditing(false);
   };
 
+  const handleCopyCommentLink = () => {
+    copyToClipboard(
+      `${window.location.origin}${getAppPath(
+        AppPath.TaskManagerIssuePage,
+        { issueId },
+        { commentId: comment.id },
+      )}`,
+      t`Link copied to clipboard`,
+    );
+  };
+
   return (
-    <StyledComment>
+    <StyledComment ref={commentRowRef} isFocused={isFocused}>
       <Avatar placeholder={authorName} type="rounded" size="md" />
       <StyledCommentBody>
         <StyledCommentHeader>
@@ -343,6 +377,13 @@ const CommentRow = ({
             {new Date(comment.createdAt).toLocaleString()}
           </StyledCommentDate>
           <StyledCommentActions>
+            <LightIconButton
+              className="displayOnHover"
+              Icon={IconLink}
+              accent="tertiary"
+              title={t`Copy link`}
+              onClick={handleCopyCommentLink}
+            />
             {isDefined(onReply) && (
               <LightIconButton
                 className="displayOnHover"
@@ -411,9 +452,13 @@ const CommentRow = ({
 
 type IssueCommentThreadProps = {
   issueId: string;
+  focusedCommentId?: string;
 };
 
-export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
+export const IssueCommentThread = ({
+  issueId,
+  focusedCommentId,
+}: IssueCommentThreadProps) => {
   const { t } = useLingui();
   const { comments, postComment, postReply, updateComment, deleteComment } =
     useIssueComments(issueId);
@@ -425,10 +470,12 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
       {comments.map((comment) => (
         <StyledThread key={comment.id}>
           <CommentRow
+            issueId={issueId}
             comment={comment}
             currentWorkspaceMemberId={currentWorkspaceMember?.id}
             onUpdate={updateComment}
             onDelete={deleteComment}
+            isFocused={comment.id === focusedCommentId}
             onReply={() =>
               setReplyingToId((current) =>
                 current === comment.id ? null : comment.id,
@@ -440,10 +487,12 @@ export const IssueCommentThread = ({ issueId }: IssueCommentThreadProps) => {
               {comment.replies.map((reply) => (
                 <CommentRow
                   key={reply.id}
+                  issueId={issueId}
                   comment={reply}
                   currentWorkspaceMemberId={currentWorkspaceMember?.id}
                   onUpdate={updateComment}
                   onDelete={deleteComment}
+                  isFocused={reply.id === focusedCommentId}
                 />
               ))}
             </StyledReplies>

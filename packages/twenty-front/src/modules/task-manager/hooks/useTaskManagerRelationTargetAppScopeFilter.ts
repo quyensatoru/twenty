@@ -1,9 +1,36 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
+import {
+  useFindManyRecords,
+  type UseFindManyRecordsParams,
+} from '@/object-record/hooks/useFindManyRecords';
 import { useFindOneRecord } from '@/object-record/hooks/useFindOneRecord';
+import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 import { isDefined } from 'twenty-shared/utils';
 import { type ObjectRecordFilterInput } from '~/generated/graphql';
+
+// Scope lists back an id-in-list filter, so they must be exhaustive — a
+// project's app can have tens of thousands of merchants, far past any one
+// page. Keep fetching pages until the query itself reports there's nothing
+// left, instead of capping at a fixed page size.
+const SCOPE_LIST_PAGE_SIZE = 1000;
+
+const useAllRecordsForScope = <T extends ObjectRecord = ObjectRecord>(
+  params: UseFindManyRecordsParams<T>,
+): T[] => {
+  const { records, fetchMoreRecords, hasNextPage } = useFindManyRecords<T>({
+    limit: SCOPE_LIST_PAGE_SIZE,
+    ...params,
+  });
+
+  useEffect(() => {
+    if (hasNextPage) {
+      fetchMoreRecords();
+    }
+  }, [hasNextPage, fetchMoreRecords]);
+
+  return records;
+};
 
 // A UUID that can never exist on a real row — used instead of `{ in: [] }`
 // to mean "match nothing": the backend's array-operator validation
@@ -82,7 +109,7 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
 
   const projectAppId: string | null | undefined = project?.appId;
 
-  const { records: merchants } = useFindManyRecords({
+  const merchants = useAllRecordsForScope({
     objectNameSingular: 'merchant',
     filter: isDefined(projectAppId)
       ? { appId: { eq: projectAppId } }
@@ -91,7 +118,7 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
     skip: scopeKind !== 'merchant' || !isDefined(projectAppId),
   });
 
-  const { records: appAccesses } = useFindManyRecords({
+  const appAccesses = useAllRecordsForScope({
     objectNameSingular: 'appAccess',
     filter: isDefined(projectAppId)
       ? { appId: { eq: projectAppId } }
@@ -100,21 +127,21 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
     skip: scopeKind !== 'workspaceMember' || !isDefined(projectAppId),
   });
 
-  const { records: sprints } = useFindManyRecords({
+  const sprints = useAllRecordsForScope({
     objectNameSingular: 'sprint',
     filter: isDefined(projectId) ? { projectId: { eq: projectId } } : undefined,
     recordGqlFields: { id: true },
     skip: scopeKind !== 'sprint' || !isDefined(projectId),
   });
 
-  const { records: epics } = useFindManyRecords({
+  const epics = useAllRecordsForScope({
     objectNameSingular: 'epic',
     filter: isDefined(projectId) ? { projectId: { eq: projectId } } : undefined,
     recordGqlFields: { id: true },
     skip: scopeKind !== 'epic' || !isDefined(projectId),
   });
 
-  const { records: issueStatuses } = useFindManyRecords({
+  const issueStatuses = useAllRecordsForScope({
     objectNameSingular: 'issueStatus',
     filter: isDefined(projectId) ? { projectId: { eq: projectId } } : undefined,
     recordGqlFields: { id: true },

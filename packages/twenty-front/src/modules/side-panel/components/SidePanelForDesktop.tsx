@@ -5,20 +5,27 @@ import { SIDE_PANEL_CLICK_OUTSIDE_ID } from '@/side-panel/constants/SidePanelCli
 import { SIDE_PANEL_CONSTRAINTS } from '@/side-panel/constants/SidePanelConstraints';
 import { useSidePanelCloseAnimationCompleteCleanup } from '@/side-panel/hooks/useSidePanelCloseAnimationCompleteCleanup';
 import { useSidePanelMenu } from '@/side-panel/hooks/useSidePanelMenu';
+import { viewableRecordNameSingularComponentState } from '@/side-panel/pages/record-page/states/viewableRecordNameSingularComponentState';
 import { isSidePanelClosingState } from '@/side-panel/states/isSidePanelClosingState';
 import { isSidePanelOpenedState } from '@/side-panel/states/isSidePanelOpenedState';
+import { sidePanelPageInfoState } from '@/side-panel/states/sidePanelPageInfoState';
+import { sidePanelPageState } from '@/side-panel/states/sidePanelPageState';
 import {
   SIDE_PANEL_WIDTH_VAR,
   sidePanelWidthState,
 } from '@/side-panel/states/sidePanelWidthState';
+import { TASK_MANAGER_ISSUE_SIDE_PANEL_CONSTRAINTS } from '@/task-manager/issue-detail/constants/TaskManagerIssueSidePanelConstraints';
+import { taskManagerIssueSidePanelWidthState } from '@/task-manager/issue-detail/states/taskManagerIssueSidePanelWidthState';
 import { ModalContainerContext } from '@/ui/layout/modal/contexts/ModalContainerContext';
 import { ResizablePanelGap } from '@/ui/layout/resizable-panel/components/ResizablePanelGap';
 import { ParentClickOutsideIdContext } from '@/ui/utilities/pointer-event/contexts/ParentClickOutsideIdContext';
+import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 import { styled } from '@linaria/react';
 import { useCallback, useState } from 'react';
+import { SidePanelPages } from 'twenty-shared/types';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledSidePanelWrapper = styled.div<{
@@ -60,7 +67,31 @@ const StyledModalContainer = styled.div`
 export const SidePanelForDesktop = () => {
   const isSidePanelOpened = useAtomStateValue(isSidePanelOpenedState);
   const isSidePanelClosing = useAtomStateValue(isSidePanelClosingState);
+
+  const sidePanelPage = useAtomStateValue(sidePanelPageState);
+  const sidePanelPageInfo = useAtomStateValue(sidePanelPageInfoState);
+  const viewableRecordNameSingular = useAtomFamilyStateValue(
+    viewableRecordNameSingularComponentState,
+    { instanceId: sidePanelPageInfo.instanceId },
+  );
+  const isViewingTaskManagerIssue =
+    sidePanelPage === SidePanelPages.ViewRecord &&
+    viewableRecordNameSingular === 'issue';
+
   const [sidePanelWidth, setSidePanelWidth] = useAtomState(sidePanelWidthState);
+  const [taskManagerIssueSidePanelWidth, setTaskManagerIssueSidePanelWidth] =
+    useAtomState(taskManagerIssueSidePanelWidthState);
+
+  const activeSidePanelWidth = isViewingTaskManagerIssue
+    ? taskManagerIssueSidePanelWidth
+    : sidePanelWidth;
+  const setActiveSidePanelWidth = isViewingTaskManagerIssue
+    ? setTaskManagerIssueSidePanelWidth
+    : setSidePanelWidth;
+  const sidePanelWidthConstraints = isViewingTaskManagerIssue
+    ? TASK_MANAGER_ISSUE_SIDE_PANEL_CONSTRAINTS
+    : SIDE_PANEL_CONSTRAINTS;
+
   const { closeSidePanelMenu } = useSidePanelMenu();
   const { sidePanelCloseAnimationCompleteCleanup } =
     useSidePanelCloseAnimationCompleteCleanup();
@@ -100,11 +131,11 @@ export const SidePanelForDesktop = () => {
 
   const handleWidthChange = useCallback(
     (width: number) => {
-      setSidePanelWidth(width);
+      setActiveSidePanelWidth(width);
       setIsResizing(false);
       setTableWidthResizeIsActive(true);
     },
-    [setSidePanelWidth, setTableWidthResizeIsActive],
+    [setActiveSidePanelWidth, setTableWidthResizeIsActive],
   );
 
   const handleResizeStart = useCallback(() => {
@@ -120,11 +151,11 @@ export const SidePanelForDesktop = () => {
 
   return (
     <>
-      <SidePanelWidthEffect />
+      <SidePanelWidthEffect width={activeSidePanelWidth} />
       <ResizablePanelGap
         side="left"
-        constraints={SIDE_PANEL_CONSTRAINTS}
-        currentWidth={sidePanelWidth}
+        constraints={sidePanelWidthConstraints}
+        currentWidth={activeSidePanelWidth}
         onWidthChange={handleWidthChange}
         onCollapse={handleCollapse}
         gapWidth={0}
