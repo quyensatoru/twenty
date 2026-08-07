@@ -10,6 +10,8 @@ export type IssueCommentRecord = ObjectRecord & {
   author: {
     name?: { firstName?: string; lastName?: string };
     avatarUrl?: string | null;
+    jobTitle?: string | null;
+    userEmail?: string | null;
   } | null;
   authorId: string | null;
   parentCommentId: string | null;
@@ -59,7 +61,13 @@ export const useIssueComments = (issueId: string) => {
       id: true,
       createdAt: true,
       bodyV2: true,
-      author: { id: true, name: true, avatarUrl: true },
+      author: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        jobTitle: true,
+        userEmail: true,
+      },
       authorId: true,
       parentCommentId: true,
     },

@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import '@blocknote/react/style.css';
+import { css } from '@linaria/core';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
+import { isNonEmptyString } from '@sniptt/guards';
 import { createPortal } from 'react-dom';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
@@ -18,6 +20,7 @@ import {
 } from 'twenty-ui/icon';
 import { Button, LightIconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
+import { AppTooltip, TooltipDelay } from 'twenty-ui/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
@@ -81,8 +84,10 @@ const StyledCommentTopRow = styled.div`
   gap: ${themeCssVariables.spacing['2']};
 `;
 
+// Indent matches the avatar's width (size="lg" = 24px) + the row's gap, so
+// the message lines up under the author name instead of the avatar.
 const StyledCommentBody = styled.div`
-  margin-left: calc(16px + ${themeCssVariables.spacing['2']});
+  margin-left: calc(24px + ${themeCssVariables.spacing['2']});
 `;
 
 const StyledCommentHeader = styled.div`
@@ -109,6 +114,82 @@ const StyledCommentActions = styled.div`
   gap: ${themeCssVariables.spacing['1']};
   margin-left: auto;
 `;
+
+// display:flex so this hugs the avatar's own size instead of stretching as
+// a block-level flex item — it only exists to hold the hover-anchor id.
+const StyledAvatarAnchor = styled.div`
+  display: flex;
+`;
+
+// AppTooltip's default bubble is a translucent dark chip meant for a short
+// line of text — fine for a plain tooltip, unreadable for a multi-line card.
+// This cancels that chrome out so StyledAuthorCard's own opaque background
+// is the only thing visible.
+const authorCardTooltipClass = css`
+  backdrop-filter: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  padding: 0 !important;
+`;
+
+// "xl" (40px) is Avatar's largest built-in size — override its fixed
+// dimensions to go bigger, since there's no larger preset to switch to.
+const authorCardAvatarClass = css`
+  font-size: 22px !important;
+  height: 56px !important;
+  width: 56px !important;
+`;
+
+const StyledAuthorCard = styled.div`
+  background: ${themeCssVariables.background.primary};
+  border-radius: ${themeCssVariables.border.radius.md};
+  box-shadow: ${themeCssVariables.boxShadow.strong};
+  display: flex;
+  flex-direction: column;
+  gap: ${themeCssVariables.spacing['2']};
+  padding: ${themeCssVariables.spacing['3']};
+  width: 220px;
+`;
+
+const StyledAuthorCardName = styled.span`
+  color: ${themeCssVariables.font.color.primary};
+  font-weight: ${themeCssVariables.font.weight.semiBold};
+`;
+
+const StyledAuthorCardDetail = styled.span`
+  color: ${themeCssVariables.font.color.tertiary};
+  font-size: ${themeCssVariables.font.size.sm};
+`;
+
+const AuthorInfoCard = ({
+  authorName,
+  avatarUrl,
+  jobTitle,
+  email,
+}: {
+  authorName: string;
+  avatarUrl: string | undefined;
+  jobTitle?: string | null;
+  email?: string | null;
+}) => (
+  <StyledAuthorCard>
+    <Avatar
+      className={authorCardAvatarClass}
+      placeholder={authorName}
+      avatarUrl={avatarUrl}
+      type="rounded"
+      size="xl"
+    />
+    <StyledAuthorCardName>{authorName}</StyledAuthorCardName>
+    {isNonEmptyString(jobTitle) && (
+      <StyledAuthorCardDetail>{jobTitle}</StyledAuthorCardDetail>
+    )}
+    {isNonEmptyString(email) && (
+      <StyledAuthorCardDetail>{email}</StyledAuthorCardDetail>
+    )}
+  </StyledAuthorCard>
+);
 
 const StyledCommentBodyEditor = styled.div`
   & .editor {
@@ -323,6 +404,7 @@ const CommentRow = ({
 }: CommentRowProps) => {
   const { t } = useLingui();
   const [isEditing, setIsEditing] = useState(false);
+  const [isAvatarHovered, setIsAvatarHovered] = useState(false);
   const { openModal } = useModal();
   const { closeDropdown } = useCloseDropdown();
   const { copyToClipboard } = useCopyToClipboard();
@@ -330,6 +412,7 @@ const CommentRow = ({
 
   const dropdownId = `issue-comment-menu-${comment.id}`;
   const deleteModalId = `issue-comment-delete-modal-${comment.id}`;
+  const avatarAnchorId = `issue-comment-avatar-${comment.id}`;
 
   const isAuthor =
     isDefined(currentWorkspaceMemberId) &&
@@ -376,12 +459,36 @@ const CommentRow = ({
   return (
     <StyledComment ref={commentRowRef} isFocused={isFocused}>
       <StyledCommentTopRow>
-        <Avatar
-          placeholder={authorName}
-          avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
-          type="rounded"
-          size="md"
-        />
+        <StyledAvatarAnchor
+          id={avatarAnchorId}
+          onMouseEnter={() => setIsAvatarHovered(true)}
+          onMouseLeave={() => setIsAvatarHovered(false)}
+        >
+          <Avatar
+            placeholder={authorName}
+            avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
+            type="rounded"
+            size="lg"
+          />
+        </StyledAvatarAnchor>
+        {isAvatarHovered && (
+          <AppTooltip
+            anchorSelect={`#${avatarAnchorId}`}
+            place="right-start"
+            noArrow
+            offset={8}
+            delay={TooltipDelay.noDelay}
+            className={authorCardTooltipClass}
+            isOpen
+          >
+            <AuthorInfoCard
+              authorName={authorName}
+              avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
+              jobTitle={comment.author?.jobTitle}
+              email={comment.author?.userEmail}
+            />
+          </AppTooltip>
+        )}
         <StyledCommentHeader>
           <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
           <StyledCommentDate>

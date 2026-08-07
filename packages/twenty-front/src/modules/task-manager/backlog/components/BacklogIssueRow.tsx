@@ -93,7 +93,7 @@ export const BacklogIssueRow = ({
               placeholder={assigneeName}
               avatarUrl={getAbsoluteImageUrl(assignee?.avatarUrl)}
               type="rounded"
-              size="sm"
+              size="lg"
             />
           )}
         </StyledRow>
