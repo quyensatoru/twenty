@@ -25,8 +25,8 @@ const ISSUE_BASE_RECORD_GQL_FIELDS = {
   sprintId: true,
   epicId: true,
   parentId: true,
-  assignee: true,
-  reporter: true,
+  assignee: { id: true, name: true, avatarUrl: true },
+  reporter: { id: true, name: true, avatarUrl: true },
 };
 
 export const useTaskManagerIssues = ({ projectId }: { projectId?: string }) => {

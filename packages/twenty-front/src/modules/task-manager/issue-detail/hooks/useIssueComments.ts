@@ -7,7 +7,10 @@ import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 export type IssueCommentRecord = ObjectRecord & {
   createdAt: string;
   bodyV2: { blocknote: string | null; markdown: string | null } | null;
-  author: { name?: { firstName?: string; lastName?: string } } | null;
+  author: {
+    name?: { firstName?: string; lastName?: string };
+    avatarUrl?: string | null;
+  } | null;
   authorId: string | null;
   parentCommentId: string | null;
 };
@@ -56,7 +59,7 @@ export const useIssueComments = (issueId: string) => {
       id: true,
       createdAt: true,
       bodyV2: true,
-      author: true,
+      author: { id: true, name: true, avatarUrl: true },
       authorId: true,
       parentCommentId: true,
     },

@@ -37,6 +37,7 @@ import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModa
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
+import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
 
 const EMPTY_PARAGRAPH = [{ type: 'paragraph' as const, content: '' }];
 
@@ -375,7 +376,12 @@ const CommentRow = ({
   return (
     <StyledComment ref={commentRowRef} isFocused={isFocused}>
       <StyledCommentTopRow>
-        <Avatar placeholder={authorName} type="rounded" size="md" />
+        <Avatar
+          placeholder={authorName}
+          avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
+          type="rounded"
+          size="md"
+        />
         <StyledCommentHeader>
           <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
           <StyledCommentDate>

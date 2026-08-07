@@ -7,6 +7,7 @@ import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataIte
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { getCssCompatibleDraggableProps } from '@/ui/layout/draggable-list/utils/getCssCompatibleDraggableProps';
+import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
 
 const StyledRow = styled.div<{ isDragging: boolean }>`
   align-items: center;
@@ -52,7 +53,10 @@ export const BacklogIssueRow = ({
   );
 
   const assignee = issue.assignee as
-    | { name?: { firstName?: string; lastName?: string } }
+    | {
+        name?: { firstName?: string; lastName?: string };
+        avatarUrl?: string | null;
+      }
     | null
     | undefined;
   const assigneeName = assignee?.name
@@ -85,7 +89,12 @@ export const BacklogIssueRow = ({
             <Tag text={`${issue.storyPoints} pts`} color="gray" />
           )}
           {assigneeName && (
-            <Avatar placeholder={assigneeName} type="rounded" size="sm" />
+            <Avatar
+              placeholder={assigneeName}
+              avatarUrl={getAbsoluteImageUrl(assignee?.avatarUrl)}
+              type="rounded"
+              size="sm"
+            />
           )}
         </StyledRow>
       )}
