@@ -7,7 +7,7 @@ import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/data-display';
 import { IconArrowLeft, IconBrowserMaximize, IconLink } from 'twenty-ui/icon';
-import { LightIconButton } from 'twenty-ui/input';
+import { LightIconButton, TabButton } from 'twenty-ui/input';
 import { type ThemeColor } from 'twenty-ui/theme';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -22,6 +22,7 @@ import { useSidePanelMenu } from '@/side-panel/hooks/useSidePanelMenu';
 import { TaskManagerFieldCell } from '@/task-manager/components/TaskManagerFieldCell';
 import { IssueCommentThread } from '@/task-manager/issue-detail/components/IssueCommentThread';
 import { IssueFieldPanel } from '@/task-manager/issue-detail/components/IssueFieldPanel';
+import { IssueWorklogList } from '@/task-manager/issue-detail/components/IssueWorklogList';
 import { useTaskManagerIssue } from '@/task-manager/issue-detail/hooks/useTaskManagerIssue';
 import { LayoutRenderingProvider } from '@/ui/layout/contexts/LayoutRenderingContext';
 import { ResizablePanelGap } from '@/ui/layout/resizable-panel/components/ResizablePanelGap';
@@ -143,6 +144,13 @@ const StyledHeaderPill = styled.div`
   flex-shrink: 0;
 `;
 
+const StyledActivityTabs = styled.div`
+  border-bottom: 1px solid ${themeCssVariables.border.color.light};
+  display: flex;
+  gap: ${themeCssVariables.spacing['2']};
+  margin-bottom: ${themeCssVariables.spacing['3']};
+`;
+
 type IssueStatusValue = { name?: string; color?: string } | null;
 
 // IssueStatus.color is a free-text field (users can rename/recolor statuses
@@ -185,6 +193,10 @@ export const TaskManagerIssueDetail = ({
 
   const [rightColumnWidth, setRightColumnWidth] = useState(
     RIGHT_COLUMN_CONSTRAINTS.default,
+  );
+
+  const [activityTab, setActivityTab] = useState<'comments' | 'worklogs'>(
+    'comments',
   );
 
   useEffect(() => {
@@ -331,13 +343,28 @@ export const TaskManagerIssueDetail = ({
           </div>
 
           <div>
-            <StyledSectionTitle>
-              <Trans>Comments</Trans>
-            </StyledSectionTitle>
-            <IssueCommentThread
-              issueId={issueId}
-              focusedCommentId={focusedCommentId}
-            />
+            <StyledActivityTabs>
+              <TabButton
+                id="comments"
+                title={t`Comment`}
+                active={activityTab === 'comments'}
+                onClick={() => setActivityTab('comments')}
+              />
+              <TabButton
+                id="worklogs"
+                title={t`Log time`}
+                active={activityTab === 'worklogs'}
+                onClick={() => setActivityTab('worklogs')}
+              />
+            </StyledActivityTabs>
+            {activityTab === 'comments' ? (
+              <IssueCommentThread
+                issueId={issueId}
+                focusedCommentId={focusedCommentId}
+              />
+            ) : (
+              <IssueWorklogList issueId={issueId} />
+            )}
           </div>
 
           <TimelineActivityContext.Provider value={{ recordId: issueId }}>

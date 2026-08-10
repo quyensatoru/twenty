@@ -2000,11 +2000,6 @@ msgstr "Toate obiectele"
 msgid "All objects are already in the sidebar"
 msgstr "Toate obiectele sunt deja în bara laterală"
 
-#. js-lingui-id: zG6Ooi
-#: src/modules/task-manager/components/TaskManagerTopBar.tsx
-msgid "All projects"
-msgstr ""
-
 #. js-lingui-id: gqXMNe
 #: src/modules/settings/unsubscribers/components/filter-dropdown/SettingsUnsubscribersFilterDropdown.tsx
 msgid "All reasons"
@@ -2549,6 +2544,11 @@ msgstr ""
 #. js-lingui-id: 4CHeVx
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Are you sure you want to delete this evaluation input?"
+msgstr ""
+
+#. js-lingui-id: ln/qYG
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "Are you sure you want to delete this logged time? This action cannot be undone."
 msgstr ""
 
 #. js-lingui-id: Yz8PeY
@@ -3436,6 +3436,7 @@ msgstr "Nu poți scana? Copiază"
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/ValidationStep/ValidationStep.tsx
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/modules/ui/feedback/snack-bar-manager/components/SnackBar.tsx
 #: src/modules/ui/layout/modal/components/ConfirmationModal.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationDangerZone.tsx
@@ -4153,13 +4154,9 @@ msgstr "Virgule și punct"
 
 #. js-lingui-id: NBdIgR
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/pages/settings/ai/SettingsAgentTurnDetail.tsx
 msgid "Comment"
-msgstr ""
-
-#. js-lingui-id: VbyRUy
-#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
-msgid "Comments"
 msgstr ""
 
 #. js-lingui-id: hZotg6
@@ -4732,6 +4729,8 @@ msgid "Copy key ID"
 msgstr "Copiază ID-ul cheii"
 
 #. js-lingui-id: y1eoq1
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workspace/components/WorkspaceInviteLink.tsx
 msgid "Copy link"
 msgstr "Copiază linkul"
@@ -6004,6 +6003,7 @@ msgstr "șterge"
 #: src/modules/side-panel/pages/page-layout/components/RegularTabSettingsContent.tsx
 #: src/modules/side-panel/pages/page-layout/components/SoloTabSettingsContent.tsx
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/modules/views/view-picker/components/ViewPickerCreateButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerEditButton.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
@@ -6215,6 +6215,12 @@ msgstr "Șterge webhook"
 #: src/modules/side-panel/pages/page-layout/components/WidgetSettingsManageSection.tsx
 msgid "Delete widget"
 msgstr "Șterge widgetul"
+
+#. js-lingui-id: Gst6kj
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "Delete Worklog"
+msgstr ""
 
 #. js-lingui-id: kYu0eF
 #: src/modules/settings/profile/components/DeleteWorkspace.tsx
@@ -6716,6 +6722,11 @@ msgstr "de ex. 2.50"
 msgid "e.g. 3.75"
 msgstr "de ex. 3.75"
 
+#. js-lingui-id: 5hTC1D
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "e.g. 90"
+msgstr ""
+
 #. js-lingui-id: QVVmxi
 #: src/modules/settings/developers/components/ApiKeyNameInput.tsx
 #: src/pages/settings/developers/api-keys/SettingsDevelopersApiKeyDetail.tsx
@@ -6805,6 +6816,7 @@ msgstr "eddy@gmail.com, @apple.com"
 #: src/modules/settings/roles/role-permissions/object-level-permissions/field-permissions/components/SettingsRolePermissionsObjectLevelObjectFieldPermissionTable.tsx
 #: src/modules/side-panel/hooks/useSidePanelMenu.ts
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/modules/views/view-picker/components/ViewPickerOptionDropdown.tsx
 msgid "Edit"
 msgstr "Editare"
@@ -10919,6 +10931,8 @@ msgstr "Link"
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownVisibilityContent.tsx
 #: src/modules/object-record/record-field/ui/meta-types/display/components/LinksFieldDisplay.tsx
 #: src/modules/object-record/record-table/record-table-cell/hooks/useGetSecondaryRecordTableCellButton.ts
+#: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workspace/components/WorkspaceInviteLink.tsx
 msgid "Link copied to clipboard"
 msgstr "Link-ul a fost copiat în clipboard"
@@ -11111,6 +11125,12 @@ msgstr "Deconectare"
 #: src/modules/settings/security/components/SettingsSecuritySettings.tsx
 msgid "Log retention"
 msgstr "Păstrarea jurnalelor"
+
+#. js-lingui-id: Z/3wU7
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "Log time"
+msgstr ""
 
 #. js-lingui-id: hykMbH
 #: src/modules/information-banner/components/impersonate/InformationBannerIsImpersonating.tsx
@@ -12920,6 +12940,11 @@ msgstr "Fără câmp selectabil"
 msgid "No server administrators found."
 msgstr "Nu au fost găsiți administratori de server."
 
+#. js-lingui-id: 586DJb
+#: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
+msgid "No status"
+msgstr ""
+
 #. js-lingui-id: RQ6tfU
 #: src/modules/navigation-menu-item/edit/side-panel/components/SidePanelSystemObjectPickerSubView.tsx
 msgid "No system objects available"
@@ -12934,6 +12959,11 @@ msgstr "Nu au fost găsite obiecte de sistem cu vizualizări"
 #: src/modules/side-panel/pages/page-layout/components/dropdown-content/ChartGroupByFieldSelectionMorphRelationFieldView.tsx
 msgid "No targets available"
 msgstr "Nicio țintă disponibilă"
+
+#. js-lingui-id: mn57+k
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "No time logged yet."
+msgstr ""
 
 #. js-lingui-id: t0t36i
 #: src/modules/workflow/workflow-run/observability/WorkflowRunStepLogsAiAgentDetail.tsx
@@ -14522,11 +14552,6 @@ msgstr "Profil - Setări"
 msgid "Profile Picture"
 msgstr ""
 
-#. js-lingui-id: e0NrBM
-#: src/modules/task-manager/board/components/TaskManagerBoard.tsx
-msgid "Project"
-msgstr ""
-
 #. js-lingui-id: W9uQXX
 #: src/modules/workflow/workflow-steps/workflow-actions/ai-agent-action/components/WorkflowEditActionAiAgent.tsx
 msgid "Prompt"
@@ -15700,6 +15725,7 @@ msgstr "Sâmbătă"
 #: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/settings/components/SaveAndCancelButtons/SaveButton.tsx
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/pages/settings/data-model/new-field/SettingsObjectNewFieldConfigure.tsx
 msgid "Save"
 msgstr "Salvează"
@@ -18312,6 +18338,11 @@ msgstr "Acest furnizor nu are încă un SDK nativ — va folosi modul compatibil
 msgid "This record has been deleted"
 msgstr "Această înregistrare a fost ștearsă"
 
+#. js-lingui-id: UiaCF0
+#: src/modules/object-record/record-field/ui/meta-types/input/hooks/useUpdateRelationOneToManyFieldInput.tsx
+msgid "This record requires a parent, so it was deleted instead of detached."
+msgstr ""
+
 #. js-lingui-id: vbLBMd
 #: src/modules/settings/roles/role-permissions/object-level-permissions/object-form/components/SettingsRolePermissionsObjectLevelObjectFormObjectLevelTableRow.tsx
 msgid "This role can {humanReadableAction} all records"
@@ -18460,6 +18491,11 @@ msgstr "Tim"
 #: src/pages/settings/profile/appearance/components/DateTimeSettingsTimeFormatSelect.tsx
 msgid "Time format"
 msgstr "Formatul orei"
+
+#. js-lingui-id: K3K8QV
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "Time spent (minutes)"
+msgstr ""
 
 #. js-lingui-id: Mz2JN2
 #: src/modules/settings/experience/components/DateTimeSettingsTimeZoneSelect.tsx
@@ -19086,6 +19122,7 @@ msgstr "Identificator universal"
 #: src/modules/settings/billing/components/SettingsBillingSubscriptionInfo.tsx
 #: src/modules/settings/unsubscribers/utils/getMessageSuppressionReasonBadge.ts
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/pages/settings/admin-panel/SettingsAdminInferredVersion.tsx
 #: src/pages/settings/applications/components/SettingsApplicationVersionContainer.tsx
 #: src/pages/settings/emailing-domains/utils/getEmailingDomainStatusText.ts
@@ -20760,6 +20797,11 @@ msgstr "Scrie o descriere pentru acest agent"
 #. js-lingui-id: kuuS0x
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
 msgid "Write a reply..."
+msgstr ""
+
+#. js-lingui-id: yY9kap
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
+msgid "Write what you worked on..."
 msgstr ""
 
 #. js-lingui-id: zeCIJi

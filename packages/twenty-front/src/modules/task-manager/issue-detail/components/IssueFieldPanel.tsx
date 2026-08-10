@@ -9,13 +9,16 @@ import { TaskManagerFieldCell } from '@/task-manager/components/TaskManagerField
 
 // title/description are edited in the main column; status/priority/issueKey
 // already show as pills in the page header — listing them again here would
-// just be visual noise.
+// just be visual noise. worklogs has its own dedicated section (like
+// Comments) since the generic relation-picker cell is a poor fit for
+// logging/reviewing time entries.
 const FIELD_PANEL_EXCLUDED_FIELD_NAMES = new Set([
   'title',
   'description',
   'status',
   'priority',
   'issueKey',
+  'worklogs',
 ]);
 
 const StyledPanel = styled.div`
