@@ -1,12 +1,15 @@
 import { useCallback, useContext } from 'react';
 
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
+import { useDeleteOneRecord } from '@/object-record/hooks/useDeleteOneRecord';
 import { useRecordOneToManyFieldAttachTargetRecord } from '@/object-record/hooks/useRecordOneToManyFieldAttachTargetRecord';
 import { useRecordOneToManyFieldDetachTargetRecord } from '@/object-record/hooks/useRecordOneToManyFieldDetachTargetRecord';
 import { FieldContext } from '@/object-record/record-field/ui/contexts/FieldContext';
 import { assertFieldMetadata } from '@/object-record/record-field/ui/types/guards/assertFieldMetadata';
 import { isFieldRelation } from '@/object-record/record-field/ui/types/guards/isFieldRelation';
 import { type RecordPickerPickableMorphItem } from '@/object-record/record-picker/types/RecordPickerPickableMorphItem';
+import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
+import { t } from '@lingui/core/macro';
 import {
   computeMorphRelationGqlFieldName,
   isDefined,
@@ -50,6 +53,13 @@ export const useUpdateRelationOneToManyFieldInput = () => {
 
   const { recordOneToManyFieldAttachTargetRecord } =
     useRecordOneToManyFieldAttachTargetRecord();
+
+  const { deleteOneRecord: deleteOneTargetRecord } = useDeleteOneRecord({
+    objectNameSingular:
+      fieldDefinition.metadata.relationObjectMetadataNameSingular,
+  });
+
+  const { enqueueInfoSnackBar } = useSnackBar();
 
   const updateRelation = useCallback(
     async (morphItem: RecordPickerPickableMorphItem) => {
@@ -96,6 +106,13 @@ export const useUpdateRelationOneToManyFieldInput = () => {
           sourceRecordId: recordId,
           targetRecordId: morphItem.recordId,
         });
+      } else if (targetFieldMetadata.isNullable === false) {
+        // Target's FK to this record is required (e.g. Worklog.issue), so it can't be
+        // detached and left orphaned — unselecting it means deleting it instead.
+        await deleteOneTargetRecord(morphItem.recordId);
+        enqueueInfoSnackBar({
+          message: t`This record requires a parent, so it was deleted instead of detached.`,
+        });
       } else {
         await recordOneToManyFieldDetachTargetRecord({
           sourceObjectNameSingular:
@@ -109,6 +126,8 @@ export const useUpdateRelationOneToManyFieldInput = () => {
       }
     },
     [
+      deleteOneTargetRecord,
+      enqueueInfoSnackBar,
       fieldDefinition.metadata.objectMetadataNameSingular,
       fieldDefinition.metadata.relationObjectMetadataNameSingular,
       fieldDefinition.metadata.targetFieldMetadataName,

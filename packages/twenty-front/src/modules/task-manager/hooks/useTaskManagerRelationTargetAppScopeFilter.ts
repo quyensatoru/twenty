@@ -56,7 +56,12 @@ export const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
 // framework.
 const SCOPED_RELATION_FIELD_KIND_BY_KEY: Record<
   string,
-  'merchant' | 'workspaceMember' | 'sprint' | 'epic' | 'issueStatus'
+  | 'merchant'
+  | 'workspaceMember'
+  | 'sprint'
+  | 'epic'
+  | 'issueStatus'
+  | 'worklog'
 > = {
   'issue.assignee': 'workspaceMember',
   'issue.reporter': 'workspaceMember',
@@ -64,6 +69,7 @@ const SCOPED_RELATION_FIELD_KIND_BY_KEY: Record<
   'issue.sprint': 'sprint',
   'issue.epic': 'epic',
   'issue.status': 'issueStatus',
+  'issue.worklogs': 'worklog',
   'epic.assignee': 'workspaceMember',
   'sprint.owner': 'workspaceMember',
 };
@@ -88,11 +94,13 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
   // card's own query resolves), so reading it here raced that load and was
   // intermittently empty. A dedicated query is deterministic regardless of
   // what else is mounted.
+  const needsProjectId = isDefined(scopeKind) && scopeKind !== 'worklog';
+
   const { record: currentRecord } = useFindOneRecord({
     objectNameSingular,
     objectRecordId: recordId ?? '',
     recordGqlFields: { id: true, project: { id: true } },
-    skip: !isDefined(scopeKind) || !isDefined(recordId),
+    skip: !needsProjectId || !isDefined(recordId),
   });
 
   const projectId: string | undefined = currentRecord?.project?.id;
@@ -148,6 +156,18 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
     skip: scopeKind !== 'issueStatus' || !isDefined(projectId),
   });
 
+  // Worklogs belong exclusively to the issue they were logged against
+  // (issueId is required, cascade-delete) — unlike merchants/sprints/epics,
+  // which are shared pools scoped by project, a worklog can never be picked
+  // up from elsewhere. Scope candidates to this issue's own worklogs, not
+  // its project's.
+  const worklogs = useAllRecordsForScope({
+    objectNameSingular: 'worklog',
+    filter: isDefined(recordId) ? { issueId: { eq: recordId } } : undefined,
+    recordGqlFields: { id: true },
+    skip: scopeKind !== 'worklog' || !isDefined(recordId),
+  });
+
   return useMemo(() => {
     switch (scopeKind) {
       case 'merchant':
@@ -174,14 +194,20 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
         return isDefined(projectId)
           ? idsToFilter(issueStatuses.map((issueStatus) => issueStatus.id))
           : undefined;
+      case 'worklog':
+        return isDefined(recordId)
+          ? idsToFilter(worklogs.map((worklog) => worklog.id))
+          : undefined;
       default:
         return undefined;
     }
   }, [
     scopeKind,
+    recordId,
     projectId,
     projectAppId,
     merchants,
+    worklogs,
     appAccesses,
     sprints,
     epics,

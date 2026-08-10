@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useEffect } from 'react';
 import { useStore } from 'jotai';
 import { v4 } from 'uuid';
 
@@ -27,11 +27,14 @@ import { getSourceJoinColumnName } from '@/object-record/record-field/ui/utils/j
 import { hasJunctionConfig } from '@/object-record/record-field/ui/utils/junction/hasJunctionConfig';
 import { MultipleRecordPicker } from '@/object-record/record-picker/multiple-record-picker/components/MultipleRecordPicker';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
+import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
+import { useTaskManagerRelationTargetAppScopeFilter } from '@/task-manager/hooks/useTaskManagerRelationTargetAppScopeFilter';
 import { buildRecordLabelPayload } from '@/object-record/utils/buildRecordLabelPayload';
 import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/component-state/hooks/useAvailableComponentInstanceIdOrThrow';
 import { useAtomComponentStateCallbackState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateCallbackState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
+import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
 import {
   computeRelationGqlFieldJoinColumnName,
   CustomError,
@@ -169,6 +172,40 @@ export const RelationOneToManyFieldInput = () => {
     );
   const { performSearch: multipleRecordPickerPerformSearch } =
     useMultipleRecordPickerPerformSearch();
+
+  const setMultipleRecordPickerFilter = useSetAtomComponentState(
+    multipleRecordPickerFilterComponentState,
+    instanceId,
+  );
+
+  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
+    objectNameSingular: objectMetadataNameSingular ?? '',
+    fieldName,
+    recordId,
+  });
+
+  // Some one-to-many relations (e.g. Worklogs) must only offer the current
+  // record's own related records as candidates, never every record of that
+  // type in the workspace. The picker already opened with an unscoped search
+  // (see useOpenRelationFromManyFieldInput), so re-run it once the scope
+  // resolves rather than blocking the initial open on this extra round-trip.
+  useEffect(() => {
+    if (!isDefined(appScopeFilter)) {
+      return;
+    }
+
+    setMultipleRecordPickerFilter(appScopeFilter);
+
+    multipleRecordPickerPerformSearch({
+      multipleRecordPickerInstanceId: instanceId,
+      forceFilter: appScopeFilter,
+    });
+  }, [
+    appScopeFilter,
+    instanceId,
+    multipleRecordPickerPerformSearch,
+    setMultipleRecordPickerFilter,
+  ]);
 
   const handleCreateNew = useCallback(
     async (searchInput?: string) => {
