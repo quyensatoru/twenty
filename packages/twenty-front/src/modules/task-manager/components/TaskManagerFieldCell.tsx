@@ -17,6 +17,7 @@ import {
   type FieldInputEvent,
 } from '@/object-record/record-field/ui/contexts/FieldInputEventContext';
 import { useFieldFocus } from '@/object-record/record-field/ui/hooks/useFieldFocus';
+import { useInitDraftValue } from '@/object-record/record-field/ui/hooks/useInitDraftValue';
 import { useOpenJunctionRelationFieldInput } from '@/object-record/record-field/ui/hooks/useOpenJunctionRelationFieldInput';
 import { usePersistField } from '@/object-record/record-field/ui/hooks/usePersistField';
 import { useOpenRelationFromManyFieldInput } from '@/object-record/record-field/ui/meta-types/input/hooks/useOpenRelationFromManyFieldInput';
@@ -269,8 +270,21 @@ export const TaskManagerFieldCell = ({
   const isJunctionRelationsEnabled = useIsFeatureEnabled(
     FeatureFlagKey.IS_JUNCTION_RELATIONS_ENABLED,
   );
+  const initFieldInputDraftValue = useInitDraftValue();
 
   const openEditMode = () => {
+    // Every other inline-cell entry point (RecordFieldList, RecordBoardCard,
+    // etc.) opens edit mode through useInlineCell, which seeds the field
+    // input's draft value from the record's current value before rendering
+    // it. This panel wires click-to-edit by hand (see the class doc comment
+    // above) and skipped that step, so scalar fields (text, number, date...)
+    // opened blank instead of showing their current value.
+    initFieldInputDraftValue({
+      recordId,
+      fieldDefinition,
+      fieldComponentInstanceId: instanceId,
+    });
+
     if (isFieldRelationManyToOne(fieldDefinition)) {
       openRelationToOneFieldInput({
         fieldName: fieldMetadataItem.name,
