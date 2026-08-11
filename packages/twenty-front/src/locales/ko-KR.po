@@ -3761,6 +3761,11 @@ msgstr "OIDC와 SAML 프로토콜 중 선택"
 msgid "Choose between Short and Full"
 msgstr "짧음과 긴 중에서 선택"
 
+#. js-lingui-id: +yPBXI
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
+msgid "Choose file"
+msgstr ""
+
 #. js-lingui-id: 5EMoSo
 #: src/modules/settings/billing/components/internal/SettingsBillingPlansWithoutSubscription.tsx
 msgid "Choose plan"
@@ -4078,7 +4083,7 @@ msgid "Columns shown in this view, in display order"
 msgstr "이 보기에서 표시되는 열(표시 순서대로)"
 
 #. js-lingui-id: AQ/ifz
-#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-visibility-policy/components/SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRow.tsx
 msgid "Comma-separated values"
 msgstr ""
@@ -10689,6 +10694,12 @@ msgstr "지난 결제에 실패했습니다. 청구 정보를 업데이트하세
 msgid "Last refreshed"
 msgstr "마지막 새로고침"
 
+#. js-lingui-id: WT1Ibn
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
+msgid "Last run"
+msgstr ""
+
 #. js-lingui-id: NYwqoV
 #: src/pages/settings/applications/SettingsApplicationConnectionDetail.tsx
 msgid "Last signed in"
@@ -13095,7 +13106,7 @@ msgstr "노드"
 
 #. js-lingui-id: EdQY6l
 #: src/modules/ai/constants/AgentChatThreadGroupByLabels.ts
-#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCalendarEndFieldsContent.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownLayoutContent.tsx
@@ -15668,6 +15679,7 @@ msgid "Ruby"
 msgstr "루비"
 
 #. js-lingui-id: 3JjdaA
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Run"
 msgstr ""
@@ -15704,6 +15716,7 @@ msgstr "함수 실행 중"
 
 #. js-lingui-id: LTC198
 #: src/modules/ai/components/CodeExecutionDisplay.tsx
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
 msgid "Running..."
 msgstr "실행 중..."
 
@@ -16678,6 +16691,7 @@ msgid "Setting up your <0>database</0>..."
 msgstr "<0>데이터베이스</0>를 설정하는 중..."
 
 #. js-lingui-id: Tz0i8g
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/navigation/components/NavigationDrawerOtherSection.tsx
 #: src/modules/navigation/components/SettingsNavigationDrawer.tsx
 #: src/modules/navigation/components/SettingsNavigationDrawer.tsx
@@ -18667,6 +18681,7 @@ msgid "Tool generation"
 msgstr "도구 생성"
 
 #. js-lingui-id: xdA/+p
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/pages/settings/ai/components/SettingsAgentToolsTab.tsx
 #: src/pages/settings/ai/components/SettingsAiOverviewTab.tsx
 #: src/pages/settings/ai/SettingsAI.tsx
@@ -19605,6 +19620,7 @@ msgid "Uploaded content is too large."
 msgstr "업로드한 콘텐츠의 용량이 너무 큽니다."
 
 #. js-lingui-id: GxkJXS
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/object-record/record-field/ui/meta-types/input/components/FilesFieldInput.tsx
 msgid "Uploading..."
 msgstr "업로드 중..."

@@ -3761,6 +3761,11 @@ msgstr "Kies tussen OIDC- en SAML-protocollen"
 msgid "Choose between Short and Full"
 msgstr "Kies tussen Kort en Volledig"
 
+#. js-lingui-id: +yPBXI
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
+msgid "Choose file"
+msgstr ""
+
 #. js-lingui-id: 5EMoSo
 #: src/modules/settings/billing/components/internal/SettingsBillingPlansWithoutSubscription.tsx
 msgid "Choose plan"
@@ -4078,7 +4083,7 @@ msgid "Columns shown in this view, in display order"
 msgstr "Kolommen die in deze weergave worden getoond, in weergavevolgorde"
 
 #. js-lingui-id: AQ/ifz
-#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-visibility-policy/components/SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRow.tsx
 msgid "Comma-separated values"
 msgstr ""
@@ -10689,6 +10694,12 @@ msgstr "Laatste betaling mislukt. Werk uw factureringsgegevens bij."
 msgid "Last refreshed"
 msgstr "Laatst vernieuwd"
 
+#. js-lingui-id: WT1Ibn
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
+msgid "Last run"
+msgstr ""
+
 #. js-lingui-id: NYwqoV
 #: src/pages/settings/applications/SettingsApplicationConnectionDetail.tsx
 msgid "Last signed in"
@@ -13095,7 +13106,7 @@ msgstr "Node"
 
 #. js-lingui-id: EdQY6l
 #: src/modules/ai/constants/AgentChatThreadGroupByLabels.ts
-#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCalendarEndFieldsContent.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownLayoutContent.tsx
@@ -15668,6 +15679,7 @@ msgid "Ruby"
 msgstr "Robijn"
 
 #. js-lingui-id: 3JjdaA
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
 #: src/pages/settings/ai/components/SettingsAgentEvalsTab.tsx
 msgid "Run"
 msgstr ""
@@ -15704,6 +15716,7 @@ msgstr "Functie wordt uitgevoerd"
 
 #. js-lingui-id: LTC198
 #: src/modules/ai/components/CodeExecutionDisplay.tsx
+#: src/modules/merchant/components/MerchantCustomSettingToolCard.tsx
 msgid "Running..."
 msgstr "Wordt uitgevoerd..."
 
@@ -16678,6 +16691,7 @@ msgid "Setting up your <0>database</0>..."
 msgstr "Uw <0>database</0> opzetten..."
 
 #. js-lingui-id: Tz0i8g
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/modules/navigation/components/NavigationDrawerOtherSection.tsx
 #: src/modules/navigation/components/SettingsNavigationDrawer.tsx
 #: src/modules/navigation/components/SettingsNavigationDrawer.tsx
@@ -18669,6 +18683,7 @@ msgid "Tool generation"
 msgstr "Toolgeneratie"
 
 #. js-lingui-id: xdA/+p
+#: src/modules/merchant/components/MerchantCustomSettingsButton.tsx
 #: src/pages/settings/ai/components/SettingsAgentToolsTab.tsx
 #: src/pages/settings/ai/components/SettingsAiOverviewTab.tsx
 #: src/pages/settings/ai/SettingsAI.tsx
@@ -19607,6 +19622,7 @@ msgid "Uploaded content is too large."
 msgstr "Geüploade inhoud is te groot."
 
 #. js-lingui-id: GxkJXS
+#: src/modules/merchant/components/MerchantCustomSettingFieldInput.tsx
 #: src/modules/object-record/record-field/ui/meta-types/input/components/FilesFieldInput.tsx
 msgid "Uploading..."
 msgstr "Uploaden..."
