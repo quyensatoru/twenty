@@ -35,34 +35,39 @@ const TOOL_RUN_STATUS_COLOR: Record<CustomSettingToolRunStatus, TagColor> = {
   FAILED: 'red',
 };
 
-// No border/padding box on purpose: the tool rows use the exact same grid
-// template as the settings section above, so labels and inputs line up.
+// No border box on purpose — a light horizontal inset is the only thing
+// separating tools from the modal edge; rows share the settings grid template.
 const StyledToolBlock = styled.div`
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: ${themeCssVariables.spacing[4]};
+  padding: 0 ${themeCssVariables.spacing[2]};
   width: 100%;
 `;
 
-// Status tag sits right next to the tool label (no space-between) so the
-// pair reads as one unit.
+// Title + status tag grouped left, Run button on the same row to the right.
 const StyledToolHeader = styled.div`
   align-items: center;
   display: flex;
   gap: ${themeCssVariables.spacing[2]};
+  justify-content: space-between;
+`;
+
+const StyledToolTitleGroup = styled.div`
+  align-items: center;
+  display: flex;
+  gap: ${themeCssVariables.spacing[2]};
+  min-width: 0;
 `;
 
 const StyledToolTitle = styled.div`
   color: ${themeCssVariables.font.color.primary};
   font-size: ${themeCssVariables.font.size.md};
   font-weight: ${themeCssVariables.font.weight.medium};
-`;
-
-const StyledToolFooter = styled.div`
-  align-items: center;
-  display: flex;
-  gap: ${themeCssVariables.spacing[2]};
-  justify-content: space-between;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const StyledLastRun = styled.div`
@@ -70,6 +75,7 @@ const StyledLastRun = styled.div`
   font-size: ${themeCssVariables.font.size.sm};
   min-width: 0;
   overflow: hidden;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
@@ -180,14 +186,24 @@ export const MerchantCustomSettingToolCard = ({
   return (
     <StyledToolBlock>
       <StyledToolHeader>
-        <StyledToolTitle>{tool.label}</StyledToolTitle>
-        {isDefined(lastRun) && (
-          <Tag
-            text={lastRun.status}
-            color={TOOL_RUN_STATUS_COLOR[lastRun.status] ?? 'gray'}
-            weight="medium"
-          />
-        )}
+        <StyledToolTitleGroup>
+          <StyledToolTitle>{tool.label}</StyledToolTitle>
+          {isDefined(lastRun) && (
+            <Tag
+              text={lastRun.status}
+              color={TOOL_RUN_STATUS_COLOR[lastRun.status] ?? 'gray'}
+              weight="medium"
+            />
+          )}
+        </StyledToolTitleGroup>
+        <Button
+          onClick={handleRun}
+          title={isRunning ? t`Running...` : t`Run`}
+          variant="primary"
+          accent="blue"
+          size="small"
+          disabled={isRunning || isUploading || hasMissingRequiredParam}
+        />
       </StyledToolHeader>
       <StyledCustomSettingFieldGrid>
         {tool.fields.map((field) => (
@@ -208,17 +224,9 @@ export const MerchantCustomSettingToolCard = ({
           </Fragment>
         ))}
       </StyledCustomSettingFieldGrid>
-      <StyledToolFooter>
+      {isDefined(lastRunText) && (
         <StyledLastRun title={lastRunText}>{lastRunText}</StyledLastRun>
-        <Button
-          onClick={handleRun}
-          title={isRunning ? t`Running...` : t`Run`}
-          variant="primary"
-          accent="blue"
-          size="small"
-          disabled={isRunning || isUploading || hasMissingRequiredParam}
-        />
-      </StyledToolFooter>
+      )}
     </StyledToolBlock>
   );
 };

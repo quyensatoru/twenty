@@ -94,7 +94,7 @@ const StyledContentStack = styled.div`
 const StyledDivider = styled.div`
   background: ${themeCssVariables.border.color.light};
   height: 1px;
-  margin: ${themeCssVariables.spacing[4]} 0;
+  margin: ${themeCssVariables.spacing[2]} 0;
   width: 100%;
 `;
 
