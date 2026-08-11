@@ -1,24 +1,38 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useId, useState } from 'react';
 
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
+import { v4 as uuidv4 } from 'uuid';
 import { IconSettings } from 'twenty-ui/icon';
-import {
-  Button,
-  Checkbox,
-  IconButton,
-  type SelectOption,
-} from 'twenty-ui/input';
+import { Button, IconButton } from 'twenty-ui/input';
 import { Section, SectionAlignment } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
 import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';
+import {
+  MerchantCustomSettingFieldInput,
+  StyledCustomSettingFieldCell,
+  StyledCustomSettingFieldGrid,
+  StyledCustomSettingFieldLabel,
+} from '@/merchant/components/MerchantCustomSettingFieldInput';
+import { MerchantCustomSettingToolCard } from '@/merchant/components/MerchantCustomSettingToolCard';
+import {
+  isCustomSettingToolEntry,
+  type CustomSettingFieldSchemaEntry,
+  type CustomSettingSchemaEntry,
+  type CustomSettingToolRun,
+  type CustomSettingToolSchemaEntry,
+  type CustomSettingValue,
+} from '@/merchant/types/CustomSettingSchema';
+import {
+  formatValueForInput,
+  isCustomSettingToolRun,
+  parseValueForSave,
+} from '@/merchant/utils/customSettingValueTransforms';
 import { useFindOneRecord } from '@/object-record/hooks/useFindOneRecord';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
 import { InputLabel } from '@/ui/input/components/InputLabel';
-import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
-import { DropdownMenuInnerSelect } from '@/ui/layout/dropdown/components/DropdownMenuInnerSelect';
 import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { isDefined } from 'twenty-shared/utils';
@@ -28,108 +42,65 @@ type MerchantCustomSettingsButtonProps = {
   recordId: string;
 };
 
-// Schema stored on the merchant's App (App.fieldSchema) drives this form —
-// authored as raw JSON on the App record itself, no dedicated schema-editing UI.
-type CustomSettingFieldType =
-  | 'TEXT'
-  | 'BOOLEAN'
-  | 'NUMBER'
-  | 'DATE'
-  | 'ARRAY'
-  | 'RICH_TEXT'
-  | 'SELECT'
-  | 'FILE';
+// The record side panel can mount this field (and thus this component) more
+// than once. Modal and dropdown state in Twenty is global per instance id, so
+// every id must be unique PER MOUNT — otherwise all mounted dialogs open at
+// once and dropdown clicks land in whichever hidden twin rendered last.
+const getModalInstanceId = (recordId: string, mountId: string) =>
+  `merchant-custom-settings-modal-${recordId}-${mountId}`;
 
-type CustomSettingFieldSchemaEntry = {
-  key: string;
-  label: string;
-  type: CustomSettingFieldType;
-  options?: string[];
-  default?: unknown;
-};
+// Settings (form + Save) and tools (independent Run actions) are two different
+// interaction models, so the modal splits them into tabs instead of one long
+// scroll. The tab bar only renders when the app schema declares both kinds.
+type CustomSettingsModalTab = 'settings' | 'tools';
 
-// Persisted shape for a FILE-type value — the file itself is never stored on
-// the record, only a reference to it plus a signed download URL minted once
-// at upload time (see useDirectFileUpload / FileFolder.MerchantCustomSetting).
-type CustomSettingFileValue = {
-  fileId: string;
-  label: string;
-  extension: string;
-  url: string;
-};
-
-type CustomSettingValue = string | boolean | CustomSettingFileValue;
-
-const isCustomSettingFileValue = (
-  value: unknown,
-): value is CustomSettingFileValue =>
-  isDefined(value) &&
-  typeof value === 'object' &&
-  'fileId' in (value as Record<string, unknown>);
-
-const NO_SELECT_VALUE = '';
-const ARRAY_VALUE_SEPARATOR = ',';
-
-const getModalInstanceId = (recordId: string) =>
-  `merchant-custom-settings-modal-${recordId}`;
-
-const StyledFieldGrid = styled.div`
-  column-gap: ${themeCssVariables.spacing[4]};
-  display: grid;
-  grid-template-columns: minmax(100px, 140px) 1fr;
-  row-gap: ${themeCssVariables.spacing[4]};
-  width: 100%;
-`;
-
-const StyledFieldLabel = styled.div`
-  align-items: center;
+const StyledTabBar = styled.div`
+  border-bottom: 1px solid ${themeCssVariables.border.color.light};
   display: flex;
-  min-height: 32px;
+  flex-shrink: 0;
+  gap: ${themeCssVariables.spacing[4]};
+  margin-top: ${themeCssVariables.spacing[4]};
 `;
 
-const StyledNativeInput = styled.input`
-  background: ${themeCssVariables.background.primary};
-  border: 1px solid ${themeCssVariables.border.color.medium};
-  border-radius: ${themeCssVariables.border.radius.sm};
-  box-sizing: border-box;
-  color: ${themeCssVariables.font.color.primary};
-  font-size: ${themeCssVariables.font.size.md};
-  height: 32px;
-  padding: 0 ${themeCssVariables.spacing[2]};
-  width: 100%;
-`;
-
-const StyledNativeTextarea = styled.textarea`
-  background: ${themeCssVariables.background.primary};
-  border: 1px solid ${themeCssVariables.border.color.medium};
-  border-radius: ${themeCssVariables.border.radius.sm};
-  box-sizing: border-box;
-  color: ${themeCssVariables.font.color.primary};
+const StyledTabButton = styled.button`
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: ${themeCssVariables.font.color.secondary};
+  cursor: pointer;
   font-family: inherit;
   font-size: ${themeCssVariables.font.size.md};
-  min-height: 72px;
-  padding: ${themeCssVariables.spacing[2]};
-  resize: vertical;
+  font-weight: ${themeCssVariables.font.weight.medium};
+  margin-bottom: -1px;
+  padding: 0 0 ${themeCssVariables.spacing[2]};
+
+  &[data-active='true'] {
+    border-bottom-color: ${themeCssVariables.font.color.primary};
+    color: ${themeCssVariables.font.color.primary};
+  }
+`;
+
+// One vertical stack per tab so spacing stays even and the shared field grid
+// keeps every label column aligned.
+const StyledContentStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${themeCssVariables.spacing[4]};
   width: 100%;
 `;
 
-const StyledFileRow = styled.div`
-  align-items: center;
-  display: flex;
-  gap: ${themeCssVariables.spacing[2]};
-`;
-
-const StyledFileLink = styled.a`
-  color: ${themeCssVariables.font.color.primary};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+const StyledDivider = styled.div`
+  background: ${themeCssVariables.border.color.light};
+  height: 1px;
+  margin: ${themeCssVariables.spacing[2]} 0;
+  width: 100%;
 `;
 
 const StyledFooter = styled.div`
   display: flex;
   flex-shrink: 0;
   gap: ${themeCssVariables.spacing[2]};
+  justify-content: flex-end;
   margin-top: ${themeCssVariables.spacing[6]};
 `;
 
@@ -142,7 +113,9 @@ const StyledModalContent = styled.div`
 const StyledScrollableSection = styled.div`
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  padding-top: ${themeCssVariables.spacing[4]};
   scrollbar-color: ${themeCssVariables.border.color.medium} transparent;
   scrollbar-width: thin;
 
@@ -156,49 +129,13 @@ const StyledScrollableSection = styled.div`
   }
 `;
 
-const formatValueForInput = (
-  entry: CustomSettingFieldSchemaEntry,
-  existingValue: unknown,
-): CustomSettingValue => {
-  if (entry.type === 'BOOLEAN') {
-    return Boolean(existingValue);
-  }
-  if (entry.type === 'ARRAY') {
-    return Array.isArray(existingValue)
-      ? existingValue.join(ARRAY_VALUE_SEPARATOR)
-      : '';
-  }
-  if (entry.type === 'FILE') {
-    return isCustomSettingFileValue(existingValue) ? existingValue : '';
-  }
-  return existingValue?.toString() ?? '';
-};
-
-const parseValueForSave = (
-  entry: CustomSettingFieldSchemaEntry,
-  value: CustomSettingValue,
-): unknown => {
-  if (entry.type === 'NUMBER') {
-    return Number(value) || 0;
-  }
-  if (entry.type === 'ARRAY') {
-    return String(value)
-      .split(ARRAY_VALUE_SEPARATOR)
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-  }
-  if (entry.type === 'FILE') {
-    return isCustomSettingFileValue(value) ? value : undefined;
-  }
-  return value;
-};
-
 export const MerchantCustomSettingsButton = ({
   recordId,
 }: MerchantCustomSettingsButtonProps) => {
   const { t } = useLingui();
   const { openModal, closeModal } = useModal();
-  const modalInstanceId = getModalInstanceId(recordId);
+  const mountId = useId();
+  const modalInstanceId = getModalInstanceId(recordId, mountId);
 
   const { record, refetch } = useFindOneRecord({
     objectNameSingular: 'merchant',
@@ -211,8 +148,15 @@ export const MerchantCustomSettingsButton = ({
   });
 
   const fieldSchema = ((record?.app as { fieldSchema?: unknown } | null)
-    ?.fieldSchema ?? []) as CustomSettingFieldSchemaEntry[];
-  const hasSchema = fieldSchema.length > 0;
+    ?.fieldSchema ?? []) as CustomSettingSchemaEntry[];
+  const settingEntries = fieldSchema.filter(
+    (entry): entry is CustomSettingFieldSchemaEntry =>
+      !isCustomSettingToolEntry(entry),
+  );
+  const toolEntries = fieldSchema.filter(isCustomSettingToolEntry);
+  const hasSettings = settingEntries.length > 0;
+  const hasTools = toolEntries.length > 0;
+  const hasSchema = hasSettings || hasTools;
 
   const { updateOneRecord } = useUpdateOneRecord();
   const { uploadFile } = useDirectFileUpload();
@@ -223,6 +167,18 @@ export const MerchantCustomSettingsButton = ({
   const [uploadingKeys, setUploadingKeys] = useState<Record<string, boolean>>(
     {},
   );
+  const [runningToolKey, setRunningToolKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] =
+    useState<CustomSettingsModalTab>('settings');
+
+  const showTabBar = hasSettings && hasTools;
+  // A tab is only reachable when its section exists in the schema — fall back
+  // to the one section the app actually declares.
+  const currentTab: CustomSettingsModalTab = !hasSettings
+    ? 'tools'
+    : !hasTools
+      ? 'settings'
+      : activeTab;
 
   // Portalled modal content (including the backdrop click-outside-to-close
   // area) still bubbles clicks up the REACT tree (not the DOM tree) to the
@@ -234,20 +190,23 @@ export const MerchantCustomSettingsButton = ({
     event.stopPropagation();
   };
 
+  const currentCustomSettings = () =>
+    (record?.customSettings as Record<string, unknown> | null) ?? {};
+
   const handleOpen = (event: React.MouseEvent) => {
     event.stopPropagation();
 
-    const currentCustomSettings =
-      (record?.customSettings as Record<string, unknown> | null) ?? {};
+    const existingSettings = currentCustomSettings();
 
     const initialValues: Record<string, CustomSettingValue> = {};
-    fieldSchema.forEach((entry) => {
+    settingEntries.forEach((entry) => {
       initialValues[entry.key] = formatValueForInput(
         entry,
-        currentCustomSettings[entry.key] ?? entry.default,
+        existingSettings[entry.key] ?? entry.default,
       );
     });
     setSchemaValues(initialValues);
+    setActiveTab('settings');
     openModal(modalInstanceId);
   };
 
@@ -281,14 +240,13 @@ export const MerchantCustomSettingsButton = ({
     }
   };
 
+  // Save only touches plain setting keys — tool keys hold run-envelopes owned
+  // by the app behind the webhook, spreading the current object keeps them.
   const handleSave = async () => {
-    const currentCustomSettings =
-      (record?.customSettings as Record<string, unknown> | null) ?? {};
-
     const newCustomSettings = {
-      ...currentCustomSettings,
+      ...currentCustomSettings(),
       ...Object.fromEntries(
-        fieldSchema.map((entry) => [
+        settingEntries.map((entry) => [
           entry.key,
           parseValueForSave(entry, schemaValues[entry.key]),
         ]),
@@ -302,6 +260,34 @@ export const MerchantCustomSettingsButton = ({
     });
     await refetch();
     closeModal(modalInstanceId);
+  };
+
+  // Each Run writes a fresh envelope (new runId) under the tool's key; the app
+  // deduplicates on runId so webhook replays never re-run the action.
+  const handleRunTool = async (
+    tool: CustomSettingToolSchemaEntry,
+    params: Record<string, unknown>,
+  ) => {
+    setRunningToolKey(tool.key);
+    try {
+      const envelope: CustomSettingToolRun = {
+        runId: uuidv4(),
+        requestedAt: new Date().toISOString(),
+        status: 'REQUESTED',
+        params,
+      };
+
+      await updateOneRecord({
+        objectNameSingular: 'merchant',
+        idToUpdate: recordId,
+        updateOneRecordInput: {
+          customSettings: { ...currentCustomSettings(), [tool.key]: envelope },
+        },
+      });
+      await refetch();
+    } finally {
+      setRunningToolKey(null);
+    }
   };
 
   return (
@@ -328,157 +314,104 @@ export const MerchantCustomSettingsButton = ({
               title={t`Custom Settings`}
               fontColor={H1TitleFontColor.Primary}
             />
+            {showTabBar && (
+              <StyledTabBar>
+                <StyledTabButton
+                  type="button"
+                  data-active={currentTab === 'settings'}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  {t`Settings`}
+                </StyledTabButton>
+                <StyledTabButton
+                  type="button"
+                  data-active={currentTab === 'tools'}
+                  onClick={() => setActiveTab('tools')}
+                >
+                  {t`Tools`}
+                </StyledTabButton>
+              </StyledTabBar>
+            )}
             <StyledScrollableSection>
               <Section alignment={SectionAlignment.Center}>
                 {!hasSchema ? (
                   <InputLabel>
                     {t`No custom settings configured for this app.`}
                   </InputLabel>
+                ) : currentTab === 'settings' ? (
+                  <StyledContentStack>
+                    <StyledCustomSettingFieldGrid>
+                      {settingEntries.map((entry) => (
+                        <Fragment key={entry.key}>
+                          <StyledCustomSettingFieldLabel>
+                            <InputLabel>{entry.label}</InputLabel>
+                          </StyledCustomSettingFieldLabel>
+                          <StyledCustomSettingFieldCell>
+                            <MerchantCustomSettingFieldInput
+                              entry={entry}
+                              value={schemaValues[entry.key]}
+                              instanceIdPrefix={`merchant-custom-setting-${mountId}`}
+                              isUploading={uploadingKeys[entry.key]}
+                              onChange={(value) =>
+                                handleSchemaValueChange(entry.key, value)
+                              }
+                              onFileSelected={(file) =>
+                                handleFileSelected(entry.key, file)
+                              }
+                            />
+                          </StyledCustomSettingFieldCell>
+                        </Fragment>
+                      ))}
+                    </StyledCustomSettingFieldGrid>
+                  </StyledContentStack>
                 ) : (
-                  <StyledFieldGrid>
-                    {fieldSchema.map((entry) => {
-                      const selectOptions: SelectOption[] = [
-                        { label: t`None`, value: NO_SELECT_VALUE },
-                        ...(entry.options ?? []).map((option) => ({
-                          label: option,
-                          value: option,
-                        })),
-                      ];
-                      const currentValue = String(
-                        schemaValues[entry.key] ?? '',
-                      );
-                      const selectedOption =
-                        selectOptions.find(
-                          (option) => option.value === currentValue,
-                        ) ?? selectOptions[0];
-                      const rawValue = schemaValues[entry.key];
-                      const currentFileValue = isCustomSettingFileValue(
-                        rawValue,
-                      )
-                        ? rawValue
-                        : undefined;
+                  <StyledContentStack>
+                    {toolEntries.map((tool, toolIndex) => {
+                      const rawLastRun = currentCustomSettings()[tool.key];
 
                       return (
-                        <Fragment key={entry.key}>
-                          <StyledFieldLabel>
-                            <InputLabel>{entry.label}</InputLabel>
-                          </StyledFieldLabel>
-                          <div>
-                            {entry.type === 'BOOLEAN' ? (
-                              <Checkbox
-                                checked={Boolean(schemaValues[entry.key])}
-                                onCheckedChange={(value) =>
-                                  handleSchemaValueChange(entry.key, value)
-                                }
-                              />
-                            ) : entry.type === 'SELECT' ? (
-                              <DropdownMenuInnerSelect
-                                dropdownId={`merchant-custom-setting-select-${entry.key}`}
-                                options={selectOptions}
-                                selectedOption={selectedOption}
-                                isDropdownInModal
-                                onChange={(option) =>
-                                  handleSchemaValueChange(
-                                    entry.key,
-                                    option.value as string,
-                                  )
-                                }
-                              />
-                            ) : entry.type === 'DATE' ? (
-                              <StyledNativeInput
-                                type="date"
-                                value={currentValue}
-                                onChange={(event) =>
-                                  handleSchemaValueChange(
-                                    entry.key,
-                                    event.target.value,
-                                  )
-                                }
-                              />
-                            ) : entry.type === 'NUMBER' ? (
-                              <StyledNativeInput
-                                type="number"
-                                value={currentValue}
-                                onChange={(event) =>
-                                  handleSchemaValueChange(
-                                    entry.key,
-                                    event.target.value,
-                                  )
-                                }
-                              />
-                            ) : entry.type === 'RICH_TEXT' ? (
-                              <StyledNativeTextarea
-                                value={currentValue}
-                                onChange={(event) =>
-                                  handleSchemaValueChange(
-                                    entry.key,
-                                    event.target.value,
-                                  )
-                                }
-                              />
-                            ) : entry.type === 'FILE' ? (
-                              <StyledFileRow>
-                                {isDefined(currentFileValue) && (
-                                  <StyledFileLink
-                                    href={currentFileValue.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    {currentFileValue.label}
-                                  </StyledFileLink>
-                                )}
-                                <input
-                                  type="file"
-                                  disabled={uploadingKeys[entry.key]}
-                                  onChange={(event) =>
-                                    handleFileSelected(
-                                      entry.key,
-                                      event.target.files?.[0],
-                                    )
-                                  }
-                                />
-                              </StyledFileRow>
-                            ) : (
-                              <SettingsTextInput
-                                instanceId={`merchant-custom-setting-${entry.key}`}
-                                value={currentValue}
-                                onChange={(value) =>
-                                  handleSchemaValueChange(
-                                    entry.key,
-                                    value ?? '',
-                                  )
-                                }
-                                placeholder={
-                                  entry.type === 'ARRAY'
-                                    ? t`Comma-separated values`
-                                    : entry.label
-                                }
-                                disableHotkeys
-                                fullWidth
-                              />
-                            )}
-                          </div>
+                        <Fragment key={tool.key}>
+                          {toolIndex > 0 && <StyledDivider />}
+                          <MerchantCustomSettingToolCard
+                            instanceIdPrefix={`merchant-tool-${mountId}`}
+                            tool={tool}
+                            lastRun={
+                              isCustomSettingToolRun(rawLastRun)
+                                ? rawLastRun
+                                : undefined
+                            }
+                            isRunning={runningToolKey === tool.key}
+                            onRun={(params) => handleRunTool(tool, params)}
+                          />
                         </Fragment>
                       );
                     })}
-                  </StyledFieldGrid>
+                  </StyledContentStack>
                 )}
               </Section>
             </StyledScrollableSection>
             <StyledFooter>
-              <Button
-                onClick={() => closeModal(modalInstanceId)}
-                title={hasSchema ? t`Cancel` : t`Close`}
-                variant="secondary"
-                fullWidth
-              />
-              {hasSchema && (
+              {hasSchema && currentTab === 'settings' ? (
+                <>
+                  <Button
+                    onClick={() => closeModal(modalInstanceId)}
+                    title={t`Cancel`}
+                    variant="secondary"
+                    fullWidth
+                  />
+                  <Button
+                    onClick={handleSave}
+                    title={t`Save`}
+                    variant="primary"
+                    accent="blue"
+                    fullWidth
+                  />
+                </>
+              ) : (
                 <Button
-                  onClick={handleSave}
-                  title={t`Save`}
-                  variant="primary"
-                  accent="blue"
-                  fullWidth
+                  onClick={() => closeModal(modalInstanceId)}
+                  title={t`Close`}
+                  variant="secondary"
                 />
               )}
             </StyledFooter>
