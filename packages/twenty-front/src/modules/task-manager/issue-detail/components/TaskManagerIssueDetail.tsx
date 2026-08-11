@@ -165,12 +165,14 @@ type TaskManagerIssueDetailProps = {
   issueId: string;
   isInSidePanel?: boolean;
   focusedCommentId?: string;
+  focusedWorklogId?: string;
 };
 
 export const TaskManagerIssueDetail = ({
   issueId,
   isInSidePanel = false,
   focusedCommentId,
+  focusedWorklogId,
 }: TaskManagerIssueDetailProps) => {
   const { t } = useLingui();
   const goToPage = useNavigate();
@@ -195,8 +197,10 @@ export const TaskManagerIssueDetail = ({
     RIGHT_COLUMN_CONSTRAINTS.default,
   );
 
+  // A worklog permalink (opened via its "Copy link") should land on the Log
+  // time tab even though Comment is the default landing tab.
   const [activityTab, setActivityTab] = useState<'comments' | 'worklogs'>(
-    'comments',
+    isDefined(focusedWorklogId) ? 'worklogs' : 'comments',
   );
 
   useEffect(() => {
@@ -363,7 +367,10 @@ export const TaskManagerIssueDetail = ({
                 focusedCommentId={focusedCommentId}
               />
             ) : (
-              <IssueWorklogList issueId={issueId} />
+              <IssueWorklogList
+                issueId={issueId}
+                focusedWorklogId={focusedWorklogId}
+              />
             )}
           </div>
 

@@ -18,6 +18,7 @@ export const TaskManagerIssuePage = () => {
       <TaskManagerIssueDetail
         issueId={issueId}
         focusedCommentId={searchParams.get('commentId') ?? undefined}
+        focusedWorklogId={searchParams.get('worklogId') ?? undefined}
       />
     </TaskManagerPageShell>
   );

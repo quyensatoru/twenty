@@ -4730,6 +4730,7 @@ msgstr "Kopiera nyckel-ID"
 
 #. js-lingui-id: y1eoq1
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workspace/components/WorkspaceInviteLink.tsx
 msgid "Copy link"
@@ -10932,6 +10933,7 @@ msgstr "Länk"
 #: src/modules/object-record/record-field/ui/meta-types/display/components/LinksFieldDisplay.tsx
 #: src/modules/object-record/record-table/record-table-cell/hooks/useGetSecondaryRecordTableCellButton.ts
 #: src/modules/task-manager/issue-detail/components/IssueCommentThread.tsx
+#: src/modules/task-manager/issue-detail/components/IssueWorklogList.tsx
 #: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 #: src/modules/workspace/components/WorkspaceInviteLink.tsx
 msgid "Link copied to clipboard"
