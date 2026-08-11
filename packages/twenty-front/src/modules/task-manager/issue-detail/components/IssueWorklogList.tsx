@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -6,9 +6,15 @@ import '@blocknote/react/style.css';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { createPortal } from 'react-dom';
-import { isDefined } from 'twenty-shared/utils';
+import { AppPath } from 'twenty-shared/types';
+import { getAppPath, isDefined } from 'twenty-shared/utils';
 import { Avatar, Tag } from 'twenty-ui/data-display';
-import { IconDotsVertical, IconPencil, IconTrash } from 'twenty-ui/icon';
+import {
+  IconDotsVertical,
+  IconLink,
+  IconPencil,
+  IconTrash,
+} from 'twenty-ui/icon';
 import { Button, LightIconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -33,6 +39,7 @@ import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePush
 import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
 import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
 
 const EMPTY_PARAGRAPH = [{ type: 'paragraph' as const, content: '' }];
@@ -54,12 +61,15 @@ const StyledEmptyState = styled.div`
   font-size: ${themeCssVariables.font.size.sm};
 `;
 
-const StyledRow = styled.div`
+const StyledRow = styled.div<{ isFocused?: boolean }>`
+  background-color: ${({ isFocused }) =>
+    isFocused ? themeCssVariables.background.transparent.light : 'transparent'};
   border-radius: ${themeCssVariables.border.radius.sm};
   display: flex;
   flex-direction: column;
   gap: ${themeCssVariables.spacing['1']};
   padding: ${themeCssVariables.spacing['1']};
+  transition: background-color ${themeCssVariables.animation.duration.slow};
 `;
 
 const StyledTopRow = styled.div`
@@ -351,6 +361,7 @@ type WorklogRowProps = {
   worklog: IssueWorklogRecord;
   issueId: string;
   currentWorkspaceMemberId: string | undefined;
+  isFocused?: boolean;
   onUpdate: (
     worklogId: string,
     updates: { timeSpentMinutes: number; description: string },
@@ -362,6 +373,7 @@ const WorklogRow = ({
   worklog,
   issueId,
   currentWorkspaceMemberId,
+  isFocused = false,
   onUpdate,
   onDelete,
 }: WorklogRowProps) => {
@@ -369,6 +381,8 @@ const WorklogRow = ({
   const [isEditing, setIsEditing] = useState(false);
   const { openModal } = useModal();
   const { closeDropdown } = useCloseDropdown();
+  const { copyToClipboard } = useCopyToClipboard();
+  const worklogRowRef = useRef<HTMLDivElement>(null);
 
   const dropdownId = `issue-worklog-menu-${worklog.id}`;
   const deleteModalId = `issue-worklog-delete-modal-${worklog.id}`;
@@ -384,6 +398,15 @@ const WorklogRow = ({
     t`Unknown`,
   );
   const timeSpentLabel = formatTimeSpent(worklog.timeSpentMinutes);
+
+  useEffect(() => {
+    if (isFocused) {
+      worklogRowRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [isFocused]);
 
   const handleEdit = () => {
     closeDropdown(dropdownId);
@@ -403,6 +426,17 @@ const WorklogRow = ({
     setIsEditing(false);
   };
 
+  const handleCopyWorklogLink = () => {
+    copyToClipboard(
+      `${window.location.origin}${getAppPath(
+        AppPath.TaskManagerIssuePage,
+        { issueId },
+        { worklogId: worklog.id },
+      )}`,
+      t`Link copied to clipboard`,
+    );
+  };
+
   if (isEditing) {
     return (
       <StyledRow>
@@ -420,7 +454,7 @@ const WorklogRow = ({
   }
 
   return (
-    <StyledRow>
+    <StyledRow ref={worklogRowRef} isFocused={isFocused}>
       <StyledTopRow>
         <Avatar
           placeholder={memberName}
@@ -436,8 +470,15 @@ const WorklogRow = ({
           <StyledDate>
             {new Date(worklog.createdAt).toLocaleString()}
           </StyledDate>
-          {isLogger && (
-            <StyledActions>
+          <StyledActions>
+            <LightIconButton
+              className="displayOnHover"
+              Icon={IconLink}
+              accent="tertiary"
+              title={t`Copy link`}
+              onClick={handleCopyWorklogLink}
+            />
+            {isLogger && (
               <Dropdown
                 dropdownId={dropdownId}
                 dropdownPlacement="bottom-end"
@@ -466,8 +507,8 @@ const WorklogRow = ({
                   </DropdownContent>
                 }
               />
-            </StyledActions>
-          )}
+            )}
+          </StyledActions>
         </StyledHeader>
       </StyledTopRow>
       {isDefined(worklog.description) && worklog.description !== '' && (
@@ -491,9 +532,13 @@ const WorklogRow = ({
 
 type IssueWorklogListProps = {
   issueId: string;
+  focusedWorklogId?: string;
 };
 
-export const IssueWorklogList = ({ issueId }: IssueWorklogListProps) => {
+export const IssueWorklogList = ({
+  issueId,
+  focusedWorklogId,
+}: IssueWorklogListProps) => {
   const { t } = useLingui();
   const { worklogs, logWork, updateWorklog, deleteWorklog } =
     useIssueWorklogs(issueId);
@@ -510,6 +555,7 @@ export const IssueWorklogList = ({ issueId }: IssueWorklogListProps) => {
             key={worklog.id}
             worklog={worklog}
             issueId={issueId}
+            isFocused={worklog.id === focusedWorklogId}
             currentWorkspaceMemberId={currentWorkspaceMember?.id}
             onUpdate={updateWorklog}
             onDelete={deleteWorklog}
