@@ -9,6 +9,7 @@ import { Section, SectionAlignment } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
+import { currentUserState } from '@/auth/states/currentUserState';
 import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';
 import {
   MerchantCustomSettingFieldInput,
@@ -35,6 +36,7 @@ import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
 import { InputLabel } from '@/ui/input/components/InputLabel';
 import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { isDefined } from 'twenty-shared/utils';
 import { FileFolder } from '~/generated-metadata/graphql';
 
@@ -136,6 +138,7 @@ export const MerchantCustomSettingsButton = ({
   const { openModal, closeModal } = useModal();
   const mountId = useId();
   const modalInstanceId = getModalInstanceId(recordId, mountId);
+  const currentUser = useAtomStateValue(currentUserState);
 
   const { record, refetch } = useFindOneRecord({
     objectNameSingular: 'merchant',
@@ -273,6 +276,9 @@ export const MerchantCustomSettingsButton = ({
       const envelope: CustomSettingToolRun = {
         runId: uuidv4(),
         requestedAt: new Date().toISOString(),
+        ...(isDefined(currentUser?.email) && {
+          requestedBy: currentUser.email,
+        }),
         status: 'REQUESTED',
         params,
       };

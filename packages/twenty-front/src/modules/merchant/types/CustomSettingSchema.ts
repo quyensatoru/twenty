@@ -66,6 +66,9 @@ export type CustomSettingToolRunResult = {
 export type CustomSettingToolRun = {
   runId: string;
   requestedAt: string;
+  // Email of the workspace member who hit Run — stamped automatically so the
+  // app can attribute the job without asking the user to type their email.
+  requestedBy?: string;
   status: CustomSettingToolRunStatus;
   params: Record<string, unknown>;
   result?: CustomSettingToolRunResult;
