@@ -159,11 +159,13 @@ export const RecordDetailRelationSectionDropdownToOne = ({
     relationObjectMetadataNameSingular !==
     CoreObjectNameSingular.WorkspaceMember;
 
-  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
-    objectNameSingular: objectMetadataItem.nameSingular,
-    fieldName: fieldMetadataItem.name,
-    recordId,
-  });
+  const { filter: appScopeFilter } = useTaskManagerRelationTargetAppScopeFilter(
+    {
+      objectNameSingular: objectMetadataItem.nameSingular,
+      fieldName: fieldMetadataItem.name,
+      recordId,
+    },
+  );
 
   return (
     <Dropdown

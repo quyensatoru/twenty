@@ -11,7 +11,7 @@ import { getJunctionConfig } from '@/object-record/record-field/ui/utils/junctio
 import { getSearchableObjectMetadataItems } from '@/object-record/record-field/ui/utils/junction/getSearchableObjectMetadataItems';
 import { useMultipleRecordPickerOpen } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerOpen';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
-import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
+import { multipleRecordPickerDirectMerchantAppIdComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerDirectMerchantAppIdComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
 import { multipleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchFilterComponentState';
 import { multipleRecordPickerSearchableObjectMetadataItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchableObjectMetadataItemsComponentState';
@@ -139,16 +139,16 @@ export const useOpenJunctionRelationFieldInput = () => {
         fetchIssueMerchantsAppScopeFilter({
           apolloClient: apolloCoreClient,
           issueId: recordId,
-        }).then((appScopeFilter) => {
-          if (!isDefined(appScopeFilter)) {
+        }).then((appId) => {
+          if (!isDefined(appId)) {
             return;
           }
 
           store.set(
-            multipleRecordPickerFilterComponentState.atomFamily({
+            multipleRecordPickerDirectMerchantAppIdComponentState.atomFamily({
               instanceId: recordPickerInstanceId,
             }),
-            appScopeFilter,
+            appId,
           );
 
           performSearch({
@@ -156,7 +156,7 @@ export const useOpenJunctionRelationFieldInput = () => {
             forceSearchFilter: '',
             forceSearchableObjectMetadataItems: searchableObjectMetadataItems,
             forcePickableMorphItems: pickableMorphItems,
-            forceFilter: appScopeFilter,
+            forceDirectMerchantAppId: appId,
           });
         });
       }

@@ -9,10 +9,9 @@ import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 import { isDefined } from 'twenty-shared/utils';
 import { type ObjectRecordFilterInput } from '~/generated/graphql';
 
-// Scope lists back an id-in-list filter, so they must be exhaustive — a
-// project's app can have tens of thousands of merchants, far past any one
-// page. Keep fetching pages until the query itself reports there's nothing
-// left, instead of capping at a fixed page size.
+// Scope lists back an id-in-list filter, so they must be exhaustive. Keep
+// fetching pages until the query itself reports there's nothing left,
+// instead of capping at a fixed page size.
 const SCOPE_LIST_PAGE_SIZE = 1000;
 
 const useAllRecordsForScope = <T extends ObjectRecord = ObjectRecord>(
@@ -41,10 +40,11 @@ const NEVER_MATCHING_ID = '00000000-0000-0000-0000-000000000000';
 // The picker's search query is typed as ObjectRecordFilterInput
 // (packages/twenty-server/.../object-record-filter-input.ts), which only
 // has `id`/`createdAt`/`updatedAt`/`deletedAt` (plus and/or/not) — no
-// object-specific fields like `appId`/`projectId`. So every scope below
-// must resolve to a candidate-id list first (via useFindManyRecords on the
-// TARGET object's own, fully-featured filter type) and always hand the
-// picker a plain `{ id: { in } }`.
+// object-specific fields like `appId`/`projectId`. So every scope below,
+// other than `merchant` (see directMerchantAppId), must resolve to a
+// candidate-id list first (via useFindManyRecords on the TARGET object's
+// own, fully-featured filter type) and hand the picker a plain
+// `{ id: { in } }`.
 export const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
   id: { in: ids.length > 0 ? ids : [NEVER_MATCHING_ID] },
 });
@@ -56,12 +56,7 @@ export const idsToFilter = (ids: string[]): ObjectRecordFilterInput => ({
 // framework.
 const SCOPED_RELATION_FIELD_KIND_BY_KEY: Record<
   string,
-  | 'merchant'
-  | 'workspaceMember'
-  | 'sprint'
-  | 'epic'
-  | 'issueStatus'
-  | 'worklog'
+  'merchant' | 'workspaceMember' | 'sprint' | 'epic' | 'issueStatus' | 'worklog'
 > = {
   'issue.assignee': 'workspaceMember',
   'issue.reporter': 'workspaceMember',
@@ -74,6 +69,16 @@ const SCOPED_RELATION_FIELD_KIND_BY_KEY: Record<
   'sprint.owner': 'workspaceMember',
 };
 
+export type TaskManagerRelationTargetAppScope = {
+  filter: ObjectRecordFilterInput | undefined;
+  // Set only for the `merchant` scope kind: a project's app can have tens
+  // of thousands of merchants, so instead of resolving to an id-in-list
+  // `filter` (which would need every merchant id crawled client-side
+  // first), the picker searches the merchant object directly, scoped by
+  // this appId, via searchMerchantsByAppId.
+  directMerchantAppId: string | undefined;
+};
+
 // Returns the extra picker filter for the scoped relation fields above, or
 // undefined for every other field (no filter, no extra queries run).
 export const useTaskManagerRelationTargetAppScopeFilter = ({
@@ -84,7 +89,7 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
   objectNameSingular: string;
   fieldName: string;
   recordId: string | undefined;
-}): ObjectRecordFilterInput | undefined => {
+}): TaskManagerRelationTargetAppScope => {
   const scopeKind =
     SCOPED_RELATION_FIELD_KIND_BY_KEY[`${objectNameSingular}.${fieldName}`];
 
@@ -116,15 +121,6 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
   });
 
   const projectAppId: string | null | undefined = project?.appId;
-
-  const merchants = useAllRecordsForScope({
-    objectNameSingular: 'merchant',
-    filter: isDefined(projectAppId)
-      ? { appId: { eq: projectAppId } }
-      : undefined,
-    recordGqlFields: { id: true },
-    skip: scopeKind !== 'merchant' || !isDefined(projectAppId),
-  });
 
   const appAccesses = useAllRecordsForScope({
     objectNameSingular: 'appAccess',
@@ -168,45 +164,62 @@ export const useTaskManagerRelationTargetAppScopeFilter = ({
     skip: scopeKind !== 'worklog' || !isDefined(recordId),
   });
 
-  return useMemo(() => {
+  return useMemo((): TaskManagerRelationTargetAppScope => {
     switch (scopeKind) {
       case 'merchant':
-        return isDefined(projectAppId)
-          ? idsToFilter(merchants.map((merchant) => merchant.id))
-          : undefined;
+        return {
+          filter: undefined,
+          directMerchantAppId: isDefined(projectAppId)
+            ? projectAppId
+            : undefined,
+        };
       case 'workspaceMember':
-        return isDefined(projectAppId)
-          ? idsToFilter(
-              appAccesses
-                .map((appAccess) => appAccess.memberId as string | undefined)
-                .filter(isDefined),
-            )
-          : undefined;
+        return {
+          filter: isDefined(projectAppId)
+            ? idsToFilter(
+                appAccesses
+                  .map((appAccess) => appAccess.memberId as string | undefined)
+                  .filter(isDefined),
+              )
+            : undefined,
+          directMerchantAppId: undefined,
+        };
       case 'sprint':
-        return isDefined(projectId)
-          ? idsToFilter(sprints.map((sprint) => sprint.id))
-          : undefined;
+        return {
+          filter: isDefined(projectId)
+            ? idsToFilter(sprints.map((sprint) => sprint.id))
+            : undefined,
+          directMerchantAppId: undefined,
+        };
       case 'epic':
-        return isDefined(projectId)
-          ? idsToFilter(epics.map((epic) => epic.id))
-          : undefined;
+        return {
+          filter: isDefined(projectId)
+            ? idsToFilter(epics.map((epic) => epic.id))
+            : undefined,
+          directMerchantAppId: undefined,
+        };
       case 'issueStatus':
-        return isDefined(projectId)
-          ? idsToFilter(issueStatuses.map((issueStatus) => issueStatus.id))
-          : undefined;
+        return {
+          filter: isDefined(projectId)
+            ? idsToFilter(issueStatuses.map((issueStatus) => issueStatus.id))
+            : undefined,
+          directMerchantAppId: undefined,
+        };
       case 'worklog':
-        return isDefined(recordId)
-          ? idsToFilter(worklogs.map((worklog) => worklog.id))
-          : undefined;
+        return {
+          filter: isDefined(recordId)
+            ? idsToFilter(worklogs.map((worklog) => worklog.id))
+            : undefined,
+          directMerchantAppId: undefined,
+        };
       default:
-        return undefined;
+        return { filter: undefined, directMerchantAppId: undefined };
     }
   }, [
     scopeKind,
     recordId,
     projectId,
     projectAppId,
-    merchants,
     worklogs,
     appAccesses,
     sprints,
