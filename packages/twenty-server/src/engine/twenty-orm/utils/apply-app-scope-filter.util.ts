@@ -92,16 +92,21 @@ export const applyAppScopeFilter = ({
     scopePath,
   });
 
-  // Update/soft-delete/delete builders reference the direct table name in their
-  // WHERE clause (Twenty already rewrites other conditions from alias to table
-  // name before executing them, since Postgres UPDATE/DELETE don't support an
-  // aliased target table the way a SELECT does) — referencing the alias here
-  // instead would produce a "missing FROM-clause entry" error. SELECT keeps the
-  // query alias, which TypeORM defaults to the object's nameSingular.
-  const isUpdateOrDeleteQuery = ['update', 'soft-delete', 'delete'].includes(
-    queryBuilder.expressionMap.queryType,
-  );
-  const mainTableReference = isUpdateOrDeleteQuery
+  // Which name this predicate may use depends on WHERE the builder calls us,
+  // not just on the query type — Postgres UPDATE/DELETE have no aliased target
+  // table, so Twenty rewrites alias to table name (applyTableAliasOnWhereCondition)
+  // once, mid-execute:
+  // - update: called AFTER that rewrite, so the predicate must already speak
+  //   the table name.
+  // - soft-delete/delete: called BEFORE it, alongside the RLS and visibility
+  //   predicates — the alias is correct here and the rewrite converts it later.
+  //   Emitting the table name instead breaks the `before`/`after` event SELECTs,
+  //   which inherit these WHERE clauses while still aliased ("missing
+  //   FROM-clause entry for table _x").
+  // - select: keeps the query alias, which TypeORM defaults to nameSingular.
+  const isPostRewriteUpdateQuery =
+    queryBuilder.expressionMap.queryType === 'update';
+  const mainTableReference = isPostRewriteUpdateQuery
     ? computeObjectTargetTable(objectMetadata)
     : objectMetadata.nameSingular;
 

@@ -101,9 +101,9 @@ const buildInternalContext = (): WorkspaceInternalContext => {
   } as unknown as WorkspaceInternalContext;
 };
 
-const buildQueryBuilder = () => ({
+const buildQueryBuilder = (queryType = 'select') => ({
   andWhere: jest.fn(),
-  expressionMap: { queryType: 'select' } as QueryExpressionMap,
+  expressionMap: { queryType } as QueryExpressionMap,
 });
 
 const AUTH_CONTEXT = {
@@ -114,11 +114,13 @@ const AUTH_CONTEXT = {
 const applyFilterOn = ({
   nameSingular,
   internalContext,
+  queryType,
 }: {
   nameSingular: string;
   internalContext: WorkspaceInternalContext;
+  queryType?: string;
 }) => {
-  const queryBuilder = buildQueryBuilder();
+  const queryBuilder = buildQueryBuilder(queryType);
 
   applyAppScopeFilter({
     queryBuilder,
@@ -180,6 +182,39 @@ describe('applyAppScopeFilter', () => {
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       '"discount"."appId" IS NULL',
       { appScopeGrantedAppIds: [] },
+    );
+  });
+
+  it('keeps the query alias on soft-delete, which is rewritten to the table name later', () => {
+    const internalContext = buildInternalContext();
+
+    const queryBuilder = applyFilterOn({
+      nameSingular: 'discount',
+      internalContext,
+      queryType: 'soft-delete',
+    });
+
+    // Regression guard: the table name here leaks into the before/after event
+    // SELECTs, which inherit these WHERE clauses while still aliased and fail
+    // with "missing FROM-clause entry for table _discount".
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      '("discount"."appId" IN (:...appScopeGrantedAppIds) OR "discount"."appId" IS NULL)',
+      { appScopeGrantedAppIds: [GRANTED_APP_ID] },
+    );
+  });
+
+  it('uses the table name on update, which runs after the alias rewrite', () => {
+    const internalContext = buildInternalContext();
+
+    const queryBuilder = applyFilterOn({
+      nameSingular: 'discount',
+      internalContext,
+      queryType: 'update',
+    });
+
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      '("_discount"."appId" IN (:...appScopeGrantedAppIds) OR "_discount"."appId" IS NULL)',
+      { appScopeGrantedAppIds: [GRANTED_APP_ID] },
     );
   });
 
