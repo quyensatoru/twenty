@@ -40,7 +40,7 @@ export const useMultipleRecordPickerPerformSearch = () => {
   const performSearch = useCallback(
     async ({
       multipleRecordPickerInstanceId,
-      forceSearchFilter = '',
+      forceSearchFilter,
       forceSearchableObjectMetadataItems = [],
       forcePickableMorphItems = [],
       forceFilter,
