@@ -149,7 +149,7 @@ describe('applyAppScopeFilter', () => {
     });
 
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      '("discount"."appId" IN (:...appScopeGrantedAppIds) OR "discount"."appId" IS NULL)',
+      'COALESCE("discount"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
       { appScopeGrantedAppIds: [GRANTED_APP_ID] },
     );
   });
@@ -198,7 +198,7 @@ describe('applyAppScopeFilter', () => {
     // SELECTs, which inherit these WHERE clauses while still aliased and fail
     // with "missing FROM-clause entry for table _discount".
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      '("discount"."appId" IN (:...appScopeGrantedAppIds) OR "discount"."appId" IS NULL)',
+      'COALESCE("discount"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
       { appScopeGrantedAppIds: [GRANTED_APP_ID] },
     );
   });
@@ -213,7 +213,7 @@ describe('applyAppScopeFilter', () => {
     });
 
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      '("_discount"."appId" IN (:...appScopeGrantedAppIds) OR "_discount"."appId" IS NULL)',
+      'COALESCE("_discount"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
       { appScopeGrantedAppIds: [GRANTED_APP_ID] },
     );
   });

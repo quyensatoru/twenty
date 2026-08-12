@@ -215,7 +215,14 @@ const buildAppScopePredicateSql = ({
       return `${appColumnReference} IS NULL`;
     }
 
-    return `(${grantedAppIdsClause} OR ${appColumnReference} IS NULL)`;
+    // `COALESCE(<x> IN (...), TRUE)` rather than the plainer
+    // `<x> IN (...) OR <x> IS NULL`: `IN` already yields NULL for an app-less
+    // row, so this keeps those rows without naming the column twice. Naming it
+    // twice would not survive applyTableAliasOnWhereCondition, which rewrites
+    // only the leading `alias.` of a condition — the second reference would
+    // still point at the query alias, which UPDATE/DELETE statements don't
+    // have ("missing FROM-clause entry").
+    return `COALESCE(${grantedAppIdsClause}, TRUE)`;
   }
 
   const appHolderTable = computeObjectTargetTable(
