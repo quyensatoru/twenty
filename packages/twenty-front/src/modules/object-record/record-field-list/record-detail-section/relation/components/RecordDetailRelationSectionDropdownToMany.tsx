@@ -21,6 +21,7 @@ import { hasJunctionConfig } from '@/object-record/record-field/ui/utils/junctio
 import { MultipleRecordPicker } from '@/object-record/record-picker/multiple-record-picker/components/MultipleRecordPicker';
 import { useMultipleRecordPickerOpen } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerOpen';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
+import { multipleRecordPickerDirectMerchantAppIdComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerDirectMerchantAppIdComponentState';
 import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
 import { multipleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerSearchFilterComponentState';
@@ -187,11 +188,17 @@ export const RecordDetailRelationSectionDropdownToMany = ({
     dropdownId,
   );
 
-  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
-    objectNameSingular: objectMetadataItem.nameSingular,
-    fieldName,
-    recordId,
-  });
+  const setMultipleRecordPickerDirectMerchantAppId = useSetAtomComponentState(
+    multipleRecordPickerDirectMerchantAppIdComponentState,
+    dropdownId,
+  );
+
+  const { filter: appScopeFilter, directMerchantAppId } =
+    useTaskManagerRelationTargetAppScopeFilter({
+      objectNameSingular: objectMetadataItem.nameSingular,
+      fieldName,
+      recordId,
+    });
 
   const multipleRecordPickerPickableMorphItemsCallbackState =
     useAtomComponentStateCallbackState(
@@ -245,6 +252,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
     setMultipleRecordPickerSearchFilter('');
     setMultipleRecordPickerPickableMorphItems(pickableMorphItems);
     setMultipleRecordPickerFilter(appScopeFilter);
+    setMultipleRecordPickerDirectMerchantAppId(directMerchantAppId);
 
     openMultipleRecordPicker(dropdownId);
 
@@ -254,6 +262,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
       forceSearchableObjectMetadataItems: [pickerObjectMetadataItem],
       forcePickableMorphItems: pickableMorphItems,
       forceFilter: appScopeFilter,
+      forceDirectMerchantAppId: directMerchantAppId,
     });
   };
 
@@ -285,6 +294,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
           forceSearchableObjectMetadataItems: [pickerObjectMetadataItem],
           forcePickableMorphItems: newMorphItems,
           forceFilter: appScopeFilter,
+          forceDirectMerchantAppId: directMerchantAppId,
         });
       };
 
@@ -341,6 +351,7 @@ export const RecordDetailRelationSectionDropdownToMany = ({
     },
     [
       appScopeFilter,
+      directMerchantAppId,
       closeDropdown,
       createJunctionRecord,
       createNewRecordAndOpenSidePanel,

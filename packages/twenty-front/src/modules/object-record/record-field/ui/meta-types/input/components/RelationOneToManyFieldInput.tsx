@@ -27,6 +27,7 @@ import { getSourceJoinColumnName } from '@/object-record/record-field/ui/utils/j
 import { hasJunctionConfig } from '@/object-record/record-field/ui/utils/junction/hasJunctionConfig';
 import { MultipleRecordPicker } from '@/object-record/record-picker/multiple-record-picker/components/MultipleRecordPicker';
 import { useMultipleRecordPickerPerformSearch } from '@/object-record/record-picker/multiple-record-picker/hooks/useMultipleRecordPickerPerformSearch';
+import { multipleRecordPickerDirectMerchantAppIdComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerDirectMerchantAppIdComponentState';
 import { multipleRecordPickerFilterComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerFilterComponentState';
 import { multipleRecordPickerPickableMorphItemsComponentState } from '@/object-record/record-picker/multiple-record-picker/states/multipleRecordPickerPickableMorphItemsComponentState';
 import { useTaskManagerRelationTargetAppScopeFilter } from '@/task-manager/hooks/useTaskManagerRelationTargetAppScopeFilter';
@@ -178,11 +179,17 @@ export const RelationOneToManyFieldInput = () => {
     instanceId,
   );
 
-  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
-    objectNameSingular: objectMetadataNameSingular ?? '',
-    fieldName,
-    recordId,
-  });
+  const setMultipleRecordPickerDirectMerchantAppId = useSetAtomComponentState(
+    multipleRecordPickerDirectMerchantAppIdComponentState,
+    instanceId,
+  );
+
+  const { filter: appScopeFilter, directMerchantAppId } =
+    useTaskManagerRelationTargetAppScopeFilter({
+      objectNameSingular: objectMetadataNameSingular ?? '',
+      fieldName,
+      recordId,
+    });
 
   // Some one-to-many relations (e.g. Worklogs) must only offer the current
   // record's own related records as candidates, never every record of that
@@ -190,20 +197,24 @@ export const RelationOneToManyFieldInput = () => {
   // (see useOpenRelationFromManyFieldInput), so re-run it once the scope
   // resolves rather than blocking the initial open on this extra round-trip.
   useEffect(() => {
-    if (!isDefined(appScopeFilter)) {
+    if (!isDefined(appScopeFilter) && !isDefined(directMerchantAppId)) {
       return;
     }
 
     setMultipleRecordPickerFilter(appScopeFilter);
+    setMultipleRecordPickerDirectMerchantAppId(directMerchantAppId);
 
     multipleRecordPickerPerformSearch({
       multipleRecordPickerInstanceId: instanceId,
       forceFilter: appScopeFilter,
+      forceDirectMerchantAppId: directMerchantAppId,
     });
   }, [
     appScopeFilter,
+    directMerchantAppId,
     instanceId,
     multipleRecordPickerPerformSearch,
+    setMultipleRecordPickerDirectMerchantAppId,
     setMultipleRecordPickerFilter,
   ]);
 

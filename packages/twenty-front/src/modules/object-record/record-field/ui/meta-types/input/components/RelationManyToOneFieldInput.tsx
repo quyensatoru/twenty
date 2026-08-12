@@ -99,11 +99,13 @@ export const RelationManyToOneFieldInput = () => {
     }
   };
 
-  const appScopeFilter = useTaskManagerRelationTargetAppScopeFilter({
-    objectNameSingular: objectMetadataItem.nameSingular,
-    fieldName: fieldMetadataItem.name,
-    recordId,
-  });
+  const { filter: appScopeFilter } = useTaskManagerRelationTargetAppScopeFilter(
+    {
+      objectNameSingular: objectMetadataItem.nameSingular,
+      fieldName: fieldMetadataItem.name,
+      recordId,
+    },
+  );
 
   if (recordFieldInputLayoutDirectionLoading) {
     return <></>;
