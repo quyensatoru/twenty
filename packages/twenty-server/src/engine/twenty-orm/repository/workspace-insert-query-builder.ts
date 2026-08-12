@@ -32,6 +32,7 @@ import { formatData } from 'src/engine/twenty-orm/utils/format-data.util';
 import { formatResult } from 'src/engine/twenty-orm/utils/format-result.util';
 import { formatTwentyOrmEventToDatabaseBatchEvent } from 'src/engine/twenty-orm/utils/format-twenty-orm-event-to-database-batch-event.util';
 import { getObjectMetadataFromEntityTarget } from 'src/engine/twenty-orm/utils/get-object-metadata-from-entity-target.util';
+import { validateAppScopeForRecords } from 'src/engine/twenty-orm/utils/validate-app-scope-for-records.util';
 import { validateRecordVisibilityPolicyForRecords } from 'src/engine/twenty-orm/utils/validate-record-visibility-policy-for-records.util';
 import { validateRLSPredicatesForRecords } from 'src/engine/twenty-orm/utils/validate-rls-predicates-for-records.util';
 
@@ -222,6 +223,7 @@ export class WorkspaceInsertQueryBuilder<
 
       this.validateRLSPredicatesForInsert();
       this.validateRecordVisibilityPolicyForInsert();
+      this.validateAppScopeForInsert();
 
       const result = await super.execute();
 
@@ -371,6 +373,27 @@ export class WorkspaceInsertQueryBuilder<
       internalContext: this.internalContext,
       authContext: this.authContext,
       shouldBypassPermissionChecks: this.shouldBypassPermissionChecks,
+    });
+  }
+
+  private validateAppScopeForInsert(): void {
+    const mainAliasTarget = this.getMainAliasTarget();
+    const objectMetadata = getObjectMetadataFromEntityTarget(
+      mainAliasTarget,
+      this.internalContext,
+    );
+
+    const valuesToInsert = Array.isArray(this.expressionMap.valuesSet)
+      ? this.expressionMap.valuesSet
+      : [this.expressionMap.valuesSet];
+
+    validateAppScopeForRecords({
+      values: valuesToInsert.filter(isDefined) as unknown as T[],
+      objectMetadata,
+      internalContext: this.internalContext,
+      authContext: this.authContext,
+      shouldBypassPermissionChecks: this.shouldBypassPermissionChecks,
+      mode: 'insert',
     });
   }
 

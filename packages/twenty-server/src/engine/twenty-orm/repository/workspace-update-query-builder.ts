@@ -40,6 +40,7 @@ import { formatData } from 'src/engine/twenty-orm/utils/format-data.util';
 import { formatResult } from 'src/engine/twenty-orm/utils/format-result.util';
 import { formatTwentyOrmEventToDatabaseBatchEvent } from 'src/engine/twenty-orm/utils/format-twenty-orm-event-to-database-batch-event.util';
 import { getObjectMetadataFromEntityTarget } from 'src/engine/twenty-orm/utils/get-object-metadata-from-entity-target.util';
+import { validateAppScopeForRecords } from 'src/engine/twenty-orm/utils/validate-app-scope-for-records.util';
 import { validateRecordVisibilityPolicyForRecords } from 'src/engine/twenty-orm/utils/validate-record-visibility-policy-for-records.util';
 import { validateRLSPredicatesForRecords } from 'src/engine/twenty-orm/utils/validate-rls-predicates-for-records.util';
 import { computeObjectTargetTable } from 'src/engine/utils/compute-object-target-table.util';
@@ -235,6 +236,11 @@ export class WorkspaceUpdateQueryBuilder<
       });
       this.validateRecordVisibilityPolicyForUpdate({
         updatedRecords,
+      });
+      this.validateAppScopeForUpdate({
+        updateValues: (Array.isArray(valuesSet)
+          ? valuesSet
+          : [valuesSet]) as unknown as T[],
       });
 
       const result = await super.execute();
@@ -452,6 +458,9 @@ export class WorkspaceUpdateQueryBuilder<
         });
         this.validateRecordVisibilityPolicyForUpdate({
           updatedRecords,
+        });
+        this.validateAppScopeForUpdate({
+          updateValues: [input.partialEntity as unknown as T],
         });
 
         const result = await super.execute();
@@ -717,6 +726,31 @@ export class WorkspaceUpdateQueryBuilder<
       shouldBypassPermissionChecks: this.shouldBypassPermissionChecks,
       errorMessage:
         'Updated record does not satisfy row-level security constraints of your current role',
+    });
+  }
+
+  // Only the values being SET are validated, not the merged "record after
+  // update": `before` is fetched with permission checks bypassed, so a bulk
+  // update spanning apps would otherwise be rejected over rows the WHERE
+  // clause already excludes.
+  private validateAppScopeForUpdate({
+    updateValues,
+  }: {
+    updateValues: T[];
+  }): void {
+    const mainAliasTarget = this.getMainAliasTarget();
+    const objectMetadata = getObjectMetadataFromEntityTarget(
+      mainAliasTarget,
+      this.internalContext,
+    );
+
+    validateAppScopeForRecords({
+      values: updateValues.filter(isDefined),
+      objectMetadata,
+      internalContext: this.internalContext,
+      authContext: this.authContext,
+      shouldBypassPermissionChecks: this.shouldBypassPermissionChecks,
+      mode: 'update',
     });
   }
 

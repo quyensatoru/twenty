@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
+import { msg } from '@lingui/core/macro';
 import { type ObjectRecord } from 'twenty-shared/types';
+import { isDefined } from 'twenty-shared/utils';
 
 import { CommonBaseQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-base-query-runner.service';
 import { CommonCreateManyQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/common-create-many-query-runner.service';
+import {
+  CommonQueryRunnerException,
+  CommonQueryRunnerExceptionCode,
+} from 'src/engine/api/common/common-query-runners/errors/common-query-runner.exception';
 import { CommonBaseQueryRunnerContext } from 'src/engine/api/common/types/common-base-query-runner-context.type';
 import { CommonExtendedQueryRunnerContext } from 'src/engine/api/common/types/common-extended-query-runner-context.type';
 import {
@@ -44,6 +50,21 @@ export class CommonCreateOneQueryRunnerService extends CommonBaseQueryRunnerServ
       },
       queryRunnerContext,
     );
+
+    // The row is inserted, then read back through the normal permission
+    // filters. If those hide it (app-scope, RLS, visibility policy), the
+    // result is empty — surface that as a real error instead of handing
+    // `undefined` down to processQueryResult, which reads its keys and dies
+    // with an unrelated TypeError.
+    if (!isDefined(result[0])) {
+      throw new CommonQueryRunnerException(
+        `Record was created but is not readable with your current permissions`,
+        CommonQueryRunnerExceptionCode.RECORD_NOT_FOUND,
+        {
+          userFriendlyMessage: msg`The record was created but you do not have permission to read it back. Check your access to the record's App.`,
+        },
+      );
+    }
 
     return result[0];
   }

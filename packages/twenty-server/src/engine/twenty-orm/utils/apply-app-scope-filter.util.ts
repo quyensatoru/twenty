@@ -11,6 +11,7 @@ import { type AppScopeOperation } from 'src/engine/twenty-orm/types/app-scope-pe
 import {
   buildAppScopePathByObjectId,
   findAppJoinColumnName,
+  isAppScopeUnassignedVisible,
   resolveAppScopeHops,
   type AppScopeHop,
 } from 'src/engine/twenty-orm/utils/build-app-scope-path-by-object-id.util';
@@ -86,12 +87,10 @@ export const applyAppScopeFilter = ({
     .filter(([, permissions]) => permissions.includes(operation))
     .map(([appId]) => appId);
 
-  // Nothing granted for this member/operation: every row is out of scope.
-  if (grantedAppIds.length === 0) {
-    queryBuilder.andWhere('1 = 0');
-
-    return;
-  }
+  const allowsUnassignedRows = isAppScopeUnassignedVisible({
+    objectMetadata,
+    scopePath,
+  });
 
   // Update/soft-delete/delete builders reference the direct table name in their
   // WHERE clause (Twenty already rewrites other conditions from alias to table
@@ -105,6 +104,15 @@ export const applyAppScopeFilter = ({
   const mainTableReference = isUpdateOrDeleteQuery
     ? computeObjectTargetTable(objectMetadata)
     : objectMetadata.nameSingular;
+
+  // Nothing granted for this member/operation: every row is out of scope. An
+  // unassigned-visible object still keeps its app-less rows reachable, so it
+  // falls through to the predicate below instead of being cut off here.
+  if (grantedAppIds.length === 0 && !allowsUnassignedRows) {
+    queryBuilder.andWhere('1 = 0');
+
+    return;
+  }
 
   // `app` itself: scope by comparing its own `id` directly — there's no join
   // column to walk since `app` has no FK to itself.
@@ -164,6 +172,8 @@ export const applyAppScopeFilter = ({
     hops,
     appJoinColumnName,
     workspaceSchemaName,
+    allowsUnassignedRows,
+    hasGrantedAppIds: grantedAppIds.length > 0,
   });
 
   queryBuilder.andWhere(predicateSql, {
@@ -176,14 +186,31 @@ const buildAppScopePredicateSql = ({
   hops,
   appJoinColumnName,
   workspaceSchemaName,
+  allowsUnassignedRows,
+  hasGrantedAppIds,
 }: {
   mainTableReference: string;
   hops: AppScopeHop[];
   appJoinColumnName: string;
   workspaceSchemaName: string;
+  allowsUnassignedRows: boolean;
+  hasGrantedAppIds: boolean;
 }): string => {
   if (hops.length === 0) {
-    return `"${mainTableReference}"."${appJoinColumnName}" IN (:...${APP_SCOPE_GRANTED_APP_IDS_PARAMETER})`;
+    const appColumnReference = `"${mainTableReference}"."${appJoinColumnName}"`;
+    const grantedAppIdsClause = `${appColumnReference} IN (:...${APP_SCOPE_GRANTED_APP_IDS_PARAMETER})`;
+
+    if (!allowsUnassignedRows) {
+      return grantedAppIdsClause;
+    }
+
+    // An empty granted list can't be spread into `IN (:...)` — Postgres would
+    // get `IN ()`. With no grants at all, app-less rows are all that's left.
+    if (!hasGrantedAppIds) {
+      return `${appColumnReference} IS NULL`;
+    }
+
+    return `(${grantedAppIdsClause} OR ${appColumnReference} IS NULL)`;
   }
 
   const appHolderTable = computeObjectTargetTable(

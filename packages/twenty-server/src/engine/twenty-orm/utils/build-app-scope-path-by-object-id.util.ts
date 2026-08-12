@@ -23,6 +23,32 @@ const DEFAULT_MAX_APP_SCOPE_DEPTH = 4;
 // `null` (unscoped) and is governed only by normal object permissions.
 const APP_SCOPE_ROOT_EXCLUDED_NAMES_SINGULAR = new Set(['appAccess']);
 
+// Objects where a row whose own app FK is NULL means "not assigned to an app
+// yet" rather than "hidden from everyone". `discount` is global on the BLOY
+// side (unique by discountCode, synced up without an app), and Twenty's
+// inline-create flow inserts an empty row before any field is filled in — so
+// failing closed on NULL hides every existing discount from every non-bypass
+// member AND breaks creation, since the post-insert re-select comes back
+// empty and the create resolver has no record to return.
+// Task-manager objects (project/merchant/issue...) deliberately stay
+// fail-closed: an unassigned project must not become visible to everyone.
+const APP_SCOPE_UNASSIGNED_VISIBLE_NAMES_SINGULAR = new Set(['discount']);
+
+// Whether rows of this object stay visible/writable while their app FK is
+// NULL. Only meaningful for app-scope roots (`scopePath === []`): a deeper
+// chain resolves its app through a parent row, where a missing link is not
+// the same thing as "no app assigned yet".
+export const isAppScopeUnassignedVisible = ({
+  objectMetadata,
+  scopePath,
+}: {
+  objectMetadata: FlatObjectMetadata;
+  scopePath: string[] | null | 'IS_APP_ITSELF' | undefined;
+}): boolean =>
+  Array.isArray(scopePath) &&
+  scopePath.length === 0 &&
+  APP_SCOPE_UNASSIGNED_VISIBLE_NAMES_SINGULAR.has(objectMetadata.nameSingular);
+
 // objectMetadataId -> ordered relation field names to traverse (MANY_TO_ONE,
 // "many" side only) from that object down to the app-scope root (the object
 // that directly holds the FK to `app` — `project`, today).
