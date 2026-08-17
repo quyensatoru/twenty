@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
-import { PermissionFlagType } from 'twenty-shared/constants';
+import {
+  PermissionFlagType,
+  RECORD_VISIBILITY_POLICY_CURRENT_MEMBER_PLACEHOLDER,
+} from 'twenty-shared/constants';
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
 import { DataSource, Repository } from 'typeorm';
 
@@ -10,6 +13,7 @@ import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.ent
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { FieldPermissionService } from 'src/engine/metadata-modules/object-permission/field-permission/field-permission.service';
 import { ObjectPermissionService } from 'src/engine/metadata-modules/object-permission/object-permission.service';
+import { RecordVisibilityPolicyService } from 'src/engine/metadata-modules/record-visibility-policy/services/record-visibility-policy.service';
 import { RolePermissionFlagService } from 'src/engine/metadata-modules/role-permission-flag/role-permission-flag.service';
 import { RoleTargetService } from 'src/engine/metadata-modules/role-target/services/role-target.service';
 import { RoleDTO } from 'src/engine/metadata-modules/role/dtos/role.dto';
@@ -44,6 +48,7 @@ export class DevSeederPermissionsService {
     private readonly fieldPermissionService: FieldPermissionService,
     private readonly roleTargetService: RoleTargetService,
     private readonly rolePermissionFlagService: RolePermissionFlagService,
+    private readonly recordVisibilityPolicyService: RecordVisibilityPolicyService,
     @InjectDataSource()
     private readonly coreDataSource: DataSource,
   ) {}
@@ -101,10 +106,11 @@ export class DevSeederPermissionsService {
         adminUserWorkspaceId = USER_WORKSPACE_DATA_SEED_IDS.JANE;
         limitedUserWorkspaceId = USER_WORKSPACE_DATA_SEED_IDS.TIM;
         guestUserWorkspaceId = USER_WORKSPACE_DATA_SEED_IDS.PHIL;
-        memberUserWorkspaceIds = [
-          USER_WORKSPACE_DATA_SEED_IDS.JONY,
-          ...Object.values(RANDOM_USER_WORKSPACE_IDS),
-        ];
+        // Jony is reassigned from the default (elevated) Member role to the
+        // restricted CS Member role below, so QA can log in as a real
+        // non-elevated CS member. The random users stay on the default Member
+        // role (which remains the workspace default role).
+        memberUserWorkspaceIds = [...Object.values(RANDOM_USER_WORKSPACE_IDS)];
 
         const guestRole = await this.roleService.createGuestRole({
           workspaceId,
@@ -140,6 +146,20 @@ export class DevSeederPermissionsService {
           workspaceId,
           userWorkspaceIds: [USER_WORKSPACE_DATA_SEED_IDS.SCOTT],
           roleId: impersonateOnlyRole.id,
+        });
+
+        // Restricted "CS Member" role + shift Record Visibility Policy (RVP).
+        // The shift feature only exists in full (non-light) mode, and this is
+        // the role QA uses to exercise the member-vs-leader split.
+        const csMemberRole = await this.createCsMemberRoleForSeedWorkspace({
+          workspaceId,
+          ownerFlatApplication: workspaceCustomFlatApplication,
+        });
+
+        await this.userRoleService.assignRoleToManyUserWorkspace({
+          workspaceId,
+          userWorkspaceIds: [USER_WORKSPACE_DATA_SEED_IDS.JONY],
+          roleId: csMemberRole.id,
         });
       }
     } else if (workspaceId === SEED_YCOMBINATOR_WORKSPACE_ID) {
@@ -235,6 +255,96 @@ export class DevSeederPermissionsService {
     });
 
     return impersonateOnlyRole;
+  }
+
+  // Restricted "CS Member" role for the shift feature. It must be NON-elevated
+  // yet still able to register + view its OWN shifts:
+  //  - canUpdateAllObjectRecords=false is what makes isElevatedActor=false
+  //    (shouldBypassAppScope reads this RAW flag, not the computed per-object
+  //    permission), so the shift find-hooks + write-guards scope every read/write
+  //    to the caller's own shifts.
+  //  - canSoftDeleteAllObjectRecords=false + canDestroyAllObjectRecords=false
+  //    keep the client leader-gate (canSoftDelete && canDestroy) reading "member",
+  //    and forbid members deleting/destroying shifts.
+  //  - canReadAllObjectRecords=true lets a member read the shared shiftTemplate /
+  //    specialDay catalogs and their own shifts; the Record Visibility Policy
+  //    attached below narrows shift *reads* to their own rows.
+  //  - `shift` is a non-system object, so INSERT/UPDATE require
+  //    canUpdateObjectRecords on shift (validateOperationIsPermittedOrThrow). The
+  //    role's all-level update flag is off, so a per-object update grant on shift
+  //    is REQUIRED — without it a CS member could not register a shift at all. It
+  //    does NOT elevate the actor (the per-object grant is invisible to
+  //    shouldBypassAppScope).
+  private async createCsMemberRoleForSeedWorkspace({
+    ownerFlatApplication,
+    workspaceId,
+  }: {
+    workspaceId: string;
+    ownerFlatApplication: FlatApplication;
+  }): Promise<RoleDTO> {
+    const csMemberRole = await this.roleService.createRole({
+      ownerFlatApplication,
+      workspaceId,
+      input: {
+        label: 'CS Member',
+        description:
+          'Restricted CS member: can register and read only their own shifts (non-elevated)',
+        icon: 'IconHeadset',
+        canUpdateAllSettings: false,
+        canAccessAllTools: true,
+        canReadAllObjectRecords: true,
+        canUpdateAllObjectRecords: false,
+        canSoftDeleteAllObjectRecords: false,
+        canDestroyAllObjectRecords: false,
+      },
+    });
+
+    const shiftObjectMetadata =
+      await this.objectMetadataRepository.findOneOrFail({
+        where: {
+          nameSingular: 'shift',
+          workspaceId,
+        },
+      });
+
+    // Per-object update grant so a CS member can INSERT (register) + UPDATE
+    // (cancel) their OWN shifts. Read stays true (the RVP narrows reads to own
+    // rows); soft-delete/destroy stay false so members can never delete shifts.
+    await this.objectPermissionService.upsertObjectPermissions({
+      workspaceId,
+      input: {
+        roleId: csMemberRole.id,
+        objectPermissions: [
+          {
+            objectMetadataId: shiftObjectMetadata.id,
+            canReadObjectRecords: true,
+            canUpdateObjectRecords: true,
+            canSoftDeleteObjectRecords: false,
+            canDestroyObjectRecords: false,
+          },
+        ],
+      },
+    });
+
+    // Closes the shift read-IDOR at the data layer: scopes every shift read
+    // (top-level find, relation hydration, groupBy) and enforces own-create /
+    // own-update to memberId = the current member. Attached ONLY to this
+    // restricted role — never to Admin / any all-records role.
+    await this.recordVisibilityPolicyService.upsertRecordVisibilityPolicy({
+      workspaceId,
+      input: {
+        roleId: csMemberRole.id,
+        objectMetadataId: shiftObjectMetadata.id,
+        filter: {
+          memberId: {
+            eq: RECORD_VISIBILITY_POLICY_CURRENT_MEMBER_PLACEHOLDER,
+          },
+        },
+        currentMemberFieldName: 'id',
+      },
+    });
+
+    return csMemberRole;
   }
 
   private async createLimitedRoleForSeedWorkspace({

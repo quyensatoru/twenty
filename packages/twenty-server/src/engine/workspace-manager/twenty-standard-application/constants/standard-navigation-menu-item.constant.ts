@@ -92,12 +92,35 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
     icon: 'IconLayoutKanban',
     position: 8,
   },
+  shiftTracker: {
+    universalIdentifier: '117117dd-9191-411f-98b8-945c61c9c045',
+    type: NavigationMenuItemType.LINK,
+    name: 'Shifts',
+    link: '/shift',
+    icon: 'IconCalendarClock',
+    position: 9,
+  },
+  allShiftTemplates: {
+    universalIdentifier: 'c8404305-c783-4f36-a31e-336570455584',
+    type: NavigationMenuItemType.OBJECT,
+    viewUniversalIdentifier:
+      STANDARD_OBJECTS.shiftTemplate.views.allShiftTemplates
+        .universalIdentifier,
+    position: 10,
+  },
+  allSpecialDays: {
+    universalIdentifier: '9713ecf5-8a52-4159-8206-9909bbae94d3',
+    type: NavigationMenuItemType.OBJECT,
+    viewUniversalIdentifier:
+      STANDARD_OBJECTS.specialDay.views.allSpecialDays.universalIdentifier,
+    position: 11,
+  },
   allMerchants: {
     universalIdentifier: '30e9b078-09a8-4bbe-b42f-5dbebe56fe9b',
     type: NavigationMenuItemType.OBJECT,
     viewUniversalIdentifier:
       STANDARD_OBJECTS.merchant.views.allMerchants.universalIdentifier,
-    position: 9,
+    position: 12,
   },
 } as const;
 
@@ -112,6 +135,9 @@ export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
   allMerchants: 'green',
   allOpportunities: 'red',
   taskManager: 'turquoise',
+  shiftTracker: 'turquoise',
+  allShiftTemplates: 'turquoise',
+  allSpecialDays: 'turquoise',
   workflowsFolder: 'orange',
   allDashboards: 'gray',
   workflowsFolderAllWorkflows: 'gray',

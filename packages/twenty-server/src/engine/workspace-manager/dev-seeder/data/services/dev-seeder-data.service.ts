@@ -110,6 +110,14 @@ import {
   ROCKET_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/rocket-data-seeds.constant';
 import {
+  SHIFT_TEMPLATE_DATA_SEED_COLUMNS,
+  SHIFT_TEMPLATE_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/shift-template-data-seeds.constant';
+import {
+  SPECIAL_DAY_DATA_SEED_COLUMNS,
+  SPECIAL_DAY_DATA_SEEDS,
+} from 'src/engine/workspace-manager/dev-seeder/data/constants/special-day-data-seeds.constant';
+import {
   SPRINT_DATA_SEED_COLUMNS,
   SPRINT_DATA_SEEDS,
 } from 'src/engine/workspace-manager/dev-seeder/data/constants/sprint-data-seeds.constant';
@@ -187,6 +195,16 @@ const getRecordSeedsBatches = (
       tableName: 'project',
       pgColumns: PROJECT_DATA_SEED_COLUMNS,
       recordSeeds: PROJECT_DATA_SEEDS,
+    },
+    {
+      tableName: 'shiftTemplate',
+      pgColumns: SHIFT_TEMPLATE_DATA_SEED_COLUMNS,
+      recordSeeds: SHIFT_TEMPLATE_DATA_SEEDS,
+    },
+    {
+      tableName: 'specialDay',
+      pgColumns: SPECIAL_DAY_DATA_SEED_COLUMNS,
+      recordSeeds: SPECIAL_DAY_DATA_SEEDS,
     },
   ];
 

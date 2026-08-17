@@ -12,6 +12,7 @@ import { type CompanyWorkspaceEntity } from 'src/modules/company/standard-object
 import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
 import { type MessageParticipantWorkspaceEntity } from 'src/modules/messaging/common/standard-objects/message-participant.workspace-entity';
 import { type OpportunityWorkspaceEntity } from 'src/modules/opportunity/standard-objects/opportunity.workspace-entity';
+import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
 import { type TaskWorkspaceEntity } from 'src/modules/task/standard-objects/task.workspace-entity';
 import { type TimelineActivityWorkspaceEntity } from 'src/modules/timeline/standard-objects/timeline-activity.workspace-entity';
@@ -78,6 +79,7 @@ export class WorkspaceMemberWorkspaceEntity extends BaseWorkspaceEntity {
   ownedOpportunities: Relation<OpportunityWorkspaceEntity[]>;
   assignedEpics: Relation<EpicWorkspaceEntity[]>;
   ownedSprints: Relation<SprintWorkspaceEntity[]>;
+  shifts: Relation<ShiftWorkspaceEntity[]>;
   searchVector: string;
   numberFormat: string;
 }

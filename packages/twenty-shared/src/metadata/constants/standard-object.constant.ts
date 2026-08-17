@@ -2702,6 +2702,249 @@ export const STANDARD_OBJECTS = {
       },
     },
   },
+  shiftTemplate: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shiftTemplate,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shiftTemplate,
+      ),
+      name: { universalIdentifier: 'bc1b50d2-ae16-4ced-87c6-d44dfef94169' },
+      code: { universalIdentifier: 'e319e588-72a9-4f03-8108-5d9b193a5f43' },
+      startTime: {
+        universalIdentifier: '334b4d7f-40de-4e83-8956-bacbe58d8b97',
+      },
+      endTime: {
+        universalIdentifier: '5d8ca64b-86b9-409e-99eb-e3fe699ab04b',
+      },
+      dayKind: {
+        universalIdentifier: '52eb03f5-4625-462c-8061-b3bad4a45aff',
+      },
+      earlyCheckInMinutes: {
+        universalIdentifier: '2c919b8d-cc32-4659-9d25-ebe6b7d95d19',
+      },
+      lateCheckOutMinutes: {
+        universalIdentifier: 'ffda6656-01db-4cc4-8b4e-b86e69d4d2db',
+      },
+      salaryPerHour: {
+        universalIdentifier: '1f0f2b17-e648-4180-badc-46e84fc63970',
+      },
+      color: { universalIdentifier: 'aa68129e-6a00-44b0-95e4-e0e0b98a526b' },
+      isActive: {
+        universalIdentifier: '5e0bd44d-c764-4792-af75-ef9137dd16a1',
+      },
+      description: {
+        universalIdentifier: '55e9e449-2e1c-44b3-bef7-4dbcb7b44a5e',
+      },
+      shifts: {
+        universalIdentifier: '4f3f4ab2-20e9-404c-a319-ce3a3a3a2d2c',
+      },
+    },
+    indexes: {
+      isActiveIndex: {
+        universalIdentifier: '440cb5ec-fabb-4575-93ef-6ded444db247',
+      },
+      codeIndex: {
+        universalIdentifier: '2933e33d-0cbb-48d7-a912-00ee7a38ca0e',
+      },
+    },
+    views: {
+      allShiftTemplates: {
+        universalIdentifier: '461b371e-7660-45c7-8fd4-0de5fe885ee6',
+        // LƯU Ý: salaryPerHour CỐ TÌNH không là view field — member không
+        // được thấy cột lương trong danh mục (quyết định nghiệp vụ
+        // 12/08/2026).
+        viewFields: {
+          name: {
+            universalIdentifier: '2140d08d-3171-4c67-bf4c-0369d3a7745f',
+          },
+          code: {
+            universalIdentifier: '748df8ac-f9a3-41de-bb20-44b224ebd66b',
+          },
+          startTime: {
+            universalIdentifier: '49061331-d42f-4d09-8a37-2cf7c282956c',
+          },
+          endTime: {
+            universalIdentifier: 'c6104dc2-a62a-4876-a42b-c61f214c17d9',
+          },
+          dayKind: {
+            universalIdentifier: '8c8aa303-8bde-44f7-9413-a1d7fe74bb02',
+          },
+          isActive: {
+            universalIdentifier: '1b395bf8-205e-42d4-9cfa-90ced9f7fd31',
+          },
+        },
+      },
+      shiftTemplateRecordPageFields: {
+        universalIdentifier: 'ed7e1a4e-9540-4dfb-8d1e-0943a9040b1f',
+        viewFields: {},
+      },
+    },
+  },
+  specialDay: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.specialDay,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.specialDay,
+      ),
+      name: { universalIdentifier: '60f82307-46d5-4501-8863-4a39c80cc5bb' },
+      kind: { universalIdentifier: 'df691f7e-be49-44ab-bdb0-d4df9442cbc5' },
+      month: {
+        universalIdentifier: '4098c4ab-289f-45e7-849d-3ed3fc6dab84',
+      },
+      day: { universalIdentifier: '5c993363-1b42-4e9f-aa60-84abd0b5c9ff' },
+      date: { universalIdentifier: '2a191783-37ca-47f0-9b5e-26112ffcacdb' },
+      multiplier: {
+        universalIdentifier: '96d98940-5d22-4360-a0b6-bb388db87db4',
+      },
+      isActive: {
+        universalIdentifier: 'e67d14f8-052a-443a-a84e-e98331e9d934',
+      },
+    },
+    indexes: {
+      kindIsActiveIndex: {
+        universalIdentifier: 'a8ea95df-ce34-4cbb-ad33-081c7c071f89',
+      },
+    },
+    views: {
+      allSpecialDays: {
+        universalIdentifier: '73cf6a3d-d307-405e-8c77-532308046b26',
+        viewFields: {
+          name: {
+            universalIdentifier: 'af650b93-77c4-4f86-9fc3-cd6031b8964a',
+          },
+          kind: {
+            universalIdentifier: '6a512d00-2eae-4146-b4b1-d2b7424fcf73',
+          },
+          month: {
+            universalIdentifier: '2ba13915-0dc5-450b-bbbd-788f562b2e27',
+          },
+          day: {
+            universalIdentifier: '6ef7e509-1dc6-4e73-9d53-11000a6accc9',
+          },
+          date: {
+            universalIdentifier: 'd0c04b1f-0a08-4d9c-8740-867a34f0d692',
+          },
+          multiplier: {
+            universalIdentifier: '92167e2e-8f67-4229-9775-59115899aa2c',
+          },
+          isActive: {
+            universalIdentifier: '7a253726-1d1c-446a-b85a-9f63a67b7dc2',
+          },
+        },
+      },
+      specialDayRecordPageFields: {
+        universalIdentifier: 'be66aa00-a0c4-46a7-81c2-5bbb4cd5abcc',
+        viewFields: {},
+      },
+    },
+  },
+  shift: {
+    universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shift,
+    fields: {
+      ...buildStandardObjectSystemFields(
+        STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shift,
+      ),
+      name: { universalIdentifier: '7e227adc-8839-4d2f-bc46-24a42dfb2344' },
+      date: { universalIdentifier: 'd92362a6-d964-47aa-870d-f6da65cb82c1' },
+      status: {
+        universalIdentifier: 'd7e818e9-23f4-4a29-b944-bcb163904a54',
+      },
+      templateCode: {
+        universalIdentifier: 'da7101a4-f577-4a78-8b5e-f60f475fb33d',
+      },
+      templateName: {
+        universalIdentifier: '5c390af4-3b80-4382-87a8-222c6a4afa9b',
+      },
+      startTime: {
+        universalIdentifier: '56415541-132d-4c1b-b423-69336e4ba4d7',
+      },
+      endTime: {
+        universalIdentifier: 'f0825520-2a8a-4a01-8d18-ded678b29acd',
+      },
+      checkInAt: {
+        universalIdentifier: '635861fd-b5f0-41bb-80c2-572f2c7e051c',
+      },
+      checkOutAt: {
+        universalIdentifier: '3e32da4b-30b2-4f65-b8a3-c560cc14e60d',
+      },
+      checkInLateMinutes: {
+        universalIdentifier: '3d35e034-133b-445b-be6a-282e8ff20932',
+      },
+      workingMinutes: {
+        universalIdentifier: 'b1ea0630-bda2-476e-8fed-36c8a33bcfa5',
+      },
+      rateMultiplier: {
+        universalIdentifier: '557fa620-fc9b-4943-b36f-136ac4b720cc',
+      },
+      handoverNote: {
+        universalIdentifier: '0ba4615b-38b9-42bb-b7a5-1824365b6171',
+      },
+      cancelReason: {
+        universalIdentifier: '6aa64169-1077-4d28-8895-3ee09f6ba465',
+      },
+      cancelCategory: {
+        universalIdentifier: 'cc835c72-d3a7-425a-a8eb-85397df22acb',
+      },
+      cancelledAt: {
+        universalIdentifier: 'c7c76b49-b913-481a-bb9e-4581aadada9b',
+      },
+      member: {
+        universalIdentifier: '7f58f5d8-a0f4-4096-8256-4ceb56071305',
+      },
+      shiftTemplate: {
+        universalIdentifier: '4ce93038-7f41-4269-a6a5-ab953d91ec49',
+      },
+    },
+    indexes: {
+      memberIdIndex: {
+        universalIdentifier: '5af540b9-a3e6-47be-bd1d-5905ea0d5ad8',
+      },
+      shiftTemplateIdIndex: {
+        universalIdentifier: '6ab554f5-3cc2-428e-8230-cff5ff493675',
+      },
+      dateIndex: {
+        universalIdentifier: '53a29b1a-5acc-4712-ae5e-912083e543dd',
+      },
+    },
+    views: {
+      allShifts: {
+        universalIdentifier: 'fdd1d968-9ff8-43ff-a3fe-a8bdffa06ca4',
+        viewFields: {
+          name: {
+            universalIdentifier: '98a8825c-7409-47b4-a7a2-c39c6257f016',
+          },
+          date: {
+            universalIdentifier: 'ee06751f-662b-4282-a0b7-cba48397bd40',
+          },
+          status: {
+            universalIdentifier: '9f1503f4-00be-486d-a467-fbc7659811cb',
+          },
+          member: {
+            universalIdentifier: '5cde2759-2ecd-482e-b372-62a03a1f5eaf',
+          },
+          templateCode: {
+            universalIdentifier: 'e3c5e0ac-1e86-4969-ada3-f29514ac5d3a',
+          },
+          checkInAt: {
+            universalIdentifier: 'd9a1818d-ee2f-4b6a-89ca-14e8b07bd4a2',
+          },
+          checkOutAt: {
+            universalIdentifier: 'aedd443f-f742-4a7c-b111-26960c53545c',
+          },
+          checkInLateMinutes: {
+            universalIdentifier: '04603f50-3eb9-4ec0-8312-461a8322b5a1',
+          },
+          workingMinutes: {
+            universalIdentifier: 'f9f68168-4ef1-48bd-859e-096306fcff56',
+          },
+        },
+      },
+      shiftRecordPageFields: {
+        universalIdentifier: '735d170d-641e-4aad-a7bb-d326051c7f04',
+        viewFields: {},
+      },
+    },
+  },
   task: {
     universalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.task,
     fields: {
@@ -3646,6 +3889,9 @@ export const STANDARD_OBJECTS = {
       },
       worklogs: {
         universalIdentifier: 'c0bf79c9-1bbd-438a-b4de-3a0a7960e212',
+      },
+      shifts: {
+        universalIdentifier: '217853a5-299d-4b07-8b6b-cf1e8c3bc14b',
       },
       appAccesses: {
         universalIdentifier: '288d8f20-66ea-40e6-afc8-f2c73aa18d99',

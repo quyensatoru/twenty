@@ -27,6 +27,9 @@ import { computeStandardNoteViews } from 'src/engine/workspace-manager/twenty-st
 import { computeStandardIssueCommentViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-issue-comment-views.util';
 import { computeStandardIssueViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-issue-views.util';
 import { computeStandardIssueStatusViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-issue-status-views.util';
+import { computeStandardShiftViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-shift-views.util';
+import { computeStandardShiftTemplateViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-shift-template-views.util';
+import { computeStandardSpecialDayViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-special-day-views.util';
 import { computeStandardWorklogViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-worklog-views.util';
 import { computeStandardOpportunityViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-opportunity-views.util';
 import { computeStandardPersonViews } from 'src/engine/workspace-manager/twenty-standard-application/utils/view/compute-standard-person-views.util';
@@ -74,6 +77,9 @@ const STANDARD_FLAT_VIEW_METADATA_BUILDERS_BY_OBJECT_NAME = {
   issueStatus: computeStandardIssueStatusViews,
   issueComment: computeStandardIssueCommentViews,
   worklog: computeStandardWorklogViews,
+  shiftTemplate: computeStandardShiftTemplateViews,
+  specialDay: computeStandardSpecialDayViews,
+  shift: computeStandardShiftViews,
   person: computeStandardPersonViews,
   project: computeStandardProjectViews,
   merchant: computeStandardMerchantViews,

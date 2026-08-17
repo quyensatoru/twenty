@@ -54,6 +54,12 @@ export const SEARCH_FIELDS_BY_STANDARD_OBJECT_NAME = {
   issueComment: [{ name: 'bodyV2', type: FieldMetadataType.RICH_TEXT }],
   issueMerchant: [{ name: 'id', type: FieldMetadataType.UUID }],
   worklog: [{ name: 'description', type: FieldMetadataType.TEXT }],
+  shiftTemplate: [
+    { name: 'name', type: FieldMetadataType.TEXT },
+    { name: 'code', type: FieldMetadataType.TEXT },
+  ],
+  specialDay: [{ name: 'name', type: FieldMetadataType.TEXT }],
+  shift: [{ name: 'name', type: FieldMetadataType.TEXT }],
   person: [
     { name: 'name', type: FieldMetadataType.FULL_NAME },
     { name: 'emails', type: FieldMetadataType.EMAILS },

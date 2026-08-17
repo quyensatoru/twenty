@@ -28,6 +28,9 @@ export {
 } from './standard-page-layout-config.type';
 export { STANDARD_PERSON_PAGE_LAYOUT_CONFIG } from './standard-person-page-layout.config';
 export { STANDARD_PROJECT_PAGE_LAYOUT_CONFIG } from './standard-project-page-layout.config';
+export { STANDARD_SHIFT_TEMPLATE_PAGE_LAYOUT_CONFIG } from './standard-shift-template-page-layout.config';
+export { STANDARD_SPECIAL_DAY_PAGE_LAYOUT_CONFIG } from './standard-special-day-page-layout.config';
+export { STANDARD_SHIFT_PAGE_LAYOUT_CONFIG } from './standard-shift-page-layout.config';
 export { STANDARD_SPRINT_PAGE_LAYOUT_CONFIG } from './standard-sprint-page-layout.config';
 export { STANDARD_TASK_PAGE_LAYOUT_CONFIG } from './standard-task-page-layout.config';
 export { STANDARD_WORKFLOW_AUTOMATED_TRIGGER_PAGE_LAYOUT_CONFIG } from './standard-workflow-automated-trigger-page-layout.config';

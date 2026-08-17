@@ -23,6 +23,8 @@ const FLAT_NAVIGATION_MENU_ITEM_NAMES = [
   'allNotes',
   'allOpportunities',
   'allPeople',
+  'allShiftTemplates',
+  'allSpecialDays',
   'allTasks',
 ] as const;
 
@@ -135,6 +137,25 @@ export const buildStandardFlatNavigationMenuItemMaps = ({
 
   addFlatNavigationMenuItemToMapsAndUpdateIndex({
     flatNavigationMenuItem: taskManagerItem,
+    flatNavigationMenuItemMaps,
+  });
+
+  const shiftTrackerDefinition = STANDARD_NAVIGATION_MENU_ITEMS.shiftTracker;
+  const shiftTrackerItem = createStandardNavigationMenuItemLinkFlatMetadata({
+    universalIdentifier: shiftTrackerDefinition.universalIdentifier,
+    name: shiftTrackerDefinition.name,
+    link: shiftTrackerDefinition.link,
+    icon: shiftTrackerDefinition.icon,
+    color: STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS.shiftTracker,
+    position: shiftTrackerDefinition.position,
+    navigationMenuItemId: v4(),
+    workspaceId,
+    twentyStandardApplicationId,
+    now,
+  });
+
+  addFlatNavigationMenuItemToMapsAndUpdateIndex({
+    flatNavigationMenuItem: shiftTrackerItem,
     flatNavigationMenuItemMaps,
   });
 

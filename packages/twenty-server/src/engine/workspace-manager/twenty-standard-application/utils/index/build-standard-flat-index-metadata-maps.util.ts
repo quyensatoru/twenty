@@ -27,6 +27,9 @@ import { buildIssueCommentStandardFlatIndexMetadatas } from 'src/engine/workspac
 import { buildIssueMerchantStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-merchant-standard-flat-index-metadata.util';
 import { buildIssueStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-standard-flat-index-metadata.util';
 import { buildIssueStatusStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-issue-status-standard-flat-index-metadata.util';
+import { buildShiftStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-shift-standard-flat-index-metadata.util';
+import { buildShiftTemplateStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-shift-template-standard-flat-index-metadata.util';
+import { buildSpecialDayStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-special-day-standard-flat-index-metadata.util';
 import { buildWorklogStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-worklog-standard-flat-index-metadata.util';
 import { buildOpportunityStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-opportunity-standard-flat-index-metadata.util';
 import { buildPersonStandardFlatIndexMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/index/compute-person-standard-flat-index-metadata.util';
@@ -75,6 +78,9 @@ const STANDARD_FLAT_INDEX_METADATA_BUILDERS_BY_OBJECT_NAME = {
   issueComment: buildIssueCommentStandardFlatIndexMetadatas,
   issueMerchant: buildIssueMerchantStandardFlatIndexMetadatas,
   worklog: buildWorklogStandardFlatIndexMetadatas,
+  shiftTemplate: buildShiftTemplateStandardFlatIndexMetadatas,
+  specialDay: buildSpecialDayStandardFlatIndexMetadatas,
+  shift: buildShiftStandardFlatIndexMetadatas,
   person: buildPersonStandardFlatIndexMetadatas,
   project: buildProjectStandardFlatIndexMetadatas,
   merchant: buildMerchantStandardFlatIndexMetadatas,

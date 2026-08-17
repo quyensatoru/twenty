@@ -197,6 +197,12 @@ export enum MessageChannelVisibility {
 export type Mutation = {
   __typename?: 'Mutation';
   activateWorkflowVersion: Scalars['Boolean']['output'];
+  /** Cancel a registered shift with a reason and category. */
+  cancelShift: Scalars['Boolean']['output'];
+  /** Check in to a registered shift. */
+  checkInShift: Scalars['Boolean']['output'];
+  /** Check out of a shift; computes payable minutes. */
+  checkOutShift: Scalars['Boolean']['output'];
   /** Close a sprint and move its unfinished issues to the backlog or to another sprint. */
   completeSprint: Scalars['Int']['output'];
   computeStepOutputSchema: Scalars['JSON']['output'];
@@ -225,6 +231,24 @@ export type Mutation = {
 
 export type MutationActivateWorkflowVersionArgs = {
   workflowVersionId: Scalars['UUID']['input'];
+};
+
+
+export type MutationCancelShiftArgs = {
+  category: Scalars['String']['input'];
+  reason: Scalars['String']['input'];
+  shiftId: Scalars['UUID']['input'];
+};
+
+
+export type MutationCheckInShiftArgs = {
+  shiftId: Scalars['UUID']['input'];
+};
+
+
+export type MutationCheckOutShiftArgs = {
+  handoverNote?: InputMaybe<Scalars['String']['input']>;
+  shiftId: Scalars['UUID']['input'];
 };
 
 

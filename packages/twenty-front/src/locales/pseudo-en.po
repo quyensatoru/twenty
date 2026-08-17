@@ -410,6 +410,11 @@ msgstr ""
 msgid "{deletedCount, plural, one {Successfully deleted {deletedCount} job} other {Successfully deleted {deletedCount} jobs}}"
 msgstr ""
 
+#. js-lingui-id: TUvHFQ
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "{errorCount} shift(s) could not be registered."
+msgstr ""
+
 #. js-lingui-id: JBSWmp
 #: src/modules/activities/timeline-activities/rows/activity/components/EventRowActivity.tsx
 msgid "{eventAction} a related {eventObject}"
@@ -956,6 +961,11 @@ msgstr ""
 msgid "About your app"
 msgstr ""
 
+#. js-lingui-id: t5KfV4
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Absent"
+msgstr ""
+
 #. js-lingui-id: nJJAYH
 #: src/pages/settings/legal/SettingsLegalDpa.tsx
 msgid "Accepted and signed DPAs for this workspace, with their template version and date."
@@ -1119,6 +1129,11 @@ msgstr ""
 #. js-lingui-id: XJOV1Y
 #: src/modules/task-manager/issue-detail/components/TaskManagerIssueDetail.tsx
 msgid "Activity"
+msgstr ""
+
+#. js-lingui-id: lQls8C
+#: src/pages/shift/ShiftPage.tsx
+msgid "Actual hours"
 msgstr ""
 
 #. js-lingui-id: m16xKo
@@ -2131,6 +2146,11 @@ msgstr ""
 msgid "Already in navbar"
 msgstr ""
 
+#. js-lingui-id: zeSPPj
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+msgid "Already registered"
+msgstr ""
+
 #. js-lingui-id: Fc64QW
 #: src/modules/settings/mcp-and-apis/utils/buildMcpSetupCategories.tsx
 msgid "Amazon Q Developer CLI"
@@ -2268,6 +2288,11 @@ msgstr ""
 #. js-lingui-id: xJR+Wq
 #: src/pages/settings/members/tabs/SettingsWorkspaceMembersInviteTab.tsx
 msgid "Anyone with an email address at these domains is allowed to sign up for this workspace."
+msgstr ""
+
+#. js-lingui-id: i2Ml16
+#: src/modules/shift/components/CheckOutModal.tsx
+msgid "Anything the next shift should pick up? (optional)"
 msgstr ""
 
 #. js-lingui-id: OZtEcz
@@ -3423,6 +3448,7 @@ msgstr ""
 #: src/modules/settings/billing/components/internal/ResourceCreditPackagePickerModal.tsx
 #: src/modules/settings/components/SaveAndCancelButtons/CancelButton.tsx
 #: src/modules/settings/components/SaveAndCancelButtons/CancelButton.tsx
+#: src/modules/shift/components/CheckOutModal.tsx
 #: src/modules/side-panel/pages/compose-campaign/components/SidePanelCampaignComposerPage.tsx
 #: src/modules/side-panel/pages/compose-email/components/SidePanelComposeEmailPage.tsx
 #: src/modules/spreadsheet-import/provider/components/SpreadsheetImport.tsx
@@ -3480,6 +3506,17 @@ msgstr ""
 msgid "Cancel reply"
 msgstr ""
 
+#. js-lingui-id: 8e0Wku
+#: src/modules/shift/components/CancelShiftModal.tsx
+#: src/modules/shift/components/CancelShiftModal.tsx
+msgid "Cancel shift"
+msgstr ""
+
+#. js-lingui-id: +zzYSR
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Cancel shift…"
+msgstr ""
+
 #. js-lingui-id: N6gPiD
 #: src/modules/settings/billing/components/SettingsBillingContent.tsx
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
@@ -3495,6 +3532,14 @@ msgstr ""
 #. js-lingui-id: dC0BTo
 #: src/modules/settings/admin-panel/components/SettingsAdminWorkspaceBillingContent.tsx
 msgid "Canceled at"
+msgstr ""
+
+#. js-lingui-id: vv7kpg
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+#: src/modules/shift/components/ShiftReportTable.tsx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Cancelled"
 msgstr ""
 
 #. js-lingui-id: y4uH7j
@@ -3572,6 +3617,7 @@ msgstr ""
 
 #. js-lingui-id: K7tIrx
 #: src/modules/settings/applications/components/SettingsApplicationAboutSidebar.tsx
+#: src/modules/shift/components/CancelShiftModal.tsx
 msgid "Category"
 msgstr ""
 
@@ -3705,6 +3751,17 @@ msgstr ""
 msgid "Chats"
 msgstr ""
 
+#. js-lingui-id: BPWGKn
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+msgid "Check in"
+msgstr ""
+
+#. js-lingui-id: 6uFFoY
+#: src/modules/shift/components/CheckOutModal.tsx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+msgid "Check out"
+msgstr ""
+
 #. js-lingui-id: h5C4B4
 #: src/modules/settings/emailing-domains/components/SettingsEmailingDomainVerifyButton.tsx
 msgid "Check verification"
@@ -3718,6 +3775,36 @@ msgstr ""
 #. js-lingui-id: hXXBiE
 #: src/modules/settings/profile/hooks/useUpdateEmail.ts
 msgid "Check your inbox to verify your new email address."
+msgstr ""
+
+#. js-lingui-id: gXcPxc
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Check-in"
+msgstr ""
+
+#. js-lingui-id: cb/dwv
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Check-in late"
+msgstr ""
+
+#. js-lingui-id: cLtHhh
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Check-out"
+msgstr ""
+
+#. js-lingui-id: cQjlJO
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Check-out is {roundedDeviation} min off the scheduled end"
+msgstr ""
+
+#. js-lingui-id: U3e6Qv
+#: src/pages/shift/ShiftPage.tsx
+msgid "Checked in."
+msgstr ""
+
+#. js-lingui-id: hRtHMc
+#: src/pages/shift/ShiftPage.tsx
+msgid "Checked out."
 msgstr ""
 
 #. js-lingui-id: SxwQE8
@@ -4226,6 +4313,10 @@ msgstr ""
 #: src/modules/ai/components/CodeExecutionDisplay.tsx
 #: src/modules/settings/admin-panel/components/SettingsAdminWorkspaceContent.tsx
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminQueueJobsTable.tsx
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+#: src/modules/shift/components/ShiftReportTable.tsx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
 #: src/pages/settings/admin-panel/SettingsAdminInstanceStatus.tsx
 msgid "Completed"
 msgstr ""
@@ -4420,6 +4511,11 @@ msgstr ""
 #. js-lingui-id: q2rgqr
 #: src/modules/settings/billing/components/internal/ResourceCreditPriceSelector.tsx
 msgid "Confirm changing your current resource credit allocation."
+msgstr ""
+
+#. js-lingui-id: 89Yov6
+#: src/modules/shift/components/CheckOutModal.tsx
+msgid "Confirm check out"
 msgstr ""
 
 #. js-lingui-id: SU6Tym
@@ -4913,6 +5009,21 @@ msgstr ""
 #. js-lingui-id: s8lFtq
 #: src/hooks/useCopyToClipboard.tsx
 msgid "Couldn't copy to clipboard"
+msgstr ""
+
+#. js-lingui-id: /xkNJj
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Couldn't load registration."
+msgstr ""
+
+#. js-lingui-id: +uWEw+
+#: src/pages/shift/ShiftReportPage.tsx
+msgid "Couldn't load the report."
+msgstr ""
+
+#. js-lingui-id: xxVzdI
+#: src/pages/shift/ShiftPage.tsx
+msgid "Couldn't load your shifts."
 msgstr ""
 
 #. js-lingui-id: kjbTwZ
@@ -5723,6 +5834,7 @@ msgstr ""
 #: src/modules/object-record/record-table/record-table-footer/components/RecordTableColumnAggregateFooterMenuContent.tsx
 #: src/modules/settings/legal/components/SettingsDpaAgreementsTable.tsx
 #: src/modules/settings/unsubscribers/components/SettingsUnsubscribersList.tsx
+#: src/modules/shift/components/ShiftReportTable.tsx
 #: src/pages/settings/ai/components/SettingsAgentLogsTab.tsx
 #: src/pages/settings/ai/components/SettingsAgentLogsTab.tsx
 #: src/pages/settings/ai/SettingsAgentTurnDetail.tsx
@@ -7734,6 +7846,11 @@ msgstr ""
 msgid "Error while switching subscription."
 msgstr ""
 
+#. js-lingui-id: S4BM29
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Est. earnings"
+msgstr ""
+
 #. js-lingui-id: JLxMta
 #: src/pages/settings/api-webhooks/SettingsApiWebhooks.tsx
 #: src/pages/settings/developers/webhooks/components/SettingsWebhooks.tsx
@@ -8004,6 +8121,11 @@ msgstr ""
 #. js-lingui-id: 1RvVK1
 #: src/modules/settings/developers/utils/formatExpiration.ts
 msgid "Expires in {dateDiff}"
+msgstr ""
+
+#. js-lingui-id: kw4fyn
+#: src/modules/shift/components/CancelShiftModal.tsx
+msgid "Explain why this shift is being cancelled (min {MIN_REASON_LENGTH} characters)"
 msgstr ""
 
 #. js-lingui-id: GS+Mus
@@ -8742,6 +8864,11 @@ msgstr ""
 msgid "Fix the payment issue to keep your enterprise features active."
 msgstr ""
 
+#. js-lingui-id: Xgkhyj
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Flags"
+msgstr ""
+
 #. js-lingui-id: ylQd2j
 #: src/modules/side-panel/pages/workflow/action/components/SidePanelWorkflowSelectAction.tsx
 #: src/modules/workflow/workflow-steps/workflow-actions/utils/getActionHeaderTypeOrThrow.ts
@@ -8858,6 +8985,12 @@ msgstr ""
 #. js-lingui-id: nLC6tu
 #: src/pages/settings/profile/appearance/components/LocalePicker.tsx
 msgid "French"
+msgstr ""
+
+#. js-lingui-id: xVhQZV
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Fri"
 msgstr ""
 
 #. js-lingui-id: ejVYRQ
@@ -9243,6 +9376,11 @@ msgstr ""
 msgid "Handle"
 msgstr ""
 
+#. js-lingui-id: tg+C0k
+#: src/modules/shift/components/CheckOutModal.tsx
+msgid "Handover note — pending conversations"
+msgstr ""
+
 #. js-lingui-id: Gpb1xF
 #: src/pages/settings/legal/SettingsLegalDpaNew.tsx
 msgid "Head of Legal"
@@ -9401,6 +9539,11 @@ msgstr ""
 msgid "Hire a partner to help you implement and customize Twenty."
 msgstr ""
 
+#. js-lingui-id: TvHXt1
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+msgid "Holiday / OT"
+msgstr ""
+
 #. js-lingui-id: i0qMbr
 #: src/modules/navigation/components/MainNavigationDrawerTabsRow.tsx
 msgid "Home"
@@ -9441,6 +9584,7 @@ msgid ""
 msgstr ""
 
 #. js-lingui-id: yY8wAv
+#: src/modules/shift/components/ShiftRegisterSummary.tsx
 #: src/modules/workflow/workflow-steps/workflow-actions/delay-actions/components/WorkflowEditActionDelay.tsx
 msgid "Hours"
 msgstr ""
@@ -9760,6 +9904,13 @@ msgstr ""
 #. js-lingui-id: HiyKEP
 #: src/modules/settings/developers/utils/formatExpiration.ts
 msgid "In {dateDiff}"
+msgstr ""
+
+#. js-lingui-id: /LCAwL
+#: src/modules/shift/components/ShiftReportTable.tsx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "In progress"
 msgstr ""
 
 #. js-lingui-id: hVockd
@@ -10449,6 +10600,11 @@ msgstr ""
 msgid "Kanban widget"
 msgstr ""
 
+#. js-lingui-id: f87fli
+#: src/modules/shift/components/CancelShiftModal.tsx
+msgid "Keep shift"
+msgstr ""
+
 #. js-lingui-id: 7sMeHQ
 #: src/modules/workflow/workflow-steps/workflow-actions/http-request-action/components/KeyValuePairInput.tsx
 msgid "Key"
@@ -11077,6 +11233,12 @@ msgstr ""
 msgid "Loading..."
 msgstr ""
 
+#. js-lingui-id: Pwqkdw
+#: src/pages/shift/ShiftRegisterPage.tsx
+#: src/pages/shift/ShiftReportPage.tsx
+msgid "Loading…"
+msgstr ""
+
 #. js-lingui-id: 7VBQ2j
 #: src/modules/settings/billing/constants/SettingsBillingPlanComparisonRows.ts
 #: src/modules/settings/billing/constants/SettingsBillingPlanComparisonRows.ts
@@ -11472,6 +11634,11 @@ msgstr ""
 msgid "Medium section heading"
 msgstr ""
 
+#. js-lingui-id: OvoEq7
+#: src/pages/shift/ShiftReportPage.tsx
+msgid "Member"
+msgstr ""
+
 #. js-lingui-id: Sma10A
 #: src/modules/ui/navigation/navigation-drawer/components/MultiWorkspaceDropdown/internal/components/WorkspacesForSignIn.tsx
 msgid "Member of"
@@ -11680,6 +11847,12 @@ msgstr ""
 msgid "Models for this provider. Toggle to enable or disable."
 msgstr ""
 
+#. js-lingui-id: fpMgHS
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Mon"
+msgstr ""
+
 #. js-lingui-id: hty0d5
 #: src/pages/settings/profile/appearance/components/DateTimeSettingsCalendarStartDaySelect.tsx
 #: src/pages/settings/profile/appearance/components/DateTimeSettingsCalendarStartDaySelect.tsx
@@ -11712,6 +11885,7 @@ msgstr ""
 #: src/modules/side-panel/pages/page-layout/components/record-table-settings/RecordTableCalendarLayoutDropdownContent.tsx
 #: src/modules/side-panel/pages/page-layout/components/record-table-settings/WidgetViewLayoutSettingsRows.tsx
 #: src/modules/side-panel/pages/page-layout/utils/getDateGranularityLabel.ts
+#: src/pages/shift/ShiftReportPage.tsx
 msgid "Month"
 msgstr ""
 
@@ -11845,6 +12019,18 @@ msgstr ""
 msgid "Move work forward across teams and agents"
 msgstr ""
 
+#. js-lingui-id: zv3vvb
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Multiplier"
+msgstr ""
+
+#. js-lingui-id: qYEboz
+#. placeholder {0}: shift.checkInLateMinutes
+#: src/modules/shift/components/ShiftReportTable.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Muộn +{0}'"
+msgstr ""
+
 #. js-lingui-id: asWVA5
 #: src/modules/object-record/spreadsheet-import/utils/getSpreadSheetFieldValidationDefinitions.ts
 msgid "must be a number"
@@ -11873,6 +12059,11 @@ msgstr ""
 #. js-lingui-id: XTGSZU
 #: src/modules/views/view-picker/components/ViewPickerListContent.tsx
 msgid "My unlisted views"
+msgstr ""
+
+#. js-lingui-id: Tf1EYu
+#: src/modules/shift/components/ShiftTopBar.tsx
+msgid "My Week"
 msgstr ""
 
 #. js-lingui-id: JUrq94
@@ -12293,6 +12484,11 @@ msgstr ""
 #: src/modules/spreadsheet-import/steps/components/MatchColumnsStep/MatchColumnsStep.tsx
 #: src/modules/spreadsheet-import/steps/components/SelectSheetStep/SelectSheetStep.tsx
 msgid "Next Step"
+msgstr ""
+
+#. js-lingui-id: IT903p
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Next week"
 msgstr ""
 
 #. js-lingui-id: ulck7h
@@ -12923,6 +13119,26 @@ msgstr ""
 #. js-lingui-id: JkPTT8
 #: src/modules/settings/admin-panel/components/SettingsAdminServerAdmins.tsx
 msgid "No server administrators found."
+msgstr ""
+
+#. js-lingui-id: JdMSA2
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "No shift"
+msgstr ""
+
+#. js-lingui-id: xdhhgv
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+msgid "No shift scheduled for today."
+msgstr ""
+
+#. js-lingui-id: TAa7nt
+#: src/pages/shift/ShiftReportPage.tsx
+msgid "No shifts this month."
+msgstr ""
+
+#. js-lingui-id: Nw4OHp
+#: src/pages/shift/ShiftPage.tsx
+msgid "No shifts this week — register for next week."
 msgstr ""
 
 #. js-lingui-id: 586DJb
@@ -13650,6 +13866,11 @@ msgstr ""
 msgid "Opened"
 msgstr ""
 
+#. js-lingui-id: zaKjkx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+msgid "Opens at {opensAtLabel}"
+msgstr ""
+
 #. js-lingui-id: Fzfj4N
 #: src/pages/settings/layout/SettingsLayoutViewDetail.tsx
 msgid "Operand"
@@ -13752,6 +13973,8 @@ msgstr ""
 #: src/modules/navigation/components/NavigationDrawerOtherSection.tsx
 #: src/modules/settings/hooks/useSettingsNavigationItems.tsx
 #: src/modules/settings/security/components/SettingsSecuritySettings.tsx
+#: src/modules/shift/components/CancelShiftModal.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
 #: src/modules/side-panel/pages/workflow/action/components/SidePanelWorkflowSelectAction.tsx
 #: src/pages/settings/admin-panel/SettingsAdmin.tsx
 #: src/pages/settings/admin-panel/SettingsAdminAiProviderDetail.tsx
@@ -13834,6 +14057,11 @@ msgstr ""
 #. js-lingui-id: in6CUw
 #: src/modules/workflow/components/OverrideWorkflowDraftConfirmationModal.tsx
 msgid "Override Draft"
+msgstr ""
+
+#. js-lingui-id: /tQto0
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Overtime hours"
 msgstr ""
 
 #. js-lingui-id: 6/dCYd
@@ -14141,6 +14369,12 @@ msgstr ""
 msgid "Person created"
 msgstr ""
 
+#. js-lingui-id: 7MuXko
+#: src/modules/shift/components/CancelShiftModal.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Personal"
+msgstr ""
+
 #. js-lingui-id: zmwvG2
 #: src/modules/object-record/record-field/ui/meta-types/input/components/PhonesFieldInput.tsx
 msgid "Phone"
@@ -14441,6 +14675,11 @@ msgstr ""
 #. js-lingui-id: KaMwgJ
 #: src/modules/object-record/record-calendar/components/RecordCalendarTopBar.tsx
 msgid "Previous period"
+msgstr ""
+
+#. js-lingui-id: mmShHA
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Previous week"
 msgstr ""
 
 #. js-lingui-id: aHCEmh
@@ -14760,6 +14999,7 @@ msgstr ""
 #: src/modules/settings/unsubscribers/components/filter-dropdown/SettingsUnsubscribersFilterDropdown.tsx
 #: src/modules/settings/unsubscribers/components/filter-dropdown/SettingsUnsubscribersFilterMenuContent.tsx
 #: src/modules/settings/unsubscribers/components/SettingsUnsubscribersList.tsx
+#: src/modules/shift/components/CancelShiftModal.tsx
 msgid "Reason"
 msgstr ""
 
@@ -14996,14 +15236,57 @@ msgstr ""
 msgid "Region where inference data is processed (optional)"
 msgstr ""
 
+#. js-lingui-id: fgLNSM
+#: src/modules/shift/components/ShiftTopBar.tsx
+msgid "Register"
+msgstr ""
+
+#. js-lingui-id: WfA6eF
+#. placeholder {0}: template.code
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+msgid "Register {0} on {day}"
+msgstr ""
+
+#. js-lingui-id: Jolhg7
+#. placeholder {0}: registration.selectedCount
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Register {0} shifts"
+msgstr ""
+
 #. js-lingui-id: E1qk3l
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Register as development instance"
 msgstr ""
 
+#. js-lingui-id: uGI3Dv
+#: src/pages/shift/ShiftPage.tsx
+msgid "Register shifts"
+msgstr ""
+
+#. js-lingui-id: EUqVdC
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Register shifts — week of {fromDate} → {toDate}"
+msgstr ""
+
+#. js-lingui-id: Flcla5
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Registered {successCount} shift(s)."
+msgstr ""
+
 #. js-lingui-id: ARGZDy
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Registered as a development instance. This instance will not be billed."
+msgstr ""
+
+#. js-lingui-id: inyTQg
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+#: src/pages/shift/ShiftPage.tsx
+msgid "Registered hours"
+msgstr ""
+
+#. js-lingui-id: RIROqE
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Registered shifts"
 msgstr ""
 
 #. js-lingui-id: h9AYFD
@@ -15279,6 +15562,11 @@ msgstr ""
 msgid "Reply..."
 msgstr ""
 
+#. js-lingui-id: gjpdaf
+#: src/modules/shift/components/ShiftTopBar.tsx
+msgid "Report"
+msgstr ""
+
 #. js-lingui-id: Q3LOVJ
 #: src/modules/settings/applications/components/SettingsApplicationAboutSidebar.tsx
 msgid "Report an issue"
@@ -15456,6 +15744,9 @@ msgstr ""
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminRetryJobsConfirmationModal.tsx
 #: src/pages/onboarding/PaymentSuccess.tsx
 #: src/pages/onboarding/WorkspaceActivation.tsx
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+#: src/pages/shift/ShiftReportPage.tsx
 msgid "Retry"
 msgstr ""
 
@@ -15700,6 +15991,12 @@ msgstr ""
 #. js-lingui-id: 3hNFUc
 #: src/modules/settings/logic-functions/components/triggers/SettingsLogicFunctionTriggerPayloadFormat.tsx
 msgid "Sample input"
+msgstr ""
+
+#. js-lingui-id: PiK6Ld
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Sat"
 msgstr ""
 
 #. js-lingui-id: +5kO8P
@@ -16752,6 +17049,29 @@ msgstr ""
 msgid "Sharing link copied to clipboard"
 msgstr ""
 
+#. js-lingui-id: PGetcZ
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Shift"
+msgstr ""
+
+#. js-lingui-id: JMO/Cg
+#: src/pages/shift/ShiftPage.tsx
+msgid "Shift cancelled."
+msgstr ""
+
+#. js-lingui-id: 8i4q8K
+#: src/modules/shift/components/CancelShiftModal.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Shift swap"
+msgstr ""
+
+#. js-lingui-id: 67b7X4
+#: src/modules/shift/components/ShiftRegisterSummary.tsx
+#: src/modules/shift/components/ShiftTopBar.tsx
+msgid "Shifts"
+msgstr ""
+
 #. js-lingui-id: RRXpo1
 #: src/modules/settings/data-model/fields/forms/number/constants/NumberDataModelSelectOptions.ts
 #: src/modules/side-panel/pages/page-layout/utils/getChartNumberFormatLabel.ts
@@ -16823,6 +17143,12 @@ msgstr ""
 #. js-lingui-id: TJ4tz9
 #: src/modules/side-panel/pages/page-layout/constants/settings/ChartConfigurationSettingLabels.ts
 msgid "Show value in center"
+msgstr ""
+
+#. js-lingui-id: ytDjh1
+#: src/modules/shift/components/CancelShiftModal.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Sick leave"
 msgstr ""
 
 #. js-lingui-id: uVg8dY
@@ -17064,6 +17390,11 @@ msgstr ""
 msgid "Some log data was dropped to fit the size limit ({0} entries, {1} bytes)."
 msgstr ""
 
+#. js-lingui-id: PmZ8VL
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Some shifts weren't registered"
+msgstr ""
+
 #. js-lingui-id: nwtY4N
 #: src/pages/auth/Authorize.tsx
 msgid "Something went wrong"
@@ -17286,6 +17617,7 @@ msgstr ""
 #: src/modules/settings/admin-panel/components/SettingsAdminWorkspaceContent.tsx
 #: src/modules/settings/admin-panel/signing-keys/components/SettingsAdminSigningKeysTable.tsx
 #: src/modules/settings/components/SettingsDnsRecordsTable.tsx
+#: src/modules/shift/components/ShiftReportTable.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationClaims.tsx
 #: src/pages/settings/admin-panel/SettingsAdminIndicatorHealthStatus.tsx
 #: src/pages/settings/admin-panel/SettingsAdminInstanceStatus.tsx
@@ -17540,6 +17872,12 @@ msgstr ""
 #: src/modules/object-record/record-board/record-board-column/utils/getAggregateOperationLabel.ts
 #: src/modules/object-record/record-board/record-board-column/utils/getAggregateOperationShortLabel.ts
 msgid "Sum"
+msgstr ""
+
+#. js-lingui-id: D89zck
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Sun"
 msgstr ""
 
 #. js-lingui-id: DBC3t5
@@ -18331,6 +18669,11 @@ msgstr ""
 msgid "This setting can only be configured through environment variables."
 msgstr ""
 
+#. js-lingui-id: ujSX5m
+#: src/modules/shift/components/CancelShiftModal.tsx
+msgid "This shift is in progress."
+msgstr ""
+
 #. js-lingui-id: iAubP2
 #: src/modules/settings/admin-panel/config-variables/components/ConfigVariableHelpText.tsx
 msgid "This should never happen"
@@ -18361,6 +18704,7 @@ msgstr ""
 
 #. js-lingui-id: yByRxz
 #: src/modules/settings/admin-panel/health-status/constants/WorkerQueueMetricsSelectOptions.ts
+#: src/modules/shift/components/ShiftRegisterSummary.tsx
 msgid "This week"
 msgstr ""
 
@@ -18432,6 +18776,12 @@ msgstr ""
 msgid "Thought"
 msgstr ""
 
+#. js-lingui-id: +FjWgX
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Thu"
+msgstr ""
+
 #. js-lingui-id: Vqn9Z1
 #: src/modules/workflow/workflow-diagram/components/WorkflowDiagramRightClickCommandMenu.tsx
 msgid "Tidy up workflow"
@@ -18442,6 +18792,11 @@ msgstr ""
 #: src/modules/settings/profile/components/NameFields.tsx
 #: src/pages/onboarding/CreateProfile.tsx
 msgid "Tim"
+msgstr ""
+
+#. js-lingui-id: LhMjLm
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Time"
 msgstr ""
 
 #. js-lingui-id: n9nSNJ
@@ -18517,6 +18872,8 @@ msgstr ""
 #: src/modules/localization/utils/formatDateISOStringToRelativeDate.ts
 #: src/modules/object-record/record-calendar/components/RecordCalendarTopBar.tsx
 #: src/modules/settings/admin-panel/health-status/constants/WorkerQueueMetricsSelectOptions.ts
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
 #: src/utils/date-utils.ts
 msgid "Today"
 msgstr ""
@@ -18675,6 +19032,11 @@ msgstr ""
 msgid "Total time"
 msgstr ""
 
+#. js-lingui-id: hIcwnM
+#: src/modules/shift/components/ShiftReportStatCards.tsx
+msgid "Total working hours"
+msgstr ""
+
 #. js-lingui-id: BxecEJ
 #: src/pages/settings/ai/components/SettingsAiUsageTab.tsx
 #: src/pages/settings/ai/components/SettingsAiUsageTab.tsx
@@ -18826,6 +19188,12 @@ msgstr ""
 #. js-lingui-id: ouRvqq
 #: src/modules/settings/components/SettingsDnsRecordsTable.tsx
 msgid "TTL"
+msgstr ""
+
+#. js-lingui-id: vq2WxD
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Tue"
 msgstr ""
 
 #. js-lingui-id: Kz91g/
@@ -19310,6 +19678,13 @@ msgstr ""
 #. js-lingui-id: j5CWO4
 #: src/modules/settings/admin-panel/utils/getUpgradeHealthStatusBadge.ts
 msgid "Up to date"
+msgstr ""
+
+#. js-lingui-id: ia8YsC
+#: src/modules/shift/components/ShiftReportTable.tsx
+#: src/modules/shift/components/ShiftTodayPanel.tsx
+#: src/modules/shift/components/ShiftWeekList.tsx
+msgid "Upcoming"
 msgstr ""
 
 #. js-lingui-id: hmc//6
@@ -19903,6 +20278,11 @@ msgstr ""
 msgid "Verify the code from the app"
 msgstr ""
 
+#. js-lingui-id: UTq4PN
+#: src/pages/shift/ShiftReportPage.tsx
+msgid "Verify totals and send to PO at month end"
+msgstr ""
+
 #. js-lingui-id: PMxbkM
 #: src/modules/onboarding/constants/OnboardingActivationMessages.tsx
 msgid "Verifying your <0>login token</0>"
@@ -20372,6 +20752,12 @@ msgstr ""
 msgid "Website"
 msgstr ""
 
+#. js-lingui-id: 0f7U0k
+#: src/pages/shift/ShiftPage.tsx
+#: src/pages/shift/ShiftRegisterPage.tsx
+msgid "Wed"
+msgstr ""
+
 #. js-lingui-id: zx4BuL
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCalendarViewContent.tsx
 #: src/modules/object-record/object-options-dropdown/components/ObjectOptionsDropdownCustomView.tsx
@@ -20382,6 +20768,18 @@ msgstr ""
 #: src/modules/side-panel/pages/page-layout/components/record-table-settings/WidgetViewLayoutSettingsRows.tsx
 #: src/modules/side-panel/pages/page-layout/utils/getDateGranularityLabel.ts
 msgid "Week"
+msgstr ""
+
+#. js-lingui-id: W9XAF4
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+#: src/modules/shift/components/ShiftRegisterSummary.tsx
+msgid "Weekday"
+msgstr ""
+
+#. js-lingui-id: WDFABq
+#: src/modules/shift/components/ShiftRegisterGrid.tsx
+#: src/modules/shift/components/ShiftRegisterSummary.tsx
+msgid "Weekend"
 msgstr ""
 
 #. js-lingui-id: IAUiSh
@@ -20560,6 +20958,11 @@ msgstr ""
 #: src/modules/settings/billing/constants/SettingsBillingPlanComparisonRows.ts
 #: src/modules/settings/roles/role-permissions/permission-flags/hooks/useSettingsRolePermissionFlagConfig.ts
 msgid "Workflows"
+msgstr ""
+
+#. js-lingui-id: zBOlTP
+#: src/modules/shift/components/ShiftReportTable.tsx
+msgid "Working hours"
 msgstr ""
 
 #. js-lingui-id: pmUArF

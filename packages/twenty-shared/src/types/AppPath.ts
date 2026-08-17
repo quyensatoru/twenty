@@ -31,6 +31,11 @@ export enum AppPath {
   TaskManagerRoadmapPage = '/task/roadmap',
   TaskManagerIssuePage = '/task/issue/:issueId',
 
+  ShiftPage = '/shift',
+  ShiftRegisterPage = '/shift/register',
+  ShiftReportPage = '/shift/report',
+  ShiftAnalyticsPage = '/shift/analytics',
+
   Settings = `settings`,
   SettingsCatchAll = `/${Settings}/*`,
   Developers = `developers`,

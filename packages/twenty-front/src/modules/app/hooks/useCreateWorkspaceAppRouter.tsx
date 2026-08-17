@@ -135,6 +135,30 @@ const TaskManagerIssuePage = lazy(() =>
   })),
 );
 
+const ShiftPage = lazy(() =>
+  import('~/pages/shift/ShiftPage').then((module) => ({
+    default: module.ShiftPage,
+  })),
+);
+
+const ShiftRegisterPage = lazy(() =>
+  import('~/pages/shift/ShiftRegisterPage').then((module) => ({
+    default: module.ShiftRegisterPage,
+  })),
+);
+
+const ShiftReportPage = lazy(() =>
+  import('~/pages/shift/ShiftReportPage').then((module) => ({
+    default: module.ShiftReportPage,
+  })),
+);
+
+const ShiftAnalyticsPage = lazy(() =>
+  import('~/pages/shift/ShiftAnalyticsPage').then((module) => ({
+    default: module.ShiftAnalyticsPage,
+  })),
+);
+
 const WorkspaceSetup = lazyWithPreload(() =>
   import('~/pages/onboarding/WorkspaceSetup').then((module) => ({
     default: module.WorkspaceSetup,
@@ -237,6 +261,38 @@ const createWorkspaceAppRouter = (
                 element={
                   <LazyRoute>
                     <TaskManagerIssuePage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.ShiftPage}
+                element={
+                  <LazyRoute>
+                    <ShiftPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.ShiftRegisterPage}
+                element={
+                  <LazyRoute>
+                    <ShiftRegisterPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.ShiftReportPage}
+                element={
+                  <LazyRoute>
+                    <ShiftReportPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path={AppPath.ShiftAnalyticsPage}
+                element={
+                  <LazyRoute>
+                    <ShiftAnalyticsPage />
                   </LazyRoute>
                 }
               />

@@ -1,6 +1,8 @@
 import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 import { FieldMetadataType, RelationType } from 'twenty-shared/types';
 
+import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
+import { isFlatFieldMetadataOfType } from 'src/engine/metadata-modules/flat-field-metadata/utils/is-flat-field-metadata-of-type.util';
 import { computeTwentyStandardApplicationAllFlatEntityMaps } from 'src/engine/workspace-manager/twenty-standard-application/utils/twenty-standard-application-all-flat-entity-maps.constant';
 
 const WORKSPACE_ID = '20202020-1111-4111-8111-111111111111';
@@ -64,10 +66,16 @@ describe('TimelineActivity <-> Issue/Epic activity targets', () => {
       STANDARD_OBJECTS.epic.fields.timelineActivities.universalIdentifier,
     );
 
-    expect(issueTimelineActivities?.settings?.relationType).toBe(
+    // relationType only exists on RELATION settings, so narrow before reading
+    const relationTypeOf = (field: FlatFieldMetadata | undefined) =>
+      field && isFlatFieldMetadataOfType(field, FieldMetadataType.RELATION)
+        ? field.settings.relationType
+        : undefined;
+
+    expect(relationTypeOf(issueTimelineActivities)).toBe(
       RelationType.ONE_TO_MANY,
     );
-    expect(epicTimelineActivities?.settings?.relationType).toBe(
+    expect(relationTypeOf(epicTimelineActivities)).toBe(
       RelationType.ONE_TO_MANY,
     );
   });

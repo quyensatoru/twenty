@@ -31,6 +31,9 @@ import { buildIssueCommentStandardFlatFieldMetadatas } from 'src/engine/workspac
 import { buildIssueMerchantStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-merchant-standard-flat-field-metadata.util';
 import { buildIssueStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-standard-flat-field-metadata.util';
 import { buildIssueStatusStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-issue-status-standard-flat-field-metadata.util';
+import { buildShiftStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-shift-standard-flat-field-metadata.util';
+import { buildShiftTemplateStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-shift-template-standard-flat-field-metadata.util';
+import { buildSpecialDayStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-special-day-standard-flat-field-metadata.util';
 import { buildWorklogStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-worklog-standard-flat-field-metadata.util';
 import { buildOpportunityStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-opportunity-standard-flat-field-metadata.util';
 import { buildPersonStandardFlatFieldMetadatas } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/compute-person-standard-flat-field-metadata.util';
@@ -81,6 +84,9 @@ const STANDARD_FLAT_FIELD_METADATA_BUILDERS_BY_OBJECT_NAME = {
   issueComment: buildIssueCommentStandardFlatFieldMetadatas,
   issueMerchant: buildIssueMerchantStandardFlatFieldMetadatas,
   worklog: buildWorklogStandardFlatFieldMetadatas,
+  shiftTemplate: buildShiftTemplateStandardFlatFieldMetadatas,
+  specialDay: buildSpecialDayStandardFlatFieldMetadatas,
+  shift: buildShiftStandardFlatFieldMetadatas,
   person: buildPersonStandardFlatFieldMetadatas,
   project: buildProjectStandardFlatFieldMetadatas,
   merchant: buildMerchantStandardFlatFieldMetadatas,

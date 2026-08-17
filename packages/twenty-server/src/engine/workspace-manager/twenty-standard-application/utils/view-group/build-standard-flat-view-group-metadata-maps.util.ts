@@ -16,6 +16,12 @@ const STANDARD_FLAT_VIEW_GROUP_METADATA_BUILDERS_BY_OBJECT_NAME = {
   opportunity: computeStandardOpportunityViewGroups,
   issue: computeStandardIssueViewGroups,
   task: computeStandardTaskViewGroups,
+  // shiftTemplate has no Kanban view, so no view groups
+  shiftTemplate: () => ({}),
+  // specialDay has no Kanban view, so no view groups
+  specialDay: () => ({}),
+  // shift has no Kanban view, so no view groups
+  shift: () => ({}),
 } as const satisfies {
   [P in AllStandardObjectName]?: StandardViewGroupBuilder<P>;
 };

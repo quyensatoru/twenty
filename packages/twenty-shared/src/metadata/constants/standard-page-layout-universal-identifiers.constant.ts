@@ -724,6 +724,45 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
       },
     },
   },
+  shiftTemplateRecordPage: {
+    universalIdentifier: '93448a17-a03a-4de2-9174-d0f811ee83f7',
+    tabs: {
+      home: {
+        universalIdentifier: 'b2ca63c9-df6f-4744-bd18-7f131a24cd7a',
+        widgets: {
+          fields: {
+            universalIdentifier: 'ad0bdb63-f170-4fdb-885f-a5f317829f68',
+          },
+        },
+      },
+    },
+  },
+  specialDayRecordPage: {
+    universalIdentifier: 'd5ee38ca-a2fe-408e-b71d-6673d48dd74b',
+    tabs: {
+      home: {
+        universalIdentifier: '71698c40-9e46-4bc6-a782-1b9b6dee3f15',
+        widgets: {
+          fields: {
+            universalIdentifier: '7e7a231c-74ca-46d4-9332-fbad34d229ef',
+          },
+        },
+      },
+    },
+  },
+  shiftRecordPage: {
+    universalIdentifier: '7bcd575f-feb9-43a3-b492-33333a734cf5',
+    tabs: {
+      home: {
+        universalIdentifier: '7fccd49a-53e4-4cf8-936e-0d11bdd78220',
+        widgets: {
+          fields: {
+            universalIdentifier: '1af603c5-71a4-42bc-b057-0e94309cab48',
+          },
+        },
+      },
+    },
+  },
   merchantRecordPage: {
     universalIdentifier: '41a5a300-b048-4aba-8709-b45cc2c394d7',
     tabs: {

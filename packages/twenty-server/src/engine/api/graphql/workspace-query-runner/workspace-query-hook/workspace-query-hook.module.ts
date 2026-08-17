@@ -16,6 +16,7 @@ import { IssueQueryHookModule } from 'src/modules/issue/query-hooks/issue-query-
 import { MessagingQueryHookModule } from 'src/modules/messaging/common/query-hooks/messaging-query-hook.module';
 import { NoteQueryHookModule } from 'src/modules/note/query-hooks/note-query-hook.module';
 import { ProjectQueryHookModule } from 'src/modules/project/query-hooks/project-query-hook.module';
+import { ShiftQueryHookModule } from 'src/modules/shift/query-hooks/shift-query-hook.module';
 import { SprintQueryHookModule } from 'src/modules/sprint/query-hooks/sprint-query-hook.module';
 import { TaskQueryHookModule } from 'src/modules/task/query-hooks/task-query-hook.module';
 import { WorklogQueryHookModule } from 'src/modules/worklog/query-hooks/worklog-query-hook.module';
@@ -32,6 +33,7 @@ import { WorkspaceMemberQueryHookModule } from 'src/modules/workspace-member/que
     TaskQueryHookModule,
     IssueQueryHookModule,
     WorklogQueryHookModule,
+    ShiftQueryHookModule,
     ProjectQueryHookModule,
     SprintQueryHookModule,
     EpicQueryHookModule,

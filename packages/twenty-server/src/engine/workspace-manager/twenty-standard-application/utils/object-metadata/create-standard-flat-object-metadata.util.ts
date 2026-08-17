@@ -899,6 +899,93 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
       twentyStandardApplicationId,
       now,
     }),
+  shiftTemplate: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<
+    CreateStandardObjectArgs<'shiftTemplate'>,
+    'context' | 'objectName'
+  >) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'shiftTemplate',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.shiftTemplate.universalIdentifier,
+        nameSingular: 'shiftTemplate',
+        namePlural: 'shiftTemplates',
+        labelSingular: i18nLabel(msg`Shift Template`),
+        labelPlural: i18nLabel(msg`Shift Templates`),
+        description: i18nLabel(
+          msg`A reusable shift definition (code, time window, OT kind)`,
+        ),
+        icon: 'IconClockCog',
+        isSearchable: true,
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
+  specialDay: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<CreateStandardObjectArgs<'specialDay'>, 'context' | 'objectName'>) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'specialDay',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.specialDay.universalIdentifier,
+        nameSingular: 'specialDay',
+        namePlural: 'specialDays',
+        labelSingular: i18nLabel(msg`Special Day`),
+        labelPlural: i18nLabel(msg`Special Days`),
+        description: i18nLabel(
+          msg`A holiday or special date with an OT pay multiplier`,
+        ),
+        icon: 'IconCalendarStar',
+        isSearchable: true,
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
+  shift: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<CreateStandardObjectArgs<'shift'>, 'context' | 'objectName'>) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'shift',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier: STANDARD_OBJECTS.shift.universalIdentifier,
+        nameSingular: 'shift',
+        namePlural: 'shifts',
+        labelSingular: i18nLabel(msg`Shift`),
+        labelPlural: i18nLabel(msg`Shifts`),
+        description: i18nLabel(
+          msg`One member's registration + attendance for one shift template on one date`,
+        ),
+        icon: 'IconCalendarClock',
+        isSearchable: true,
+        labelIdentifierFieldMetadataName: 'name',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
   task: ({
     now,
     workspaceId,

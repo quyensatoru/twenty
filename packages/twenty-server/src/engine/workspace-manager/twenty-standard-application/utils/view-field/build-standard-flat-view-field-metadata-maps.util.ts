@@ -27,6 +27,9 @@ import { computeStandardNoteViewFields } from 'src/engine/workspace-manager/twen
 import { computeStandardIssueCommentViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-issue-comment-view-fields.util';
 import { computeStandardIssueViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-issue-view-fields.util';
 import { computeStandardIssueStatusViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-issue-status-view-fields.util';
+import { computeStandardShiftViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-shift-view-fields.util';
+import { computeStandardShiftTemplateViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-shift-template-view-fields.util';
+import { computeStandardSpecialDayViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-special-day-view-fields.util';
 import { computeStandardWorklogViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-worklog-view-fields.util';
 import { computeStandardOpportunityViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-opportunity-view-fields.util';
 import { computeStandardPersonViewFields } from 'src/engine/workspace-manager/twenty-standard-application/utils/view-field/compute-standard-person-view-fields.util';
@@ -74,6 +77,9 @@ const STANDARD_FLAT_VIEW_FIELD_METADATA_BUILDERS_BY_OBJECT_NAME = {
   issueStatus: computeStandardIssueStatusViewFields,
   issueComment: computeStandardIssueCommentViewFields,
   worklog: computeStandardWorklogViewFields,
+  shiftTemplate: computeStandardShiftTemplateViewFields,
+  specialDay: computeStandardSpecialDayViewFields,
+  shift: computeStandardShiftViewFields,
   person: computeStandardPersonViewFields,
   project: computeStandardProjectViewFields,
   merchant: computeStandardMerchantViewFields,
