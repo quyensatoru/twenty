@@ -175,20 +175,6 @@ const StyledMemberName = styled.span<{ isOwn: boolean }>`
   white-space: nowrap;
 `;
 
-// First name saves horizontal room in the cell; fall back to the full name when
-// there is no space to split on.
-const getMemberDisplayName = (memberName: string | null): string | null => {
-  if (!isDefined(memberName)) {
-    return null;
-  }
-
-  const [firstToken] = memberName.trim().split(/\s+/);
-
-  return isDefined(firstToken) && firstToken.length > 0
-    ? firstToken
-    : memberName;
-};
-
 type ShiftRegisterMonthCalendarProps = {
   weeks: (string | null)[][];
   today: string;
@@ -267,9 +253,9 @@ export const ShiftRegisterMonthCalendar = ({
                       const isOwn =
                         isDefined(currentMemberId) &&
                         entry.memberId === currentMemberId;
-                      const displayName = getMemberDisplayName(
-                        entry.memberName,
-                      );
+                      // Full name (firstName + lastName) from the roster service;
+                      // the cell ellipsizes when narrow and the title shows it whole.
+                      const displayName = entry.memberName;
                       const hasWindow =
                         isDefined(entry.startTime) && isDefined(entry.endTime);
 
@@ -290,7 +276,10 @@ export const ShiftRegisterMonthCalendar = ({
                               {entry.templateCode ?? template?.code ?? '?'}
                             </StyledCodeChip>
                             {isDefined(displayName) && (
-                              <StyledMemberName isOwn={isOwn}>
+                              <StyledMemberName
+                                isOwn={isOwn}
+                                title={displayName}
+                              >
                                 {displayName}
                               </StyledMemberName>
                             )}
