@@ -387,6 +387,10 @@ export type Query = {
   getTimelineThreadsFromPersonId: TimelineThreadsWithTotal;
   isMaintenanceModeBannerDismissed: Scalars['Boolean']['output'];
   search: SearchResultConnection;
+  /** Team shift handover notes (COMPLETED shifts with a note) for a date range. */
+  shiftHandovers: Array<ShiftHandoverEntry>;
+  /** Team shift roster (safe coverage fields) for a date range. */
+  shiftRoster: Array<ShiftRosterEntry>;
   workflowStepConnectedAccountHandle?: Maybe<ConnectedAccountHandleDto>;
 };
 
@@ -459,6 +463,18 @@ export type QuerySearchArgs = {
 };
 
 
+export type QueryShiftHandoversArgs = {
+  fromDate: Scalars['String']['input'];
+  toDate: Scalars['String']['input'];
+};
+
+
+export type QueryShiftRosterArgs = {
+  fromDate: Scalars['String']['input'];
+  toDate: Scalars['String']['input'];
+};
+
+
 export type QueryWorkflowStepConnectedAccountHandleArgs = {
   connectedAccountId: Scalars['UUID']['input'];
 };
@@ -504,6 +520,32 @@ export type SearchResultPageInfo = {
   __typename?: 'SearchResultPageInfo';
   endCursor?: Maybe<Scalars['String']['output']>;
   hasNextPage: Scalars['Boolean']['output'];
+};
+
+export type ShiftHandoverEntry = {
+  __typename?: 'ShiftHandoverEntry';
+  date: Scalars['String']['output'];
+  endTime?: Maybe<Scalars['String']['output']>;
+  handoverNote: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  memberName?: Maybe<Scalars['String']['output']>;
+  startTime?: Maybe<Scalars['String']['output']>;
+  templateCode?: Maybe<Scalars['String']['output']>;
+  templateName?: Maybe<Scalars['String']['output']>;
+};
+
+export type ShiftRosterEntry = {
+  __typename?: 'ShiftRosterEntry';
+  date: Scalars['String']['output'];
+  endTime?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  memberId?: Maybe<Scalars['String']['output']>;
+  memberName?: Maybe<Scalars['String']['output']>;
+  shiftTemplateId?: Maybe<Scalars['String']['output']>;
+  startTime?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  templateCode?: Maybe<Scalars['String']['output']>;
+  templateName?: Maybe<Scalars['String']['output']>;
 };
 
 export type SubmitFormStepInput = {
