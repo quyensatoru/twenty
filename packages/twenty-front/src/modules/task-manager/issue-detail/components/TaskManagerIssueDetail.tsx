@@ -133,8 +133,12 @@ const StyledDescriptionBox = styled.div`
   border-radius: ${themeCssVariables.border.radius.sm};
   padding: ${themeCssVariables.spacing['2']} ${themeCssVariables.spacing['3']};
   transition:
-    background-color ${themeCssVariables.animation.duration.fast},
-    border-color ${themeCssVariables.animation.duration.fast};
+    background-color calc(${themeCssVariables.animation.duration.fast} * 1s),
+    border-color calc(${themeCssVariables.animation.duration.fast} * 1s);
+
+  & .editor {
+    min-height: ${themeCssVariables.spacing['6']};
+  }
 
   &:hover {
     background-color: ${themeCssVariables.background.transparent.light};

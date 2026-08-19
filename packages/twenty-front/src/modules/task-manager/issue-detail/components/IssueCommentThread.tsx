@@ -68,7 +68,20 @@ const StyledComment = styled.div<{ isFocused?: boolean }>`
   flex-direction: column;
   gap: ${themeCssVariables.spacing['1']};
   padding: ${themeCssVariables.spacing['1']};
-  transition: background-color ${themeCssVariables.animation.duration.slow};
+  position: relative;
+  transition: background-color
+    calc(${themeCssVariables.animation.duration.slow} * 1s);
+
+  .displayOnHover {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity calc(${themeCssVariables.animation.duration.fast} * 1s);
+  }
+
+  &:hover .displayOnHover {
+    opacity: 1;
+    pointer-events: auto;
+  }
 `;
 
 const StyledReplies = styled.div`
@@ -76,6 +89,53 @@ const StyledReplies = styled.div`
   flex-direction: column;
   gap: ${themeCssVariables.spacing['2']};
   margin-left: ${themeCssVariables.spacing['8']};
+`;
+
+// Thread line dropping from under the author avatar (spacing[1] padding +
+// 24px avatar) into the replies block, where each reply's elbow picks it up.
+const StyledParentComment = styled.div<{ hasReplies: boolean }>`
+  position: relative;
+
+  &::before {
+    border-left: 1px solid
+      ${({ hasReplies }) =>
+        hasReplies ? themeCssVariables.border.color.medium : 'transparent'};
+    bottom: calc(-1 * ${themeCssVariables.spacing['2']});
+    content: '';
+    left: ${themeCssVariables.spacing['4']};
+    position: absolute;
+    top: ${themeCssVariables.spacing['7']};
+  }
+`;
+
+// ::before is the elbow curving into this reply's avatar, ::after continues
+// the vertical line down to the next reply — so the line stops at the last
+// reply instead of running past it.
+const StyledReply = styled.div`
+  position: relative;
+
+  &::before {
+    border-bottom: 1px solid ${themeCssVariables.border.color.medium};
+    border-bottom-left-radius: ${themeCssVariables.border.radius.md};
+    border-left: 1px solid ${themeCssVariables.border.color.medium};
+    content: '';
+    height: calc(
+      ${themeCssVariables.spacing['2']} + ${themeCssVariables.spacing['4']}
+    );
+    left: calc(-1 * ${themeCssVariables.spacing['4']});
+    position: absolute;
+    top: calc(-1 * ${themeCssVariables.spacing['2']});
+    width: ${themeCssVariables.spacing['5']};
+  }
+
+  &:not(:last-child)::after {
+    border-left: 1px solid ${themeCssVariables.border.color.medium};
+    bottom: calc(-1 * ${themeCssVariables.spacing['2']});
+    content: '';
+    left: calc(-1 * ${themeCssVariables.spacing['4']});
+    position: absolute;
+    top: ${themeCssVariables.spacing['4']};
+  }
 `;
 
 const StyledReplyComposer = styled.div`
@@ -112,11 +172,22 @@ const StyledCommentDate = styled.span`
   font-size: ${themeCssVariables.font.size.sm};
 `;
 
+// Floating column pinned to the comment's top-right corner instead of a row
+// in the header, so the action stack stays put no matter how long the author
+// name and date get.
 const StyledCommentActions = styled.div`
   align-items: center;
+  background: ${themeCssVariables.background.primary};
+  border: 1px solid ${themeCssVariables.border.color.light};
+  border-radius: ${themeCssVariables.border.radius.md};
+  box-shadow: ${themeCssVariables.boxShadow.light};
   display: flex;
+  flex-direction: column;
   gap: ${themeCssVariables.spacing['1']};
-  margin-left: auto;
+  padding: ${themeCssVariables.spacing['1']};
+  position: absolute;
+  right: ${themeCssVariables.spacing['1']};
+  top: ${themeCssVariables.spacing['1']};
 `;
 
 // display:flex so this hugs the avatar's own size instead of stretching as
@@ -540,9 +611,8 @@ const CommentRow = ({
           <StyledCommentDate>
             {new Date(comment.createdAt).toLocaleString()}
           </StyledCommentDate>
-          <StyledCommentActions>
+          <StyledCommentActions className="displayOnHover">
             <LightIconButton
-              className="displayOnHover"
               Icon={IconLink}
               accent="tertiary"
               title={t`Copy link`}
@@ -550,7 +620,6 @@ const CommentRow = ({
             />
             {isDefined(onReply) && (
               <LightIconButton
-                className="displayOnHover"
                 Icon={IconArrowBackUp}
                 accent="tertiary"
                 title={t`Reply`}
@@ -562,11 +631,7 @@ const CommentRow = ({
                 dropdownId={dropdownId}
                 dropdownPlacement="bottom-end"
                 clickableComponent={
-                  <LightIconButton
-                    className="displayOnHover"
-                    Icon={IconDotsVertical}
-                    accent="tertiary"
-                  />
+                  <LightIconButton Icon={IconDotsVertical} accent="tertiary" />
                 }
                 dropdownComponents={
                   <DropdownContent>
@@ -633,33 +698,45 @@ export const IssueCommentThread = ({
 
   return (
     <StyledContainer>
+      <CommentComposer
+        issueId={issueId}
+        focusId={`comment-new-${issueId}`}
+        placeholder={t`Write a comment...`}
+        submitLabel={t`Comment`}
+        onSubmit={(blocknote) =>
+          postComment(blocknote, currentWorkspaceMember?.id)
+        }
+      />
       {comments.map((comment) => (
         <StyledThread key={comment.id}>
-          <CommentRow
-            issueId={issueId}
-            comment={comment}
-            currentWorkspaceMemberId={currentWorkspaceMember?.id}
-            onUpdate={updateComment}
-            onDelete={deleteComment}
-            isFocused={comment.id === focusedCommentId}
-            onReply={() =>
-              setReplyingToId((current) =>
-                current === comment.id ? null : comment.id,
-              )
-            }
-          />
+          <StyledParentComment hasReplies={comment.replies.length > 0}>
+            <CommentRow
+              issueId={issueId}
+              comment={comment}
+              currentWorkspaceMemberId={currentWorkspaceMember?.id}
+              onUpdate={updateComment}
+              onDelete={deleteComment}
+              isFocused={comment.id === focusedCommentId}
+              onReply={() =>
+                setReplyingToId((current) =>
+                  current === comment.id ? null : comment.id,
+                )
+              }
+            />
+          </StyledParentComment>
           {comment.replies.length > 0 && (
             <StyledReplies>
               {comment.replies.map((reply) => (
-                <CommentRow
-                  key={reply.id}
-                  issueId={issueId}
-                  comment={reply}
-                  currentWorkspaceMemberId={currentWorkspaceMember?.id}
-                  onUpdate={updateComment}
-                  onDelete={deleteComment}
-                  isFocused={reply.id === focusedCommentId}
-                />
+                <StyledReply key={reply.id}>
+                  <CommentRow
+                    issueId={issueId}
+                    comment={reply}
+                    currentWorkspaceMemberId={currentWorkspaceMember?.id}
+                    onUpdate={updateComment}
+                    onDelete={deleteComment}
+                    isFocused={reply.id === focusedCommentId}
+                  />
+                </StyledReply>
               ))}
             </StyledReplies>
           )}
@@ -683,15 +760,6 @@ export const IssueCommentThread = ({
           )}
         </StyledThread>
       ))}
-      <CommentComposer
-        issueId={issueId}
-        focusId={`comment-new-${issueId}`}
-        placeholder={t`Write a comment...`}
-        submitLabel={t`Comment`}
-        onSubmit={(blocknote) =>
-          postComment(blocknote, currentWorkspaceMember?.id)
-        }
-      />
     </StyledContainer>
   );
 };

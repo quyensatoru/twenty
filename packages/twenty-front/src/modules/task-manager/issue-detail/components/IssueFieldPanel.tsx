@@ -47,14 +47,6 @@ const StyledFieldList = styled.div`
   padding: 0 ${themeCssVariables.spacing['1']};
 `;
 
-const StyledFieldRow = styled.div`
-  border-radius: ${themeCssVariables.border.radius.sm};
-
-  &:hover {
-    background: ${themeCssVariables.background.transparent.light};
-  }
-`;
-
 type IssueFieldPanelProps = {
   recordId: string;
   objectMetadataItem: EnrichedObjectMetadataItem;
@@ -95,14 +87,13 @@ export const IssueFieldPanel = ({
       >
         <StyledFieldList>
           {visibleFieldMetadataItems.map((fieldMetadataItem) => (
-            <StyledFieldRow key={fieldMetadataItem.id}>
-              <TaskManagerFieldCell
-                recordId={recordId}
-                fieldMetadataItem={fieldMetadataItem}
-                objectMetadataItem={objectMetadataItem}
-                instanceIdPrefix={recordIndexId}
-              />
-            </StyledFieldRow>
+            <TaskManagerFieldCell
+              key={fieldMetadataItem.id}
+              recordId={recordId}
+              fieldMetadataItem={fieldMetadataItem}
+              objectMetadataItem={objectMetadataItem}
+              instanceIdPrefix={recordIndexId}
+            />
           ))}
         </StyledFieldList>
       </RecordFieldsScopeContextProvider>
