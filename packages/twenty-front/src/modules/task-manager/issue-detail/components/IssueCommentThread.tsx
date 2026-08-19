@@ -68,20 +68,8 @@ const StyledComment = styled.div<{ isFocused?: boolean }>`
   flex-direction: column;
   gap: ${themeCssVariables.spacing['1']};
   padding: ${themeCssVariables.spacing['1']};
-  position: relative;
   transition: background-color
     calc(${themeCssVariables.animation.duration.slow} * 1s);
-
-  .displayOnHover {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity calc(${themeCssVariables.animation.duration.fast} * 1s);
-  }
-
-  &:hover .displayOnHover {
-    opacity: 1;
-    pointer-events: auto;
-  }
 `;
 
 const StyledReplies = styled.div`
@@ -172,22 +160,13 @@ const StyledCommentDate = styled.span`
   font-size: ${themeCssVariables.font.size.sm};
 `;
 
-// Floating column pinned to the comment's top-right corner instead of a row
-// in the header, so the action stack stays put no matter how long the author
-// name and date get.
+// Action row sits under the message, aligned with the body's indent (avatar
+// width + the top row's gap) like Jira, not in the author/date header.
 const StyledCommentActions = styled.div`
   align-items: center;
-  background: ${themeCssVariables.background.primary};
-  border: 1px solid ${themeCssVariables.border.color.light};
-  border-radius: ${themeCssVariables.border.radius.md};
-  box-shadow: ${themeCssVariables.boxShadow.light};
   display: flex;
-  flex-direction: column;
   gap: ${themeCssVariables.spacing['1']};
-  padding: ${themeCssVariables.spacing['1']};
-  position: absolute;
-  right: ${themeCssVariables.spacing['1']};
-  top: ${themeCssVariables.spacing['1']};
+  margin-left: calc(24px + ${themeCssVariables.spacing['2']});
 `;
 
 // display:flex so this hugs the avatar's own size instead of stretching as
@@ -611,48 +590,6 @@ const CommentRow = ({
           <StyledCommentDate>
             {new Date(comment.createdAt).toLocaleString()}
           </StyledCommentDate>
-          <StyledCommentActions className="displayOnHover">
-            <LightIconButton
-              Icon={IconLink}
-              accent="tertiary"
-              title={t`Copy link`}
-              onClick={handleCopyCommentLink}
-            />
-            {isDefined(onReply) && (
-              <LightIconButton
-                Icon={IconArrowBackUp}
-                accent="tertiary"
-                title={t`Reply`}
-                onClick={onReply}
-              />
-            )}
-            {isAuthor && (
-              <Dropdown
-                dropdownId={dropdownId}
-                dropdownPlacement="bottom-end"
-                clickableComponent={
-                  <LightIconButton Icon={IconDotsVertical} accent="tertiary" />
-                }
-                dropdownComponents={
-                  <DropdownContent>
-                    <DropdownMenuItemsContainer>
-                      <MenuItem
-                        LeftIcon={IconPencil}
-                        text={t`Edit`}
-                        onClick={handleEdit}
-                      />
-                      <MenuItem
-                        LeftIcon={IconTrash}
-                        text={t`Delete`}
-                        accent="danger"
-                        onClick={handleDeleteClick}
-                      />
-                    </DropdownMenuItemsContainer>
-                  </DropdownContent>
-                }
-              />
-            )}
-          </StyledCommentActions>
         </StyledCommentHeader>
       </StyledCommentTopRow>
       <StyledCommentBody>
@@ -667,6 +604,48 @@ const CommentRow = ({
           <CommentBody blocknote={comment.bodyV2?.blocknote} />
         )}
       </StyledCommentBody>
+      <StyledCommentActions>
+        <LightIconButton
+          Icon={IconLink}
+          accent="tertiary"
+          title={t`Copy link`}
+          onClick={handleCopyCommentLink}
+        />
+        {isDefined(onReply) && (
+          <LightIconButton
+            Icon={IconArrowBackUp}
+            accent="tertiary"
+            title={t`Reply`}
+            onClick={onReply}
+          />
+        )}
+        {isAuthor && (
+          <Dropdown
+            dropdownId={dropdownId}
+            dropdownPlacement="bottom-end"
+            clickableComponent={
+              <LightIconButton Icon={IconDotsVertical} accent="tertiary" />
+            }
+            dropdownComponents={
+              <DropdownContent>
+                <DropdownMenuItemsContainer>
+                  <MenuItem
+                    LeftIcon={IconPencil}
+                    text={t`Edit`}
+                    onClick={handleEdit}
+                  />
+                  <MenuItem
+                    LeftIcon={IconTrash}
+                    text={t`Delete`}
+                    accent="danger"
+                    onClick={handleDeleteClick}
+                  />
+                </DropdownMenuItemsContainer>
+              </DropdownContent>
+            }
+          />
+        )}
+      </StyledCommentActions>
       {createPortal(
         <ConfirmationModal
           modalInstanceId={deleteModalId}
