@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useStore } from 'jotai';
+import { useCallback, useState } from 'react';
+import { atom, useStore } from 'jotai';
 
 import { type BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
@@ -11,6 +11,14 @@ export const useReplaceBlockEditorContent = (
   fieldName: string,
 ) => {
   const store = useStore();
+
+  // BlockNote normalizes blocks (ids, default props) when it builds
+  // editor.document, so a hydration replace can fire even when the fetched
+  // content is unchanged. This atom, read/written through the store
+  // directly rather than via useAtom, lets callers check synchronously
+  // whether an onChange was caused by that hydration rather than a real
+  // user edit, so they can skip re-persisting it.
+  const [isReplacingContentProgrammaticallyAtom] = useState(() => atom(false));
 
   const replaceBlockEditorContent = useCallback(
     (recordId: string) => {
@@ -25,14 +33,22 @@ export const useReplaceBlockEditorContent = (
       ];
 
       if (!isDeeplyEqual(editor.document, content as typeof editor.document)) {
-        editor.replaceBlocks(
-          editor.document,
-          content as typeof editor.document,
-        );
+        store.set(isReplacingContentProgrammaticallyAtom, true);
+        try {
+          editor.replaceBlocks(
+            editor.document,
+            content as typeof editor.document,
+          );
+        } finally {
+          store.set(isReplacingContentProgrammaticallyAtom, false);
+        }
       }
     },
-    [store, editor, fieldName],
+    [store, editor, fieldName, isReplacingContentProgrammaticallyAtom],
   );
 
-  return { replaceBlockEditorContent };
+  return {
+    replaceBlockEditorContent,
+    isReplacingContentProgrammaticallyAtom,
+  };
 };

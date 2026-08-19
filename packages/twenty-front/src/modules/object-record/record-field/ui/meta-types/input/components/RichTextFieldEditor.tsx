@@ -181,6 +181,10 @@ export const RichTextFieldEditor = ({
   const handleBodyChangeDebounced = useDebouncedCallback(handleBodyChange, 500);
 
   const handleEditorChange = () => {
+    if (store.get(isReplacingContentProgrammaticallyAtom)) {
+      return;
+    }
+
     const newStringifiedBody = JSON.stringify(editor.document) ?? '';
 
     handleBodyChangeDebounced(newStringifiedBody);
@@ -225,10 +229,8 @@ export const RichTextFieldEditor = ({
     editorRef.current = editor;
   }
 
-  const { replaceBlockEditorContent } = useReplaceBlockEditorContent(
-    editor,
-    fieldName,
-  );
+  const { replaceBlockEditorContent, isReplacingContentProgrammaticallyAtom } =
+    useReplaceBlockEditorContent(editor, fieldName);
 
   const [currentRecordId, setCurrentRecordId] = useState(recordId);
 
