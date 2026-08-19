@@ -44,7 +44,7 @@ const groupCommentsIntoThreads = (
     .filter((comment) => !comment.parentCommentId)
     .map((comment) => ({
       ...comment,
-      replies: repliesByParentId.get(comment.id) ?? [],
+      replies: [...(repliesByParentId.get(comment.id) ?? [])].reverse(),
     }));
 };
 
@@ -56,7 +56,7 @@ export const useIssueComments = (issueId: string) => {
   } = useFindManyRecords<IssueCommentRecord>({
     objectNameSingular: 'issueComment',
     filter: { issueId: { eq: issueId } },
-    orderBy: [{ createdAt: 'AscNullsLast' }],
+    orderBy: [{ createdAt: 'DescNullsLast' }],
     recordGqlFields: {
       id: true,
       createdAt: true,

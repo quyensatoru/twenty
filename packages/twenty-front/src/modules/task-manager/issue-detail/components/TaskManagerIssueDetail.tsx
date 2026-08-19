@@ -129,13 +129,19 @@ const StyledSectionTitle = styled.h3`
 `;
 
 const StyledDescriptionBox = styled.div`
-  border: 1px solid ${themeCssVariables.border.color.light};
+  border: 1px solid transparent;
   border-radius: ${themeCssVariables.border.radius.sm};
   padding: ${themeCssVariables.spacing['2']} ${themeCssVariables.spacing['3']};
-  transition: border-color ${themeCssVariables.animation.duration.fast};
+  transition:
+    background-color ${themeCssVariables.animation.duration.fast},
+    border-color ${themeCssVariables.animation.duration.fast};
 
-  &:hover,
+  &:hover {
+    background-color: ${themeCssVariables.background.transparent.light};
+  }
+
   &:focus-within {
+    background-color: transparent;
     border-color: ${themeCssVariables.border.color.medium};
   }
 `;

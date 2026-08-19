@@ -1,10 +1,23 @@
-import { useCallback, useState } from 'react';
 import { atom, useStore } from 'jotai';
+import { useCallback, useState } from 'react';
+import { isDefined } from 'twenty-shared/utils';
 
 import { type BLOCK_SCHEMA } from '@/blocknote-editor/blocks/Schema';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
 import { recordStoreFamilyState } from '@/object-record/record-store/states/recordStoreFamilyState';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
+
+const resetTextCursorToFirstTextBlock = (
+  editor: typeof BLOCK_SCHEMA.BlockNoteEditor,
+) => {
+  const firstTextBlock = editor.document.find((block) =>
+    Array.isArray(block.content),
+  );
+
+  if (isDefined(firstTextBlock)) {
+    editor.setTextCursorPosition(firstTextBlock, 'start');
+  }
+};
 
 export const useReplaceBlockEditorContent = (
   editor: typeof BLOCK_SCHEMA.BlockNoteEditor,
@@ -39,6 +52,10 @@ export const useReplaceBlockEditorContent = (
             editor.document,
             content as typeof editor.document,
           );
+
+          if (!editor.isFocused()) {
+            resetTextCursorToFirstTextBlock(editor);
+          }
         } finally {
           store.set(isReplacingContentProgrammaticallyAtom, false);
         }
