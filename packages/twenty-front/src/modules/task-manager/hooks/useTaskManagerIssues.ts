@@ -7,7 +7,13 @@ import { visibleRecordFieldsComponentSelector } from '@/object-record/record-fie
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
 import { useUpsertRecordsInStore } from '@/object-record/record-store/hooks/useUpsertRecordsInStore';
 import { useAtomComponentSelectorValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentSelectorValue';
-import { isDefined } from 'twenty-shared/utils';
+import { isNonEmptyString } from '@sniptt/guards';
+import { type RecordGqlOperationFilter } from 'twenty-shared/types';
+import {
+  combineFilters,
+  isDefined,
+  turnAnyFieldFilterIntoRecordGqlFilter,
+} from 'twenty-shared/utils';
 
 // Structural fields Board/Backlog/Roadmap group, sort, or filter by — needed
 // regardless of whether the user hid them from the Fields dropdown.
@@ -29,7 +35,13 @@ const ISSUE_BASE_RECORD_GQL_FIELDS = {
   reporter: { id: true, name: true, avatarUrl: true },
 };
 
-export const useTaskManagerIssues = ({ projectId }: { projectId?: string }) => {
+export const useTaskManagerIssues = ({
+  projectId,
+  searchQuery,
+}: {
+  projectId?: string;
+  searchQuery?: string;
+}) => {
   const { objectMetadataItem, recordIndexId } = useRecordIndexContextOrThrow();
   const { objectMetadataItems } = useObjectMetadataItems();
 
@@ -57,9 +69,30 @@ export const useTaskManagerIssues = ({ projectId }: { projectId?: string }) => {
     };
   }, [visibleRecordFields, objectMetadataItem.fields, objectMetadataItems]);
 
+  // Same "any field" semantics the Board gets from the record index query, so
+  // a given search returns the same issues on every Task Manager tab.
+  const filter = useMemo(() => {
+    const projectFilter: RecordGqlOperationFilter = isNonEmptyString(projectId)
+      ? { projectId: { eq: projectId } }
+      : {};
+
+    const { recordGqlOperationFilter: searchFilter } = isNonEmptyString(
+      searchQuery,
+    )
+      ? turnAnyFieldFilterIntoRecordGqlFilter({
+          fields: objectMetadataItem.fields,
+          filterValue: searchQuery,
+        })
+      : { recordGqlOperationFilter: {} };
+
+    const combinedFilter = combineFilters([projectFilter, searchFilter]);
+
+    return Object.keys(combinedFilter).length > 0 ? combinedFilter : undefined;
+  }, [projectId, searchQuery, objectMetadataItem.fields]);
+
   const { records, loading, refetch } = useFindManyRecords({
     objectNameSingular: 'issue',
-    filter: projectId ? { projectId: { eq: projectId } } : undefined,
+    filter,
     recordGqlFields,
     limit: 250,
   });

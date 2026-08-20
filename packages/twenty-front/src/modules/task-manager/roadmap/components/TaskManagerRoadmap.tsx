@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { isNonEmptyString } from '@sniptt/guards';
 import { Tag } from 'twenty-ui/data-display';
 import { ProgressBar } from 'twenty-ui/feedback';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -12,6 +13,7 @@ import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSide
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
 import { useTaskManagerEpics } from '@/task-manager/hooks/useTaskManagerEpics';
 import { useTaskManagerIssues } from '@/task-manager/hooks/useTaskManagerIssues';
+import { useTaskManagerSearchQuery } from '@/task-manager/hooks/useTaskManagerSearchQuery';
 
 const StyledPage = styled.div`
   display: flex;
@@ -140,14 +142,27 @@ export const TaskManagerRoadmap = () => {
   const { openRecordInSidePanel } = useOpenRecordInSidePanel();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project') ?? undefined;
+  const searchQuery = useTaskManagerSearchQuery();
 
-  const { issues } = useTaskManagerIssues({ projectId });
+  const { issues } = useTaskManagerIssues({ projectId, searchQuery });
   const { epics } = useTaskManagerEpics({ projectId });
 
   const issuesWithoutEpic = useMemo(
     () => issues.filter((issue) => !issue.epicId && !issue.parentId),
     [issues],
   );
+
+  // A search narrows the issue list, so epics left without a single match
+  // would otherwise render as a wall of empty cards.
+  const visibleEpics = useMemo(() => {
+    if (!isNonEmptyString(searchQuery)) {
+      return epics;
+    }
+
+    return epics.filter((epic) =>
+      issues.some((issue) => issue.epicId === epic.id),
+    );
+  }, [epics, issues, searchQuery]);
 
   const handleNavigateToIssue = (issueId: string) => {
     openRecordInSidePanel({ recordId: issueId, objectNameSingular: 'issue' });
@@ -157,7 +172,7 @@ export const TaskManagerRoadmap = () => {
     <StyledPage>
       <TaskManagerTopBar />
       <StyledContent>
-        {epics.map((epic) => (
+        {visibleEpics.map((epic) => (
           <EpicGroup
             key={epic.id}
             epic={epic}
@@ -188,8 +203,12 @@ export const TaskManagerRoadmap = () => {
             ))}
           </StyledEpicCard>
         )}
-        {epics.length === 0 && issuesWithoutEpic.length === 0 && (
-          <StyledProgressLabel>{t`No issues yet.`}</StyledProgressLabel>
+        {visibleEpics.length === 0 && issuesWithoutEpic.length === 0 && (
+          <StyledProgressLabel>
+            {isNonEmptyString(searchQuery)
+              ? t`No matching issues.`
+              : t`No issues yet.`}
+          </StyledProgressLabel>
         )}
       </StyledContent>
     </StyledPage>

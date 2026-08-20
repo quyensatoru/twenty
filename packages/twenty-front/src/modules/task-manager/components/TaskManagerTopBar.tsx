@@ -10,6 +10,7 @@ import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { useCreateOneRecord } from '@/object-record/hooks/useCreateOneRecord';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
+import { TaskManagerSearchInput } from '@/task-manager/components/TaskManagerSearchInput';
 import { useTaskManagerProjects } from '@/task-manager/hooks/useTaskManagerProjects';
 import { Select } from '@/ui/input/components/Select';
 
@@ -156,6 +157,7 @@ export const TaskManagerTopBar = ({ rightSlot }: TaskManagerTopBarProps) => {
         ))}
       </StyledTabs>
       <StyledRightSlot>
+        <TaskManagerSearchInput />
         {rightSlot}
         <Button
           title={t`New Issue`}

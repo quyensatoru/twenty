@@ -15,6 +15,7 @@ import {
   assertRelationTargetAppScopeOrThrow,
 } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
+import { applyDefaultIssueReporter } from 'src/modules/issue/utils/apply-default-issue-reporter.util';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
 const buildIssueRelationTargetAppScopeEntries = (
@@ -81,6 +82,8 @@ export class IssueCreateOnePreQueryHook implements WorkspacePreQueryHookInstance
       projectId,
       targets: buildIssueRelationTargetAppScopeEntries(payload.data),
     });
+
+    applyDefaultIssueReporter(authContext, payload.data);
 
     if (isDefined(payload.data.issueKey)) {
       return payload;
