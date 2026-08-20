@@ -5,7 +5,6 @@ import { RecordIndexCommandMenu } from '@/command-menu-item/components/RecordInd
 import { ObjectOptionsDropdown } from '@/object-record/object-options-dropdown/components/ObjectOptionsDropdown';
 import { RecordBoardContainer } from '@/object-record/record-board/components/RecordBoardContainer';
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
-import { TaskManagerBoardSearchEffect } from '@/task-manager/board/components/TaskManagerBoardSearchEffect';
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
 import { ViewType } from '@/views/types/ViewType';
 
@@ -32,7 +31,6 @@ export const TaskManagerBoard = () => {
 
   return (
     <StyledPage>
-      <TaskManagerBoardSearchEffect />
       <TaskManagerTopBar
         rightSlot={
           <>

@@ -11,7 +11,6 @@ import { BacklogSprintSection } from '@/task-manager/backlog/components/BacklogS
 import { TaskManagerTopBar } from '@/task-manager/components/TaskManagerTopBar';
 import { useRecordDragToGroupReorder } from '@/task-manager/hooks/useRecordDragToGroupReorder';
 import { useTaskManagerIssues } from '@/task-manager/hooks/useTaskManagerIssues';
-import { useTaskManagerSearchQuery } from '@/task-manager/hooks/useTaskManagerSearchQuery';
 import { useTaskManagerSprints } from '@/task-manager/hooks/useTaskManagerSprints';
 
 const StyledPage = styled.div`
@@ -33,12 +32,10 @@ export const TaskManagerBacklog = () => {
   const { t } = useLingui();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project') ?? undefined;
-  const searchQuery = useTaskManagerSearchQuery();
 
   const { objectMetadataItem } = useRecordIndexContextOrThrow();
   const { issues, refetch: refetchIssues } = useTaskManagerIssues({
     projectId,
-    searchQuery,
   });
   const { sprints, refetch: refetchSprints } = useTaskManagerSprints({
     projectId,
