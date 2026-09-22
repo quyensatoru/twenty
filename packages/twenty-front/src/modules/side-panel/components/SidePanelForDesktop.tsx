@@ -6,11 +6,12 @@ import { SIDE_PANEL_CLICK_OUTSIDE_ID } from '@/side-panel/constants/SidePanelCli
 import { SIDE_PANEL_CONSTRAINTS } from '@/side-panel/constants/SidePanelConstraints';
 import { useSidePanelCloseAnimationCompleteCleanup } from '@/side-panel/hooks/useSidePanelCloseAnimationCompleteCleanup';
 import { useSidePanelMenu } from '@/side-panel/hooks/useSidePanelMenu';
-import { viewableRecordNameSingularComponentState } from '@/side-panel/pages/record-page/states/viewableRecordNameSingularComponentState';
+import { getRecordShowParamsFromPath } from '@/side-panel/routing/utils/getRecordShowParamsFromPath';
+import { sidePanelNavigationStackState } from '@/side-panel/states/sidePanelNavigationStackState';
+import { TASK_MANAGER_ISSUE_SIDE_PANEL_CONSTRAINTS } from '@/task-manager/issue-detail/constants/TaskManagerIssueSidePanelConstraints';
+import { taskManagerIssueSidePanelWidthState } from '@/task-manager/issue-detail/states/taskManagerIssueSidePanelWidthState';
 import { isSidePanelClosingState } from '@/side-panel/states/isSidePanelClosingState';
 import { isSidePanelOpenedState } from '@/side-panel/states/isSidePanelOpenedState';
-import { sidePanelPageInfoState } from '@/side-panel/states/sidePanelPageInfoState';
-import { sidePanelPageState } from '@/side-panel/states/sidePanelPageState';
 import {
   SIDE_PANEL_WIDTH_VAR,
   sidePanelWidthState,
@@ -18,7 +19,6 @@ import {
 import { DialogContainerContext } from '@/ui/layout/dialog/contexts/DialogContainerContext';
 import { ResizablePanelGap } from '@/ui/layout/resizable-panel/components/ResizablePanelGap';
 import { ParentClickOutsideIdContext } from '@/ui/utilities/pointer-event/contexts/ParentClickOutsideIdContext';
-import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
@@ -26,6 +26,7 @@ import { styled } from '@linaria/react';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from 'jotai';
 import { type AnimationEvent, useCallback, useState } from 'react';
+import { SidePanelPages } from 'twenty-shared/types';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledSidePanelWrapper = styled.div<{
@@ -80,6 +81,21 @@ export const SidePanelForDesktop = () => {
   const store = useStore();
   const isSidePanelOpened = useAtomStateValue(isSidePanelOpenedState);
   const [sidePanelWidth, setSidePanelWidth] = useAtomState(sidePanelWidthState);
+  const sidePanelNavigationStack = useAtomStateValue(
+    sidePanelNavigationStackState,
+  );
+  const currentNavigationItem = sidePanelNavigationStack.at(-1);
+  // The old viewableRecordNameSingular mechanism was removed upstream with
+  // the record-page side panel; derive the viewed object from the routed
+  // nav-stack entry instead.
+  const recordShowParams =
+    currentNavigationItem?.page === SidePanelPages.RoutedPage
+      ? getRecordShowParamsFromPath(
+          currentNavigationItem.routedLocation.pathname,
+        )
+      : null;
+  const isViewingTaskManagerIssue =
+    recordShowParams?.objectNameSingular === 'issue';
   const [taskManagerIssueSidePanelWidth, setTaskManagerIssueSidePanelWidth] =
     useAtomState(taskManagerIssueSidePanelWidthState);
 
