@@ -99,7 +99,11 @@ export const validateNavigationMenuItemTypeRequiredProperties = ({
       ];
     }
     case NavigationMenuItemType.LINK: {
-      return isDefined(link) && isValidUrl(link)
+      const isValidLink =
+        isDefined(link) &&
+        (isValidUrl(link) || (link.startsWith('/') && link.trim() !== ''));
+
+      return isValidLink
         ? []
         : [
             buildInvalidInputError(
