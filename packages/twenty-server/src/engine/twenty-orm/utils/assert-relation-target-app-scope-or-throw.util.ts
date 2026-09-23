@@ -7,7 +7,6 @@ import {
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import {
   type ORMWorkspaceContext,
   getWorkspaceContext,
@@ -18,6 +17,7 @@ import {
 } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { buildAppScopePathByObjectId } from 'src/engine/twenty-orm/utils/build-app-scope-path-by-object-id.util';
 import { shouldBypassAppScope } from 'src/engine/twenty-orm/utils/should-bypass-app-scope.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 
 export type RelationTargetAppScopeEntry =
   | { fieldName: string; kind: 'merchant'; targetId: string }
@@ -30,13 +30,13 @@ export type RelationTargetAppScopeEntry =
 // permission into an App, not whether the selected target itself is in scope.
 export const assertRelationTargetAppScopeOrThrow = async ({
   authContext,
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   objectNameSingular,
   projectId,
   targets,
 }: {
   authContext: WorkspaceAuthContext;
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   objectNameSingular: string;
   projectId: string | null | undefined;
   targets: RelationTargetAppScopeEntry[];
@@ -45,7 +45,7 @@ export const assertRelationTargetAppScopeOrThrow = async ({
     return;
   }
 
-  await globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+  await workspaceOrmManager.executeInWorkspaceContext(async () => {
     const context = getWorkspaceContext();
 
     if (
@@ -62,7 +62,7 @@ export const assertRelationTargetAppScopeOrThrow = async ({
     }
 
     const resolvedAppId = await resolveProjectScopedAppId({
-      globalWorkspaceOrmManager,
+      workspaceOrmManager,
       context,
       objectNameSingular,
       projectId,
@@ -77,21 +77,17 @@ export const assertRelationTargetAppScopeOrThrow = async ({
       );
     }
 
-    const workspaceId = context.authContext.workspace.id;
-
     for (const target of targets) {
       const isValid =
         target.kind === 'merchant'
           ? (await fetchColumnValue({
-              globalWorkspaceOrmManager,
-              workspaceId,
+              workspaceOrmManager,
               objectNameSingular: 'merchant',
               id: target.targetId,
               columnName: 'appId',
             })) === resolvedAppId
           : await hasAppAccessRow({
-              globalWorkspaceOrmManager,
-              workspaceId,
+              workspaceOrmManager,
               memberId: target.targetId,
               appId: resolvedAppId,
             });
@@ -110,12 +106,12 @@ export const assertRelationTargetAppScopeOrThrow = async ({
 // resolveEffectiveAppId, just entered from the record's own `projectId`
 // rather than an arbitrary immediate foreign key.
 const resolveProjectScopedAppId = async ({
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   context,
   objectNameSingular,
   projectId,
 }: {
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   context: ORMWorkspaceContext;
   objectNameSingular: string;
   projectId: string | null | undefined;
@@ -146,8 +142,7 @@ const resolveProjectScopedAppId = async ({
   }
 
   return resolveEffectiveAppId({
-    globalWorkspaceOrmManager,
-    workspaceId: context.authContext.workspace.id,
+    workspaceOrmManager,
     objectMetadata,
     scopePath,
     immediateForeignKeyValue: projectId,
@@ -157,21 +152,17 @@ const resolveProjectScopedAppId = async ({
 };
 
 const hasAppAccessRow = async ({
-  globalWorkspaceOrmManager,
-  workspaceId,
+  workspaceOrmManager,
   memberId,
   appId,
 }: {
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
-  workspaceId: string;
+  workspaceOrmManager: WorkspaceOrmManager;
   memberId: string;
   appId: string;
 }): Promise<boolean> => {
-  const repository = await globalWorkspaceOrmManager.getRepository(
-    workspaceId,
-    'appAccess',
-    { shouldBypassPermissionChecks: true },
-  );
+  const repository = workspaceOrmManager.getRepository('appAccess', {
+    shouldBypassPermissionChecks: true,
+  });
 
   // ponytail: "any AppAccess row exists" is treated as sufficient scope —
   // not distinguishing read/write permission values within `permissions`.

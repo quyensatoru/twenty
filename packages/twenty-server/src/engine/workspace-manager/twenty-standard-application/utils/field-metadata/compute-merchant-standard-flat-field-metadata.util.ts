@@ -34,8 +34,10 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -53,8 +55,12 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -75,8 +81,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -97,8 +110,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -120,8 +140,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Merchant record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Merchant record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -138,8 +165,12 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Merchant name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Merchant name`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconBuildingStore',
       isNullable: true,
     },
@@ -154,9 +185,14 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'customSettings',
       type: FieldMetadataType.RAW_JSON,
-      label: i18nLabel(msg`Custom Settings`),
+      label: i18nLabel(
+        msg({ message: `Custom Settings`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Custom feature settings for this merchant, shape varies by app`,
+        msg({
+          message: `Custom feature settings for this merchant, shape varies by app`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconSettings',
       isNullable: true,
@@ -172,8 +208,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -195,9 +238,14 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -220,8 +268,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -240,8 +295,13 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'app',
-      label: i18nLabel(msg`App`),
-      description: i18nLabel(msg`Merchant's app`),
+      label: i18nLabel(msg({ message: `App`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({
+          message: `Merchant's app`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconApps',
       isNullable: true,
       targetObjectName: 'app',
@@ -268,7 +328,12 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
       ),
-      description: i18nLabel(msg`Attachments linked to the merchant`),
+      description: i18nLabel(
+        msg({
+          message: `Attachments linked to the merchant`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
         .icon,
       isNullable: true,
@@ -294,7 +359,12 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.noteTarget.label,
       ),
-      description: i18nLabel(msg`Notes tied to the merchant`),
+      description: i18nLabel(
+        msg({
+          message: `Notes tied to the merchant`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.noteTarget
         .icon,
       isUIEditable: false,
@@ -321,7 +391,12 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.taskTarget.label,
       ),
-      description: i18nLabel(msg`Tasks tied to the merchant`),
+      description: i18nLabel(
+        msg({
+          message: `Tasks tied to the merchant`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.taskTarget
         .icon,
       isUIEditable: false,
@@ -345,8 +420,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       morphId: null,
       fieldName: 'timelineActivities',
       isSystemSideEffect: true,
-      label: i18nLabel(msg`Events`),
-      description: i18nLabel(msg`Events linked to the merchant`),
+      label: i18nLabel(
+        msg({ message: `Events`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Events linked to the merchant`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconTimelineEvent',
       isNullable: true,
       targetObjectName: 'timelineActivity',
@@ -367,8 +449,15 @@ export const buildMerchantStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issues',
-      label: i18nLabel(msg`Issues`),
-      description: i18nLabel(msg`Issues linked to the merchant`),
+      label: i18nLabel(
+        msg({ message: `Issues`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issues linked to the merchant`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLayoutKanban',
       isNullable: true,
       targetObjectName: 'issueMerchant',

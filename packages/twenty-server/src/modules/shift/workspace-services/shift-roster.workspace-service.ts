@@ -5,7 +5,7 @@ import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type ShiftRosterEntryDTO } from 'src/modules/shift/dtos/shift-roster-entry.dto';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 import { type WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/standard-objects/workspace-member.workspace-entity';
@@ -20,9 +20,7 @@ import { type WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-membe
 // neither selected from the DB nor emitted.
 @Injectable()
 export class ShiftRosterWorkspaceService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   // `fromDate`/`toDate` are ICT calendar days ('YYYY-MM-DD'). The column is TEXT,
   // so a lexicographic Between is a valid inclusive date-range compare.
@@ -35,11 +33,10 @@ export class ShiftRosterWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const shiftRepository =
-          await this.globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            workspace.id,
+          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
             'shift',
             { shouldBypassPermissionChecks: true },
           );
@@ -66,7 +63,6 @@ export class ShiftRosterWorkspaceService {
         });
 
         const memberNameById = await this.loadMemberNames(
-          workspace.id,
           shifts
             .map((shift) => shift.memberId)
             .filter((memberId): memberId is string => isDefined(memberId)),
@@ -95,7 +91,6 @@ export class ShiftRosterWorkspaceService {
   // the workspaceMember's composite `name` (FullNameMetadata). Both parts empty →
   // null. No other member field is read.
   private async loadMemberNames(
-    workspaceId: string,
     memberIds: string[],
   ): Promise<Map<string, string | null>> {
     const memberNameById = new Map<string, string | null>();
@@ -107,8 +102,7 @@ export class ShiftRosterWorkspaceService {
     }
 
     const workspaceMemberRepository =
-      await this.globalWorkspaceOrmManager.getRepository<WorkspaceMemberWorkspaceEntity>(
-        workspaceId,
+      this.workspaceOrmManager.getRepository<WorkspaceMemberWorkspaceEntity>(
         'workspaceMember',
         { shouldBypassPermissionChecks: true },
       );

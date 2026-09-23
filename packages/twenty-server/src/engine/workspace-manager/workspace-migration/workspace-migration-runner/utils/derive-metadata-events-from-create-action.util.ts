@@ -98,7 +98,10 @@ const deriveAllMetadataEventsFromCreateAction = (
     case 'fieldPermission':
     case 'viewSort':
     case 'webhook':
+    case 'workflow':
+    case 'workflowVersion':
     case 'connectionProvider':
+    case 'timelineActivityType':
     case 'searchFieldMetadata': {
       return [
         {

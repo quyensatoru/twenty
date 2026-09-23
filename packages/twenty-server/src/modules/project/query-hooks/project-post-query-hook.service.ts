@@ -15,7 +15,7 @@ import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadat
 import { ViewFilterService } from 'src/engine/metadata-modules/view-filter/services/view-filter.service';
 import { ViewGroupService } from 'src/engine/metadata-modules/view-group/services/view-group.service';
 import { ViewService } from 'src/engine/metadata-modules/view/services/view.service';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type IssueStatusWorkspaceEntity } from 'src/modules/issue-status/standard-objects/issue-status.workspace-entity';
 import { type ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
@@ -47,7 +47,7 @@ const SYSTEM_ACTOR: ActorMetadata = {
 @Injectable()
 export class ProjectPostQueryHookService {
   constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly workspaceOrmManager: WorkspaceOrmManager,
     private readonly flatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
     private readonly viewService: ViewService,
     private readonly viewFilterService: ViewFilterService,
@@ -76,11 +76,10 @@ export class ProjectPostQueryHookService {
     const workspaceId = workspace.id;
 
     const issueStatuses =
-      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      await this.workspaceOrmManager.executeInWorkspaceContext(
         async () => {
           const issueStatusRepository =
-            await this.globalWorkspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
-              workspaceId,
+            this.workspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
               'issueStatus',
               { shouldBypassPermissionChecks: true },
             );

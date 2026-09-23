@@ -1,8 +1,16 @@
-import { FieldMetadataType, type ObjectRecord } from 'twenty-shared/types';
+import {
+  FieldMetadataType,
+  MetadataReadability,
+  MetadataWritability,
+  ObjectOpenRecordIn,
+  type RecordGqlOperationFilter,
+  type ObjectRecord,
+} from 'twenty-shared/types';
 
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
+import { UNSATISFIABLE_RECORD_FILTER } from 'src/engine/twenty-orm/constants/unsatisfiable-record-filter.constant';
 import { isRecordMatchingRLSRowLevelPermissionPredicate } from 'src/engine/twenty-orm/utils/is-record-matching-rls-row-level-permission-predicate.util';
 
 describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
@@ -26,10 +34,13 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
     universalIdentifier: 'test-object-id',
     indexMetadataIds: [],
     searchFieldMetadataIds: [],
+    navigationMenuItemIds: [],
+    commandMenuItemIds: [],
     objectPermissionIds: [],
     fieldPermissionIds: [],
     fieldIds,
     viewIds: [],
+    pageLayoutIds: [],
     applicationId: 'test-application-id',
     isLabelSyncedWithName: false,
     createdAt: new Date().toISOString(),
@@ -39,6 +50,10 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
     overrides: null,
     isUIEditable: true,
     isUICreatable: true,
+    writability: MetadataWritability.OPEN,
+    readability: MetadataReadability.OPEN,
+    readabilityParentFieldUniversalIdentifiers: null,
+    openRecordIn: ObjectOpenRecordIn.USER_CHOICE,
     labelIdentifierFieldMetadataId: null,
     imageIdentifierFieldMetadataId: null,
     duplicateCriteria: null,
@@ -47,8 +62,11 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
     objectPermissionUniversalIdentifiers: [],
     fieldPermissionUniversalIdentifiers: [],
     viewUniversalIdentifiers: [],
+    pageLayoutUniversalIdentifiers: [],
     indexMetadataUniversalIdentifiers: [],
     searchFieldMetadataUniversalIdentifiers: [],
+    navigationMenuItemUniversalIdentifiers: [],
+    commandMenuItemUniversalIdentifiers: [],
     labelIdentifierFieldMetadataUniversalIdentifier: null,
     imageIdentifierFieldMetadataUniversalIdentifier: null,
   });
@@ -121,6 +139,7 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
         joinColumnName: 'companyId',
       },
     ),
+    createMockFlatFieldMetadata('users-id', 'users', FieldMetadataType.ARRAY),
   ];
 
   const flatObjectMetadata = createMockFlatObjectMetadata(
@@ -139,6 +158,7 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
       addressCity: 'Paris',
     },
     companyId: 'company-1',
+    users: ['user-1', 'user-2'],
     deletedAt: null,
     id: 'record-1',
     createdAt: new Date().toISOString(),
@@ -154,6 +174,17 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
     });
 
     expect(result).toBe(true);
+  });
+
+  it('never matches the unsatisfiable filter', () => {
+    const result = isRecordMatchingRLSRowLevelPermissionPredicate({
+      record: baseRecord,
+      filter: UNSATISFIABLE_RECORD_FILTER,
+      flatObjectMetadata,
+      flatFieldMetadataMaps,
+    });
+
+    expect(result).toBe(false);
   });
 
   it('returns false for deleted records without deletedAt filter', () => {
@@ -329,4 +360,53 @@ describe('isRecordMatchingRLSRowLevelPermissionPredicate', () => {
       }),
     ).toBe(false);
   });
+
+  it.each<{ filter: RecordGqlOperationFilter; expected: boolean }>([
+    {
+      filter: { users: { containsIlike: '%user-1%' } },
+      expected: true,
+    },
+    {
+      filter: { users: { containsIlike: '%user-999%' } },
+      expected: false,
+    },
+    {
+      filter: {
+        or: [
+          { users: { containsIlike: '%user-999%' } },
+          { users: { containsIlike: '%user-1%' } },
+        ],
+      },
+      expected: true,
+    },
+    {
+      filter: {
+        or: [
+          { users: { containsIlike: '%user-999%' } },
+          { users: { containsIlike: '%user-998%' } },
+        ],
+      },
+      expected: false,
+    },
+    {
+      filter: { not: { users: { containsIlike: '%user-1%' } } },
+      expected: false,
+    },
+    {
+      filter: { not: { users: { containsIlike: '%user-999%' } } },
+      expected: true,
+    },
+  ])(
+    'evaluates array RLS filter $filter as $expected',
+    ({ filter, expected }) => {
+      expect(
+        isRecordMatchingRLSRowLevelPermissionPredicate({
+          record: baseRecord,
+          filter,
+          flatObjectMetadata,
+          flatFieldMetadataMaps,
+        }),
+      ).toBe(expected);
+    },
+  );
 });

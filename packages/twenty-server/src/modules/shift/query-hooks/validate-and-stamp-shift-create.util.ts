@@ -12,7 +12,7 @@ import {
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { ShiftRateWorkspaceService } from 'src/modules/shift/query-hooks/shift-rate.workspace-service';
 import { type ShiftTemplateWorkspaceEntity } from 'src/modules/shift/standard-objects/shift-template.workspace-entity';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
@@ -33,19 +33,17 @@ import {
 // upsert rejection in the create hooks (without upsert an id match is a plain
 // INSERT that collides on the primary key rather than overwriting a row).
 //
-// MUST be called inside globalWorkspaceOrmManager.executeInWorkspaceContext —
+// MUST be called inside workspaceOrmManager.executeInWorkspaceContext —
 // isElevatedActor and getRepository both read the workspace AsyncLocalStorage.
 export const validateAndStampShiftCreate = async ({
   authContext,
-  workspaceId,
   data,
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   shiftRateWorkspaceService,
 }: {
   authContext: WorkspaceAuthContext;
-  workspaceId: string;
   data: ShiftWorkspaceEntity;
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   shiftRateWorkspaceService: ShiftRateWorkspaceService;
 }): Promise<ShiftWorkspaceEntity> => {
   // Members register for themselves; only an elevated actor (leader/PO) may
@@ -96,8 +94,7 @@ export const validateAndStampShiftCreate = async ({
   }
 
   const shiftTemplateRepository =
-    await globalWorkspaceOrmManager.getRepository<ShiftTemplateWorkspaceEntity>(
-      workspaceId,
+    workspaceOrmManager.getRepository<ShiftTemplateWorkspaceEntity>(
       'shiftTemplate',
       { shouldBypassPermissionChecks: true },
     );
@@ -131,12 +128,10 @@ export const validateAndStampShiftCreate = async ({
     );
   }
 
-  const shiftRepository =
-    await globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-      workspaceId,
-      'shift',
-      { shouldBypassPermissionChecks: true },
-    );
+  const shiftRepository = workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
+    'shift',
+    { shouldBypassPermissionChecks: true },
+  );
 
   const shiftsOnSameSlot = await shiftRepository.find({
     where: { date: data.date, shiftTemplateId: data.shiftTemplateId },

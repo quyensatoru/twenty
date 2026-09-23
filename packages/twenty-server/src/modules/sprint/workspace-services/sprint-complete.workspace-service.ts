@@ -4,37 +4,29 @@ import { isDefined } from 'twenty-shared/utils';
 
 import { UserInputError } from 'src/engine/core-modules/graphql/utils/graphql-errors.util';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
 
 @Injectable()
 export class SprintCompleteWorkspaceService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async completeSprint(
     authContext: WorkspaceAuthContext,
     sprintId: string,
     targetSprintId: string | null,
   ): Promise<number> {
-    const workspaceId = authContext.workspace.id;
-
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
-        const sprintRepository =
-          await this.globalWorkspaceOrmManager.getRepository(
-            workspaceId,
-            SprintWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
-        const issueRepository =
-          await this.globalWorkspaceOrmManager.getRepository(
-            workspaceId,
-            IssueWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+        const sprintRepository = this.workspaceOrmManager.getRepository(
+          SprintWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
+        const issueRepository = this.workspaceOrmManager.getRepository(
+          IssueWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
 
         const sprint = await sprintRepository.findOne({
           where: { id: sprintId },
@@ -59,12 +51,13 @@ export class SprintCompleteWorkspaceService {
           }
         }
 
-        const { affected } = await issueRepository
+        const { generatedMaps } = await issueRepository
           .createQueryBuilder()
-          .update()
-          .set({ sprintId: targetSprintId })
           .where('"sprintId" = :sprintId', { sprintId })
           .andWhere('"status" != :doneStatus', { doneStatus: 'DONE' })
+          .update()
+          .set({ sprintId: targetSprintId })
+          .returning(['id'])
           .execute();
 
         await sprintRepository.update(
@@ -72,7 +65,7 @@ export class SprintCompleteWorkspaceService {
           { state: 'CLOSED', completeDate: new Date().toISOString() },
         );
 
-        return affected ?? 0;
+        return generatedMaps.length;
       },
       authContext,
     );

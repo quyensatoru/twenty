@@ -6,7 +6,7 @@ import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { UserInputError } from 'src/engine/core-modules/graphql/utils/graphql-errors.util';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type ShiftTemplateWorkspaceEntity } from 'src/modules/shift/standard-objects/shift-template.workspace-entity';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 import { assertShiftOwnerOrElevatedOrThrow } from 'src/modules/shift/utils/assert-shift-owner-or-elevated-or-throw.util';
@@ -27,9 +27,7 @@ const CANCEL_CATEGORIES = ['SICK', 'PERSONAL', 'SWAP', 'OTHER'] as const;
 // Task-16 workflows on record-updated; this service only writes data.
 @Injectable()
 export class ShiftAttendanceWorkspaceService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async checkIn(
     authContext: WorkspaceAuthContext,
@@ -39,7 +37,7 @@ export class ShiftAttendanceWorkspaceService {
     // returns before we open ours below — sequential, never truly nested.
     await assertShiftOwnerOrElevatedOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       shiftId,
       operation: 'write',
     });
@@ -48,11 +46,10 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const shiftRepository =
-          await this.globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            workspace.id,
+          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
             'shift',
             { shouldBypassPermissionChecks: true },
           );
@@ -71,10 +68,7 @@ export class ShiftAttendanceWorkspaceService {
           throw new UserInputError('Already checked in');
         }
 
-        const template = await this.loadTemplate(
-          workspace.id,
-          shift.shiftTemplateId,
-        );
+        const template = await this.loadTemplate(shift.shiftTemplateId);
         const earlyCheckInMinutes = template?.earlyCheckInMinutes ?? null;
 
         // Early-window guard is a no-op unless the padding is configured (null =
@@ -142,7 +136,7 @@ export class ShiftAttendanceWorkspaceService {
   ): Promise<boolean> {
     await assertShiftOwnerOrElevatedOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       shiftId,
       operation: 'write',
     });
@@ -151,11 +145,10 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const shiftRepository =
-          await this.globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            workspace.id,
+          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
             'shift',
             { shouldBypassPermissionChecks: true },
           );
@@ -207,7 +200,7 @@ export class ShiftAttendanceWorkspaceService {
   ): Promise<boolean> {
     await assertShiftOwnerOrElevatedOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       shiftId,
       operation: 'write',
     });
@@ -224,11 +217,10 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const shiftRepository =
-          await this.globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            workspace.id,
+          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
             'shift',
             { shouldBypassPermissionChecks: true },
           );
@@ -278,7 +270,6 @@ export class ShiftAttendanceWorkspaceService {
   }
 
   private async loadTemplate(
-    workspaceId: string,
     shiftTemplateId: string | null,
   ): Promise<ShiftTemplateWorkspaceEntity | null> {
     if (!isDefined(shiftTemplateId)) {
@@ -286,8 +277,7 @@ export class ShiftAttendanceWorkspaceService {
     }
 
     const shiftTemplateRepository =
-      await this.globalWorkspaceOrmManager.getRepository<ShiftTemplateWorkspaceEntity>(
-        workspaceId,
+      this.workspaceOrmManager.getRepository<ShiftTemplateWorkspaceEntity>(
         'shiftTemplate',
         { shouldBypassPermissionChecks: true },
       );

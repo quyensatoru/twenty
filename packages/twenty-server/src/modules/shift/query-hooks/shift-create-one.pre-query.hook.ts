@@ -13,7 +13,7 @@ import {
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { ShiftRateWorkspaceService } from 'src/modules/shift/query-hooks/shift-rate.workspace-service';
 import { validateAndStampShiftCreate } from 'src/modules/shift/query-hooks/validate-and-stamp-shift-create.util';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
@@ -29,7 +29,7 @@ import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/sh
 @WorkspaceQueryHook(`shift.createOne`)
 export class ShiftCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
   constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly workspaceOrmManager: WorkspaceOrmManager,
     private readonly shiftRateWorkspaceService: ShiftRateWorkspaceService,
   ) {}
 
@@ -54,13 +54,12 @@ export class ShiftCreateOnePreQueryHook implements WorkspacePreQueryHookInstance
       );
     }
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const data = await validateAndStampShiftCreate({
           authContext,
-          workspaceId: workspace.id,
           data: payload.data,
-          globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+          workspaceOrmManager: this.workspaceOrmManager,
           shiftRateWorkspaceService: this.shiftRateWorkspaceService,
         });
 

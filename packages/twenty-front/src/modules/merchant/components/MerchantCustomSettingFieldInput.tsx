@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
-import { Button, Checkbox, type SelectOption } from 'twenty-ui/input';
+import { Button, Checkbox, type SelectOption } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import {
@@ -173,11 +173,12 @@ export const MerchantCustomSettingFieldInput = ({
         />
         <Button
           onClick={() => fileInputRef.current?.click()}
-          title={isUploading ? t`Uploading...` : t`Choose file`}
-          variant="secondary"
-          size="small"
+          variant="outline"
+          size="sm"
           disabled={isUploading}
-        />
+        >
+          {isUploading ? t`Uploading...` : t`Choose file`}
+        </Button>
         {isDefined(currentFileValue) && (
           <StyledFileLink
             href={currentFileValue.url}

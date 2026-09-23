@@ -7,7 +7,7 @@ import { type CreateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { assertRelationTargetAppScopeOrThrow } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/sprint.workspace-entity';
@@ -16,9 +16,7 @@ import { type SprintWorkspaceEntity } from 'src/modules/sprint/standard-objects/
 @Injectable()
 @WorkspaceQueryHook(`sprint.createOne`)
 export class SprintCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -27,14 +25,14 @@ export class SprintCreateOnePreQueryHook implements WorkspacePreQueryHookInstanc
   ): Promise<CreateOneResolverArgs<SprintWorkspaceEntity>> {
     await assertAppScopeWriteAccessOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       objectNameSingular: 'sprint',
       foreignKeyValue: payload.data.projectId,
     });
 
     await assertRelationTargetAppScopeOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       objectNameSingular: 'sprint',
       projectId: payload.data.projectId,
       targets: isDefined(payload.data.ownerId)

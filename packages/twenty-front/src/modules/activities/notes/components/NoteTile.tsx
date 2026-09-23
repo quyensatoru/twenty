@@ -1,17 +1,23 @@
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 
+import { useActivityFieldComponentInstanceId } from '@/activities/hooks/useActivityFieldComponentInstanceId';
 import { type Note } from '@/activities/types/Note';
 import { useDeleteOneRecord } from '@/object-record/hooks/useDeleteOneRecord';
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { useObjectPermissionsForObject } from '@/object-record/hooks/useObjectPermissionsForObject';
 import { getActivityPreview } from '@/activities/utils/getActivityPreview';
+import { useObjectMorphJunctionConfigOrThrow } from '@/object-record/record-field/ui/hooks/useObjectMorphJunctionConfigOrThrow';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { CoreObjectNameSingular } from 'twenty-shared/types';
+import { RecordFieldsScopeContextProvider } from '@/object-record/record-field-list/contexts/RecordFieldsScopeContext';
+import { FieldContextProvider } from '@/object-record/record-field/ui/components/FieldContextProvider';
+import { RecordFieldComponentInstanceContext } from '@/object-record/record-field/ui/states/contexts/RecordFieldComponentInstanceContext';
+import { RecordInlineCell } from '@/object-record/record-inline-cell/components/RecordInlineCell';
+import { getRecordFieldInputInstanceId } from '@/object-record/utils/getRecordFieldInputId';
 import { IconTrash } from 'twenty-ui/icon';
-import { LightIconButton } from 'twenty-ui/input';
+import { LightIconButton } from 'twenty-ui/components';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { beautifyPastDateRelativeToNow } from '~/utils/date-utils';
 
 const StyledCard = styled.div<{ isSingleNote: boolean }>`
   align-items: flex-start;
@@ -20,6 +26,7 @@ const StyledCard = styled.div<{ isSingleNote: boolean }>`
   border-radius: ${themeCssVariables.border.radius.md};
   display: flex;
   flex-direction: column;
+  height: 300px;
   justify-content: space-between;
   position: relative;
   width: 100%;
@@ -47,6 +54,7 @@ const StyledCardDetailsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${themeCssVariables.spacing[2]};
+  height: calc(100% - 45px);
   justify-content: start;
   padding: ${themeCssVariables.spacing[4]};
   width: calc(100% - ${themeCssVariables.spacing[8]});
@@ -57,14 +65,9 @@ const StyledNoteTitle = styled.div`
   font-weight: ${themeCssVariables.font.weight.medium};
 `;
 
-const NOTE_PREVIEW_MAX_LINES = 6;
-
 const StyledCardContent = styled.div`
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: ${NOTE_PREVIEW_MAX_LINES};
   align-self: stretch;
   color: ${themeCssVariables.font.color.secondary};
-  display: -webkit-box;
   line-break: anywhere;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -76,21 +79,13 @@ const StyledFooter = styled.div`
   align-items: center;
   align-self: stretch;
   border-top: 1px solid ${themeCssVariables.border.color.light};
-  color: ${themeCssVariables.font.color.tertiary};
+  color: ${themeCssVariables.font.color.primary};
   display: flex;
   flex-direction: row;
-  font-size: ${themeCssVariables.font.size.xs};
-  gap: ${themeCssVariables.spacing[2]};
-  justify-content: flex-start;
-  padding: ${themeCssVariables.spacing[2]} ${themeCssVariables.spacing[4]};
-  width: calc(100% - ${themeCssVariables.spacing[8]});
-`;
-
-const StyledAuthor = styled.span`
-  color: ${themeCssVariables.font.color.secondary};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  gap: ${themeCssVariables.spacing[1]};
+  justify-content: center;
+  padding: ${themeCssVariables.spacing[2]};
+  width: calc(100% - ${themeCssVariables.spacing[4]});
 `;
 
 export const NoteTile = ({
@@ -114,13 +109,24 @@ export const NoteTile = ({
     objectNameSingular: CoreObjectNameSingular.Note,
   });
 
+  const junctionFieldName = useObjectMorphJunctionConfigOrThrow({
+    objectNameSingular: CoreObjectNameSingular.Note,
+  }).junctionField.name;
+
+  const instanceIdPrefix =
+    useActivityFieldComponentInstanceId('note-card-targets');
+  const componentInstanceId = getRecordFieldInputInstanceId({
+    recordId: note.id,
+    fieldName: junctionFieldName,
+    prefix: instanceIdPrefix,
+  });
+
   return (
     <StyledCard isSingleNote={isSingleNote}>
       {objectPermissions.canSoftDeleteObjectRecords && (
         <StyledDeleteButton>
           <LightIconButton
-            Icon={IconTrash}
-            accent="tertiary"
+            emphasis="subtle"
             aria-label={t`Delete note`}
             // Deleting is a soft delete, recoverable from the Notes view, so it
             // asks for no confirmation.
@@ -128,7 +134,9 @@ export const NoteTile = ({
               event.stopPropagation();
               void deleteOneRecord(note.id);
             }}
-          />
+          >
+            <IconTrash />
+          </LightIconButton>
         </StyledDeleteButton>
       )}
       <StyledCardDetailsContainer
@@ -143,8 +151,25 @@ export const NoteTile = ({
         <StyledCardContent>{body}</StyledCardContent>
       </StyledCardDetailsContainer>
       <StyledFooter>
-        <StyledAuthor>{note.createdBy?.name ?? t`Unknown`}</StyledAuthor>
-        <span>{beautifyPastDateRelativeToNow(note.createdAt)}</span>
+        <FieldContextProvider
+          objectNameSingular={CoreObjectNameSingular.Note}
+          objectRecordId={note.id}
+          fieldMetadataName={junctionFieldName}
+          fieldPosition={0}
+          isDisplayModeFixHeight
+        >
+          <RecordFieldsScopeContextProvider
+            value={{
+              scopeInstanceId: note.id,
+            }}
+          >
+            <RecordFieldComponentInstanceContext.Provider
+              value={{ instanceId: componentInstanceId }}
+            >
+              <RecordInlineCell instanceIdPrefix={instanceIdPrefix} />
+            </RecordFieldComponentInstanceContext.Provider>
+          </RecordFieldsScopeContextProvider>
+        </FieldContextProvider>
       </StyledFooter>
     </StyledCard>
   );

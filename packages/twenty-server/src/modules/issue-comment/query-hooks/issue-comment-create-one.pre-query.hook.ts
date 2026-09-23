@@ -5,8 +5,8 @@ import { type CreateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/standard-objects/issue-comment.workspace-entity';
 
 // `issueComment.issueId` is required (non-nullable) — a create always carries
@@ -15,9 +15,7 @@ import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/stan
 @Injectable()
 @WorkspaceQueryHook(`issueComment.createOne`)
 export class IssueCommentCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -26,7 +24,7 @@ export class IssueCommentCreateOnePreQueryHook implements WorkspacePreQueryHookI
   ): Promise<CreateOneResolverArgs<IssueCommentWorkspaceEntity>> {
     await assertAppScopeWriteAccessOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       objectNameSingular: 'issueComment',
       foreignKeyValue: payload.data.issueId,
     });

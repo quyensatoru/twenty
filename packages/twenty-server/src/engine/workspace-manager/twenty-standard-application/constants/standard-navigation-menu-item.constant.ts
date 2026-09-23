@@ -1,6 +1,8 @@
+import { msg } from '@lingui/core/macro';
 import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { NavigationMenuItemType } from 'src/engine/metadata-modules/navigation-menu-item/enums/navigation-menu-item-type.enum';
+import { i18nLabel } from 'src/engine/workspace-manager/twenty-standard-application/utils/i18n-label.util';
 
 export const STANDARD_NAVIGATION_MENU_ITEMS = {
   allCompanies: {
@@ -52,12 +54,22 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
       STANDARD_OBJECTS.issue.views.allIssues.universalIdentifier,
     position: 6,
   },
+  allMessageCampaigns: {
+    universalIdentifier: '20202020-b00b-4b0b-8b0b-c0aba11c000b',
+    type: NavigationMenuItemType.OBJECT,
+    viewUniversalIdentifier:
+      STANDARD_OBJECTS.messageCampaign.views.allMessageCampaigns
+        .universalIdentifier,
+    position: 7,
+  },
   workflowsFolder: {
     universalIdentifier: '20202020-b007-4b07-8b07-c0aba11c0007',
     type: NavigationMenuItemType.FOLDER,
-    name: 'Workflows',
+    name: i18nLabel(
+      msg({ message: `Workflows`, context: 'navigationMenuItem.name' }),
+    ),
     icon: 'IconSettingsAutomation',
-    position: 7,
+    position: 8,
   },
   workflowsFolderAllWorkflows: {
     universalIdentifier: '20202020-b008-4b08-8b08-c0aba11c0008',
@@ -85,20 +97,24 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
     position: 2,
   },
   taskManager: {
-    universalIdentifier: '20202020-b00b-4b0b-8b0b-c0aba11c000b',
+    universalIdentifier: '20202020-b00c-4b0c-8b0c-c0aba11c000c',
     type: NavigationMenuItemType.LINK,
-    name: 'Task Manager',
+    name: i18nLabel(
+      msg({ message: `Task Manager`, context: 'navigationMenuItem.name' }),
+    ),
     link: '/task',
     icon: 'IconLayoutKanban',
-    position: 8,
+    position: 9,
   },
   shiftTracker: {
     universalIdentifier: '117117dd-9191-411f-98b8-945c61c9c045',
     type: NavigationMenuItemType.LINK,
-    name: 'Shifts',
+    name: i18nLabel(
+      msg({ message: `Shifts`, context: 'navigationMenuItem.name' }),
+    ),
     link: '/shift',
     icon: 'IconCalendarClock',
-    position: 9,
+    position: 10,
   },
   allShiftTemplates: {
     universalIdentifier: 'c8404305-c783-4f36-a31e-336570455584',
@@ -106,21 +122,21 @@ export const STANDARD_NAVIGATION_MENU_ITEMS = {
     viewUniversalIdentifier:
       STANDARD_OBJECTS.shiftTemplate.views.allShiftTemplates
         .universalIdentifier,
-    position: 10,
+    position: 11,
   },
   allSpecialDays: {
     universalIdentifier: '9713ecf5-8a52-4159-8206-9909bbae94d3',
     type: NavigationMenuItemType.OBJECT,
     viewUniversalIdentifier:
       STANDARD_OBJECTS.specialDay.views.allSpecialDays.universalIdentifier,
-    position: 11,
+    position: 12,
   },
   allMerchants: {
     universalIdentifier: '30e9b078-09a8-4bbe-b42f-5dbebe56fe9b',
     type: NavigationMenuItemType.OBJECT,
     viewUniversalIdentifier:
       STANDARD_OBJECTS.merchant.views.allMerchants.universalIdentifier,
-    position: 12,
+    position: 13,
   },
 } as const;
 
@@ -139,6 +155,7 @@ export const STANDARD_NAVIGATION_MENU_ITEM_DEFAULT_COLORS: Partial<
   allShiftTemplates: 'turquoise',
   allSpecialDays: 'turquoise',
   workflowsFolder: 'orange',
+  allMessageCampaigns: 'gray',
   allDashboards: 'gray',
   workflowsFolderAllWorkflows: 'gray',
   workflowsFolderAllWorkflowRuns: 'gray',

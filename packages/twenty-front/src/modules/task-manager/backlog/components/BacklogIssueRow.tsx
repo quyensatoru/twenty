@@ -1,6 +1,6 @@
 import { Draggable } from '@hello-pangea/dnd';
 import { styled } from '@linaria/react';
-import { Avatar, Tag } from 'twenty-ui/data-display';
+import { Avatar, Tag } from 'twenty-ui/primitives/data-display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
@@ -83,16 +83,16 @@ export const BacklogIssueRow = ({
           <StyledIssueKey>{issue.issueKey}</StyledIssueKey>
           <StyledTitle>{issue.title}</StyledTitle>
           {priorityOption && (
-            <Tag text={priorityOption.label} color={priorityOption.color} />
+            <Tag color={priorityOption.color}>{priorityOption.label}</Tag>
           )}
           {issue.storyPoints !== null && issue.storyPoints !== undefined && (
-            <Tag text={`${issue.storyPoints} pts`} color="gray" />
+            <Tag color="gray">{`${issue.storyPoints} pts`}</Tag>
           )}
           {assigneeName && (
             <Avatar
-              placeholder={assigneeName}
-              avatarUrl={getAbsoluteImageUrl(assignee?.avatarUrl)}
-              type="rounded"
+              name={assigneeName}
+              src={getAbsoluteImageUrl(assignee?.avatarUrl)}
+              shape="rounded-square"
               size="lg"
             />
           )}

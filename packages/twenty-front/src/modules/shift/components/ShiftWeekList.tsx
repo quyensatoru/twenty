@@ -2,10 +2,11 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { Tag } from 'twenty-ui/data-display';
+import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconDotsVertical } from 'twenty-ui/icon';
-import { Button, LightIconButton } from 'twenty-ui/input';
-import { MenuItem, UndecoratedLink } from 'twenty-ui/navigation';
+import { Button } from 'twenty-ui/primitives/input';
+import { MenuItem, UndecoratedLink } from 'twenty-ui/primitives/navigation';
+import { LightIconButton } from 'twenty-ui/components';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { CancelShiftModal } from '@/shift/components/CancelShiftModal';
@@ -22,7 +23,7 @@ import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 
 // One bordered card of the week's still-actionable shifts. Completed / past /
 // cancelled shifts are deliberately absent — those live in the Report tab; this
@@ -138,7 +139,7 @@ type WeekShiftRowProps = {
 
 const WeekShiftRow = ({ shift, template, onCancel }: WeekShiftRowProps) => {
   const { t } = useLingui();
-  const { openModal } = useModal();
+  const { openDialog } = useDialog();
   const { closeDropdown } = useCloseDropdown();
 
   const dropdownId = `shift-week-menu-${shift.id}`;
@@ -186,7 +187,7 @@ const WeekShiftRow = ({ shift, template, onCancel }: WeekShiftRowProps) => {
 
   const handleCancelClick = () => {
     closeDropdown(dropdownId);
-    openModal(cancelModalId);
+    openDialog(cancelModalId);
   };
 
   return (
@@ -204,15 +205,19 @@ const WeekShiftRow = ({ shift, template, onCancel }: WeekShiftRowProps) => {
           {chipCode}
         </StyledCodeChip>
       )}
-      <Tag color={statusColor} text={statusLabel} />
-      {showOvertime && <Tag color="orange" text={`×${shift.rateMultiplier}`} />}
+      <Tag color={statusColor}>{statusLabel}</Tag>
+      {showOvertime && (
+        <Tag color="orange">{`×${shift.rateMultiplier}`}</Tag>
+      )}
       <StyledSpacer />
       {isCancellable && (
         <Dropdown
           dropdownId={dropdownId}
           dropdownPlacement="bottom-end"
           clickableComponent={
-            <LightIconButton Icon={IconDotsVertical} accent="tertiary" />
+            <LightIconButton emphasis="subtle" aria-label={t`More actions`}>
+              <IconDotsVertical />
+            </LightIconButton>
           }
           dropdownComponents={
             <DropdownContent>
@@ -294,7 +299,7 @@ export const ShiftWeekList = ({
         <StyledEmpty>
           <span>{t`No upcoming shifts.`}</span>
           <UndecoratedLink to={AppPath.ShiftRegisterPage}>
-            <Button title={t`Register shifts`} variant="secondary" />
+            <Button variant="outline">{t`Register shifts`}</Button>
           </UndecoratedLink>
         </StyledEmpty>
       ) : (

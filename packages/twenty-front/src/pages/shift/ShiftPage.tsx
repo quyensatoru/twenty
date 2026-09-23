@@ -1,4 +1,3 @@
-import { type ErrorLike } from '@apollo/client';
 import { css } from '@linaria/core';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
@@ -6,11 +5,13 @@ import { useContext, useMemo } from 'react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { AppPath } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { Button } from 'twenty-ui/input';
-import { UndecoratedLink } from 'twenty-ui/navigation';
+import { useToast } from 'twenty-ui/primitives/feedback';
+import { Button } from 'twenty-ui/primitives/input';
+import { UndecoratedLink } from 'twenty-ui/primitives/navigation';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
+import { getToastOptionsFromError } from '@/error-handler/utils/getToastOptionsFromError';
 import { ShiftPageShell } from '@/shift/components/ShiftPageShell';
 import { ShiftTodayAction } from '@/shift/components/ShiftTodayAction';
 import { ShiftTopBar } from '@/shift/components/ShiftTopBar';
@@ -27,7 +28,6 @@ import {
   isShiftMissed,
   pickPrecedingHandover,
 } from '@/shift/utils/shiftWeek';
-import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 
 const StyledPageBody = styled.div`
@@ -113,7 +113,7 @@ const ShiftLoadingSkeleton = () => {
 
 const ShiftMyWeekBody = () => {
   const { t } = useLingui();
-  const { enqueueSuccessSnackBar, enqueueErrorSnackBar } = useSnackBar();
+  const { enqueueToast } = useToast();
 
   const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
 
@@ -222,9 +222,9 @@ const ShiftMyWeekBody = () => {
     try {
       await checkInShift(shiftId);
       await refetch();
-      enqueueSuccessSnackBar({ message: t`Checked in.` });
+      enqueueToast({ variant: 'success', children: t`Checked in.` });
     } catch (error) {
-      enqueueErrorSnackBar({ apolloError: error as ErrorLike });
+      enqueueToast(getToastOptionsFromError({ error }));
     }
   };
 
@@ -235,9 +235,9 @@ const ShiftMyWeekBody = () => {
     try {
       await checkOutShift(shiftId, handoverNote);
       await refetch();
-      enqueueSuccessSnackBar({ message: t`Checked out.` });
+      enqueueToast({ variant: 'success', children: t`Checked out.` });
     } catch (error) {
-      enqueueErrorSnackBar({ apolloError: error as ErrorLike });
+      enqueueToast(getToastOptionsFromError({ error }));
       // Rethrow so the modal keeps the typed handover note instead of clearing it.
       throw error;
     }
@@ -251,9 +251,9 @@ const ShiftMyWeekBody = () => {
     try {
       await cancelShift(shiftId, reason, category);
       await refetch();
-      enqueueSuccessSnackBar({ message: t`Shift cancelled.` });
+      enqueueToast({ variant: 'success', children: t`Shift cancelled.` });
     } catch (error) {
-      enqueueErrorSnackBar({ apolloError: error as ErrorLike });
+      enqueueToast(getToastOptionsFromError({ error }));
       // Rethrow so the modal keeps the typed reason/category instead of clearing it.
       throw error;
     }
@@ -271,13 +271,14 @@ const ShiftMyWeekBody = () => {
           <StyledEmptyState>
             <StyledEmptyText>{t`Couldn't load your shifts.`}</StyledEmptyText>
             <Button
-              title={t`Retry`}
-              variant="primary"
-              accent="blue"
+              variant="solid"
+              color="accent"
               onClick={() => {
                 void refetch();
               }}
-            />
+            >
+              {t`Retry`}
+            </Button>
           </StyledEmptyState>
         );
       }
@@ -286,11 +287,9 @@ const ShiftMyWeekBody = () => {
         <StyledEmptyState>
           <StyledEmptyText>{t`No shifts registered for this week or next.`}</StyledEmptyText>
           <UndecoratedLink to={AppPath.ShiftRegisterPage}>
-            <Button
-              title={t`Register shifts`}
-              variant="primary"
-              accent="blue"
-            />
+            <Button variant="solid" color="accent">
+              {t`Register shifts`}
+            </Button>
           </UndecoratedLink>
         </StyledEmptyState>
       );

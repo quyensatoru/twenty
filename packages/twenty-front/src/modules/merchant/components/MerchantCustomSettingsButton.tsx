@@ -4,10 +4,10 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { v4 as uuidv4 } from 'uuid';
 import { IconSettings } from 'twenty-ui/icon';
-import { Button, IconButton } from 'twenty-ui/input';
-import { Section, SectionAlignment } from 'twenty-ui/layout';
+import { IconButton, Section } from 'twenty-ui/components';
+import { Button, InputLabel } from 'twenty-ui/primitives/input';
+import { Dialog } from 'twenty-ui/primitives/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
 import { currentUserState } from '@/auth/states/currentUserState';
 import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';
@@ -33,9 +33,8 @@ import {
 } from '@/merchant/utils/customSettingValueTransforms';
 import { useFindOneRecord } from '@/object-record/hooks/useFindOneRecord';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
-import { InputLabel } from '@/ui/input/components/InputLabel';
-import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { DialogInstance } from '@/ui/layout/dialog/components/DialogInstance';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { isDefined } from 'twenty-shared/utils';
 import { FileFolder } from '~/generated-metadata/graphql';
@@ -45,11 +44,11 @@ type MerchantCustomSettingsButtonProps = {
 };
 
 // The record side panel can mount this field (and thus this component) more
-// than once. Modal and dropdown state in Twenty is global per instance id, so
+// than once. Dialog and dropdown state in Twenty is global per instance id, so
 // every id must be unique PER MOUNT — otherwise all mounted dialogs open at
 // once and dropdown clicks land in whichever hidden twin rendered last.
-const getModalInstanceId = (recordId: string, mountId: string) =>
-  `merchant-custom-settings-modal-${recordId}-${mountId}`;
+const getDialogId = (recordId: string, mountId: string) =>
+  `merchant-custom-settings-dialog-${recordId}-${mountId}`;
 
 // Settings (form + Save) and tools (independent Run actions) are two different
 // interaction models, so the modal splits them into tabs instead of one long
@@ -106,7 +105,7 @@ const StyledFooter = styled.div`
   margin-top: ${themeCssVariables.spacing[6]};
 `;
 
-const StyledModalContent = styled.div`
+const StyledDialogContent = styled.div`
   display: flex;
   flex-direction: column;
   max-height: 70dvh;
@@ -135,9 +134,9 @@ export const MerchantCustomSettingsButton = ({
   recordId,
 }: MerchantCustomSettingsButtonProps) => {
   const { t } = useLingui();
-  const { openModal, closeModal } = useModal();
+  const { openDialog, closeDialog } = useDialog();
   const mountId = useId();
-  const modalInstanceId = getModalInstanceId(recordId, mountId);
+  const dialogId = getDialogId(recordId, mountId);
   const currentUser = useAtomStateValue(currentUserState);
 
   const { record, refetch } = useFindOneRecord({
@@ -210,7 +209,7 @@ export const MerchantCustomSettingsButton = ({
     });
     setSchemaValues(initialValues);
     setActiveTab('settings');
-    openModal(modalInstanceId);
+    openDialog(dialogId);
   };
 
   const handleSchemaValueChange = (key: string, value: CustomSettingValue) => {
@@ -262,7 +261,7 @@ export const MerchantCustomSettingsButton = ({
       updateOneRecordInput: { customSettings: newCustomSettings },
     });
     await refetch();
-    closeModal(modalInstanceId);
+    closeDialog(dialogId);
   };
 
   // Each Run writes a fresh envelope (new runId) under the tool's key; the app
@@ -299,130 +298,140 @@ export const MerchantCustomSettingsButton = ({
   return (
     <>
       <IconButton
-        Icon={IconSettings}
-        dataTestId="merchant-custom-settings-button"
-        size="small"
-        variant="secondary"
-        accent="default"
-        ariaLabel={t`Custom settings`}
+        data-testid="merchant-custom-settings-button"
+        size="sm"
+        aria-label={t`Custom settings`}
         onClick={handleOpen}
-      />
+      >
+        <IconSettings />
+      </IconButton>
       <div onClick={stopClickPropagation} onMouseDown={stopClickPropagation}>
-        <ModalStatefulWrapper
-          modalInstanceId={modalInstanceId}
-          size="medium"
-          isClosable
-          padding="large"
+        <DialogInstance
+          dialogId={dialogId}
+          dismissible
+          onClose={() => closeDialog(dialogId)}
           renderInDocumentBody
         >
-          <StyledModalContent>
-            <H1Title
-              title={t`Custom Settings`}
-              fontColor={H1TitleFontColor.Primary}
-            />
-            {showTabBar && (
-              <StyledTabBar>
-                <StyledTabButton
-                  type="button"
-                  data-active={currentTab === 'settings'}
-                  onClick={() => setActiveTab('settings')}
-                >
-                  {t`Settings`}
-                </StyledTabButton>
-                <StyledTabButton
-                  type="button"
-                  data-active={currentTab === 'tools'}
-                  onClick={() => setActiveTab('tools')}
-                >
-                  {t`Tools`}
-                </StyledTabButton>
-              </StyledTabBar>
-            )}
-            <StyledScrollableSection>
-              <Section alignment={SectionAlignment.Center}>
-                {!hasSchema ? (
-                  <InputLabel>
-                    {t`No custom settings configured for this app.`}
-                  </InputLabel>
-                ) : currentTab === 'settings' ? (
-                  <StyledContentStack>
-                    <StyledCustomSettingFieldGrid>
-                      {settingEntries.map((entry) => (
-                        <Fragment key={entry.key}>
-                          <StyledCustomSettingFieldLabel>
-                            <InputLabel>{entry.label}</InputLabel>
-                          </StyledCustomSettingFieldLabel>
-                          <StyledCustomSettingFieldCell>
-                            <MerchantCustomSettingFieldInput
-                              entry={entry}
-                              value={schemaValues[entry.key]}
-                              instanceIdPrefix={`merchant-custom-setting-${mountId}`}
-                              isUploading={uploadingKeys[entry.key]}
-                              onChange={(value) =>
-                                handleSchemaValueChange(entry.key, value)
-                              }
-                              onFileSelected={(file) =>
-                                handleFileSelected(entry.key, file)
-                              }
-                            />
-                          </StyledCustomSettingFieldCell>
-                        </Fragment>
-                      ))}
-                    </StyledCustomSettingFieldGrid>
-                  </StyledContentStack>
-                ) : (
-                  <StyledContentStack>
-                    {toolEntries.map((tool, toolIndex) => {
-                      const rawLastRun = currentCustomSettings()[tool.key];
-
-                      return (
-                        <Fragment key={tool.key}>
-                          {toolIndex > 0 && <StyledDivider />}
-                          <MerchantCustomSettingToolCard
-                            instanceIdPrefix={`merchant-tool-${mountId}`}
-                            tool={tool}
-                            lastRun={
-                              isCustomSettingToolRun(rawLastRun)
-                                ? rawLastRun
-                                : undefined
-                            }
-                            isRunning={runningToolKey === tool.key}
-                            onRun={(params) => handleRunTool(tool, params)}
-                          />
-                        </Fragment>
-                      );
-                    })}
-                  </StyledContentStack>
+          {({ container, backdrop, viewportProps, onKeyDown }) => (
+            <Dialog.Popup
+              {...{ container, backdrop, viewportProps, onKeyDown }}
+              size="md"
+              data-globally-prevent-click-outside
+              style={{
+                padding: 'var(--t-spacing-6)',
+                borderRadius: 'var(--t-spacing-1)',
+              }}
+            >
+              <StyledDialogContent>
+                <Dialog.Title>{t`Custom Settings`}</Dialog.Title>
+                {showTabBar && (
+                  <StyledTabBar>
+                    <StyledTabButton
+                      type="button"
+                      data-active={currentTab === 'settings'}
+                      onClick={() => setActiveTab('settings')}
+                    >
+                      {t`Settings`}
+                    </StyledTabButton>
+                    <StyledTabButton
+                      type="button"
+                      data-active={currentTab === 'tools'}
+                      onClick={() => setActiveTab('tools')}
+                    >
+                      {t`Tools`}
+                    </StyledTabButton>
+                  </StyledTabBar>
                 )}
-              </Section>
-            </StyledScrollableSection>
-            <StyledFooter>
-              {hasSchema && currentTab === 'settings' ? (
-                <>
-                  <Button
-                    onClick={() => closeModal(modalInstanceId)}
-                    title={t`Cancel`}
-                    variant="secondary"
-                    fullWidth
-                  />
-                  <Button
-                    onClick={handleSave}
-                    title={t`Save`}
-                    variant="primary"
-                    accent="blue"
-                    fullWidth
-                  />
-                </>
-              ) : (
-                <Button
-                  onClick={() => closeModal(modalInstanceId)}
-                  title={t`Close`}
-                  variant="secondary"
-                />
-              )}
-            </StyledFooter>
-          </StyledModalContent>
-        </ModalStatefulWrapper>
+                <StyledScrollableSection>
+                  <Section.Root align="center">
+                    {!hasSchema ? (
+                      <InputLabel>
+                        {t`No custom settings configured for this app.`}
+                      </InputLabel>
+                    ) : currentTab === 'settings' ? (
+                      <StyledContentStack>
+                        <StyledCustomSettingFieldGrid>
+                          {settingEntries.map((entry) => (
+                            <Fragment key={entry.key}>
+                              <StyledCustomSettingFieldLabel>
+                                <InputLabel>{entry.label}</InputLabel>
+                              </StyledCustomSettingFieldLabel>
+                              <StyledCustomSettingFieldCell>
+                                <MerchantCustomSettingFieldInput
+                                  entry={entry}
+                                  value={schemaValues[entry.key]}
+                                  instanceIdPrefix={`merchant-custom-setting-${mountId}`}
+                                  isUploading={uploadingKeys[entry.key]}
+                                  onChange={(value) =>
+                                    handleSchemaValueChange(entry.key, value)
+                                  }
+                                  onFileSelected={(file) =>
+                                    handleFileSelected(entry.key, file)
+                                  }
+                                />
+                              </StyledCustomSettingFieldCell>
+                            </Fragment>
+                          ))}
+                        </StyledCustomSettingFieldGrid>
+                      </StyledContentStack>
+                    ) : (
+                      <StyledContentStack>
+                        {toolEntries.map((tool, toolIndex) => {
+                          const rawLastRun = currentCustomSettings()[tool.key];
+
+                          return (
+                            <Fragment key={tool.key}>
+                              {toolIndex > 0 && <StyledDivider />}
+                              <MerchantCustomSettingToolCard
+                                instanceIdPrefix={`merchant-tool-${mountId}`}
+                                tool={tool}
+                                lastRun={
+                                  isCustomSettingToolRun(rawLastRun)
+                                    ? rawLastRun
+                                    : undefined
+                                }
+                                isRunning={runningToolKey === tool.key}
+                                onRun={(params) => handleRunTool(tool, params)}
+                              />
+                            </Fragment>
+                          );
+                        })}
+                      </StyledContentStack>
+                    )}
+                  </Section.Root>
+                </StyledScrollableSection>
+                <StyledFooter>
+                  {hasSchema && currentTab === 'settings' ? (
+                    <>
+                      <Button
+                        onClick={() => closeDialog(dialogId)}
+                        variant="outline"
+                        fullWidth
+                      >
+                        {t`Cancel`}
+                      </Button>
+                      <Button
+                        onClick={handleSave}
+                        variant="solid"
+                        color="accent"
+                        fullWidth
+                      >
+                        {t`Save`}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={() => closeDialog(dialogId)}
+                      variant="outline"
+                    >
+                      {t`Close`}
+                    </Button>
+                  )}
+                </StyledFooter>
+              </StyledDialogContent>
+            </Dialog.Popup>
+          )}
+        </DialogInstance>
       </div>
     </>
   );

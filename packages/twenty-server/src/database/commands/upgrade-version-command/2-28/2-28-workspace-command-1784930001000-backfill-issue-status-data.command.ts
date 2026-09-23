@@ -10,8 +10,8 @@ import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/w
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { computeTwentyStandardApplicationAllFlatEntityMaps } from 'src/engine/workspace-manager/twenty-standard-application/utils/twenty-standard-application-all-flat-entity-maps.constant';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
@@ -69,7 +69,7 @@ export class BackfillIssueStatusDataCommand extends ProvisionedWorkspaceCommandR
     private readonly applicationService: ApplicationService,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly workspaceOrmManager: WorkspaceOrmManager,
     private readonly projectPostQueryHookService: ProjectPostQueryHookService,
   ) {
     super(workspaceIteratorService);
@@ -115,17 +115,15 @@ export class BackfillIssueStatusDataCommand extends ProvisionedWorkspaceCommandR
       isDefined(statusField) && statusField.type !== FieldMetadataType.RELATION;
 
     const { projects, projectsWithoutIssueStatuses, legacyIssues } =
-      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      await this.workspaceOrmManager.executeInWorkspaceContext(
         async () => {
           const projectRepository =
-            await this.globalWorkspaceOrmManager.getRepository<ProjectWorkspaceEntity>(
-              workspaceId,
+            this.workspaceOrmManager.getRepository<ProjectWorkspaceEntity>(
               'project',
               { shouldBypassPermissionChecks: true },
             );
           const issueStatusRepository =
-            await this.globalWorkspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
-              workspaceId,
+            this.workspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
               'issueStatus',
               { shouldBypassPermissionChecks: true },
             );
@@ -147,8 +145,7 @@ export class BackfillIssueStatusDataCommand extends ProvisionedWorkspaceCommandR
 
           if (needsStatusFlip) {
             const legacyIssueRepository =
-              await this.globalWorkspaceOrmManager.getRepository<LegacyIssueRow>(
-                workspaceId,
+              this.workspaceOrmManager.getRepository<LegacyIssueRow>(
                 'issue',
                 { shouldBypassPermissionChecks: true },
               );
@@ -200,17 +197,15 @@ export class BackfillIssueStatusDataCommand extends ProvisionedWorkspaceCommandR
         'flatFieldMetadataMaps',
       ]);
 
-      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      await this.workspaceOrmManager.executeInWorkspaceContext(
         async () => {
           const issueStatusRepository =
-            await this.globalWorkspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
-              workspaceId,
+            this.workspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
               'issueStatus',
               { shouldBypassPermissionChecks: true },
             );
           const issueRepository =
-            await this.globalWorkspaceOrmManager.getRepository<IssueWithStatusIdRow>(
-              workspaceId,
+            this.workspaceOrmManager.getRepository<IssueWithStatusIdRow>(
               'issue',
               { shouldBypassPermissionChecks: true },
             );

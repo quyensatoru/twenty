@@ -11,7 +11,7 @@ describe('ShiftRateWorkspaceService.getMultiplierForDate', () => {
       find: jest.fn().mockResolvedValue(specialDays),
     };
     const globalWorkspaceOrmManager = {
-      getRepository: jest.fn().mockResolvedValue(specialDayRepository),
+      getRepository: jest.fn().mockReturnValue(specialDayRepository),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),

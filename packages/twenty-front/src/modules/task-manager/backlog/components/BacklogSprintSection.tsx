@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Tag } from 'twenty-ui/data-display';
-import { Button } from 'twenty-ui/input';
+import { Tag } from 'twenty-ui/primitives/data-display';
+import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
@@ -105,29 +105,30 @@ export const BacklogSprintSection = ({
       <StyledSectionHeader>
         <StyledSectionTitle>{title}</StyledSectionTitle>
         {sprint && (
-          <Tag
-            text={sprint.state as string}
-            color={STATE_COLOR[sprint.state as string] ?? 'gray'}
-          />
+          <Tag color={STATE_COLOR[sprint.state as string] ?? 'gray'}>
+            {sprint.state as string}
+          </Tag>
         )}
         <StyledSectionCount>
           <Trans>{issues.length} issues</Trans>
         </StyledSectionCount>
         {sprint?.state === 'FUTURE' && (
           <Button
-            title={t`Start sprint`}
             onClick={handleStartSprint}
             disabled={isStarting}
-            variant="secondary"
-          />
+            variant="outline"
+          >
+            {t`Start sprint`}
+          </Button>
         )}
         {sprint?.state === 'ACTIVE' && (
           <Button
-            title={t`Complete sprint`}
             onClick={handleCompleteSprint}
             disabled={isCompleting}
-            variant="secondary"
-          />
+            variant="outline"
+          >
+            {t`Complete sprint`}
+          </Button>
         )}
       </StyledSectionHeader>
       <Droppable droppableId={droppableId}>

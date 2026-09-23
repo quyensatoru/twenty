@@ -8,6 +8,9 @@ import { SyncIssueStatusStandardObjectsCommand } from 'src/database/commands/upg
 import { SyncIssueEpicSprintAppScopeRelationsCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1784930002000-sync-issue-epic-sprint-app-scope-relations.command';
 import { SyncIssueMerchantStandardObjectCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1784930003000-sync-issue-merchant-standard-object.command';
 import { BackfillIssueMerchantSearchFieldMetadataCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1784930003500-backfill-issue-merchant-search-field-metadata.command';
+import { AddEmailBlockSettingsCommandMenuItemCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1785921674941-add-email-block-settings-command-menu-item.command';
+import { RepairOrphanCoreWorkflowVersionsCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1785600000000-repair-orphan-core-workflow-versions.command';
+import { SyncDiscardDraftWorkflowAvailabilityExpressionCommand } from 'src/database/commands/upgrade-version-command/2-28/2-28-workspace-command-1785858486000-sync-discard-draft-workflow-availability-expression.command';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import { ApplicationModule } from 'src/engine/core-modules/application/application.module';
 import { FieldMetadataEntity } from 'src/engine/metadata-modules/field-metadata/field-metadata.entity';
@@ -33,6 +36,9 @@ import { ProjectQueryHookModule } from 'src/modules/project/query-hooks/project-
     SyncIssueEpicSprintAppScopeRelationsCommand,
     SyncIssueMerchantStandardObjectCommand,
     BackfillIssueMerchantSearchFieldMetadataCommand,
+    AddEmailBlockSettingsCommandMenuItemCommand,
+    RepairOrphanCoreWorkflowVersionsCommand,
+    SyncDiscardDraftWorkflowAvailabilityExpressionCommand,
   ],
 })
 export class V2_28_UpgradeVersionCommandModule {}

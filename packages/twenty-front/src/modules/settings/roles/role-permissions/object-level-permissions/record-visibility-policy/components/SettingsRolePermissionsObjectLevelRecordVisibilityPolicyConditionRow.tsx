@@ -3,7 +3,7 @@ import { t } from '@lingui/core/macro';
 
 import { FieldMetadataType } from 'twenty-shared/types';
 import { IconTrash } from 'twenty-ui/icon';
-import { IconButton } from 'twenty-ui/input';
+import { IconButton } from 'twenty-ui/components';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
@@ -120,13 +120,14 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyConditionRo
           )}
         </StyledValueContainer>
         <IconButton
-          Icon={IconTrash}
-          size="small"
-          variant="secondary"
-          accent="danger"
+          size="sm"
+          variant="outline"
+          color="danger"
           onClick={onRemove}
-          ariaLabel={t`Remove condition`}
-        />
+          aria-label={t`Remove condition`}
+        >
+          <IconTrash />
+        </IconButton>
       </StyledRow>
     );
   };

@@ -7,9 +7,9 @@ import { type CreateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { assertRelationTargetAppScopeOrThrow } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
 
 // `epic.projectId` is required (non-nullable) — a create always carries it.
@@ -19,9 +19,7 @@ import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic
 @Injectable()
 @WorkspaceQueryHook(`epic.createOne`)
 export class EpicCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -30,14 +28,14 @@ export class EpicCreateOnePreQueryHook implements WorkspacePreQueryHookInstance 
   ): Promise<CreateOneResolverArgs<EpicWorkspaceEntity>> {
     await assertAppScopeWriteAccessOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       objectNameSingular: 'epic',
       foreignKeyValue: payload.data.projectId,
     });
 
     await assertRelationTargetAppScopeOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       objectNameSingular: 'epic',
       projectId: payload.data.projectId,
       targets: isDefined(payload.data.assigneeId)

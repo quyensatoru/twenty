@@ -32,8 +32,10 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -51,8 +53,12 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -73,8 +79,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -95,8 +108,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -118,8 +138,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Issue status record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue status record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -136,8 +163,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Issue status name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue status name`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconTag',
       isNullable: true,
     },
@@ -161,183 +195,240 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'color',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Color`),
-      description: i18nLabel(msg`Issue status color`),
+      label: i18nLabel(
+        msg({ message: `Color`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue status color`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconColorSwatch',
       isNullable: true,
       options: [
         {
           id: 'c58d9621-306f-4b97-bc23-1953b96ede78',
           value: 'RED',
-          label: i18nLabel(msg`Red`),
+          label: i18nLabel(
+            msg({ message: `Red`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'red',
         },
         {
           id: '40b29386-f3c2-4043-8c6b-263257409d10',
           value: 'RUBY',
-          label: i18nLabel(msg`Ruby`),
+          label: i18nLabel(
+            msg({ message: `Ruby`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'ruby',
         },
         {
           id: '1999c56d-3f54-4b70-a2d2-4bd3b70a6a5c',
           value: 'CRIMSON',
-          label: i18nLabel(msg`Crimson`),
+          label: i18nLabel(
+            msg({ message: `Crimson`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'crimson',
         },
         {
           id: 'ea827e92-5a15-4583-9253-f7e318593a53',
           value: 'TOMATO',
-          label: i18nLabel(msg`Tomato`),
+          label: i18nLabel(
+            msg({ message: `Tomato`, context: 'fieldMetadata.label' }),
+          ),
           position: 3,
           color: 'tomato',
         },
         {
           id: '88f6f538-dac2-4d68-bb7e-edda0a943b75',
           value: 'ORANGE',
-          label: i18nLabel(msg`Orange`),
+          label: i18nLabel(
+            msg({ message: `Orange`, context: 'fieldMetadata.label' }),
+          ),
           position: 4,
           color: 'orange',
         },
         {
           id: '87379269-f4e1-443f-a1a1-54db6599bb68',
           value: 'AMBER',
-          label: i18nLabel(msg`Amber`),
+          label: i18nLabel(
+            msg({ message: `Amber`, context: 'fieldMetadata.label' }),
+          ),
           position: 5,
           color: 'amber',
         },
         {
           id: '41d3af2b-345b-4d6e-b35d-50836ad8eebf',
           value: 'YELLOW',
-          label: i18nLabel(msg`Yellow`),
+          label: i18nLabel(
+            msg({ message: `Yellow`, context: 'fieldMetadata.label' }),
+          ),
           position: 6,
           color: 'yellow',
         },
         {
           id: '9e848c54-58fb-42e6-ac29-14a97356148d',
           value: 'LIME',
-          label: i18nLabel(msg`Lime`),
+          label: i18nLabel(
+            msg({ message: `Lime`, context: 'fieldMetadata.label' }),
+          ),
           position: 7,
           color: 'lime',
         },
         {
           id: '86c9ab62-38ff-4588-8fc1-119e174dc66f',
           value: 'GRASS',
-          label: i18nLabel(msg`Grass`),
+          label: i18nLabel(
+            msg({ message: `Grass`, context: 'fieldMetadata.label' }),
+          ),
           position: 8,
           color: 'grass',
         },
         {
           id: '6175fa96-2fa9-46e6-922b-dc41db4ffe98',
           value: 'GREEN',
-          label: i18nLabel(msg`Green`),
+          label: i18nLabel(
+            msg({ message: `Green`, context: 'fieldMetadata.label' }),
+          ),
           position: 9,
           color: 'green',
         },
         {
           id: '143f26cd-f978-4f24-b237-55974568c08a',
           value: 'JADE',
-          label: i18nLabel(msg`Jade`),
+          label: i18nLabel(
+            msg({ message: `Jade`, context: 'fieldMetadata.label' }),
+          ),
           position: 10,
           color: 'jade',
         },
         {
           id: '3382adab-ea5f-4c9c-b714-5971a2fc35e2',
           value: 'MINT',
-          label: i18nLabel(msg`Mint`),
+          label: i18nLabel(
+            msg({ message: `Mint`, context: 'fieldMetadata.label' }),
+          ),
           position: 11,
           color: 'mint',
         },
         {
           id: 'a13e4227-3b6b-4bf9-a1c8-af904a38fc73',
           value: 'TURQUOISE',
-          label: i18nLabel(msg`Turquoise`),
+          label: i18nLabel(
+            msg({ message: `Turquoise`, context: 'fieldMetadata.label' }),
+          ),
           position: 12,
           color: 'turquoise',
         },
         {
           id: 'a1e57cf8-defa-4266-8931-9642307d327a',
           value: 'CYAN',
-          label: i18nLabel(msg`Cyan`),
+          label: i18nLabel(
+            msg({ message: `Cyan`, context: 'fieldMetadata.label' }),
+          ),
           position: 13,
           color: 'cyan',
         },
         {
           id: 'ab98b764-bcf7-4a41-b7ea-efe592fbc259',
           value: 'SKY',
-          label: i18nLabel(msg`Sky`),
+          label: i18nLabel(
+            msg({ message: `Sky`, context: 'fieldMetadata.label' }),
+          ),
           position: 14,
           color: 'sky',
         },
         {
           id: 'fec08216-eabf-42a0-8891-9fcc7fdf2773',
           value: 'BLUE',
-          label: i18nLabel(msg`Blue`),
+          label: i18nLabel(
+            msg({ message: `Blue`, context: 'fieldMetadata.label' }),
+          ),
           position: 15,
           color: 'blue',
         },
         {
           id: 'ac841f37-8a61-4ada-b19c-11cb420c9873',
           value: 'IRIS',
-          label: i18nLabel(msg`Iris`),
+          label: i18nLabel(
+            msg({ message: `Iris`, context: 'fieldMetadata.label' }),
+          ),
           position: 16,
           color: 'iris',
         },
         {
           id: 'd1b65202-7c31-4642-b627-2305c7c1d13f',
           value: 'VIOLET',
-          label: i18nLabel(msg`Violet`),
+          label: i18nLabel(
+            msg({ message: `Violet`, context: 'fieldMetadata.label' }),
+          ),
           position: 17,
           color: 'violet',
         },
         {
           id: '64c9651e-00e8-4dd9-89cf-867ea43c5e35',
           value: 'PURPLE',
-          label: i18nLabel(msg`Purple`),
+          label: i18nLabel(
+            msg({ message: `Purple`, context: 'fieldMetadata.label' }),
+          ),
           position: 18,
           color: 'purple',
         },
         {
           id: '352e03e9-b8b7-4c80-a3af-2047df14df2b',
           value: 'PLUM',
-          label: i18nLabel(msg`Plum`),
+          label: i18nLabel(
+            msg({ message: `Plum`, context: 'fieldMetadata.label' }),
+          ),
           position: 19,
           color: 'plum',
         },
         {
           id: '2f878330-2773-4395-b2df-53ad2e8e5d6d',
           value: 'PINK',
-          label: i18nLabel(msg`Pink`),
+          label: i18nLabel(
+            msg({ message: `Pink`, context: 'fieldMetadata.label' }),
+          ),
           position: 20,
           color: 'pink',
         },
         {
           id: 'ccec9af4-50bb-47de-822d-c1c606c5e2a0',
           value: 'BRONZE',
-          label: i18nLabel(msg`Bronze`),
+          label: i18nLabel(
+            msg({ message: `Bronze`, context: 'fieldMetadata.label' }),
+          ),
           position: 21,
           color: 'bronze',
         },
         {
           id: 'b45733be-9fb8-4719-ae40-14434e72e99d',
           value: 'GOLD',
-          label: i18nLabel(msg`Gold`),
+          label: i18nLabel(
+            msg({ message: `Gold`, context: 'fieldMetadata.label' }),
+          ),
           position: 22,
           color: 'gold',
         },
         {
           id: 'f2e8891d-a629-4d6e-b9a5-5bc00ec0d36b',
           value: 'BROWN',
-          label: i18nLabel(msg`Brown`),
+          label: i18nLabel(
+            msg({ message: `Brown`, context: 'fieldMetadata.label' }),
+          ),
           position: 23,
           color: 'brown',
         },
         {
           id: '29ff6bf5-29e5-4f07-99e3-88c27e0fc990',
           value: 'GRAY',
-          label: i18nLabel(msg`Gray`),
+          label: i18nLabel(
+            msg({ message: `Gray`, context: 'fieldMetadata.label' }),
+          ),
           position: 24,
           color: 'gray',
         },
@@ -354,9 +445,14 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'category',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Category`),
+      label: i18nLabel(
+        msg({ message: `Category`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Status category, used to compute progress and roadmap grouping`,
+        msg({
+          message: `Status category, used to compute progress and roadmap grouping`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconProgressCheck',
       isNullable: true,
@@ -364,21 +460,27 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
         {
           id: '0d4fc734-27a9-4837-ac32-0327385a690f',
           value: 'UNSTARTED',
-          label: i18nLabel(msg`Unstarted`),
+          label: i18nLabel(
+            msg({ message: `Unstarted`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'gray',
         },
         {
           id: '195a9e79-68b9-42b2-aa76-f9c39cfc6f27',
           value: 'STARTED',
-          label: i18nLabel(msg`Started`),
+          label: i18nLabel(
+            msg({ message: `Started`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'yellow',
         },
         {
           id: '689ec945-621f-489b-aa88-144572ade801',
           value: 'DONE',
-          label: i18nLabel(msg`Done`),
+          label: i18nLabel(
+            msg({ message: `Done`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'green',
         },
@@ -395,8 +497,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -418,9 +527,14 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -443,8 +557,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -463,8 +584,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'project',
-      label: i18nLabel(msg`Project`),
-      description: i18nLabel(msg`Project this status belongs to`),
+      label: i18nLabel(
+        msg({ message: `Project`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project this status belongs to`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconListDetails',
       isNullable: false,
       targetObjectName: 'project',
@@ -487,8 +615,15 @@ export const buildIssueStatusStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issues',
-      label: i18nLabel(msg`Issues`),
-      description: i18nLabel(msg`Issues currently in this status`),
+      label: i18nLabel(
+        msg({ message: `Issues`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issues currently in this status`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLayoutKanban',
       isNullable: false,
       isUIEditable: false,

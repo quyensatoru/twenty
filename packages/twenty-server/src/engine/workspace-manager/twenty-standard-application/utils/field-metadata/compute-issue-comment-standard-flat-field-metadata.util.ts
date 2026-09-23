@@ -33,8 +33,10 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -52,8 +54,12 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -74,8 +80,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -96,8 +109,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -117,8 +137,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Issue comment record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue comment record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -137,8 +164,12 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'bodyV2',
       type: FieldMetadataType.RICH_TEXT,
-      label: i18nLabel(msg`Body`),
-      description: i18nLabel(msg`Comment body`),
+      label: i18nLabel(
+        msg({ message: `Body`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Comment body`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconFilePencil',
       isNullable: true,
     },
@@ -153,8 +184,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -176,9 +214,14 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -201,8 +244,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -221,8 +271,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issue',
-      label: i18nLabel(msg`Issue`),
-      description: i18nLabel(msg`Commented issue`),
+      label: i18nLabel(
+        msg({ message: `Issue`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Commented issue`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLayoutKanban',
       isNullable: false,
       targetObjectName: 'issue',
@@ -245,8 +302,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'author',
-      label: i18nLabel(msg`Author`),
-      description: i18nLabel(msg`Comment author`),
+      label: i18nLabel(
+        msg({ message: `Author`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Comment author`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUserCircle',
       isNullable: true,
       targetObjectName: 'workspaceMember',
@@ -269,8 +333,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'parentComment',
-      label: i18nLabel(msg`Parent comment`),
-      description: i18nLabel(msg`Comment this is a reply to`),
+      label: i18nLabel(
+        msg({ message: `Parent comment`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Comment this is a reply to`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconArrowUpRight',
       isNullable: true,
       targetObjectName: 'issueComment',
@@ -293,8 +364,15 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'replies',
-      label: i18nLabel(msg`Replies`),
-      description: i18nLabel(msg`Replies to this comment`),
+      label: i18nLabel(
+        msg({ message: `Replies`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Replies to this comment`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconArrowDownRight',
       isNullable: true,
       isUIEditable: false,
@@ -320,7 +398,12 @@ export const buildIssueCommentStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
       ),
-      description: i18nLabel(msg`Issue comment attachments`),
+      description: i18nLabel(
+        msg({
+          message: `Issue comment attachments`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
         .icon,
       isNullable: true,

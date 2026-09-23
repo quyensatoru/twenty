@@ -4,7 +4,7 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
 import { IconChevronLeft, IconChevronRight } from 'twenty-ui/icon';
-import { Button } from 'twenty-ui/input';
+import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { ShiftCoverageMatrix } from '@/shift/components/ShiftCoverageMatrix';
@@ -239,25 +239,29 @@ const ShiftAnalyticsBody = () => {
         <StyledTitle>{t`24/7 coverage`}</StyledTitle>
         <StyledModeToggle>
           <Button
-            title={t`Week`}
-            variant={viewMode === 'week' ? 'primary' : 'secondary'}
-            accent={viewMode === 'week' ? 'blue' : 'default'}
+            variant={viewMode === 'week' ? 'solid' : 'outline'}
+            color={viewMode === 'week' ? 'accent' : 'neutral'}
             onClick={() => setViewMode('week')}
-          />
+          >
+            {t`Week`}
+          </Button>
           <Button
-            title={t`Month`}
-            variant={viewMode === 'month' ? 'primary' : 'secondary'}
-            accent={viewMode === 'month' ? 'blue' : 'default'}
+            variant={viewMode === 'month' ? 'solid' : 'outline'}
+            color={viewMode === 'month' ? 'accent' : 'neutral'}
             onClick={() => setViewMode('month')}
-          />
+          >
+            {t`Month`}
+          </Button>
         </StyledModeToggle>
       </StyledHeaderRow>
 
       <StyledNavRow>
         <Button
-          Icon={IconChevronLeft}
-          title={viewMode === 'month' ? t`Previous month` : t`Previous week`}
-          variant="secondary"
+          startIcon={<IconChevronLeft />}
+          aria-label={
+            viewMode === 'month' ? t`Previous month` : t`Previous week`
+          }
+          variant="outline"
           onClick={goPrevious}
         />
         <StyledRangeLabel>
@@ -267,16 +271,14 @@ const ShiftAnalyticsBody = () => {
           </StyledRangeDates>
         </StyledRangeLabel>
         {!isAtAnchor && (
-          <Button
-            title={viewMode === 'month' ? t`This month` : t`This week`}
-            variant="secondary"
-            onClick={goToAnchor}
-          />
+          <Button variant="outline" onClick={goToAnchor}>
+            {viewMode === 'month' ? t`This month` : t`This week`}
+          </Button>
         )}
         <Button
-          Icon={IconChevronRight}
-          title={viewMode === 'month' ? t`Next month` : t`Next week`}
-          variant="secondary"
+          startIcon={<IconChevronRight />}
+          aria-label={viewMode === 'month' ? t`Next month` : t`Next week`}
+          variant="outline"
           onClick={goNext}
         />
       </StyledNavRow>

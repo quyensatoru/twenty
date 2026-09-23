@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { LightIconButton } from 'twenty-ui/components';
 import { type DraggableListDropResult } from '@/ui/layout/draggable-list/types/DraggableListDropResult';
 
 import { useGetFieldMetadataItemByIdOrThrow } from '@/object-metadata/hooks/useGetFieldMetadataItemById';
@@ -15,7 +17,7 @@ import { ViewType } from '@/views/types/ViewType';
 import { useContext } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { IconEyeOff, useIcons } from 'twenty-ui/icon';
-import { MenuItemDraggable } from 'twenty-ui/navigation';
+import { MenuItemDraggable } from 'twenty-ui/primitives/navigation';
 import { sortByProperty } from '~/utils/array/sortByProperty';
 
 export const ViewFieldsVisibleDropdownSection = () => {
@@ -49,10 +51,6 @@ export const ViewFieldsVisibleDropdownSection = () => {
       ? handleBoardFieldVisibilityChange
       : changeRecordFieldVisibility;
 
-  const handleDragEnd = (result: DraggableListDropResult) => {
-    handleReorderFields(result);
-  };
-
   const { getIcon } = useIcons();
 
   const fieldMetadataItemLabelIdentifier =
@@ -75,6 +73,17 @@ export const ViewFieldsVisibleDropdownSection = () => {
         recordFieldToFilter.fieldMetadataItemId,
     )
     .toSorted(sortByProperty('position'));
+
+  const handleDragEnd = (result: DraggableListDropResult) => {
+    if (!isDefined(result.destination)) {
+      return;
+    }
+
+    handleReorderFields({
+      recordFieldToMove: draggableRecordFields[result.source.index],
+      targetRecordField: draggableRecordFields[result.destination.index],
+    });
+  };
 
   return (
     <>
@@ -116,18 +125,20 @@ export const ViewFieldsVisibleDropdownSection = () => {
                         <MenuItemDraggable
                           key={recordField.fieldMetadataItemId}
                           LeftIcon={getIcon(fieldMetadataItem.icon)}
-                          iconButtons={[
-                            {
-                              Icon: IconEyeOff,
-                              onClick: () => {
+                          iconButtons={
+                            <LightIconButton
+                              aria-label={t`Hide field`}
+                              onClick={() => {
                                 handleChangeFieldVisibility({
                                   fieldMetadataId:
                                     recordField.fieldMetadataItemId,
                                   isVisible: false,
                                 });
-                              },
-                            },
-                          ]}
+                              }}
+                            >
+                              <IconEyeOff />
+                            </LightIconButton>
+                          }
                           text={fieldMetadataItem.label}
                           gripMode="always"
                         />

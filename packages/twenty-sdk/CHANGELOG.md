@@ -6,6 +6,43 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **`MetadataApiClient.uploadFile` in `twenty-client-sdk` takes one object and no longer accepts a content type.** The file now goes straight to Twenty's file storage (the API issues an upload target, the client sends the bytes there, then the API confirms the upload) instead of being streamed through the GraphQL API, and the MIME type is detected from the bytes on completion. Update every call:
+
+  ```diff
+  - const uploaded = await metadataClient.uploadFile(
+  -   fileBuffer,
+  -   'invoice.pdf',
+  -   'application/pdf',
+  -   FIELD_UNIVERSAL_IDENTIFIER,
+  - );
+  + const uploaded = await metadataClient.uploadFile({
+  +   fileBuffer,
+  +   filename: 'invoice.pdf',
+  +   fieldMetadataUniversalIdentifier: FIELD_UNIVERSAL_IDENTIFIER,
+  + });
+  ```
+
+  The returned `{ id, path, size, createdAt, url }` is unchanged. `uploadFile` now requires a Twenty server that exposes the `createFileUpload` and `completeFileUpload` mutations.
+
+### Added
+
+- **`enqueueJobs` in `twenty-sdk/logic-function`.** Enqueues one run per payload of a single logic function in one call (up to 200 payloads per batch). `retryLimit` and `delayMs` apply to every run in the batch.
+
+  ```ts
+  import { enqueueJobs } from 'twenty-sdk/logic-function';
+
+  await enqueueJobs({
+    logicFunctionUniversalIdentifier: PROCESS_BATCH,
+    payloads: batches.map((batch, batchIndex) => ({ batchIndex })),
+  });
+  ```
+
+### Deprecated
+
+- **`enqueueJob` in `twenty-sdk/logic-function`.** Use `enqueueJobs` with a one-element `payloads` list instead. `enqueueJob` keeps working for now and will be removed in a future major version.
+
 ### Changed
 
 - **`twenty-client-sdk` should now be a dev dependency too.** Although app code imports it (`CoreApiClient`, `MetadataApiClient`, `RestApiClient`), Twenty provides it at runtime — logic functions get it from a generated SDK layer and front components resolve it from server-served modules — so the installed copy is only needed for typechecking and the deploy-time build. Newly scaffolded apps now place it under `devDependencies`. Moving it is recommended (not required: the server already strips it from the deployed runtime), and keeps the installed app leaner:

@@ -1,13 +1,15 @@
+import { msg } from '@lingui/core/macro';
 import {
   STANDARD_OBJECTS,
   STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
 } from 'twenty-shared/metadata';
 
-import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
+import { PageLayoutType } from 'twenty-shared/types';
 import {
   TAB_PROPS,
   WIDGET_PROPS,
 } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-page-layout-tabs.template';
+import { i18nLabel } from 'src/engine/workspace-manager/twenty-standard-application/utils/i18n-label.util';
 import {
   type StandardPageLayoutConfig,
   type StandardPageLayoutTabConfig,
@@ -31,7 +33,9 @@ const SHIFT_PAGE_TABS = {
 } as const satisfies Record<string, StandardPageLayoutTabConfig>;
 
 export const STANDARD_SHIFT_PAGE_LAYOUT_CONFIG = {
-  name: 'Default Shift Layout',
+  name: i18nLabel(
+    msg({ message: `Default Shift Layout`, context: 'pageLayout.name' }),
+  ),
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier: STANDARD_OBJECTS.shift.universalIdentifier,
   universalIdentifier:

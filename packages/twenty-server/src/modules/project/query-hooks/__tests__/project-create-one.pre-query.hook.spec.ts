@@ -23,16 +23,14 @@ describe('ProjectCreateOnePreQueryHook', () => {
           Promise.resolve(existingKeys.includes(key)),
         ),
     };
-    const mockGlobalWorkspaceOrmManager = {
-      getRepository: jest.fn().mockResolvedValue(mockProjectRepository),
+    const mockWorkspaceOrmManager = {
+      getRepository: jest.fn().mockReturnValue(mockProjectRepository),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),
     };
 
-    return new ProjectCreateOnePreQueryHook(
-      mockGlobalWorkspaceOrmManager as never,
-    );
+    return new ProjectCreateOnePreQueryHook(mockWorkspaceOrmManager as never);
   };
 
   it('generates a key from the project name when none is provided', async () => {

@@ -10,7 +10,7 @@ import { isNonEmptyString } from '@sniptt/guards';
 import { createPortal } from 'react-dom';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
-import { Avatar } from 'twenty-ui/data-display';
+import { Avatar } from 'twenty-ui/primitives/data-display';
 import {
   IconArrowBackUp,
   IconDotsVertical,
@@ -18,9 +18,10 @@ import {
   IconPencil,
   IconTrash,
 } from 'twenty-ui/icon';
-import { Button, LightIconButton } from 'twenty-ui/input';
-import { MenuItem } from 'twenty-ui/navigation';
-import { AppTooltip, TooltipDelay } from 'twenty-ui/surfaces';
+import { Button } from 'twenty-ui/primitives/input';
+import { LightIconButton } from 'twenty-ui/components';
+import { MenuItem } from 'twenty-ui/primitives/navigation';
+import { Tooltip } from 'twenty-ui/primitives/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
@@ -37,8 +38,9 @@ import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
-import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { ConfirmationDialog } from '@/ui/layout/dialog/components/ConfirmationDialog';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
+import { TooltipDelay } from '@/ui/layout/tooltip/constants/TooltipDelay';
 import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack';
 import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
 import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
@@ -230,9 +232,9 @@ const AuthorInfoCard = ({
   <StyledAuthorCard>
     <Avatar
       className={authorCardAvatarClass}
-      placeholder={authorName}
-      avatarUrl={avatarUrl}
-      type="rounded"
+      name={authorName}
+      src={avatarUrl}
+      shape="rounded-square"
       size="xl"
     />
     <StyledAuthorCardName>{authorName}</StyledAuthorCardName>
@@ -382,13 +384,12 @@ const EditableCommentBody = ({
         />
       </StyledComposerEditor>
       <StyledComposerActions>
-        <Button title={t`Cancel`} onClick={onCancel} disabled={isSaving} />
+        <Button onClick={onCancel} disabled={isSaving}>{t`Cancel`}</Button>
         <Button
-          title={t`Save`}
           onClick={handleSave}
           disabled={isSaving}
-          accent="blue"
-        />
+          color="accent"
+        >{t`Save`}</Button>
       </StyledComposerActions>
     </StyledComposer>
   );
@@ -470,11 +471,10 @@ const CommentComposer = ({
         />
       </StyledComposerEditor>
       <Button
-        title={submitLabel}
         onClick={handleSend}
         disabled={isSending || !hasContent}
-        accent="blue"
-      />
+        color="accent"
+      >{submitLabel}</Button>
     </StyledComposer>
   );
 };
@@ -501,14 +501,13 @@ const CommentRow = ({
   const { t } = useLingui();
   const [isEditing, setIsEditing] = useState(false);
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
-  const { openModal } = useModal();
+  const { openDialog } = useDialog();
   const { closeDropdown } = useCloseDropdown();
   const { copyToClipboard } = useCopyToClipboard();
   const commentRowRef = useRef<HTMLDivElement>(null);
 
   const dropdownId = `issue-comment-menu-${comment.id}`;
   const deleteModalId = `issue-comment-delete-modal-${comment.id}`;
-  const avatarAnchorId = `issue-comment-avatar-${comment.id}`;
 
   const isAuthor =
     isDefined(currentWorkspaceMemberId) &&
@@ -533,7 +532,7 @@ const CommentRow = ({
 
   const handleDeleteClick = () => {
     closeDropdown(dropdownId);
-    openModal(deleteModalId);
+    openDialog(deleteModalId);
   };
 
   const handleSaveEdit = async (blocknote: string) => {
@@ -555,36 +554,35 @@ const CommentRow = ({
   return (
     <StyledComment ref={commentRowRef} isFocused={isFocused}>
       <StyledCommentTopRow>
-        <StyledAvatarAnchor
-          id={avatarAnchorId}
-          onMouseEnter={() => setIsAvatarHovered(true)}
-          onMouseLeave={() => setIsAvatarHovered(false)}
-        >
-          <Avatar
-            placeholder={authorName}
-            avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
-            type="rounded"
-            size="lg"
-          />
-        </StyledAvatarAnchor>
-        {isAvatarHovered && (
-          <AppTooltip
-            anchorSelect={`#${avatarAnchorId}`}
-            place="right-start"
-            noArrow
-            offset={8}
-            delay={TooltipDelay.noDelay}
-            className={authorCardTooltipClass}
-            isOpen
-          >
+        <Tooltip
+          content={
             <AuthorInfoCard
               authorName={authorName}
               avatarUrl={getAbsoluteImageUrl(comment.author?.avatarUrl)}
               jobTitle={comment.author?.jobTitle}
               email={comment.author?.userEmail}
             />
-          </AppTooltip>
-        )}
+          }
+          side="right"
+          align="start"
+          arrow={false}
+          sideOffset={8}
+          delay={TooltipDelay.noDelay}
+          className={authorCardTooltipClass}
+          open={isAvatarHovered}
+        >
+          <StyledAvatarAnchor
+            onMouseEnter={() => setIsAvatarHovered(true)}
+            onMouseLeave={() => setIsAvatarHovered(false)}
+          >
+            <Avatar
+              name={authorName}
+              src={getAbsoluteImageUrl(comment.author?.avatarUrl)}
+              shape="rounded-square"
+              size="lg"
+            />
+          </StyledAvatarAnchor>
+        </Tooltip>
         <StyledCommentHeader>
           <StyledCommentAuthor>{authorName}</StyledCommentAuthor>
           <StyledCommentDate>
@@ -606,25 +604,29 @@ const CommentRow = ({
       </StyledCommentBody>
       <StyledCommentActions>
         <LightIconButton
-          Icon={IconLink}
-          accent="tertiary"
-          title={t`Copy link`}
+          emphasis="subtle"
+          aria-label={t`Copy link`}
           onClick={handleCopyCommentLink}
-        />
+        >
+          <IconLink />
+        </LightIconButton>
         {isDefined(onReply) && (
           <LightIconButton
-            Icon={IconArrowBackUp}
-            accent="tertiary"
-            title={t`Reply`}
+            emphasis="subtle"
+            aria-label={t`Reply`}
             onClick={onReply}
-          />
+          >
+            <IconArrowBackUp />
+          </LightIconButton>
         )}
         {isAuthor && (
           <Dropdown
             dropdownId={dropdownId}
             dropdownPlacement="bottom-end"
             clickableComponent={
-              <LightIconButton Icon={IconDotsVertical} accent="tertiary" />
+              <LightIconButton emphasis="subtle" aria-label={t`More options`}>
+                <IconDotsVertical />
+              </LightIconButton>
             }
             dropdownComponents={
               <DropdownContent>
@@ -647,8 +649,8 @@ const CommentRow = ({
         )}
       </StyledCommentActions>
       {createPortal(
-        <ConfirmationModal
-          modalInstanceId={deleteModalId}
+        <ConfirmationDialog
+          dialogId={deleteModalId}
           title={t`Delete Comment`}
           subtitle={t`Are you sure you want to delete this comment? This action cannot be undone.`}
           onConfirmClick={() => onDelete(comment.id)}

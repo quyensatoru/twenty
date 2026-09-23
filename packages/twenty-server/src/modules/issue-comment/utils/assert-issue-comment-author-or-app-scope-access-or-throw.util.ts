@@ -8,22 +8,22 @@ import {
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { getWorkspaceContext } from 'src/engine/twenty-orm/storage/orm-workspace-context.storage';
 import { type AppScopeOperation } from 'src/engine/twenty-orm/types/app-scope-permission.type';
 import { shouldBypassAppScope } from 'src/engine/twenty-orm/utils/should-bypass-app-scope.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/standard-objects/issue-comment.workspace-entity';
 
 // Only the comment's author may edit/delete it, unless the acting role has
 // been granted blanket app-scope access for the operation (the "admin" case).
 export const assertIssueCommentAuthorOrAppScopeAccessOrThrow = async ({
   authContext,
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   issueCommentId,
   operation,
 }: {
   authContext: WorkspaceAuthContext;
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   issueCommentId: string;
   operation: AppScopeOperation;
 }): Promise<void> => {
@@ -31,12 +31,11 @@ export const assertIssueCommentAuthorOrAppScopeAccessOrThrow = async ({
 
   assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-  await globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+  await workspaceOrmManager.executeInWorkspaceContext(async () => {
     const context = getWorkspaceContext();
 
     const issueCommentRepository =
-      await globalWorkspaceOrmManager.getRepository<IssueCommentWorkspaceEntity>(
-        workspace.id,
+      workspaceOrmManager.getRepository<IssueCommentWorkspaceEntity>(
         'issueComment',
         { shouldBypassPermissionChecks: true },
       );

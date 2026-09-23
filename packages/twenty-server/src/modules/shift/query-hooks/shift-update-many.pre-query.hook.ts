@@ -13,7 +13,7 @@ import {
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 import { isElevatedActor } from 'src/modules/shift/utils/assert-shift-owner-or-elevated-or-throw.util';
 
@@ -24,9 +24,7 @@ import { isElevatedActor } from 'src/modules/shift/utils/assert-shift-owner-or-e
 @Injectable()
 @WorkspaceQueryHook(`shift.updateMany`)
 export class ShiftUpdateManyPreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -39,7 +37,7 @@ export class ShiftUpdateManyPreQueryHook implements WorkspacePreQueryHookInstanc
 
     // isElevatedActor reads the AsyncLocalStorage workspace context — it must
     // run inside executeInWorkspaceContext.
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         if (!isElevatedActor({ authContext, operation: 'write' })) {
           throw new PermissionsException(

@@ -32,8 +32,10 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -51,8 +53,12 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -73,8 +79,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -95,8 +108,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -118,8 +138,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Sprint record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -136,8 +163,12 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Sprint name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Sprint name`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconRun',
       isNullable: true,
     },
@@ -152,8 +183,12 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'state',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`State`),
-      description: i18nLabel(msg`Sprint state`),
+      label: i18nLabel(
+        msg({ message: `State`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Sprint state`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconStatusChange',
       isNullable: true,
       defaultValue: "'FUTURE'",
@@ -161,21 +196,27 @@ export const buildSprintStandardFlatFieldMetadatas = ({
         {
           id: 'f172c347-d245-4191-a265-95a7fb5317db',
           value: 'FUTURE',
-          label: i18nLabel(msg`Future`),
+          label: i18nLabel(
+            msg({ message: `Future`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'sky',
         },
         {
           id: '28856b47-17e7-461a-8247-621f5b65634e',
           value: 'ACTIVE',
-          label: i18nLabel(msg`Active`),
+          label: i18nLabel(
+            msg({ message: `Active`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'purple',
         },
         {
           id: 'bed2de0f-4854-4f8d-9123-63f951b5263f',
           value: 'CLOSED',
-          label: i18nLabel(msg`Closed`),
+          label: i18nLabel(
+            msg({ message: `Closed`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'green',
         },
@@ -192,8 +233,12 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'goal',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Goal`),
-      description: i18nLabel(msg`Sprint goal`),
+      label: i18nLabel(
+        msg({ message: `Goal`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Sprint goal`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconTarget',
       isNullable: true,
     },
@@ -208,8 +253,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'startDate',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Start date`),
-      description: i18nLabel(msg`Sprint start date`),
+      label: i18nLabel(
+        msg({ message: `Start date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint start date`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarEvent',
       isNullable: true,
     },
@@ -224,8 +276,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'endDate',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`End date`),
-      description: i18nLabel(msg`Sprint end date`),
+      label: i18nLabel(
+        msg({ message: `End date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint end date`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarEvent',
       isNullable: true,
     },
@@ -240,8 +299,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'completeDate',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Complete date`),
-      description: i18nLabel(msg`Sprint complete date`),
+      label: i18nLabel(
+        msg({ message: `Complete date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint complete date`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarCheck',
       isNullable: true,
     },
@@ -256,8 +322,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -279,9 +352,14 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -304,8 +382,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -324,8 +409,12 @@ export const buildSprintStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'owner',
-      label: i18nLabel(msg`Owner`),
-      description: i18nLabel(msg`Sprint owner`),
+      label: i18nLabel(
+        msg({ message: `Owner`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Sprint owner`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconUserCircle',
       isNullable: true,
       targetObjectName: 'workspaceMember',
@@ -348,8 +437,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'project',
-      label: i18nLabel(msg`Project`),
-      description: i18nLabel(msg`Sprint's project`),
+      label: i18nLabel(
+        msg({ message: `Project`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint's project`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconListDetails',
       isNullable: false,
       targetObjectName: 'project',
@@ -372,8 +468,15 @@ export const buildSprintStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issues',
-      label: i18nLabel(msg`Issues`),
-      description: i18nLabel(msg`Sprint's issues`),
+      label: i18nLabel(
+        msg({ message: `Issues`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Sprint's issues`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLayoutKanban',
       isNullable: false,
       isUIEditable: false,

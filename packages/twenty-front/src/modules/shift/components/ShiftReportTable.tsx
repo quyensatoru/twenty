@@ -3,7 +3,7 @@ import { Fragment } from 'react';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { Tag } from 'twenty-ui/data-display';
+import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconAlertTriangle } from 'twenty-ui/icon';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -226,22 +226,18 @@ const ShiftReportRow = ({ shift, template }: ShiftReportRowProps) => {
         {formatTimeWindow(shift.startTime, shift.endTime)}
       </StyledCell>
       <StyledCell>
-        <Tag color={statusColor} text={statusLabel} />
+        <Tag color={statusColor}>{statusLabel}</Tag>
       </StyledCell>
       <StyledCell>{formatInstantTime(shift.checkInAt)}</StyledCell>
       <StyledCell>{formatInstantTime(shift.checkOutAt)}</StyledCell>
       <StyledCell>{workingHours}</StyledCell>
       <StyledCell>
-        {isOvertime ? (
-          <Tag color="orange" text={multiplierLabel} />
-        ) : (
-          multiplierLabel
-        )}
+        {isOvertime ? <Tag color="orange">{multiplierLabel}</Tag> : multiplierLabel}
       </StyledCell>
       <StyledCell>
         <StyledFlags>
           {isLate && (
-            <Tag color="red" text={t`Muộn +${shift.checkInLateMinutes}'`} />
+            <Tag color="red">{t`Muộn +${shift.checkInLateMinutes}'`}</Tag>
           )}
           {hasCheckOutWarning && (
             <StyledWarningIcon

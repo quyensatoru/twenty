@@ -34,8 +34,10 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -53,8 +55,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -75,8 +81,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -97,8 +110,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -118,8 +138,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Issue record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -138,8 +165,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'title',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Title`),
-      description: i18nLabel(msg`Issue title`),
+      label: i18nLabel(
+        msg({ message: `Title`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Issue title`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconNotes',
       isNullable: true,
     },
@@ -154,9 +185,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'issueKey',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Key`),
+      label: i18nLabel(msg({ message: `Key`, context: 'fieldMetadata.label' })),
       description: i18nLabel(
-        msg`Issue key, auto-generated from the project key`,
+        msg({
+          message: `Issue key, auto-generated from the project key`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconKey',
       isNullable: true,
@@ -174,8 +208,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'description',
       type: FieldMetadataType.RICH_TEXT,
-      label: i18nLabel(msg`Description`),
-      description: i18nLabel(msg`Issue description`),
+      label: i18nLabel(
+        msg({ message: `Description`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue description`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconFilePencil',
       isNullable: true,
     },
@@ -190,8 +231,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'issueType',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Issue type`),
-      description: i18nLabel(msg`Issue type`),
+      label: i18nLabel(
+        msg({ message: `Issue type`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Issue type`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconTag',
       isNullable: true,
       defaultValue: "'TASK'",
@@ -199,28 +244,36 @@ export const buildIssueStandardFlatFieldMetadatas = ({
         {
           id: 'a818e3d2-043f-4b33-99aa-759b0423c739',
           value: 'STORY',
-          label: i18nLabel(msg`Story`),
+          label: i18nLabel(
+            msg({ message: `Story`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'green',
         },
         {
           id: '5f556d51-5a2b-4c19-9e0d-5f4f5c4f5f92',
           value: 'TASK',
-          label: i18nLabel(msg`Task`),
+          label: i18nLabel(
+            msg({ message: `Task`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'blue',
         },
         {
           id: 'd6a5095b-9292-4200-abff-ff9f55bc56de',
           value: 'BUG',
-          label: i18nLabel(msg`Bug`),
+          label: i18nLabel(
+            msg({ message: `Bug`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'red',
         },
         {
           id: '6a2ed5d7-0b68-4d42-8181-eb2eae147607',
           value: 'SUBTASK',
-          label: i18nLabel(msg`Subtask`),
+          label: i18nLabel(
+            msg({ message: `Subtask`, context: 'fieldMetadata.label' }),
+          ),
           position: 3,
           color: 'gray',
         },
@@ -237,8 +290,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'priority',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Priority`),
-      description: i18nLabel(msg`Issue priority`),
+      label: i18nLabel(
+        msg({ message: `Priority`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue priority`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconFlag',
       isNullable: true,
       defaultValue: "'MEDIUM'",
@@ -246,35 +306,45 @@ export const buildIssueStandardFlatFieldMetadatas = ({
         {
           id: '7a3ac4b4-1f11-4ef1-95eb-ee0c52e6898c',
           value: 'LOWEST',
-          label: i18nLabel(msg`Lowest`),
+          label: i18nLabel(
+            msg({ message: `Lowest`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'gray',
         },
         {
           id: 'e16557cb-f517-432f-86ee-be1af39501ba',
           value: 'LOW',
-          label: i18nLabel(msg`Low`),
+          label: i18nLabel(
+            msg({ message: `Low`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'blue',
         },
         {
           id: 'ce1bb9a6-df3d-48a9-b1c2-ca172a288255',
           value: 'MEDIUM',
-          label: i18nLabel(msg`Medium`),
+          label: i18nLabel(
+            msg({ message: `Medium`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'yellow',
         },
         {
           id: '8e220276-11d4-4a12-a62b-dd9df11815f4',
           value: 'HIGH',
-          label: i18nLabel(msg`High`),
+          label: i18nLabel(
+            msg({ message: `High`, context: 'fieldMetadata.label' }),
+          ),
           position: 3,
           color: 'orange',
         },
         {
           id: '0ef26535-456b-4568-baa3-8afd630dacc4',
           value: 'HIGHEST',
-          label: i18nLabel(msg`Highest`),
+          label: i18nLabel(
+            msg({ message: `Highest`, context: 'fieldMetadata.label' }),
+          ),
           position: 4,
           color: 'red',
         },
@@ -291,36 +361,54 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'resolution',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Resolution`),
-      description: i18nLabel(msg`Issue resolution`),
+      label: i18nLabel(
+        msg({ message: `Resolution`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue resolution`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCircleCheck',
       isNullable: true,
       options: [
         {
           id: 'c363ead2-e423-4375-9fe4-0b0dedd6c72d',
           value: 'DONE',
-          label: i18nLabel(msg`Done`),
+          label: i18nLabel(
+            msg({ message: `Done`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'green',
         },
         {
           id: '7822f7d8-b81c-417f-a11a-58bac696377c',
           value: 'WONT_DO',
-          label: i18nLabel(msg`Won't Do`),
+          label: i18nLabel(
+            msg({ message: `Won't Do`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'gray',
         },
         {
           id: '0a12e51d-b23d-41df-a313-7c3059d8cad5',
           value: 'DUPLICATE',
-          label: i18nLabel(msg`Duplicate`),
+          label: i18nLabel(
+            msg({ message: `Duplicate`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'orange',
         },
         {
           id: '0b2ccfe7-7544-4585-9b8e-62e6af8f7bea',
           value: 'CANNOT_REPRODUCE',
-          label: i18nLabel(msg`Cannot Reproduce`),
+          label: i18nLabel(
+            msg({
+              message: `Cannot Reproduce`,
+              context: 'fieldMetadata.label',
+            }),
+          ),
           position: 3,
           color: 'red',
         },
@@ -337,8 +425,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'storyPoints',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Story points`),
-      description: i18nLabel(msg`Story points estimate`),
+      label: i18nLabel(
+        msg({ message: `Story points`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Story points estimate`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconNumber',
       isNullable: true,
     },
@@ -353,29 +448,39 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'labels',
       type: FieldMetadataType.MULTI_SELECT,
-      label: i18nLabel(msg`Labels`),
-      description: i18nLabel(msg`Issue labels`),
+      label: i18nLabel(
+        msg({ message: `Labels`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Issue labels`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconTags',
       isNullable: true,
       options: [
         {
           id: '79b31c21-da77-4ffe-8b44-ac02e9d3e4ce',
           value: 'BUG',
-          label: i18nLabel(msg`Bug`),
+          label: i18nLabel(
+            msg({ message: `Bug`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'red',
         },
         {
           id: '4bf90866-9ea1-4ce0-b6e8-727e7894eb99',
           value: 'ENHANCEMENT',
-          label: i18nLabel(msg`Enhancement`),
+          label: i18nLabel(
+            msg({ message: `Enhancement`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'blue',
         },
         {
           id: '8a18d617-df0c-4ecc-9a89-c5124dd652b1',
           value: 'DOCUMENTATION',
-          label: i18nLabel(msg`Documentation`),
+          label: i18nLabel(
+            msg({ message: `Documentation`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'green',
         },
@@ -392,8 +497,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'dueDate',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Due date`),
-      description: i18nLabel(msg`Issue due date`),
+      label: i18nLabel(
+        msg({ message: `Due date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue due date`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarEvent',
       isNullable: true,
     },
@@ -408,8 +520,18 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'originalEstimateMinutes',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Original estimate (minutes)`),
-      description: i18nLabel(msg`Original time estimate in minutes`),
+      label: i18nLabel(
+        msg({
+          message: `Original estimate (minutes)`,
+          context: 'fieldMetadata.label',
+        }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Original time estimate in minutes`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconClock',
       isNullable: true,
     },
@@ -424,8 +546,18 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'remainingEstimateMinutes',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Remaining estimate (minutes)`),
-      description: i18nLabel(msg`Remaining time estimate in minutes`),
+      label: i18nLabel(
+        msg({
+          message: `Remaining estimate (minutes)`,
+          context: 'fieldMetadata.label',
+        }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Remaining time estimate in minutes`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconClockHour4',
       isNullable: true,
     },
@@ -440,8 +572,18 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'timeSpentMinutes',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Time spent (minutes)`),
-      description: i18nLabel(msg`Total time logged in minutes`),
+      label: i18nLabel(
+        msg({
+          message: `Time spent (minutes)`,
+          context: 'fieldMetadata.label',
+        }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Total time logged in minutes`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconClockPlay',
       isNullable: true,
     },
@@ -456,8 +598,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -479,9 +628,14 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -504,8 +658,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -524,8 +685,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'assignee',
-      label: i18nLabel(msg`Assignee`),
-      description: i18nLabel(msg`Issue assignee`),
+      label: i18nLabel(
+        msg({ message: `Assignee`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue assignee`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUserCircle',
       isNullable: true,
       targetObjectName: 'workspaceMember',
@@ -548,8 +716,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'reporter',
-      label: i18nLabel(msg`Reporter`),
-      description: i18nLabel(msg`Issue reporter`),
+      label: i18nLabel(
+        msg({ message: `Reporter`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue reporter`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUserCircle',
       isNullable: true,
       targetObjectName: 'workspaceMember',
@@ -572,8 +747,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'merchants',
-      label: i18nLabel(msg`Merchants`),
-      description: i18nLabel(msg`Merchants linked to this issue`),
+      label: i18nLabel(
+        msg({ message: `Merchants`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Merchants linked to this issue`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconBuildingStore',
       isNullable: true,
       targetObjectName: 'issueMerchant',
@@ -596,8 +778,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'project',
-      label: i18nLabel(msg`Project`),
-      description: i18nLabel(msg`Issue's project`),
+      label: i18nLabel(
+        msg({ message: `Project`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue's project`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconListDetails',
       isNullable: false,
       targetObjectName: 'project',
@@ -620,8 +809,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'status',
-      label: i18nLabel(msg`Status`),
-      description: i18nLabel(msg`Issue status`),
+      label: i18nLabel(
+        msg({ message: `Status`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Issue status`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconProgressCheck',
       isNullable: true,
       targetObjectName: 'issueStatus',
@@ -644,8 +837,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'sprint',
-      label: i18nLabel(msg`Sprint`),
-      description: i18nLabel(msg`Issue's sprint (null = backlog)`),
+      label: i18nLabel(
+        msg({ message: `Sprint`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue's sprint (null = backlog)`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconRun',
       isNullable: true,
       targetObjectName: 'sprint',
@@ -668,8 +868,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'epic',
-      label: i18nLabel(msg`Epic`),
-      description: i18nLabel(msg`Issue's epic`),
+      label: i18nLabel(
+        msg({ message: `Epic`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Issue's epic`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconStack2',
       isNullable: true,
       targetObjectName: 'epic',
@@ -692,9 +896,14 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'parent',
-      label: i18nLabel(msg`Parent issue`),
+      label: i18nLabel(
+        msg({ message: `Parent issue`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Parent issue (epic link for a story, story for a subtask)`,
+        msg({
+          message: `Parent issue (epic link for a story, story for a subtask)`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconArrowUpRight',
       isNullable: true,
@@ -718,8 +927,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'children',
-      label: i18nLabel(msg`Child issues`),
-      description: i18nLabel(msg`Child issues (stories or subtasks)`),
+      label: i18nLabel(
+        msg({ message: `Child issues`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Child issues (stories or subtasks)`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconSitemap',
       isNullable: true,
       isUIEditable: false,
@@ -741,8 +957,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issueComments',
-      label: i18nLabel(msg`Comments`),
-      description: i18nLabel(msg`Issue's comments`),
+      label: i18nLabel(
+        msg({ message: `Comments`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue's comments`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconMessage',
       isNullable: true,
       isUIEditable: false,
@@ -764,8 +987,15 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'worklogs',
-      label: i18nLabel(msg`Worklogs`),
-      description: i18nLabel(msg`Issue's worklogs`),
+      label: i18nLabel(
+        msg({ message: `Worklogs`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Issue's worklogs`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconClock',
       isNullable: true,
       isUIEditable: false,
@@ -791,7 +1021,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
       ),
-      description: i18nLabel(msg`Issue attachments`),
+      description: i18nLabel(
+        msg({
+          message: `Issue attachments`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
         .icon,
       isNullable: true,
@@ -818,7 +1053,12 @@ export const buildIssueStandardFlatFieldMetadatas = ({
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.timelineActivity
           .label,
       ),
-      description: i18nLabel(msg`Timeline Activities linked to the issue`),
+      description: i18nLabel(
+        msg({
+          message: `Timeline Activities linked to the issue`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT
         .timelineActivity.icon,
       isNullable: true,

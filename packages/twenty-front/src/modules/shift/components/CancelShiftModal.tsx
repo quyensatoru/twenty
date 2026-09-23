@@ -1,14 +1,14 @@
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
-import { Button, type SelectOption } from 'twenty-ui/input';
+import { Button, type SelectOption } from 'twenty-ui/primitives/input';
+import { Dialog } from 'twenty-ui/primitives/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
 import { Select } from '@/ui/input/components/Select';
 import { TextArea } from '@/ui/input/components/TextArea';
-import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { DialogInstance } from '@/ui/layout/dialog/components/DialogInstance';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 
 const MIN_REASON_LENGTH = 10;
 
@@ -69,7 +69,7 @@ export const CancelShiftModal = ({
   onConfirm,
 }: CancelShiftModalProps) => {
   const { t } = useLingui();
-  const { closeModal } = useModal();
+  const { closeDialog } = useDialog();
   const [reason, setReason] = useState('');
   const [category, setCategory] = useState<CancelCategory>('SICK');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,7 +87,7 @@ export const CancelShiftModal = ({
   const resetAndClose = () => {
     setReason('');
     setCategory('SICK');
-    closeModal(modalInstanceId);
+    closeDialog(modalInstanceId);
   };
 
   const handleConfirm = async () => {
@@ -108,56 +108,70 @@ export const CancelShiftModal = ({
   };
 
   return (
-    <ModalStatefulWrapper
-      modalInstanceId={modalInstanceId}
-      isClosable
+    <DialogInstance
+      dialogId={modalInstanceId}
+      dismissible
       onClose={resetAndClose}
       renderInDocumentBody
     >
-      <StyledContent>
-        <H1Title title={t`Cancel shift`} fontColor={H1TitleFontColor.Primary} />
-        <StyledSubtitle>{shiftName}</StyledSubtitle>
-        {isInProgress && (
-          <StyledWarning>{t`This shift is in progress.`}</StyledWarning>
-        )}
-        <StyledField>
-          <TextArea
-            textAreaId={`${modalInstanceId}-reason`}
-            label={t`Reason`}
-            placeholder={t`Explain why this shift is being cancelled (min ${MIN_REASON_LENGTH} characters)`}
-            value={reason}
-            onChange={setReason}
-            minRows={3}
-            maxRows={8}
-          />
-          <StyledCounter isValid={isReasonValid}>
-            {trimmedLength}/{MIN_REASON_LENGTH}
-          </StyledCounter>
-        </StyledField>
-        <Select
-          dropdownId={`${modalInstanceId}-category`}
-          label={t`Category`}
-          options={categoryOptions}
-          value={category}
-          onChange={setCategory}
-          fullWidth
-        />
-        <StyledFooter>
-          <Button
-            title={t`Keep shift`}
-            variant="secondary"
-            onClick={resetAndClose}
-            disabled={isSubmitting}
-          />
-          <Button
-            title={t`Cancel shift`}
-            variant="primary"
-            accent="danger"
-            onClick={handleConfirm}
-            disabled={isSubmitting || !isReasonValid}
-          />
-        </StyledFooter>
-      </StyledContent>
-    </ModalStatefulWrapper>
+      {({ container, backdrop, viewportProps, onKeyDown }) => (
+        <Dialog.Popup
+          {...{ container, backdrop, viewportProps, onKeyDown }}
+          size="md"
+          data-globally-prevent-click-outside
+          style={{
+            padding: 'var(--t-spacing-6)',
+            borderRadius: 'var(--t-spacing-1)',
+          }}
+        >
+          <StyledContent>
+            <Dialog.Title>{t`Cancel shift`}</Dialog.Title>
+            <StyledSubtitle>{shiftName}</StyledSubtitle>
+            {isInProgress && (
+              <StyledWarning>{t`This shift is in progress.`}</StyledWarning>
+            )}
+            <StyledField>
+              <TextArea
+                textAreaId={`${modalInstanceId}-reason`}
+                label={t`Reason`}
+                placeholder={t`Explain why this shift is being cancelled (min ${MIN_REASON_LENGTH} characters)`}
+                value={reason}
+                onChange={setReason}
+                minRows={3}
+                maxRows={8}
+              />
+              <StyledCounter isValid={isReasonValid}>
+                {trimmedLength}/{MIN_REASON_LENGTH}
+              </StyledCounter>
+            </StyledField>
+            <Select
+              dropdownId={`${modalInstanceId}-category`}
+              label={t`Category`}
+              options={categoryOptions}
+              value={category}
+              onChange={setCategory}
+              fullWidth
+            />
+            <StyledFooter>
+              <Button
+                variant="outline"
+                onClick={resetAndClose}
+                disabled={isSubmitting}
+              >
+                {t`Keep shift`}
+              </Button>
+              <Button
+                variant="solid"
+                color="danger"
+                onClick={handleConfirm}
+                disabled={isSubmitting || !isReasonValid}
+              >
+                {t`Cancel shift`}
+              </Button>
+            </StyledFooter>
+          </StyledContent>
+        </Dialog.Popup>
+      )}
+    </DialogInstance>
   );
 };

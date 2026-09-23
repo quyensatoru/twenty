@@ -1,6 +1,10 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
 import {
+  type ApplicationBilling,
+  type ApplicationCapability,
+} from 'twenty-shared/application';
+import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -17,9 +21,11 @@ import {
 
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
 import { ApplicationRegistrationSourceType } from 'src/engine/core-modules/application/application-registration/enums/application-registration-source-type.enum';
+import { ApplicationState } from 'src/engine/core-modules/application/enums/application-state.enum';
 import { FileEntity } from 'src/engine/core-modules/file/entities/file.entity';
 import { ApplicationVariableEntity } from 'src/engine/core-modules/application/application-variable/application-variable.entity';
 import { PublicDomainEntity } from 'src/engine/core-modules/public-domain/public-domain.entity';
+import { ADD_HEALTH_CHECK_TO_APPLICATION_UPGRADE_COMMAND_NAME } from 'src/database/commands/upgrade-version-command/2-42/add-health-check-to-application-upgrade-command-name.constant';
 import { WasIntroducedInUpgrade } from 'src/engine/core-modules/upgrade/decorators/was-introduced-in-upgrade.decorator';
 import { AgentEntity } from 'src/engine/metadata-modules/ai/ai-agent/entities/agent.entity';
 import { CommandMenuItemEntity } from 'src/engine/metadata-modules/command-menu-item/entities/command-menu-item.entity';
@@ -78,6 +84,17 @@ export class ApplicationEntity extends WorkspaceRelatedEntity {
   @Column({ type: 'text', default: ApplicationRegistrationSourceType.LOCAL })
   sourceType: ApplicationRegistrationSourceType;
 
+  @Column({
+    nullable: false,
+    type: 'text',
+    default: ApplicationState.INSTALLED,
+  })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.38.0_AddStateToApplicationFastInstanceCommand_1788260646460',
+  })
+  state: ApplicationState;
+
   @Column({ nullable: false, type: 'text' })
   sourcePath: string;
 
@@ -104,6 +121,23 @@ export class ApplicationEntity extends WorkspaceRelatedEntity {
   @Column({ type: 'jsonb', nullable: false, default: {} })
   availablePackages: Record<string, string>;
 
+  // What the app declares it bills for: recurring charges the platform raises
+  // each period, and the operations it charges against, each with the billing
+  // category metered and the app-authored label shown for that spend.
+  @Column({ type: 'jsonb', nullable: false, default: {} })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.38.0_AddBillingToApplicationFastInstanceCommand_1788340843000',
+  })
+  billing: ApplicationBilling;
+
+  @Column({ type: 'varchar', array: true, nullable: false, default: '{}' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.42.0_AddApplicationGrantedCapabilitiesFastInstanceCommand_1790088525621',
+  })
+  grantedCapabilities: ApplicationCapability[];
+
   @Column({ nullable: true, type: 'uuid' })
   logicFunctionLayerId: string | null;
 
@@ -115,6 +149,26 @@ export class ApplicationEntity extends WorkspaceRelatedEntity {
 
   @Column({ nullable: true, type: 'uuid' })
   settingsCustomTabFrontComponentId: string | null;
+
+  @Column({ nullable: true, type: 'uuid' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.32.0_AddUninstallLogicFunctionIdToApplicationFastInstanceCommand_1786959731000',
+  })
+  uninstallLogicFunctionId: string | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.33.0_AddUninstallHookCompletedForRequestedAtToApplicationFastInstanceCommand_1787151824000',
+  })
+  uninstallHookCompletedForRequestedAt: Date | null;
+
+  @Column({ nullable: true, type: 'uuid' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName: ADD_HEALTH_CHECK_TO_APPLICATION_UPGRADE_COMMAND_NAME,
+  })
+  healthCheckLogicFunctionId: string | null;
 
   @Column({ nullable: false, type: 'boolean', default: true })
   canBeUninstalled: boolean;
@@ -135,6 +189,20 @@ export class ApplicationEntity extends WorkspaceRelatedEntity {
       '2.23.0_AddSdkClientCoreChecksumToApplicationFastInstanceCommand_1784625638000',
   })
   sdkClientCoreChecksum: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.31.0_AddFrontComponentSharedDependenciesToApplicationFastInstanceCommand_1786529082690',
+  })
+  frontComponentSharedDependenciesChecksum: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  @WasIntroducedInUpgrade({
+    upgradeCommandName:
+      '2.31.0_AddFrontComponentSharedDependenciesToApplicationFastInstanceCommand_1786529082690',
+  })
+  frontComponentSharedDependenciesBuiltPath: string | null;
 
   @Column({ nullable: true, type: 'uuid' })
   applicationRegistrationId: string | null;

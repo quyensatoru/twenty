@@ -8,6 +8,7 @@ import { WorkspaceIteratorService } from 'src/database/commands/command-runners/
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 import { type EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
@@ -33,6 +34,7 @@ export class BackfillEpicIssueDataCommand extends ProvisionedWorkspaceCommandRun
     private readonly applicationService: ApplicationService,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
+    private readonly workspaceOrmManager: WorkspaceOrmManager,
   ) {
     super(workspaceIteratorService);
   }
@@ -68,10 +70,10 @@ export class BackfillEpicIssueDataCommand extends ProvisionedWorkspaceCommandRun
         (option) => option.value === 'EPIC',
       );
 
-    const issueRepository = dataSource.getRepository<IssueWorkspaceEntity>(
-      'issue',
-      { shouldBypassPermissionChecks: true },
-    );
+    const issueRepository =
+      this.workspaceOrmManager.getRepository<IssueWorkspaceEntity>('issue', {
+        shouldBypassPermissionChecks: true,
+      });
 
     let legacyEpicIssues: IssueWorkspaceEntity[] = [];
 
@@ -117,13 +119,13 @@ export class BackfillEpicIssueDataCommand extends ProvisionedWorkspaceCommandRun
     }
 
     if (legacyEpicIssues.length > 0) {
-      const epicRepository = dataSource.getRepository<EpicWorkspaceEntity>(
-        'epic',
-        { shouldBypassPermissionChecks: true },
-      );
+      const epicRepository =
+        this.workspaceOrmManager.getRepository<EpicWorkspaceEntity>('epic', {
+          shouldBypassPermissionChecks: true,
+        });
 
       for (const legacyEpicIssue of legacyEpicIssues) {
-        const epic = await epicRepository.save({
+        const [epic] = await epicRepository.save({
           name: legacyEpicIssue.title,
           projectId: legacyEpicIssue.projectId,
           createdBy: legacyEpicIssue.createdBy,

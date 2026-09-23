@@ -8,13 +8,13 @@ import {
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { getWorkspaceContext } from 'src/engine/twenty-orm/storage/orm-workspace-context.storage';
 import { type AppScopeOperation } from 'src/engine/twenty-orm/types/app-scope-permission.type';
 import { shouldBypassAppScope } from 'src/engine/twenty-orm/utils/should-bypass-app-scope.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 
-// MUST be called inside globalWorkspaceOrmManager.executeInWorkspaceContext —
+// MUST be called inside workspaceOrmManager.executeInWorkspaceContext —
 // getWorkspaceContext() reads the AsyncLocalStorage that wrapper populates and
 // throws otherwise. Elevated = leader/PO whose role carries the raw
 // all-object-records flag for the operation (or a system/apiKey context).
@@ -41,12 +41,12 @@ export const isElevatedActor = ({
 // (leader/PO — blanket app-scope access for the operation).
 export const assertShiftOwnerOrElevatedOrThrow = async ({
   authContext,
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   shiftId,
   operation,
 }: {
   authContext: WorkspaceAuthContext;
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   shiftId: string;
   operation: AppScopeOperation;
 }): Promise<void> => {
@@ -54,13 +54,11 @@ export const assertShiftOwnerOrElevatedOrThrow = async ({
 
   assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-  await globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
-    const shiftRepository =
-      await globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-        workspace.id,
-        'shift',
-        { shouldBypassPermissionChecks: true },
-      );
+  await workspaceOrmManager.executeInWorkspaceContext(async () => {
+    const shiftRepository = workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
+      'shift',
+      { shouldBypassPermissionChecks: true },
+    );
 
     const shift = await shiftRepository.findOne({
       where: { id: shiftId },

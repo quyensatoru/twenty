@@ -1,27 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import axios from 'axios';
+import chunk from 'lodash.chunk';
 import { isDefined, isNonEmptyArray } from 'twenty-shared/utils';
 import { In, Repository } from 'typeorm';
-import { z } from 'zod';
 
 import { ApplicationInstallService } from 'src/engine/core-modules/application/application-install/application-install.service';
-import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
-import { ApplicationRegistrationService } from 'src/engine/core-modules/application/application-registration/application-registration.service';
 import { ApplicationRegistrationSourceType } from 'src/engine/core-modules/application/application-registration/enums/application-registration-source-type.enum';
+import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import {
   ApplicationException,
   ApplicationExceptionCode,
 } from 'src/engine/core-modules/application/application.exception';
-import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
-
-const npmPackageMetadataSchema = z.object({
-  version: z.string(),
-});
-
-const UPGRADE_APPLICATIONS_DEFAULT_BATCH_SIZE = 5;
+import {
+  UPGRADE_WORKSPACE_APPLICATION_JOB_ENQUEUE_BATCH_SIZE,
+  UPGRADE_WORKSPACE_APPLICATION_JOB_NAME,
+  UPGRADE_WORKSPACE_APPLICATION_JOB_OPTIONS,
+  type UpgradeWorkspaceApplicationJobData,
+} from 'src/engine/core-modules/application/jobs/upgrade-workspace-application.job-constants';
+import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
+import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
+import { MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
+import { WorkspaceVersionService } from 'src/engine/workspace-manager/workspace-version/services/workspace-version.service';
 
 @Injectable()
 export class ApplicationUpgradeService {
@@ -33,83 +34,10 @@ export class ApplicationUpgradeService {
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
     private readonly applicationInstallService: ApplicationInstallService,
-    private readonly applicationRegistrationService: ApplicationRegistrationService,
-    private readonly twentyConfigService: TwentyConfigService,
+    private readonly workspaceVersionService: WorkspaceVersionService,
+    @InjectMessageQueue(MessageQueue.applicationUpgradeQueue)
+    private readonly applicationUpgradeQueueService: MessageQueueService,
   ) {}
-
-  async checkForUpdates(
-    appRegistration: ApplicationRegistrationEntity,
-  ): Promise<string | null> {
-    if (appRegistration.sourceType !== ApplicationRegistrationSourceType.NPM) {
-      return null;
-    }
-
-    const registryUrl = this.twentyConfigService.get('APP_REGISTRY_URL');
-
-    if (!appRegistration.sourcePackage) {
-      return null;
-    }
-
-    try {
-      const encodedPackage = encodeURIComponent(appRegistration.sourcePackage);
-
-      const { data } = await axios.get(
-        `${registryUrl}/${encodedPackage}/latest`,
-        {
-          headers: { 'User-Agent': 'Twenty-AppUpgrade' },
-          timeout: 10_000,
-        },
-      );
-
-      const parsed = npmPackageMetadataSchema.safeParse(data);
-
-      if (!parsed.success) {
-        this.logger.warn(
-          `Unexpected response shape from registry for ${appRegistration.sourcePackage}`,
-        );
-
-        return null;
-      }
-
-      const isNewVersion =
-        await this.applicationRegistrationService.setLatestAvailableVersionIfChanged(
-          appRegistration.id,
-          parsed.data.version,
-        );
-
-      if (isNewVersion) {
-        this.applicationRegistrationService.emitRegistrationPublishMetric({
-          isNewRegistration: false,
-          universalIdentifier: appRegistration.universalIdentifier,
-          name: appRegistration.name,
-          sourceType: appRegistration.sourceType,
-          version: parsed.data.version,
-        });
-
-        await this.applicationRegistrationService.enqueueAutoUpgradeApplications(
-          appRegistration.id,
-        );
-      }
-
-      return parsed.data.version;
-    } catch (error) {
-      this.logger.warn(
-        `Failed to check updates for ${appRegistration.sourcePackage}: ${error}`,
-      );
-
-      return null;
-    }
-  }
-
-  async checkAllForUpdates(): Promise<void> {
-    const npmRegistrations = await this.appRegistrationRepository.find({
-      where: { sourceType: ApplicationRegistrationSourceType.NPM },
-    });
-
-    for (const registration of npmRegistrations) {
-      await this.checkForUpdates(registration);
-    }
-  }
 
   async findApplicationsToUpgrade({
     applicationRegistrationId,
@@ -125,6 +53,7 @@ export class ApplicationUpgradeService {
     appRegistration: ApplicationRegistrationEntity;
     targetVersion: string | null;
     applicationsToUpgrade: ApplicationEntity[];
+    skippedNonProvisionedWorkspaceIds: string[];
   }> {
     const appRegistration = await this.appRegistrationRepository.findOneOrFail({
       where: { id: applicationRegistrationId },
@@ -137,6 +66,7 @@ export class ApplicationUpgradeService {
         appRegistration,
         targetVersion: null,
         applicationsToUpgrade: [],
+        skippedNonProvisionedWorkspaceIds: [],
       };
     }
 
@@ -150,92 +80,167 @@ export class ApplicationUpgradeService {
       },
     });
 
-    let applicationsToUpgrade = applications.filter(
+    const outdatedApplications = applications.filter(
       (application) => application.version !== targetVersion,
     );
 
-    if (isDefined(workspaceCountLimit)) {
-      applicationsToUpgrade = applicationsToUpgrade.slice(
-        0,
-        workspaceCountLimit,
-      );
-    }
+    const provisionedWorkspaceIds = new Set(
+      await this.workspaceVersionService.getProvisionedWorkspaceIds(),
+    );
 
-    return { appRegistration, targetVersion, applicationsToUpgrade };
+    const provisionedApplications = outdatedApplications.filter((application) =>
+      provisionedWorkspaceIds.has(application.workspaceId),
+    );
+
+    const skippedNonProvisionedWorkspaceIds = outdatedApplications
+      .filter(
+        (application) => !provisionedWorkspaceIds.has(application.workspaceId),
+      )
+      .map((application) => application.workspaceId);
+
+    const applicationsToUpgrade = isDefined(workspaceCountLimit)
+      ? provisionedApplications.slice(0, workspaceCountLimit)
+      : provisionedApplications;
+
+    return {
+      appRegistration,
+      targetVersion,
+      applicationsToUpgrade,
+      skippedNonProvisionedWorkspaceIds,
+    };
   }
 
-  async upgradeApplications({
-    appRegistration,
-    targetVersion,
+  async enqueueWorkspaceApplicationUpgrades({
+    applicationRegistrationId,
     applications,
-    batchSize = UPGRADE_APPLICATIONS_DEFAULT_BATCH_SIZE,
+    onlyAutoUpgrade,
   }: {
-    appRegistration: ApplicationRegistrationEntity;
-    targetVersion: string;
+    applicationRegistrationId: string;
     applications: ApplicationEntity[];
-    batchSize?: number;
-  }): Promise<void> {
-    const sanitizedBatchSize = Math.max(1, Math.floor(batchSize));
-
-    for (
-      let batchStart = 0;
-      batchStart < applications.length;
-      batchStart += sanitizedBatchSize
-    ) {
-      const batch = applications.slice(
-        batchStart,
-        batchStart + sanitizedBatchSize,
-      );
-
-      await Promise.all(
-        batch.map(async (application) => {
-          try {
-            await this.upgradeApplicationToVersion({
-              appRegistration,
-              targetVersion,
-              workspaceId: application.workspaceId,
-            });
-          } catch (error) {
-            this.logger.error(
-              `Failed to upgrade application ${application.id} to version ${targetVersion} in workspace ${application.workspaceId}`,
-              error,
-            );
-          }
-        }),
-      );
+    onlyAutoUpgrade: boolean;
+  }): Promise<string[]> {
+    if (!isNonEmptyArray(applications)) {
+      return [];
     }
+
+    const jobIds: string[] = [];
+
+    for (const applicationsBatch of chunk(
+      applications,
+      UPGRADE_WORKSPACE_APPLICATION_JOB_ENQUEUE_BATCH_SIZE,
+    )) {
+      const batchJobIds =
+        await this.applicationUpgradeQueueService.bulkAdd<UpgradeWorkspaceApplicationJobData>(
+          UPGRADE_WORKSPACE_APPLICATION_JOB_NAME,
+          applicationsBatch.map((application) => ({
+            data: {
+              applicationRegistrationId,
+              workspaceId: application.workspaceId,
+              onlyAutoUpgrade,
+            },
+          })),
+          UPGRADE_WORKSPACE_APPLICATION_JOB_OPTIONS,
+        );
+
+      jobIds.push(...batchJobIds);
+    }
+
+    return jobIds;
   }
 
-  async upgradeAllApplications({
+  async enqueueApplicationUpgrades({
     applicationRegistrationId,
     onlyAutoUpgrade = false,
-    batchSize = UPGRADE_APPLICATIONS_DEFAULT_BATCH_SIZE,
-    workspaceIds,
-    workspaceCountLimit,
   }: {
     applicationRegistrationId: string;
     onlyAutoUpgrade?: boolean;
-    batchSize?: number;
-    workspaceIds?: string[];
-    workspaceCountLimit?: number;
-  }): Promise<void> {
+  }): Promise<string[]> {
     const { appRegistration, targetVersion, applicationsToUpgrade } =
       await this.findApplicationsToUpgrade({
         applicationRegistrationId,
         onlyAutoUpgrade,
-        workspaceIds,
-        workspaceCountLimit,
       });
 
     if (!isDefined(targetVersion)) {
+      return [];
+    }
+
+    const jobIds = await this.enqueueWorkspaceApplicationUpgrades({
+      applicationRegistrationId,
+      applications: applicationsToUpgrade,
+      onlyAutoUpgrade,
+    });
+
+    this.logger.log(
+      `Enqueued ${jobIds.length} upgrade job(s) for ${appRegistration.universalIdentifier}, latest available version is ${targetVersion}`,
+    );
+
+    return jobIds;
+  }
+
+  async upgradeWorkspaceApplicationToLatestVersion({
+    applicationRegistrationId,
+    workspaceId,
+    onlyAutoUpgrade,
+  }: {
+    applicationRegistrationId: string;
+    workspaceId: string;
+    onlyAutoUpgrade: boolean;
+  }): Promise<void> {
+    const appRegistration = await this.appRegistrationRepository.findOne({
+      where: { id: applicationRegistrationId },
+    });
+
+    if (!isDefined(appRegistration)) {
+      this.logger.log(
+        `Skipping upgrade for application registration ${applicationRegistrationId} on workspace ${workspaceId}: registration no longer exists`,
+      );
+
       return;
     }
 
-    await this.upgradeApplications({
+    const targetVersion = appRegistration.latestAvailableVersion;
+
+    if (!isDefined(targetVersion)) {
+      this.logger.log(
+        `Skipping upgrade of ${appRegistration.universalIdentifier} on workspace ${workspaceId}: no latest available version`,
+      );
+
+      return;
+    }
+
+    const application = await this.applicationRepository.findOne({
+      where: { applicationRegistrationId, workspaceId },
+    });
+
+    if (!isDefined(application)) {
+      this.logger.log(
+        `Skipping upgrade of ${appRegistration.universalIdentifier} on workspace ${workspaceId}: application is not installed anymore`,
+      );
+
+      return;
+    }
+
+    if (onlyAutoUpgrade && !application.autoUpgrade) {
+      this.logger.log(
+        `Skipping upgrade of ${appRegistration.universalIdentifier} on workspace ${workspaceId}: auto upgrade is disabled`,
+      );
+
+      return;
+    }
+
+    if (application.version === targetVersion) {
+      this.logger.log(
+        `Skipping upgrade of ${appRegistration.universalIdentifier} on workspace ${workspaceId}: already on version ${targetVersion}`,
+      );
+
+      return;
+    }
+
+    await this.upgradeApplicationToVersion({
       appRegistration,
       targetVersion,
-      applications: applicationsToUpgrade,
-      batchSize,
+      workspaceId,
     });
   }
 

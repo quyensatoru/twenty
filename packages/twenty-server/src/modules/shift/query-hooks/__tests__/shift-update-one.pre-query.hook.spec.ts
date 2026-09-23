@@ -36,7 +36,7 @@ describe('ShiftUpdateOnePreQueryHook', () => {
       findOne: jest.fn().mockResolvedValue(shift),
     };
     const globalWorkspaceOrmManager = {
-      getRepository: jest.fn().mockResolvedValue(shiftRepository),
+      getRepository: jest.fn().mockReturnValue(shiftRepository),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),

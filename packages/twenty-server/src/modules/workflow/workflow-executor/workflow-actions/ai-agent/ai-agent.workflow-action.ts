@@ -7,6 +7,7 @@ import { type WorkflowAction } from 'src/modules/workflow/workflow-executor/inte
 import { UsageOperationType } from 'src/engine/core-modules/usage/enums/usage-operation-type.enum';
 import { AgentAsyncExecutorService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-async-executor.service';
 import { type AgentExecutionResult } from 'src/engine/metadata-modules/ai/ai-agent-execution/types/agent-execution-result.type';
+import { WORKFLOW_BASE_SYSTEM_PROMPT } from 'src/engine/metadata-modules/ai/ai-agent/constants/workflow-base-system-prompt.const';
 import { AgentEntity } from 'src/engine/metadata-modules/ai/ai-agent/entities/agent.entity';
 import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
 import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
@@ -48,7 +49,7 @@ export class AiAgentWorkflowAction implements WorkflowAction {
 
     if (!isWorkflowAiAgentAction(step)) {
       throw new WorkflowStepExecutorException(
-        'Step is not an AI Agent action',
+        'Step is not an Agent action',
         WorkflowStepExecutorExceptionCode.INVALID_STEP_TYPE,
       );
     }
@@ -83,7 +84,10 @@ export class AiAgentWorkflowAction implements WorkflowAction {
 
     const executionResult = await this.aiAgentExecutionService.executeAgent({
       agent,
-      userPrompt: resolveInput(prompt, context) as string,
+      messages: [
+        { role: 'user', content: resolveInput(prompt, context) as string },
+      ],
+      baseSystemPrompt: WORKFLOW_BASE_SYSTEM_PROMPT,
       actorContext: executionContext.isActingOnBehalfOfUser
         ? executionContext.initiator
         : undefined,
@@ -105,7 +109,7 @@ export class AiAgentWorkflowAction implements WorkflowAction {
 
     if (executionResult.hasNoMoreAvailableCredits) {
       return {
-        error: 'AI agent stopped: no more available credits.',
+        error: 'Agent stopped: no more available credits.',
       };
     }
 

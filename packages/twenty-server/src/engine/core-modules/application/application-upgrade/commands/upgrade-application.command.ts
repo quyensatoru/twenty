@@ -7,45 +7,25 @@ import { Repository } from 'typeorm';
 
 import { CommandLogger } from 'src/database/commands/logger';
 import { askCommandConfirmation } from 'src/database/commands/utils/ask-command-confirmation.util';
+import { parseBoundedPositiveInteger } from 'src/database/commands/utils/parse-bounded-positive-integer.util';
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
 import { ApplicationUpgradeService } from 'src/engine/core-modules/application/application-upgrade/application-upgrade.service';
+import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 
 type UpgradeApplicationCommandOptions = {
   applicationRegistrationUniversalIdentifier: string;
-  batchSize?: number;
   workspaceId?: Set<string>;
   workspaceCountLimit?: number;
   dryRun?: boolean;
   yes?: boolean;
 };
 
-const MAX_BATCH_SIZE = 50;
 const MAX_WORKSPACE_COUNT_LIMIT = 50;
-
-const parseBoundedPositiveInteger = (
-  value: string,
-  optionName: string,
-  maximum: number,
-): number => {
-  const parsedValue = Number(value);
-
-  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
-    throw new Error(
-      `Invalid ${optionName} "${value}". Expected a positive integer`,
-    );
-  }
-
-  if (parsedValue > maximum) {
-    throw new Error(`Invalid ${optionName} "${value}". Maximum is ${maximum}`);
-  }
-
-  return parsedValue;
-};
 
 @Command({
   name: 'application:upgrade',
   description:
-    'Upgrade an application to its latest available version on every workspace that already has it installed',
+    'Enqueue one upgrade job per workspace to bring an application to its latest available version everywhere it is installed',
 })
 export class UpgradeApplicationCommand extends CommandRunner {
   protected logger: CommandLogger;
@@ -70,15 +50,6 @@ export class UpgradeApplicationCommand extends CommandRunner {
   })
   parseApplicationRegistrationUniversalIdentifier(value: string): string {
     return value;
-  }
-
-  @Option({
-    flags: '-b, --batch-size <batch_size>',
-    description: `Number of workspaces upgraded in parallel (defaults to 5, max ${MAX_BATCH_SIZE})`,
-    required: false,
-  })
-  parseBatchSize(value: string): number {
-    return parseBoundedPositiveInteger(value, 'batch size', MAX_BATCH_SIZE);
   }
 
   @Option({
@@ -146,13 +117,16 @@ export class UpgradeApplicationCommand extends CommandRunner {
       ? Array.from(options.workspaceId)
       : undefined;
 
-    const { appRegistration, targetVersion, applicationsToUpgrade } =
-      await this.applicationUpgradeService.findApplicationsToUpgrade({
-        applicationRegistrationId: registration.id,
-        onlyAutoUpgrade: false,
-        workspaceIds,
-        workspaceCountLimit: options.workspaceCountLimit,
-      });
+    const {
+      targetVersion,
+      applicationsToUpgrade,
+      skippedNonProvisionedWorkspaceIds,
+    } = await this.applicationUpgradeService.findApplicationsToUpgrade({
+      applicationRegistrationId: registration.id,
+      onlyAutoUpgrade: false,
+      workspaceIds,
+      workspaceCountLimit: options.workspaceCountLimit,
+    });
 
     if (!isDefined(targetVersion)) {
       this.logger.warn(
@@ -162,17 +136,23 @@ export class UpgradeApplicationCommand extends CommandRunner {
       return;
     }
 
+    if (skippedNonProvisionedWorkspaceIds.length > 0) {
+      this.logger.warn(
+        `Skipping ${skippedNonProvisionedWorkspaceIds.length} non provisioned workspace(s): ${skippedNonProvisionedWorkspaceIds.join(', ')}`,
+      );
+    }
+
     const impactedWorkspaceIds = applicationsToUpgrade.map(
       (application) => application.workspaceId,
     );
 
     if (options.dryRun ?? false) {
       this.logger.log(
-        `[DRY RUN] Would upgrade "${registration.name}" (${registration.universalIdentifier}) to version ${targetVersion} on ${impactedWorkspaceIds.length} workspace(s)${
+        `[DRY RUN] Would enqueue an upgrade job for "${registration.name}" (${registration.universalIdentifier}) on ${impactedWorkspaceIds.length} workspace(s)${
           impactedWorkspaceIds.length > 0
             ? `: ${impactedWorkspaceIds.join(', ')}`
             : ''
-        }`,
+        }. Jobs install the latest available version when they run, currently ${targetVersion}`,
       );
 
       return;
@@ -192,28 +172,26 @@ export class UpgradeApplicationCommand extends CommandRunner {
         : `${impactedWorkspaceIds.length} workspace(s)`;
 
       const isConfirmed = await askCommandConfirmation(
-        `Confirm upgrading application ${registration.universalIdentifier} to version ${targetVersion} on ${confirmationTarget}`,
+        `Confirm enqueuing upgrade jobs for application ${registration.universalIdentifier} on ${confirmationTarget}. Jobs install the latest available version when they run, currently ${targetVersion}`,
       );
 
       if (!isConfirmed) {
-        this.logger.log('Aborted, no upgrade performed');
+        this.logger.log('Aborted, no upgrade enqueued');
 
         return;
       }
     }
 
-    this.logger.log(
-      `Upgrading "${registration.name}" (${registration.universalIdentifier}) to version ${targetVersion} on ${impactedWorkspaceIds.length} workspace(s)...`,
-    );
+    const enqueuedJobIds =
+      await this.applicationUpgradeService.enqueueWorkspaceApplicationUpgrades({
+        applicationRegistrationId: registration.id,
+        applications: applicationsToUpgrade,
+        onlyAutoUpgrade: false,
+      });
 
-    // Runs on the exact set shown at confirmation time, so installations
-    // created or versions published while the operator answered are excluded.
-    await this.applicationUpgradeService.upgradeApplications({
-      appRegistration,
-      targetVersion,
-      applications: applicationsToUpgrade,
-      batchSize: options.batchSize,
-    });
+    this.logger.log(
+      `Enqueued ${enqueuedJobIds.length} upgrade job(s) on ${MessageQueue.applicationUpgradeQueue} for "${registration.name}" (${registration.universalIdentifier}) on ${impactedWorkspaceIds.length} workspace(s). Jobs install the latest available version when they run, currently ${targetVersion}`,
+    );
 
     this.logger.log(chalk.blue('Command completed!'));
   }

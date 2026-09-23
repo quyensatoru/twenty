@@ -33,8 +33,10 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -52,8 +54,12 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -74,8 +80,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -96,8 +109,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -119,8 +139,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Project record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -137,8 +164,12 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Project name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Project name`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconListDetails',
       isNullable: true,
     },
@@ -153,8 +184,13 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'key',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Key`),
-      description: i18nLabel(msg`Project key, used as the issue key prefix`),
+      label: i18nLabel(msg({ message: `Key`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({
+          message: `Project key, used as the issue key prefix`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconKey',
       isNullable: true,
       isUnique: true,
@@ -170,9 +206,14 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'nextIssueNumber',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Next issue number`),
+      label: i18nLabel(
+        msg({ message: `Next issue number`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Counter used to generate the next issue key for this project`,
+        msg({
+          message: `Counter used to generate the next issue key for this project`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconHash',
       isSystem: true,
@@ -191,8 +232,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'description',
       type: FieldMetadataType.RICH_TEXT,
-      label: i18nLabel(msg`Description`),
-      description: i18nLabel(msg`Project description`),
+      label: i18nLabel(
+        msg({ message: `Description`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project description`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconFilePencil',
       isNullable: true,
     },
@@ -207,8 +255,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'category',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Category`),
-      description: i18nLabel(msg`Project category`),
+      label: i18nLabel(
+        msg({ message: `Category`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project category`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCategory',
       isNullable: true,
       defaultValue: "'SOFTWARE'",
@@ -216,14 +271,18 @@ export const buildProjectStandardFlatFieldMetadatas = ({
         {
           id: '1ece839f-faf9-48cc-8d39-4d569a923a65',
           value: 'SOFTWARE',
-          label: i18nLabel(msg`Software`),
+          label: i18nLabel(
+            msg({ message: `Software`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'blue',
         },
         {
           id: 'a803abc1-085d-4fce-9ea1-7e8346fdf0ff',
           value: 'BUSINESS',
-          label: i18nLabel(msg`Business`),
+          label: i18nLabel(
+            msg({ message: `Business`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'orange',
         },
@@ -240,8 +299,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -263,9 +329,14 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -288,8 +359,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -308,8 +386,12 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'lead',
-      label: i18nLabel(msg`Lead`),
-      description: i18nLabel(msg`Project lead`),
+      label: i18nLabel(
+        msg({ message: `Lead`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Project lead`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconUserCircle',
       isNullable: true,
       targetObjectName: 'workspaceMember',
@@ -332,8 +414,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'sprints',
-      label: i18nLabel(msg`Sprints`),
-      description: i18nLabel(msg`Project's sprints`),
+      label: i18nLabel(
+        msg({ message: `Sprints`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project's sprints`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconRun',
       isNullable: false,
       isUIEditable: false,
@@ -355,8 +444,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issues',
-      label: i18nLabel(msg`Issues`),
-      description: i18nLabel(msg`Project's issues`),
+      label: i18nLabel(
+        msg({ message: `Issues`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project's issues`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLayoutKanban',
       isNullable: false,
       isUIEditable: false,
@@ -378,8 +474,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'epics',
-      label: i18nLabel(msg`Epics`),
-      description: i18nLabel(msg`Project's epics`),
+      label: i18nLabel(
+        msg({ message: `Epics`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project's epics`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconStack2',
       isNullable: false,
       isUIEditable: false,
@@ -401,8 +504,15 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'issueStatuses',
-      label: i18nLabel(msg`Issue statuses`),
-      description: i18nLabel(msg`Project's issue statuses`),
+      label: i18nLabel(
+        msg({ message: `Issue statuses`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Project's issue statuses`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconProgressCheck',
       isNullable: false,
       isUIEditable: false,
@@ -424,8 +534,13 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'app',
-      label: i18nLabel(msg`App`),
-      description: i18nLabel(msg`App this project belongs to`),
+      label: i18nLabel(msg({ message: `App`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({
+          message: `App this project belongs to`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconApps',
       isNullable: true,
       targetObjectName: 'app',
@@ -452,7 +567,12 @@ export const buildProjectStandardFlatFieldMetadatas = ({
       label: i18nLabel(
         STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
       ),
-      description: i18nLabel(msg`Project attachments`),
+      description: i18nLabel(
+        msg({
+          message: `Project attachments`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
         .icon,
       isNullable: true,

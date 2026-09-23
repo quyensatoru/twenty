@@ -94,7 +94,6 @@ describe('evaluateFilterConditions', () => {
         expect(result).toBe(true);
       });
 
-      // Enhanced relation filter tests with object id extraction
       it('should extract id from left operand object for relation comparison', () => {
         const uuid1 = '550e8400-e29b-41d4-a716-446655440000';
         const leftObject = { id: uuid1, name: 'John Doe' };
@@ -512,6 +511,109 @@ describe('evaluateFilterConditions', () => {
         const result = evaluateFilterConditions({ filters: [filter] });
 
         expect(result).toBe(true);
+      });
+
+      it('should return false when the selected value is a substring of an option (IS)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS,
+          'INVALID',
+          '["VALID"]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(false);
+      });
+
+      it('should return true when the selected value matches an option exactly (IS)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS,
+          'VALID',
+          '["VALID"]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(true);
+      });
+
+      it('should return true when the selected value is a substring of an option (IsNot)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS_NOT,
+          'INVALID',
+          '["VALID"]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(true);
+      });
+
+      it('should return false when the selected value matches an option exactly (IsNot)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS_NOT,
+          'VALID',
+          '["VALID"]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(false);
+      });
+
+      it('should match scalar option values that are valid JSON (IS)', () => {
+        const filter = createFilter(ViewFilterOperand.IS, '1', '1', 'SELECT');
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(true);
+      });
+
+      it('should match scalar option values that are valid JSON (IsNot)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS_NOT,
+          '1',
+          '1',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(false);
+      });
+
+      it('should match any of several selected options (IS)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS,
+          'PENDING',
+          '["VALID","PENDING"]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(true);
+      });
+
+      it('should treat an empty option as a null value match (IS)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS,
+          null,
+          '[""]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(true);
+      });
+
+      it('should not match a non-null value against an empty option (IS)', () => {
+        const filter = createFilter(
+          ViewFilterOperand.IS,
+          'VALID',
+          '[""]',
+          'SELECT',
+        );
+        const result = evaluateFilterConditions({ filters: [filter] });
+
+        expect(result).toBe(false);
       });
 
       it('should return true when there are no values (IsEmpty)', () => {
@@ -1634,7 +1736,6 @@ describe('evaluateFilterConditions', () => {
           50,
           'unknown',
         );
-        // strings are converted to numbers
         const filter3 = createFilter(
           ViewFilterOperand.GREATER_THAN_OR_EQUAL,
           '1234',

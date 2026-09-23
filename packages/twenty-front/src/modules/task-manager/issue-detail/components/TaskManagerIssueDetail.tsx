@@ -5,9 +5,9 @@ import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
-import { Tag } from 'twenty-ui/data-display';
+import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconArrowLeft, IconBrowserMaximize, IconLink } from 'twenty-ui/icon';
-import { LightIconButton, TabButton } from 'twenty-ui/input';
+import { LightIconButton, TabButton } from 'twenty-ui/components';
 import { type ThemeColor } from 'twenty-ui/theme';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -235,10 +235,12 @@ export const TaskManagerIssueDetail = ({
         <StyledHeaderLeft>
           {!isInSidePanel && (
             <LightIconButton
-              Icon={IconArrowLeft}
               onClick={() => goToPage(-1)}
-              accent="secondary"
-            />
+              emphasis="subtle"
+              aria-label={t`Go back`}
+            >
+              <IconArrowLeft />
+            </LightIconButton>
           )}
           <RecordFieldsScopeContextProvider
             value={{ scopeInstanceId: `issue-detail-header-type-${issueId}` }}
@@ -283,31 +285,36 @@ export const TaskManagerIssueDetail = ({
                 showLabel={false}
                 customDisplay={
                   <Tag
-                    text={issueStatus?.name ?? t`No status`}
                     color={
                       isDefined(issueStatus)
                         ? getIssueStatusTagColor(issueStatus.color)
                         : 'transparent'
                     }
-                  />
+                  >
+                    {issueStatus?.name ?? t`No status`}
+                  </Tag>
                 }
               />
             </StyledHeaderPill>
           </RecordFieldsScopeContextProvider>
           <StyledHeaderDivider />
           <LightIconButton
-            Icon={IconLink}
             onClick={handleCopyIssueLink}
-            accent="secondary"
-            title={t`Copy link`}
-          />
+            emphasis="subtle"
+            aria-label={t`Copy link`}
+            tooltip={t`Copy link`}
+          >
+            <IconLink />
+          </LightIconButton>
           {isInSidePanel && (
             <LightIconButton
-              Icon={IconBrowserMaximize}
               onClick={handlePopOutToFullPage}
-              accent="secondary"
-              title={t`Open in full page`}
-            />
+              emphasis="subtle"
+              aria-label={t`Open in full page`}
+              tooltip={t`Open in full page`}
+            >
+              <IconBrowserMaximize />
+            </LightIconButton>
           )}
           <ObjectOptionsDropdown
             objectMetadataItem={objectMetadataItem}
@@ -360,16 +367,18 @@ export const TaskManagerIssueDetail = ({
             <StyledActivityTabs>
               <TabButton
                 id="comments"
-                title={t`Comment`}
                 active={activityTab === 'comments'}
                 onClick={() => setActivityTab('comments')}
-              />
+              >
+                {t`Comment`}
+              </TabButton>
               <TabButton
                 id="worklogs"
-                title={t`Log time`}
                 active={activityTab === 'worklogs'}
                 onClick={() => setActivityTab('worklogs')}
-              />
+              >
+                {t`Log time`}
+              </TabButton>
             </StyledActivityTabs>
             {activityTab === 'comments' ? (
               <IssueCommentThread
@@ -392,7 +401,6 @@ export const TaskManagerIssueDetail = ({
                   targetObjectNameSingular: 'issue',
                 },
                 layoutType: PageLayoutType.RECORD_PAGE,
-                isInSidePanel,
               }}
             >
               <div>

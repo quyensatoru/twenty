@@ -8,15 +8,16 @@ import { useLingui } from '@lingui/react/macro';
 import { createPortal } from 'react-dom';
 import { AppPath } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
-import { Avatar, Tag } from 'twenty-ui/data-display';
+import { Avatar, Tag } from 'twenty-ui/primitives/data-display';
 import {
   IconDotsVertical,
   IconLink,
   IconPencil,
   IconTrash,
 } from 'twenty-ui/icon';
-import { Button, LightIconButton } from 'twenty-ui/input';
-import { MenuItem } from 'twenty-ui/navigation';
+import { Button } from 'twenty-ui/primitives/input';
+import { LightIconButton } from 'twenty-ui/components';
+import { MenuItem } from 'twenty-ui/primitives/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
@@ -33,8 +34,8 @@ import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
-import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { ConfirmationDialog } from '@/ui/layout/dialog/components/ConfirmationDialog';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { usePushFocusItemToFocusStack } from '@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack';
 import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
 import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
@@ -341,17 +342,15 @@ const WorklogForm = ({
       <StyledComposerActions>
         {isDefined(onCancel) && (
           <Button
-            title={t`Cancel`}
             onClick={onCancel}
             disabled={isSubmitting}
-          />
+          >{t`Cancel`}</Button>
         )}
         <Button
-          title={submitLabel}
           onClick={handleSubmit}
           disabled={isSubmitting || !isTimeValid}
-          accent="blue"
-        />
+          color="accent"
+        >{submitLabel}</Button>
       </StyledComposerActions>
     </StyledComposer>
   );
@@ -379,7 +378,7 @@ const WorklogRow = ({
 }: WorklogRowProps) => {
   const { t } = useLingui();
   const [isEditing, setIsEditing] = useState(false);
-  const { openModal } = useModal();
+  const { openDialog } = useDialog();
   const { closeDropdown } = useCloseDropdown();
   const { copyToClipboard } = useCopyToClipboard();
   const worklogRowRef = useRef<HTMLDivElement>(null);
@@ -415,7 +414,7 @@ const WorklogRow = ({
 
   const handleDeleteClick = () => {
     closeDropdown(dropdownId);
-    openModal(deleteModalId);
+    openDialog(deleteModalId);
   };
 
   const handleSaveEdit = async (values: {
@@ -457,15 +456,15 @@ const WorklogRow = ({
     <StyledRow ref={worklogRowRef} isFocused={isFocused}>
       <StyledTopRow>
         <Avatar
-          placeholder={memberName}
-          avatarUrl={getAbsoluteImageUrl(worklog.member?.avatarUrl)}
-          type="rounded"
+          name={memberName}
+          src={getAbsoluteImageUrl(worklog.member?.avatarUrl)}
+          shape="rounded-square"
           size="lg"
         />
         <StyledHeader>
           <StyledAuthor>{memberName}</StyledAuthor>
           {isDefined(timeSpentLabel) && (
-            <Tag text={timeSpentLabel} color="blue" />
+            <Tag color="blue">{timeSpentLabel}</Tag>
           )}
           <StyledDate>
             {new Date(worklog.createdAt).toLocaleString()}
@@ -473,11 +472,12 @@ const WorklogRow = ({
           <StyledActions>
             <LightIconButton
               className="displayOnHover"
-              Icon={IconLink}
-              accent="tertiary"
-              title={t`Copy link`}
+              emphasis="subtle"
+              aria-label={t`Copy link`}
               onClick={handleCopyWorklogLink}
-            />
+            >
+              <IconLink />
+            </LightIconButton>
             {isLogger && (
               <Dropdown
                 dropdownId={dropdownId}
@@ -485,9 +485,11 @@ const WorklogRow = ({
                 clickableComponent={
                   <LightIconButton
                     className="displayOnHover"
-                    Icon={IconDotsVertical}
-                    accent="tertiary"
-                  />
+                    emphasis="subtle"
+                    aria-label={t`More options`}
+                  >
+                    <IconDotsVertical />
+                  </LightIconButton>
                 }
                 dropdownComponents={
                   <DropdownContent>
@@ -517,8 +519,8 @@ const WorklogRow = ({
         </StyledBody>
       )}
       {createPortal(
-        <ConfirmationModal
-          modalInstanceId={deleteModalId}
+        <ConfirmationDialog
+          dialogId={deleteModalId}
           title={t`Delete Worklog`}
           subtitle={t`Are you sure you want to delete this logged time? This action cannot be undone.`}
           onConfirmClick={() => onDelete(worklog.id)}

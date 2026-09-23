@@ -2,9 +2,9 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { useEffect, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { Tag } from 'twenty-ui/data-display';
-import { Button } from 'twenty-ui/input';
-import { AppTooltip, TooltipDelay } from 'twenty-ui/surfaces';
+import { Tag } from 'twenty-ui/primitives/data-display';
+import { Button } from 'twenty-ui/primitives/input';
+import { Tooltip } from 'twenty-ui/primitives/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { CheckOutModal } from '@/shift/components/CheckOutModal';
@@ -16,7 +16,8 @@ import {
   getShiftStatusTagColor,
   isCheckInWindowOpen,
 } from '@/shift/utils/shiftWeek';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
+import { TooltipDelay } from '@/ui/layout/tooltip/constants/TooltipDelay';
 
 const StyledCard = styled.section`
   background: ${themeCssVariables.background.secondary};
@@ -187,7 +188,7 @@ export const ShiftTodayAction = ({
   onCheckOut,
 }: ShiftTodayActionProps) => {
   const { t } = useLingui();
-  const { openModal } = useModal();
+  const { openDialog } = useDialog();
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   if (!isDefined(shift)) {
@@ -245,7 +246,7 @@ export const ShiftTodayAction = ({
       <StyledShiftInfo>
         <StyledTitleRow>
           <StyledShiftName>{shift.name}</StyledShiftName>
-          <Tag color={statusColor} text={statusLabel} />
+          <Tag color={statusColor}>{statusLabel}</Tag>
         </StyledTitleRow>
         {isDefined(timeWindow) && (
           <StyledTimeWindow>{timeWindow}</StyledTimeWindow>
@@ -256,33 +257,32 @@ export const ShiftTodayAction = ({
       )}
       {isInProgress ? (
         <Button
-          title={t`Check out`}
-          variant="primary"
-          accent="danger"
+          variant="solid"
+          color="danger"
           fullWidth
-          onClick={() => openModal(checkOutModalId)}
-        />
+          onClick={() => openDialog(checkOutModalId)}
+        >
+          {t`Check out`}
+        </Button>
       ) : (
-        <>
+        <Tooltip
+          delay={TooltipDelay.shortDelay}
+          content={isDefined(opensAtLabel) ? t`Opens at ${opensAtLabel}` : ''}
+          side="top"
+          disabled={canCheckIn || !isDefined(opensAtLabel)}
+        >
           <StyledActionAnchor id={checkInAnchorId}>
             <Button
-              title={t`Check in`}
-              variant="primary"
-              accent="blue"
+              variant="solid"
+              color="accent"
               fullWidth
               onClick={handleCheckIn}
               disabled={!canCheckIn || isCheckingIn}
-            />
+            >
+              {t`Check in`}
+            </Button>
           </StyledActionAnchor>
-          {!canCheckIn && isDefined(opensAtLabel) && (
-            <AppTooltip
-              anchorSelect={`#${checkInAnchorId}`}
-              content={t`Opens at ${opensAtLabel}`}
-              place="top"
-              delay={TooltipDelay.shortDelay}
-            />
-          )}
-        </>
+        </Tooltip>
       )}
       {isDefined(previousHandover) && (
         <StyledHandover>

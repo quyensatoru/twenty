@@ -4,11 +4,8 @@ import { isDefined } from 'twenty-shared/utils';
 
 import { WorkspaceCacheProvider } from 'src/engine/workspace-cache/interfaces/workspace-cache-provider.service';
 
-import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import {
   type AllObjectRecordsRoleFlagsByRoleId,
   type AppScopeGrantsByMemberId,
@@ -16,6 +13,8 @@ import {
   type AppScopeOperation,
 } from 'src/engine/twenty-orm/types/app-scope-permission.type';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
+import { type WorkspaceCacheProviderContext } from 'src/engine/workspace-cache/types/workspace-cache-provider-context.type';
+import { type WorkspaceCacheRowsRequirement } from 'src/engine/workspace-cache/types/workspace-cache-rows-requirement.type';
 import { AppAccessWorkspaceEntity } from 'src/modules/app-access/standard-objects/app-access.workspace-entity';
 
 // The `appAccess.permissions` MULTI_SELECT field stores these uppercase option
@@ -31,23 +30,28 @@ const APP_SCOPE_OPERATION_BY_PERMISSION_OPTION_VALUE: Record<
   DESTROY: 'destroy',
 };
 
+const APP_SCOPE_GRANTS_ROWS_REQUIREMENT = {
+  role: true,
+} as const satisfies WorkspaceCacheRowsRequirement;
+
 @Injectable()
-@WorkspaceCache('appScopeGrants')
+@WorkspaceCache('appScopeGrants', { packingPonderation: 1 })
 export class WorkspaceAppGrantsCacheService extends WorkspaceCacheProvider<AppScopeGrantsCacheData> {
-  constructor(
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {
+  override readonly rowsRequirement = APP_SCOPE_GRANTS_ROWS_REQUIREMENT;
+
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {
     super();
   }
 
-  async computeForCache(workspaceId: string): Promise<AppScopeGrantsCacheData> {
-    const [grantsByMemberId, allObjectRecordsRoleFlagsByRoleId] =
-      await Promise.all([
-        this.computeGrantsByMemberId(workspaceId),
-        this.computeAllObjectRecordsRoleFlagsByRoleId(workspaceId),
-      ]);
+  async computeForCache({
+    workspaceId,
+    rows,
+  }: WorkspaceCacheProviderContext<
+    typeof APP_SCOPE_GRANTS_ROWS_REQUIREMENT
+  >): Promise<AppScopeGrantsCacheData> {
+    const grantsByMemberId = await this.computeGrantsByMemberId(workspaceId);
+    const allObjectRecordsRoleFlagsByRoleId =
+      this.computeAllObjectRecordsRoleFlagsByRoleId(rows.role);
 
     return { grantsByMemberId, allObjectRecordsRoleFlagsByRoleId };
   }
@@ -57,19 +61,17 @@ export class WorkspaceAppGrantsCacheService extends WorkspaceCacheProvider<AppSc
   ): Promise<AppScopeGrantsByMemberId> {
     // `appAccess` is a workspace-schema standard object (like `project`/`issue`),
     // not a core-schema entity — it has no static TypeORM repository to inject,
-    // so it's read through GlobalWorkspaceOrmManager the same way pre-query hooks
+    // so it's read through WorkspaceOrmManager the same way pre-query hooks
     // do bypass-permission lookups. `{ lite: true }` is enough here: we only need
     // object metadata to resolve the repository, not permissions/role maps (and
     // using the full context here would recursively re-request this very cache key).
     const appAccessRecords =
-      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      await this.workspaceOrmManager.executeInWorkspaceContext(
         async () => {
-          const appAccessRepository =
-            await this.globalWorkspaceOrmManager.getRepository(
-              workspaceId,
-              AppAccessWorkspaceEntity,
-              { shouldBypassPermissionChecks: true },
-            );
+          const appAccessRepository = this.workspaceOrmManager.getRepository(
+            AppAccessWorkspaceEntity,
+            { shouldBypassPermissionChecks: true },
+          );
 
           return appAccessRepository.find();
         },
@@ -102,11 +104,11 @@ export class WorkspaceAppGrantsCacheService extends WorkspaceCacheProvider<AppSc
     return grantsByMemberId;
   }
 
-  private async computeAllObjectRecordsRoleFlagsByRoleId(
-    workspaceId: string,
-  ): Promise<AllObjectRecordsRoleFlagsByRoleId> {
-    const roles = await this.roleRepository.find(workspaceId);
-
+  private computeAllObjectRecordsRoleFlagsByRoleId(
+    roles: WorkspaceCacheProviderContext<
+      typeof APP_SCOPE_GRANTS_ROWS_REQUIREMENT
+    >['rows']['role'],
+  ): AllObjectRecordsRoleFlagsByRoleId {
     const allObjectRecordsRoleFlagsByRoleId: AllObjectRecordsRoleFlagsByRoleId =
       {};
 

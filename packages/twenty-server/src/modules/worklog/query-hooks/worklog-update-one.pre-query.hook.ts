@@ -7,7 +7,7 @@ import { type UpdateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { type WorklogWorkspaceEntity } from 'src/modules/worklog/standard-objects/worklog.workspace-entity';
 
@@ -17,9 +17,7 @@ import { type WorklogWorkspaceEntity } from 'src/modules/worklog/standard-object
 @Injectable()
 @WorkspaceQueryHook(`worklog.updateOne`)
 export class WorklogUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -29,7 +27,7 @@ export class WorklogUpdateOnePreQueryHook implements WorkspacePreQueryHookInstan
     if (isDefined(payload.data.issueId)) {
       await assertAppScopeWriteAccessOrThrow({
         authContext,
-        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        workspaceOrmManager: this.workspaceOrmManager,
         objectNameSingular: 'worklog',
         foreignKeyValue: payload.data.issueId,
       });

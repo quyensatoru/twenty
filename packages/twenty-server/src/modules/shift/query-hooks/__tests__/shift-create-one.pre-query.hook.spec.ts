@@ -62,13 +62,11 @@ describe('ShiftCreateOnePreQueryHook', () => {
     const globalWorkspaceOrmManager = {
       getRepository: jest
         .fn()
-        .mockImplementation((_workspaceId: string, singularName: string) =>
-          Promise.resolve(
+        .mockImplementation((singularName: string) =>
             singularName === 'shiftTemplate'
               ? shiftTemplateRepository
               : shiftRepository,
           ),
-        ),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),

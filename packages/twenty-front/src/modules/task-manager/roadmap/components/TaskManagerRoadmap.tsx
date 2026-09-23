@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 
 import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Tag } from 'twenty-ui/data-display';
-import { ProgressBar } from 'twenty-ui/feedback';
+import { Tag } from 'twenty-ui/primitives/data-display';
+import { ProgressBar } from 'twenty-ui/primitives/feedback';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
@@ -122,7 +122,7 @@ const EpicGroup = ({
             key={child.id}
             onClick={() => onNavigateToIssue(child.id)}
           >
-            <Tag text={getIssueStatusLabel(child.status)} color="gray" />
+            <Tag color="gray">{getIssueStatusLabel(child.status)}</Tag>
             <StyledChildTitle>
               {child.issueKey} {child.title}
             </StyledChildTitle>
@@ -177,7 +177,7 @@ export const TaskManagerRoadmap = () => {
                 key={issue.id}
                 onClick={() => handleNavigateToIssue(issue.id)}
               >
-                <Tag text={getIssueStatusLabel(issue.status)} color="gray" />
+                <Tag color="gray">{getIssueStatusLabel(issue.status)}</Tag>
                 <StyledChildTitle>
                   {issue.issueKey} {issue.title}
                 </StyledChildTitle>

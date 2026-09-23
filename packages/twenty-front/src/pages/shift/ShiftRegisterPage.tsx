@@ -4,7 +4,8 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
 import { IconChevronLeft, IconChevronRight } from 'twenty-ui/icon';
-import { Button } from 'twenty-ui/input';
+import { useToast } from 'twenty-ui/primitives/feedback';
+import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
@@ -33,8 +34,7 @@ import {
   getShiftStartUtcMillis,
   getWeekdayIndex,
 } from '@/shift/utils/shiftWeek';
-import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 
 // Mon..Fri are weekday-index 0..4 and Sat/Sun 5..6, so a day's weekday index
@@ -112,8 +112,8 @@ const getApplicableTemplatesForDay = ({
 
 const ShiftRegisterBody = () => {
   const { t } = useLingui();
-  const { enqueueSuccessSnackBar, enqueueErrorSnackBar } = useSnackBar();
-  const { openModal } = useModal();
+  const { enqueueToast } = useToast();
+  const { openDialog } = useDialog();
   const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
 
   const today = useMemo(() => getIctToday(), []);
@@ -217,21 +217,23 @@ const ShiftRegisterBody = () => {
 
   const handleSelectDay = (day: string) => {
     setSelectedDay(day);
-    openModal(DAY_MODAL_ID);
+    openDialog(DAY_MODAL_ID);
   };
 
   const handleRegisterForDay = async (date: string, templateIds: string[]) => {
     const result = await registerShiftsForDay(date, templateIds);
 
     if (result.successCount > 0) {
-      enqueueSuccessSnackBar({
-        message: t`Registered ${result.successCount} shift(s).`,
+      enqueueToast({
+        variant: 'success',
+        children: t`Registered ${result.successCount} shift(s).`,
       });
     }
 
     if (result.errors.length > 0) {
-      enqueueErrorSnackBar({
-        message: t`${result.errors.length} shift(s) could not be registered.`,
+      enqueueToast({
+        variant: 'error',
+        children: t`${result.errors.length} shift(s) could not be registered.`,
       });
     }
 
@@ -280,13 +282,14 @@ const ShiftRegisterBody = () => {
       <StyledPageBody>
         <StyledStateText>{t`Couldn't load registration.`}</StyledStateText>
         <Button
-          title={t`Retry`}
-          variant="primary"
-          accent="blue"
+          variant="solid"
+          color="accent"
           onClick={() => {
             void refetch();
           }}
-        />
+        >
+          {t`Retry`}
+        </Button>
       </StyledPageBody>
     );
   }
@@ -295,9 +298,9 @@ const ShiftRegisterBody = () => {
     <StyledPageBody>
       <StyledHeader>
         <Button
-          Icon={IconChevronLeft}
-          title={t`Previous month`}
-          variant="secondary"
+          startIcon={<IconChevronLeft />}
+          aria-label={t`Previous month`}
+          variant="outline"
           onClick={goToPreviousMonth}
           disabled={viewedMonth <= currentMonth}
         />
@@ -305,9 +308,9 @@ const ShiftRegisterBody = () => {
           {t`Register shifts — ${getMonthLabel(viewedMonth)}`}
         </StyledHeaderTitle>
         <Button
-          Icon={IconChevronRight}
-          title={t`Next month`}
-          variant="secondary"
+          startIcon={<IconChevronRight />}
+          aria-label={t`Next month`}
+          variant="outline"
           onClick={goToNextMonth}
         />
       </StyledHeader>

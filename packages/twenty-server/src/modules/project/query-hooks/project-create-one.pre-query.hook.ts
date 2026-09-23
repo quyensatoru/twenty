@@ -8,8 +8,8 @@ import { type CreateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { buildProjectKeyFromName } from 'src/modules/project/query-hooks/utils/build-project-key-from-name.util';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
@@ -18,9 +18,7 @@ import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/pro
 @Injectable()
 @WorkspaceQueryHook(`project.createOne`)
 export class ProjectCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -30,7 +28,7 @@ export class ProjectCreateOnePreQueryHook implements WorkspacePreQueryHookInstan
     if (isDefined(payload.data.appId)) {
       await assertAppScopeWriteAccessOrThrow({
         authContext,
-        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        workspaceOrmManager: this.workspaceOrmManager,
         objectNameSingular: 'project',
         foreignKeyValue: payload.data.appId,
       });
@@ -56,16 +54,13 @@ export class ProjectCreateOnePreQueryHook implements WorkspacePreQueryHookInstan
     authContext: WorkspaceAuthContext,
   ): Promise<string> {
     const baseKey = buildProjectKeyFromName(name);
-    const workspaceId = authContext.workspace.id;
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
-        const projectRepository =
-          await this.globalWorkspaceOrmManager.getRepository(
-            workspaceId,
-            ProjectWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+        const projectRepository = this.workspaceOrmManager.getRepository(
+          ProjectWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
 
         let candidateKey = baseKey;
         let suffix = 2;

@@ -4,7 +4,7 @@ import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type ShiftWorkspaceEntity } from 'src/modules/shift/standard-objects/shift.workspace-entity';
 import {
   computeCheckInLateMinutes,
@@ -21,9 +21,7 @@ type RecomputedAttendance = {
 // Leader/PO edits checkInAt/checkOutAt directly on a shift (BR-5.2, BR-9.1).
 @Injectable()
 export class ShiftRecomputeWorkspaceService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async recomputeAttendance(
     authContext: WorkspaceAuthContext,
@@ -33,13 +31,11 @@ export class ShiftRecomputeWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
-      const shiftRepository =
-        await this.globalWorkspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-          workspace.id,
-          'shift',
-          { shouldBypassPermissionChecks: true },
-        );
+    await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository = this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
+        'shift',
+        { shouldBypassPermissionChecks: true },
+      );
 
       const shift = await shiftRepository.findOne({ where: { id: shiftId } });
 

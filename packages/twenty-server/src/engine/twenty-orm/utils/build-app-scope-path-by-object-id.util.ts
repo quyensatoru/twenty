@@ -7,6 +7,7 @@ import { computeMorphOrRelationFieldJoinColumnName } from 'src/engine/metadata-m
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
+import { type OrmFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/orm-flat-field-metadata.type';
 import { isFlatFieldMetadataOfType } from 'src/engine/metadata-modules/flat-field-metadata/utils/is-flat-field-metadata-of-type.util';
 import { resolveRelationFromFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
@@ -77,7 +78,7 @@ export const buildAppScopePathByObjectId = ({
   maxDepth = DEFAULT_MAX_APP_SCOPE_DEPTH,
 }: {
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
-  flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatFieldMetadataMaps: FlatEntityMaps<OrmFlatFieldMetadata>;
   maxDepth?: number;
 }): AppScopePathByObjectId => {
   const { idByNameSingular } = buildObjectIdByNameMaps(flatObjectMetadataMaps);
@@ -144,7 +145,7 @@ export const resolveAppScopeHops = ({
   objectMetadata: FlatObjectMetadata;
   scopePath: string[];
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
-  flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatFieldMetadataMaps: FlatEntityMaps<OrmFlatFieldMetadata>;
 }): AppScopeHop[] => {
   const hops: AppScopeHop[] = [];
   let currentObjectMetadata = objectMetadata;
@@ -164,7 +165,9 @@ export const resolveAppScopeHops = ({
 
     const relation = resolveRelationFromFlatFieldMetadata({
       sourceFlatFieldMetadata: field,
-      flatFieldMetadataMaps,
+      // The fields this reads (objectMetadataId, relationTargetFieldMetadataId,
+      // type, morphId) are all present on the leaner OrmFlatFieldMetadata.
+      flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
       flatObjectMetadataMaps,
     });
 
@@ -202,7 +205,7 @@ export const findAppJoinColumnName = ({
 }: {
   objectMetadata: FlatObjectMetadata;
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
-  flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatFieldMetadataMaps: FlatEntityMaps<OrmFlatFieldMetadata>;
 }): string | null => {
   const { idByNameSingular } = buildObjectIdByNameMaps(flatObjectMetadataMaps);
   const appObjectId = idByNameSingular[APP_OBJECT_NAME_SINGULAR];
@@ -221,7 +224,7 @@ export const findAppJoinColumnName = ({
 
     const relation = resolveRelationFromFlatFieldMetadata({
       sourceFlatFieldMetadata: field,
-      flatFieldMetadataMaps,
+      flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
       flatObjectMetadataMaps,
     });
 
@@ -244,7 +247,7 @@ const buildManyToOneEdgesByObjectId = ({
   flatFieldMetadataMaps,
 }: {
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
-  flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatFieldMetadataMaps: FlatEntityMaps<OrmFlatFieldMetadata>;
 }): Record<string, ManyToOneEdge[]> => {
   const edgesByObjectId: Record<string, ManyToOneEdge[]> = {};
 
@@ -267,7 +270,7 @@ const buildManyToOneEdgesByObjectId = ({
 
       const relation = resolveRelationFromFlatFieldMetadata({
         sourceFlatFieldMetadata: field,
-        flatFieldMetadataMaps,
+        flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
         flatObjectMetadataMaps,
       });
 

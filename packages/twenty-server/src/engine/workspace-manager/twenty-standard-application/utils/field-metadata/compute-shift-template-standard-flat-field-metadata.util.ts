@@ -31,8 +31,10 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -50,8 +52,12 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -72,8 +78,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -94,8 +107,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -115,8 +135,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Shift template record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Shift template record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -135,8 +162,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Shift display name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Shift display name`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconAbc',
       isNullable: false,
       defaultValue: "''",
@@ -152,8 +186,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'code',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Code`),
-      description: i18nLabel(msg`Short shift code, e.g. SAE-TT-D`),
+      label: i18nLabel(
+        msg({ message: `Code`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Short shift code, e.g. SAE-TT-D`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHash',
       isNullable: false,
       defaultValue: "''",
@@ -169,8 +210,12 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'startTime',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Start time`),
-      description: i18nLabel(msg`HH:mm, ICT`),
+      label: i18nLabel(
+        msg({ message: `Start time`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `HH:mm, ICT`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconClockPlay',
       isNullable: false,
       defaultValue: "''",
@@ -186,8 +231,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'endTime',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`End time`),
-      description: i18nLabel(msg`HH:mm, ICT — 24:00 allowed`),
+      label: i18nLabel(
+        msg({ message: `End time`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `HH:mm, ICT — 24:00 allowed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconClockStop',
       isNullable: false,
       defaultValue: "''",
@@ -203,29 +255,42 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'dayKind',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Day kind`),
-      description: i18nLabel(msg`Weekday, weekend or holiday OT`),
+      label: i18nLabel(
+        msg({ message: `Day kind`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Weekday, weekend or holiday OT`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarWeek',
       isNullable: true,
       options: [
         {
           id: '5e320c80-9917-4dff-ba32-8afc35ff0f69',
           value: 'WEEKDAY',
-          label: i18nLabel(msg`Weekday`),
+          label: i18nLabel(
+            msg({ message: `Weekday`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'blue',
         },
         {
           id: 'f825a6a2-ff18-420e-9854-9594b06bd922',
           value: 'WEEKEND',
-          label: i18nLabel(msg`Weekend`),
+          label: i18nLabel(
+            msg({ message: `Weekend`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'turquoise',
         },
         {
           id: '6258f155-5694-4ba4-8506-0c8cc9d1ff3c',
           value: 'HOLIDAY_OT',
-          label: i18nLabel(msg`Holiday OT`),
+          label: i18nLabel(
+            msg({ message: `Holiday OT`, context: 'fieldMetadata.label' }),
+          ),
           position: 2,
           color: 'orange',
         },
@@ -242,9 +307,17 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'earlyCheckInMinutes',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Early check-in (minutes)`),
+      label: i18nLabel(
+        msg({
+          message: `Early check-in (minutes)`,
+          context: 'fieldMetadata.label',
+        }),
+      ),
       description: i18nLabel(
-        msg`Check-in opens this many minutes before start. Empty = no guard`,
+        msg({
+          message: `Check-in opens this many minutes before start. Empty = no guard`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconClockUp',
       isNullable: true,
@@ -260,9 +333,17 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'lateCheckOutMinutes',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Late check-out grace (minutes)`),
+      label: i18nLabel(
+        msg({
+          message: `Late check-out grace (minutes)`,
+          context: 'fieldMetadata.label',
+        }),
+      ),
       description: i18nLabel(
-        msg`Payable minutes cap grace after end. Empty = cap disabled`,
+        msg({
+          message: `Payable minutes cap grace after end. Empty = cap disabled`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconClockDown',
       isNullable: true,
@@ -278,9 +359,14 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'salaryPerHour',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Salary per hour`),
+      label: i18nLabel(
+        msg({ message: `Salary per hour`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`VND per hour, optional. Hidden from the catalog view; members see it only through their own report`,
+        msg({
+          message: `VND per hour, optional. Hidden from the catalog view; members see it only through their own report`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconCurrencyDong',
       isNullable: true,
@@ -296,8 +382,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'color',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Color`),
-      description: i18nLabel(msg`Calendar badge color`),
+      label: i18nLabel(
+        msg({ message: `Color`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Calendar badge color`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconPalette',
       isNullable: true,
       defaultValue: "'#94a3b8'",
@@ -313,8 +406,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'isActive',
       type: FieldMetadataType.BOOLEAN,
-      label: i18nLabel(msg`Active`),
-      description: i18nLabel(msg`Inactive templates cannot be registered`),
+      label: i18nLabel(
+        msg({ message: `Active`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Inactive templates cannot be registered`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconToggleRight',
       isNullable: false,
       defaultValue: true,
@@ -330,8 +430,12 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'description',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Description`),
-      description: i18nLabel(msg`Description`),
+      label: i18nLabel(
+        msg({ message: `Description`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Description`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconFileDescription',
       isNullable: true,
     },
@@ -346,8 +450,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -369,9 +480,14 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -394,8 +510,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -414,8 +537,15 @@ export const buildShiftTemplateStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'shifts',
-      label: i18nLabel(msg`Shifts`),
-      description: i18nLabel(msg`Shifts registered from this template`),
+      label: i18nLabel(
+        msg({ message: `Shifts`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Shifts registered from this template`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isNullable: true,
       isUIEditable: false,

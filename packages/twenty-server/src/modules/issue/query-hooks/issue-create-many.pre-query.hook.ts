@@ -8,12 +8,12 @@ import { type CreateManyResolverArgs } from 'src/engine/api/graphql/workspace-re
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import {
   type RelationTargetAppScopeEntry,
   assertRelationTargetAppScopeOrThrow,
 } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { applyDefaultIssueReporter } from 'src/modules/issue/utils/apply-default-issue-reporter.util';
 import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
@@ -53,9 +53,7 @@ const buildIssueRelationTargetAppScopeEntries = (
 @Injectable()
 @WorkspaceQueryHook(`issue.createMany`)
 export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -76,7 +74,7 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
       Array.from(distinctProjectIds, (projectId) =>
         assertAppScopeWriteAccessOrThrow({
           authContext,
-          globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+          workspaceOrmManager: this.workspaceOrmManager,
           objectNameSingular: 'issue',
           foreignKeyValue: projectId,
         }),
@@ -87,7 +85,7 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
       payload.data.map((issue) =>
         assertRelationTargetAppScopeOrThrow({
           authContext,
-          globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+          workspaceOrmManager: this.workspaceOrmManager,
           objectNameSingular: 'issue',
           projectId: issue.projectId,
           targets: buildIssueRelationTargetAppScopeEntries(issue),
@@ -120,28 +118,24 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
       return payload;
     }
 
-    const workspaceId = workspace.id;
-
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
-      const projectRepository =
-        await this.globalWorkspaceOrmManager.getRepository(
-          workspaceId,
-          ProjectWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
+    await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const projectRepository = this.workspaceOrmManager.getRepository(
+        ProjectWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
 
       for (const [projectId, issues] of issuesNeedingKeyByProjectId) {
         const result = await projectRepository
           .createQueryBuilder()
+          .where('id = :projectId', { projectId })
           .update()
           .set({
             nextIssueNumber: () => `"nextIssueNumber" + ${issues.length}`,
           })
-          .where('id = :projectId', { projectId })
           .returning(['nextIssueNumber', 'key'])
           .execute();
 
-        const { nextIssueNumber: lastIssueNumber, key } = result.raw[0] as {
+        const { nextIssueNumber: lastIssueNumber, key } = result.generatedMaps[0] as {
           nextIssueNumber: number;
           key: string;
         };

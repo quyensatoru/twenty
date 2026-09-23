@@ -8,11 +8,11 @@ import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/wo
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { substituteCurrentMemberPlaceholder } from 'src/engine/metadata-modules/record-visibility-policy/utils/substitute-current-member-placeholder.util';
 import {
-  TwentyORMException,
-  TwentyORMExceptionCode,
+  TwentyOrmException,
+  TwentyOrmExceptionCode,
 } from 'src/engine/twenty-orm/exceptions/twenty-orm.exception';
 import { doesRecordMatchFilter } from 'src/engine/twenty-orm/utils/does-record-match-filter.util';
-import { resolveRoleIdFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-role-id-from-auth-context.util';
+import { resolveRoleIdsFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-role-ids-from-auth-context.util';
 
 // INSERT/UPDATE-side counterpart of apply-record-visibility-filter.util.ts —
 // same spot the Enterprise RLS validate-rls-predicates-for-records.util.ts is
@@ -42,22 +42,13 @@ export const validateRecordVisibilityPolicyForRecords = <
     return;
   }
 
-  const roleId = resolveRoleIdFromAuthContext({
+  const roleIds = resolveRoleIdsFromAuthContext({
     authContext,
     userWorkspaceRoleMap: internalContext.userWorkspaceRoleMap,
     apiKeyRoleMap: internalContext.apiKeyRoleMap,
   });
 
-  if (!isDefined(roleId)) {
-    return;
-  }
-
-  const policy =
-    internalContext.recordVisibilityPoliciesByRoleId[roleId]?.[
-      objectMetadata.id
-    ];
-
-  if (!isDefined(policy)) {
+  if (roleIds.length === 0) {
     return;
   }
 
@@ -65,39 +56,52 @@ export const validateRecordVisibilityPolicyForRecords = <
     ? authContext.workspaceMemberId
     : undefined;
 
-  const recordFilter = substituteCurrentMemberPlaceholder({
-    filter: policy.filter,
-    currentMemberFieldName: policy.currentMemberFieldName,
-    memberId,
-  });
-
   const throwValidationFailed = () => {
-    throw new TwentyORMException(
+    throw new TwentyOrmException(
       errorMessage,
-      TwentyORMExceptionCode.RECORD_VISIBILITY_POLICY_VALIDATION_FAILED,
+      TwentyOrmExceptionCode.RECORD_VISIBILITY_POLICY_VALIDATION_FAILED,
     );
   };
 
-  if (recordFilter === 'CANNOT_EVALUATE') {
-    throwValidationFailed();
+  // Every role's policy still applies — mirrors RLS's multi-role handling:
+  // one role's restriction never gets widened away by another role lacking it.
+  for (const roleId of roleIds) {
+    const policy =
+      internalContext.recordVisibilityPoliciesByRoleId[roleId]?.[
+        objectMetadata.id
+      ];
 
-    return;
-  }
+    if (!isDefined(policy)) {
+      continue;
+    }
 
-  if (!recordFilter || Object.keys(recordFilter).length === 0) {
-    return;
-  }
-
-  for (const record of records) {
-    const matches = doesRecordMatchFilter({
-      record,
-      filter: recordFilter,
-      objectMetadata,
-      flatFieldMetadataMaps: internalContext.flatFieldMetadataMaps,
+    const recordFilter = substituteCurrentMemberPlaceholder({
+      filter: policy.filter,
+      currentMemberFieldName: policy.currentMemberFieldName,
+      memberId,
     });
 
-    if (!matches) {
+    if (recordFilter === 'CANNOT_EVALUATE') {
       throwValidationFailed();
+
+      return;
+    }
+
+    if (!recordFilter || Object.keys(recordFilter).length === 0) {
+      continue;
+    }
+
+    for (const record of records) {
+      const matches = doesRecordMatchFilter({
+        record,
+        filter: recordFilter,
+        objectMetadata,
+        flatFieldMetadataMaps: internalContext.flatFieldMetadataMaps,
+      });
+
+      if (!matches) {
+        throwValidationFailed();
+      }
     }
   }
 };

@@ -7,17 +7,15 @@ import { type UpdateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { assertRelationTargetAppScopeOrThrow } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { EpicWorkspaceEntity } from 'src/modules/epic/standard-objects/epic.workspace-entity';
 
 @Injectable()
 @WorkspaceQueryHook(`epic.updateOne`)
 export class EpicUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -29,27 +27,23 @@ export class EpicUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance 
     if (isDefined(projectId)) {
       await assertAppScopeWriteAccessOrThrow({
         authContext,
-        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        workspaceOrmManager: this.workspaceOrmManager,
         objectNameSingular: 'epic',
         foreignKeyValue: projectId,
       });
     }
 
     if (isDefined(payload.data.assigneeId)) {
-      const workspace = authContext.workspace;
-
       // assigneeId can be changed without projectId in the same payload —
       // fall back to the record's current project so the guard still fires.
       const effectiveProjectId = isDefined(projectId)
         ? projectId
-        : await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+        : await this.workspaceOrmManager.executeInWorkspaceContext(
             async () => {
-              const epicRepository =
-                await this.globalWorkspaceOrmManager.getRepository(
-                  workspace.id,
-                  EpicWorkspaceEntity,
-                  { shouldBypassPermissionChecks: true },
-                );
+              const epicRepository = this.workspaceOrmManager.getRepository(
+                EpicWorkspaceEntity,
+                { shouldBypassPermissionChecks: true },
+              );
 
               const epic = await epicRepository.findOne({
                 where: { id: payload.id },
@@ -63,7 +57,7 @@ export class EpicUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance 
 
       await assertRelationTargetAppScopeOrThrow({
         authContext,
-        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        workspaceOrmManager: this.workspaceOrmManager,
         objectNameSingular: 'epic',
         projectId: effectiveProjectId,
         targets: [

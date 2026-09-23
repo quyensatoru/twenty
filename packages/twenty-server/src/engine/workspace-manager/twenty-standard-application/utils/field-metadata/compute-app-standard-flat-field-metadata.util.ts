@@ -33,8 +33,10 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -52,8 +54,12 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -74,8 +80,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -96,8 +109,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -117,8 +137,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
@@ -136,8 +163,12 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`App name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `App name`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconApps',
       isNullable: true,
     },
@@ -153,9 +184,14 @@ export const buildAppStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'fieldSchema',
       type: FieldMetadataType.RAW_JSON,
-      label: i18nLabel(msg`Field Schema`),
+      label: i18nLabel(
+        msg({ message: `Field Schema`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Schema (key/label/type) driving the Custom Settings form on this app's merchants`,
+        msg({
+          message: `Schema (key/label/type) driving the Custom Settings form on this app's merchants`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconForms',
       isNullable: true,
@@ -174,8 +210,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'projects',
-      label: i18nLabel(msg`Projects`),
-      description: i18nLabel(msg`App's projects`),
+      label: i18nLabel(
+        msg({ message: `Projects`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `App's projects`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconListDetails',
       isNullable: false,
       targetObjectName: 'project',
@@ -196,8 +239,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'appAccesses',
-      label: i18nLabel(msg`App accesses`),
-      description: i18nLabel(msg`App's access grants`),
+      label: i18nLabel(
+        msg({ message: `App accesses`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `App's access grants`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconLock',
       isNullable: false,
       targetObjectName: 'appAccess',
@@ -218,8 +268,15 @@ export const buildAppStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'merchants',
-      label: i18nLabel(msg`Merchants`),
-      description: i18nLabel(msg`Merchants using this app`),
+      label: i18nLabel(
+        msg({ message: `Merchants`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Merchants using this app`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconBuildingStore',
       isNullable: false,
       isUIEditable: false,

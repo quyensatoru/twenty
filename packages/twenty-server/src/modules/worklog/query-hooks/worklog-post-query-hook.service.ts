@@ -3,15 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { isDefined } from 'twenty-shared/utils';
 
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { WorklogWorkspaceEntity } from 'src/modules/worklog/standard-objects/worklog.workspace-entity';
 
 @Injectable()
 export class WorklogPostQueryHookService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async recomputeIssuesTimeTracking(
     authContext: WorkspaceAuthContext,
@@ -25,26 +23,21 @@ export class WorklogPostQueryHookService {
       return;
     }
 
-    const workspaceId = authContext.workspace.id;
-
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
-      const worklogRepository =
-        await this.globalWorkspaceOrmManager.getRepository(
-          workspaceId,
-          WorklogWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
-      const issueRepository =
-        await this.globalWorkspaceOrmManager.getRepository(
-          workspaceId,
-          IssueWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
+    await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const worklogRepository = this.workspaceOrmManager.getRepository(
+        WorklogWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
+      const issueRepository = this.workspaceOrmManager.getRepository(
+        IssueWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
 
       for (const issueId of issueIds) {
         const rawResult = await worklogRepository
           .createQueryBuilder()
-          .select('COALESCE(SUM("timeSpentMinutes"), 0)', 'total')
+          .select([])
+          .addSelect('COALESCE(SUM("timeSpentMinutes"), 0)', 'total')
           .where('"issueId" = :issueId', { issueId })
           .getRawOne<{ total: string }>();
 

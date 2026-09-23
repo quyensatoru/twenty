@@ -1,5 +1,4 @@
 import { FieldMetadataType } from 'twenty-shared/types';
-import { type QueryExpressionMap } from 'typeorm/query-builder/QueryExpressionMap';
 
 import { type WorkspaceInternalContext } from 'src/engine/twenty-orm/interfaces/workspace-internal-context.interface';
 
@@ -89,7 +88,9 @@ const buildInternalContext = (): WorkspaceInternalContext => {
   });
 
   return {
-    workspaceId: 'workspace-1',
+    // getWorkspaceSchemaName base36-encodes this as a UUID hex string, so it
+    // must look like one even though nothing here reads it as an actual id.
+    workspaceId: '20202020-0000-4000-8000-000000000001',
     flatObjectMetadataMaps,
     flatFieldMetadataMaps,
     appScopeGrantsByMemberId: {
@@ -101,9 +102,9 @@ const buildInternalContext = (): WorkspaceInternalContext => {
   } as unknown as WorkspaceInternalContext;
 };
 
-const buildQueryBuilder = (queryType = 'select') => ({
+const buildQueryBuilder = (alias = 'discount') => ({
   andWhere: jest.fn(),
-  expressionMap: { queryType } as QueryExpressionMap,
+  alias,
 });
 
 const AUTH_CONTEXT = {
@@ -114,13 +115,13 @@ const AUTH_CONTEXT = {
 const applyFilterOn = ({
   nameSingular,
   internalContext,
-  queryType,
+  alias,
 }: {
   nameSingular: string;
   internalContext: WorkspaceInternalContext;
-  queryType?: string;
+  alias?: string;
 }) => {
-  const queryBuilder = buildQueryBuilder(queryType);
+  const queryBuilder = buildQueryBuilder(alias ?? nameSingular);
 
   applyAppScopeFilter({
     queryBuilder,
@@ -185,35 +186,17 @@ describe('applyAppScopeFilter', () => {
     );
   });
 
-  it('keeps the query alias on soft-delete, which is rewritten to the table name later', () => {
+  it('keeps using the query alias regardless of the alias the caller passes in', () => {
     const internalContext = buildInternalContext();
 
     const queryBuilder = applyFilterOn({
       nameSingular: 'discount',
       internalContext,
-      queryType: 'soft-delete',
-    });
-
-    // Regression guard: the table name here leaks into the before/after event
-    // SELECTs, which inherit these WHERE clauses while still aliased and fail
-    // with "missing FROM-clause entry for table _discount".
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'COALESCE("discount"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
-      { appScopeGrantedAppIds: [GRANTED_APP_ID] },
-    );
-  });
-
-  it('uses the table name on update, which runs after the alias rewrite', () => {
-    const internalContext = buildInternalContext();
-
-    const queryBuilder = applyFilterOn({
-      nameSingular: 'discount',
-      internalContext,
-      queryType: 'update',
+      alias: 'my_discount_alias',
     });
 
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      'COALESCE("_discount"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
+      'COALESCE("my_discount_alias"."appId" IN (:...appScopeGrantedAppIds), TRUE)',
       { appScopeGrantedAppIds: [GRANTED_APP_ID] },
     );
   });

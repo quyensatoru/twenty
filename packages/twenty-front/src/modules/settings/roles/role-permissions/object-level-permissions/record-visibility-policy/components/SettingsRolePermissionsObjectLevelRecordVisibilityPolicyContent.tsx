@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { isDefined } from 'twenty-shared/utils';
 import { IconPlus, IconTrash } from 'twenty-ui/icon';
-import { Button } from 'twenty-ui/input';
+import { Button } from 'twenty-ui/primitives/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
@@ -232,13 +232,13 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
           />
         ))}
         <Button
-          Icon={IconPlus}
-          title={t`Add condition`}
-          size="small"
-          variant="secondary"
-          accent="default"
+          startIcon={<IconPlus />}
+          size="sm"
+          variant="outline"
           onClick={handleAddCondition}
-        />
+        >
+          {t`Add condition`}
+        </Button>
         <StyledCurrentMemberSection>
           <StyledCurrentMemberLabel>
             {t`Only show records that belong to the person viewing them`}
@@ -255,13 +255,14 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
             />
             {isDefined(currentMemberFieldName) && (
               <Button
-                Icon={IconTrash}
-                title={t`Clear`}
-                size="small"
-                variant="secondary"
-                accent="danger"
+                startIcon={<IconTrash />}
+                size="sm"
+                variant="outline"
+                color="danger"
                 onClick={() => setCurrentMemberFieldName(null)}
-              />
+              >
+                {t`Clear`}
+              </Button>
             )}
           </StyledCurrentMemberRow>
         </StyledCurrentMemberSection>

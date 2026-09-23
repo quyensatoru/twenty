@@ -1,6 +1,4 @@
 import { isDefined } from 'twenty-shared/utils';
-import { type ObjectLiteral } from 'typeorm';
-import { type QueryExpressionMap } from 'typeorm/query-builder/QueryExpressionMap';
 
 import { type WorkspaceInternalContext } from 'src/engine/twenty-orm/interfaces/workspace-internal-context.interface';
 
@@ -21,14 +19,12 @@ import { getWorkspaceSchemaName } from 'src/engine/workspace-datasource/utils/ge
 
 const APP_SCOPE_GRANTED_APP_IDS_PARAMETER = 'appScopeGrantedAppIds';
 
-// A minimal structural surface over TypeORM's Select/Update/Delete/SoftDelete
-// query builders — this predicate is a plain parameterized WHERE clause
-// (`.andWhere(sql, params)`), so unlike the Enterprise row-level-security reuse
-// trick, it doesn't need joins, Brackets, or field-permission checks, and
-// doesn't need to be cast to WorkspaceSelectQueryBuilder.
+// A minimal structural surface over v2's WorkspaceSelectQueryBuilder — this
+// predicate is a plain parameterized WHERE clause (`.andWhere(sql, params)`),
+// so it only needs the query's own alias and the ability to append a WHERE.
 type AppScopeFilterableQueryBuilder = {
-  andWhere: (condition: string, parameters?: ObjectLiteral) => unknown;
-  expressionMap: QueryExpressionMap;
+  alias: string;
+  andWhere: (condition: string, parameters?: Record<string, unknown>) => unknown;
 };
 
 type ApplyAppScopeFilterArgs = {
@@ -92,23 +88,10 @@ export const applyAppScopeFilter = ({
     scopePath,
   });
 
-  // Which name this predicate may use depends on WHERE the builder calls us,
-  // not just on the query type — Postgres UPDATE/DELETE have no aliased target
-  // table, so Twenty rewrites alias to table name (applyTableAliasOnWhereCondition)
-  // once, mid-execute:
-  // - update: called AFTER that rewrite, so the predicate must already speak
-  //   the table name.
-  // - soft-delete/delete: called BEFORE it, alongside the RLS and visibility
-  //   predicates — the alias is correct here and the rewrite converts it later.
-  //   Emitting the table name instead breaks the `before`/`after` event SELECTs,
-  //   which inherit these WHERE clauses while still aliased ("missing
-  //   FROM-clause entry for table _x").
-  // - select: keeps the query alias, which TypeORM defaults to nameSingular.
-  const isPostRewriteUpdateQuery =
-    queryBuilder.expressionMap.queryType === 'update';
-  const mainTableReference = isPostRewriteUpdateQuery
-    ? computeObjectTargetTable(objectMetadata)
-    : objectMetadata.nameSingular;
+  // v2 keeps the query alias for the mutation's target table too (Postgres
+  // UPDATE/DELETE both support `AS alias`), so unlike the v1 query builders
+  // this predicate never needs to fall back to the bare table name.
+  const mainTableReference = queryBuilder.alias;
 
   // Nothing granted for this member/operation: every row is out of scope. An
   // unassigned-visible object still keeps its app-less rows reachable, so it
@@ -162,15 +145,17 @@ export const applyAppScopeFilter = ({
     return;
   }
 
-  // The main-table reference (alias or bare name) always resolves without a
-  // schema prefix — TypeORM's own FROM/UPDATE/DELETE clause already schema-
+  // The main-table reference (the query alias) always resolves without a
+  // schema prefix — the SELECT/UPDATE/DELETE statement already schema-
   // qualifies it. Every OTHER table this predicate touches (the subquery hops)
   // is a fresh, non-aliased reference that Postgres resolves via search_path —
   // which does not include the workspace schema — so those must be qualified
-  // explicitly with the workspace's schema name.
-  const workspaceSchemaName = getWorkspaceSchemaName(
-    internalContext.workspaceId,
-  );
+  // explicitly with the workspace's schema name. Only needed once there's at
+  // least one hop to walk.
+  const workspaceSchemaName =
+    hops.length > 0
+      ? getWorkspaceSchemaName(internalContext.workspaceId)
+      : '';
 
   const predicateSql = buildAppScopePredicateSql({
     mainTableReference,
@@ -209,19 +194,17 @@ const buildAppScopePredicateSql = ({
       return grantedAppIdsClause;
     }
 
-    // An empty granted list can't be spread into `IN (:...)` — Postgres would
-    // get `IN ()`. With no grants at all, app-less rows are all that's left.
+    // An empty granted list can't be spread into `IN (:...)` without the
+    // compiler's own `IN (NULL)` fallback — spelling it out explicitly here
+    // keeps this predicate's behavior independent of that implementation
+    // detail.
     if (!hasGrantedAppIds) {
       return `${appColumnReference} IS NULL`;
     }
 
     // `COALESCE(<x> IN (...), TRUE)` rather than the plainer
     // `<x> IN (...) OR <x> IS NULL`: `IN` already yields NULL for an app-less
-    // row, so this keeps those rows without naming the column twice. Naming it
-    // twice would not survive applyTableAliasOnWhereCondition, which rewrites
-    // only the leading `alias.` of a condition — the second reference would
-    // still point at the query alias, which UPDATE/DELETE statements don't
-    // have ("missing FROM-clause entry").
+    // row, so this keeps those rows without naming the column twice.
     return `COALESCE(${grantedAppIdsClause}, TRUE)`;
   }
 

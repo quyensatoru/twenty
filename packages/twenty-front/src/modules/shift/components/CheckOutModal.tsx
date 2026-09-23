@@ -1,13 +1,13 @@
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
-import { Button } from 'twenty-ui/input';
+import { Button } from 'twenty-ui/primitives/input';
+import { Dialog } from 'twenty-ui/primitives/surfaces';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
 
 import { TextArea } from '@/ui/input/components/TextArea';
-import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
-import { useModal } from '@/ui/layout/modal/hooks/useModal';
+import { DialogInstance } from '@/ui/layout/dialog/components/DialogInstance';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 
 const StyledContent = styled.div`
   display: flex;
@@ -39,13 +39,13 @@ export const CheckOutModal = ({
   onConfirm,
 }: CheckOutModalProps) => {
   const { t } = useLingui();
-  const { closeModal } = useModal();
+  const { closeDialog } = useDialog();
   const [handoverNote, setHandoverNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetAndClose = () => {
     setHandoverNote('');
-    closeModal(modalInstanceId);
+    closeDialog(modalInstanceId);
   };
 
   const handleConfirm = async () => {
@@ -62,40 +62,54 @@ export const CheckOutModal = ({
   };
 
   return (
-    <ModalStatefulWrapper
-      modalInstanceId={modalInstanceId}
-      isClosable
+    <DialogInstance
+      dialogId={modalInstanceId}
+      dismissible
       onClose={resetAndClose}
       renderInDocumentBody
     >
-      <StyledContent>
-        <H1Title title={t`Check out`} fontColor={H1TitleFontColor.Primary} />
-        <StyledSubtitle>{shiftName}</StyledSubtitle>
-        <TextArea
-          textAreaId={`${modalInstanceId}-handover-note`}
-          label={t`Handover note — pending conversations`}
-          placeholder={t`Anything the next shift should pick up? (optional)`}
-          value={handoverNote}
-          onChange={setHandoverNote}
-          minRows={3}
-          maxRows={8}
-        />
-        <StyledFooter>
-          <Button
-            title={t`Cancel`}
-            variant="secondary"
-            onClick={resetAndClose}
-            disabled={isSubmitting}
-          />
-          <Button
-            title={t`Confirm check out`}
-            variant="primary"
-            accent="blue"
-            onClick={handleConfirm}
-            disabled={isSubmitting}
-          />
-        </StyledFooter>
-      </StyledContent>
-    </ModalStatefulWrapper>
+      {({ container, backdrop, viewportProps, onKeyDown }) => (
+        <Dialog.Popup
+          {...{ container, backdrop, viewportProps, onKeyDown }}
+          size="md"
+          data-globally-prevent-click-outside
+          style={{
+            padding: 'var(--t-spacing-6)',
+            borderRadius: 'var(--t-spacing-1)',
+          }}
+        >
+          <StyledContent>
+            <Dialog.Title>{t`Check out`}</Dialog.Title>
+            <StyledSubtitle>{shiftName}</StyledSubtitle>
+            <TextArea
+              textAreaId={`${modalInstanceId}-handover-note`}
+              label={t`Handover note — pending conversations`}
+              placeholder={t`Anything the next shift should pick up? (optional)`}
+              value={handoverNote}
+              onChange={setHandoverNote}
+              minRows={3}
+              maxRows={8}
+            />
+            <StyledFooter>
+              <Button
+                variant="outline"
+                onClick={resetAndClose}
+                disabled={isSubmitting}
+              >
+                {t`Cancel`}
+              </Button>
+              <Button
+                variant="solid"
+                color="accent"
+                onClick={handleConfirm}
+                disabled={isSubmitting}
+              >
+                {t`Confirm check out`}
+              </Button>
+            </StyledFooter>
+          </StyledContent>
+        </Dialog.Popup>
+      )}
+    </DialogInstance>
   );
 };

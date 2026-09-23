@@ -7,7 +7,7 @@ import { type UpdateOneResolverArgs } from 'src/engine/api/graphql/workspace-res
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { assertAppScopeWriteAccessOrThrow } from 'src/engine/twenty-orm/utils/assert-app-scope-write-access-or-throw.util';
 import { assertIssueCommentAuthorOrAppScopeAccessOrThrow } from 'src/modules/issue-comment/utils/assert-issue-comment-author-or-app-scope-access-or-throw.util';
 import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/standard-objects/issue-comment.workspace-entity';
@@ -17,9 +17,7 @@ import { type IssueCommentWorkspaceEntity } from 'src/modules/issue-comment/stan
 @Injectable()
 @WorkspaceQueryHook(`issueComment.updateOne`)
 export class IssueCommentUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   async execute(
     authContext: WorkspaceAuthContext,
@@ -29,7 +27,7 @@ export class IssueCommentUpdateOnePreQueryHook implements WorkspacePreQueryHookI
     if (isDefined(payload.data.issueId)) {
       await assertAppScopeWriteAccessOrThrow({
         authContext,
-        globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+        workspaceOrmManager: this.workspaceOrmManager,
         objectNameSingular: 'issueComment',
         foreignKeyValue: payload.data.issueId,
       });
@@ -37,7 +35,7 @@ export class IssueCommentUpdateOnePreQueryHook implements WorkspacePreQueryHookI
 
     await assertIssueCommentAuthorOrAppScopeAccessOrThrow({
       authContext,
-      globalWorkspaceOrmManager: this.globalWorkspaceOrmManager,
+      workspaceOrmManager: this.workspaceOrmManager,
       issueCommentId: payload.id,
       operation: 'write',
     });

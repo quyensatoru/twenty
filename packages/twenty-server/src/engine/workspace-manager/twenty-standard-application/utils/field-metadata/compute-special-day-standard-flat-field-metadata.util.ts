@@ -26,8 +26,10 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'id',
       type: FieldMetadataType.UUID,
-      label: i18nLabel(msg`Id`),
-      description: i18nLabel(msg`Id`),
+      label: i18nLabel(msg({ message: `Id`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({ message: `Id`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
@@ -45,8 +47,12 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Creation date`),
-      description: i18nLabel(msg`Creation date`),
+      label: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({ message: `Creation date`, context: 'fieldMetadata.description' }),
+      ),
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
@@ -67,8 +73,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Last update`),
-      description: i18nLabel(msg`Last time the record was changed`),
+      label: i18nLabel(
+        msg({ message: `Last update`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Last time the record was changed`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
@@ -89,8 +102,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'deletedAt',
       type: FieldMetadataType.DATE_TIME,
-      label: i18nLabel(msg`Deleted at`),
-      description: i18nLabel(msg`Date when the record was deleted`),
+      label: i18nLabel(
+        msg({ message: `Deleted at`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Date when the record was deleted`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
@@ -110,8 +130,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'position',
       type: FieldMetadataType.POSITION,
-      label: i18nLabel(msg`Position`),
-      description: i18nLabel(msg`Special day record position`),
+      label: i18nLabel(
+        msg({ message: `Position`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Special day record position`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconHierarchy2',
       isSystem: true,
       isNullable: false,
@@ -130,8 +157,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'name',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Name`),
-      description: i18nLabel(msg`Special day display name`),
+      label: i18nLabel(
+        msg({ message: `Name`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Special day display name`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconAbc',
       isNullable: false,
       defaultValue: "''",
@@ -147,9 +181,14 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'kind',
       type: FieldMetadataType.SELECT,
-      label: i18nLabel(msg`Kind`),
+      label: i18nLabel(
+        msg({ message: `Kind`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`Repeats yearly or applies to one specific date`,
+        msg({
+          message: `Repeats yearly or applies to one specific date`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconRepeat',
       isNullable: false,
@@ -158,14 +197,18 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
         {
           id: 'b0412a97-12b0-4338-8f94-57bada9a7906',
           value: 'YEARLY',
-          label: i18nLabel(msg`Yearly`),
+          label: i18nLabel(
+            msg({ message: `Yearly`, context: 'fieldMetadata.label' }),
+          ),
           position: 0,
           color: 'green',
         },
         {
           id: 'd8a66473-170d-4ce2-a7ae-d65db3a1dba4',
           value: 'SPECIFIC',
-          label: i18nLabel(msg`Specific date`),
+          label: i18nLabel(
+            msg({ message: `Specific date`, context: 'fieldMetadata.label' }),
+          ),
           position: 1,
           color: 'purple',
         },
@@ -182,8 +225,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'month',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Month`),
-      description: i18nLabel(msg`1-12, used when kind is Yearly`),
+      label: i18nLabel(
+        msg({ message: `Month`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `1-12, used when kind is Yearly`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarMonth',
       isNullable: true,
     },
@@ -198,8 +248,13 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'day',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Day`),
-      description: i18nLabel(msg`1-31, used when kind is Yearly`),
+      label: i18nLabel(msg({ message: `Day`, context: 'fieldMetadata.label' })),
+      description: i18nLabel(
+        msg({
+          message: `1-31, used when kind is Yearly`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarDue',
       isNullable: true,
     },
@@ -214,8 +269,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'date',
       type: FieldMetadataType.TEXT,
-      label: i18nLabel(msg`Date`),
-      description: i18nLabel(msg`YYYY-MM-DD, used when kind is Specific date`),
+      label: i18nLabel(
+        msg({ message: `Date`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `YYYY-MM-DD, used when kind is Specific date`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCalendarEvent',
       isNullable: true,
     },
@@ -230,8 +292,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'multiplier',
       type: FieldMetadataType.NUMBER,
-      label: i18nLabel(msg`Multiplier`),
-      description: i18nLabel(msg`Pay multiplier, e.g. 2 = 200%`),
+      label: i18nLabel(
+        msg({ message: `Multiplier`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Pay multiplier, e.g. 2 = 200%`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconPercentage',
       isNullable: false,
       defaultValue: 2,
@@ -247,8 +316,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'isActive',
       type: FieldMetadataType.BOOLEAN,
-      label: i18nLabel(msg`Active`),
-      description: i18nLabel(msg`Inactive special days are ignored`),
+      label: i18nLabel(
+        msg({ message: `Active`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Inactive special days are ignored`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconToggleRight',
       isNullable: false,
       defaultValue: true,
@@ -264,8 +340,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'createdBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Created by`),
-      description: i18nLabel(msg`The creator of the record`),
+      label: i18nLabel(
+        msg({ message: `Created by`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `The creator of the record`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
       isUIEditable: false,
@@ -287,9 +370,14 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'updatedBy',
       type: FieldMetadataType.ACTOR,
-      label: i18nLabel(msg`Updated by`),
+      label: i18nLabel(
+        msg({ message: `Updated by`, context: 'fieldMetadata.label' }),
+      ),
       description: i18nLabel(
-        msg`The workspace member who last updated the record`,
+        msg({
+          message: `The workspace member who last updated the record`,
+          context: 'fieldMetadata.description',
+        }),
       ),
       icon: 'IconUserCircle',
       isSystem: true,
@@ -312,8 +400,15 @@ export const buildSpecialDayStandardFlatFieldMetadatas = ({
     context: {
       fieldName: 'searchVector',
       type: FieldMetadataType.TS_VECTOR,
-      label: i18nLabel(msg`Search vector`),
-      description: i18nLabel(msg`Field used for full-text search`),
+      label: i18nLabel(
+        msg({ message: `Search vector`, context: 'fieldMetadata.label' }),
+      ),
+      description: i18nLabel(
+        msg({
+          message: `Field used for full-text search`,
+          context: 'fieldMetadata.description',
+        }),
+      ),
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,

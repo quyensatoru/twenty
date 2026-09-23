@@ -62,7 +62,10 @@ const deriveAllMetadataEventsFromDeleteAction = ({
     case 'fieldPermission':
     case 'viewSort':
     case 'webhook':
+    case 'workflow':
+    case 'workflowVersion':
     case 'connectionProvider':
+    case 'timelineActivityType':
     case 'searchFieldMetadata': {
       const flatEntityToDelete = findFlatEntityByIdInFlatEntityMapsOrThrow<
         MetadataFlatEntity<typeof flatAction.metadataName>

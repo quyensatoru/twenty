@@ -1,5 +1,3 @@
-import { isDefined } from 'twenty-shared/utils';
-
 import { isApiKeyAuthContext } from 'src/engine/core-modules/auth/guards/is-api-key-auth-context.guard';
 import { isApplicationAuthContext } from 'src/engine/core-modules/auth/guards/is-application-auth-context.guard';
 import { isSystemAuthContext } from 'src/engine/core-modules/auth/guards/is-system-auth-context.guard';
@@ -9,7 +7,7 @@ import {
   type AllObjectRecordsRoleFlagsByRoleId,
   type AppScopeOperation,
 } from 'src/engine/twenty-orm/types/app-scope-permission.type';
-import { resolveRoleIdFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-role-id-from-auth-context.util';
+import { resolveRoleIdsFromAuthContext } from 'src/engine/twenty-orm/utils/resolve-role-ids-from-auth-context.util';
 
 // Three independent checks — any one true bypasses app-scope enforcement entirely
 // (the member still goes through Twenty's normal Role permission checks separately):
@@ -43,15 +41,20 @@ export const shouldBypassAppScope = ({
     return true;
   }
 
-  const roleId = resolveRoleIdFromAuthContext({
+  const roleIds = resolveRoleIdsFromAuthContext({
     authContext,
     userWorkspaceRoleMap,
     apiKeyRoleMap,
   });
 
-  if (!isDefined(roleId)) {
+  if (roleIds.length === 0) {
     return false;
   }
 
-  return allObjectRecordsRoleFlagsByRoleId[roleId]?.[operation] === true;
+  // Every active role must carry the bypass flag — same AND semantics as a
+  // Record Visibility Policy: one role without global access still restricts,
+  // it never gets widened away by another role having it.
+  return roleIds.every(
+    (roleId) => allObjectRecordsRoleFlagsByRoleId[roleId]?.[operation] === true,
+  );
 };

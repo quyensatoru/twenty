@@ -4,14 +4,12 @@ import { assertIsDefinedOrThrow } from 'twenty-shared/utils';
 
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 import { type SpecialDayWorkspaceEntity } from 'src/modules/shift/standard-objects/special-day.workspace-entity';
 
 @Injectable()
 export class ShiftRateWorkspaceService {
-  constructor(
-    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
-  ) {}
+  constructor(private readonly workspaceOrmManager: WorkspaceOrmManager) {}
 
   // `date` is an ICT calendar day (YYYY-MM-DD). SPECIFIC days match by exact
   // date, YEARLY days by month/day; the highest matching multiplier wins.
@@ -23,11 +21,10 @@ export class ShiftRateWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+    return this.workspaceOrmManager.executeInWorkspaceContext(
       async () => {
         const specialDayRepository =
-          await this.globalWorkspaceOrmManager.getRepository<SpecialDayWorkspaceEntity>(
-            workspace.id,
+          this.workspaceOrmManager.getRepository<SpecialDayWorkspaceEntity>(
             'specialDay',
             { shouldBypassPermissionChecks: true },
           );

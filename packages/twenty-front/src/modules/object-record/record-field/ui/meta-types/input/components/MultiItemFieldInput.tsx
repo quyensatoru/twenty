@@ -1,3 +1,6 @@
+import { ListItem } from 'twenty-ui/primitives/navigation';
+import { OverflowingTextWithTooltip } from 'twenty-ui/primitives/surfaces';
+import { t } from '@lingui/core/macro';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Key } from 'ts-key-enum';
 import { useDebounce } from 'use-debounce';
@@ -23,11 +26,11 @@ import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomState
 import { isNonEmptyString } from '@sniptt/guards';
 import { CustomError, isDefined } from 'twenty-shared/utils';
 import { IconCheck, IconPlus } from 'twenty-ui/icon';
-import { LightIconButton } from 'twenty-ui/input';
-import { MenuItem } from 'twenty-ui/navigation';
+import { LightIconButton } from 'twenty-ui/components';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { moveArrayItem } from '~/utils/array/moveArrayItem';
 import { toSpliced } from '~/utils/array/toSpliced';
+import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 import { normalizeSearchText } from '~/utils/normalizeSearchText';
 import { turnIntoEmptyStringIfWhitespacesOnly } from '~/utils/string/turnIntoEmptyStringIfWhitespacesOnly';
 
@@ -36,6 +39,7 @@ type MultiItemFieldInputProps<T> = {
   onChange: (newItemsValue: T[]) => void;
   onEscape: (newItemsValue: T[]) => void;
   onEnter: (newItemsValue: T[]) => void;
+  onSubmit: (newItemsValue: T[]) => void;
   onClickOutside: (newItemsValue: T[], event: MouseEvent | TouchEvent) => void;
   onError?: (hasError: boolean, values: any[]) => void;
   placeholder: string;
@@ -62,6 +66,7 @@ export const MultiItemFieldInput = <T,>({
   onChange,
   onEscape,
   onEnter,
+  onSubmit,
   onError,
   placeholder,
   validateInput,
@@ -225,9 +230,13 @@ export const MultiItemFieldInput = <T,>({
     }
 
     onChange(updatedItems);
+
     if (shouldAutoEnterBecauseOnlyOneItemIsAllowed) {
       onEnter(updatedItems);
+    } else if (!isDeeplyEqual(items, updatedItems)) {
+      onSubmit(updatedItems);
     }
+
     setIsInputDisplayed(false);
     setIsAddingNewItem(false);
     setInputValue('');
@@ -283,11 +292,13 @@ export const MultiItemFieldInput = <T,>({
   const handleSetPrimaryItem = (index: number) => {
     const updatedItems = moveArrayItem(items, { fromIndex: index, toIndex: 0 });
     onChange(updatedItems);
+    onSubmit(updatedItems);
   };
 
   const handleDeleteItem = (index: number) => {
     const updatedItems = toSpliced(items, index, 1);
     onChange(updatedItems);
+    onSubmit(updatedItems);
     showInputIfNoItemsRemain(updatedItems);
   };
 
@@ -359,19 +370,21 @@ export const MultiItemFieldInput = <T,>({
           rightComponent={
             items.length ? (
               <LightIconButton
-                Icon={isAddingNewItem ? IconPlus : IconCheck}
                 onClick={handleEnter}
-              />
+                aria-label={isAddingNewItem ? t`Add item` : t`Save item`}
+              >
+                {isAddingNewItem ? <IconPlus /> : <IconCheck />}
+              </LightIconButton>
             ) : null
           }
         />
       ) : !isLimitReached ? (
         <DropdownMenuItemsContainer>
-          <MenuItem
-            onClick={handleAddButtonClick}
-            LeftIcon={IconPlus}
-            text={newItemLabel || `Add ${placeholder}`}
-          />
+          <ListItem onClick={handleAddButtonClick} startIcon={<IconPlus />}>
+            <OverflowingTextWithTooltip
+              text={newItemLabel || `Add ${placeholder}`}
+            />
+          </ListItem>
         </DropdownMenuItemsContainer>
       ) : null}
     </DropdownContent>

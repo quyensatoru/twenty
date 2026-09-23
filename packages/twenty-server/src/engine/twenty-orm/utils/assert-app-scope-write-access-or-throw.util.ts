@@ -4,14 +4,13 @@ import { isUserAuthContext } from 'src/engine/core-modules/auth/guards/is-user-a
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
-import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
+import { type OrmFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/orm-flat-field-metadata.type';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import {
   PermissionsException,
   PermissionsExceptionCode,
   PermissionsExceptionMessage,
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
-import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { getWorkspaceContext } from 'src/engine/twenty-orm/storage/orm-workspace-context.storage';
 import {
   buildAppScopePathByObjectId,
@@ -19,6 +18,7 @@ import {
   resolveAppScopeHops,
 } from 'src/engine/twenty-orm/utils/build-app-scope-path-by-object-id.util';
 import { shouldBypassAppScope } from 'src/engine/twenty-orm/utils/should-bypass-app-scope.util';
+import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
 
 // Write-guard for CREATE and FK-reassignment on UPDATE — validates that the
 // resolved effective app of the record being written is within the acting
@@ -26,12 +26,12 @@ import { shouldBypassAppScope } from 'src/engine/twenty-orm/utils/should-bypass-
 // project/issue/sprint/issueComment/worklog createOne/updateOne.
 export const assertAppScopeWriteAccessOrThrow = async ({
   authContext,
-  globalWorkspaceOrmManager,
+  workspaceOrmManager,
   objectNameSingular,
   foreignKeyValue,
 }: {
   authContext: WorkspaceAuthContext;
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
+  workspaceOrmManager: WorkspaceOrmManager;
   objectNameSingular: string;
   foreignKeyValue: string | null | undefined;
 }): Promise<void> => {
@@ -39,7 +39,7 @@ export const assertAppScopeWriteAccessOrThrow = async ({
     return;
   }
 
-  await globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+  await workspaceOrmManager.executeInWorkspaceContext(async () => {
     const context = getWorkspaceContext();
 
     if (
@@ -81,8 +81,7 @@ export const assertAppScopeWriteAccessOrThrow = async ({
     }
 
     const effectiveAppId = await resolveEffectiveAppId({
-      globalWorkspaceOrmManager,
-      workspaceId: context.authContext.workspace.id,
+      workspaceOrmManager,
       objectMetadata,
       scopePath,
       immediateForeignKeyValue: foreignKeyValue,
@@ -119,21 +118,19 @@ export const assertAppScopeWriteAccessOrThrow = async ({
 // which needs the same project -> app resolution but checks a relation
 // TARGET's app instead of the acting member's write permission.
 export const resolveEffectiveAppId = async ({
-  globalWorkspaceOrmManager,
-  workspaceId,
+  workspaceOrmManager,
   objectMetadata,
   scopePath,
   immediateForeignKeyValue,
   flatObjectMetadataMaps,
   flatFieldMetadataMaps,
 }: {
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
-  workspaceId: string;
+  workspaceOrmManager: WorkspaceOrmManager;
   objectMetadata: FlatObjectMetadata;
   scopePath: string[];
   immediateForeignKeyValue: string;
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
-  flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatFieldMetadataMaps: FlatEntityMaps<OrmFlatFieldMetadata>;
 }): Promise<string | null> => {
   if (scopePath.length === 0) {
     return immediateForeignKeyValue;
@@ -160,8 +157,7 @@ export const resolveEffectiveAppId = async ({
     }
 
     currentId = await fetchColumnValue({
-      globalWorkspaceOrmManager,
-      workspaceId,
+      workspaceOrmManager,
       objectNameSingular: currentTargetObjectMetadata.nameSingular,
       id: currentId,
       columnName: hops[i].joinColumnName,
@@ -185,8 +181,7 @@ export const resolveEffectiveAppId = async ({
   }
 
   return fetchColumnValue({
-    globalWorkspaceOrmManager,
-    workspaceId,
+    workspaceOrmManager,
     objectNameSingular: currentTargetObjectMetadata.nameSingular,
     id: currentId,
     columnName: appJoinColumnName,
@@ -196,27 +191,23 @@ export const resolveEffectiveAppId = async ({
 // Exported for reuse by assert-relation-target-app-scope-or-throw.util.ts
 // (reads a Merchant's `appId` column directly, without hydrating the entity).
 export const fetchColumnValue = async ({
-  globalWorkspaceOrmManager,
-  workspaceId,
+  workspaceOrmManager,
   objectNameSingular,
   id,
   columnName,
 }: {
-  globalWorkspaceOrmManager: GlobalWorkspaceOrmManager;
-  workspaceId: string;
+  workspaceOrmManager: WorkspaceOrmManager;
   objectNameSingular: string;
   id: string;
   columnName: string;
 }): Promise<string | null> => {
-  const repository = await globalWorkspaceOrmManager.getRepository(
-    workspaceId,
-    objectNameSingular,
-    { shouldBypassPermissionChecks: true },
-  );
+  const repository = workspaceOrmManager.getRepository(objectNameSingular, {
+    shouldBypassPermissionChecks: true,
+  });
 
   const row = await repository
     .createQueryBuilder()
-    .select(`"${columnName}"`, 'value')
+    .addSelect(`"${columnName}"`, 'value')
     .where('id = :id', { id })
     .getRawOne<{ value: string | null }>();
 

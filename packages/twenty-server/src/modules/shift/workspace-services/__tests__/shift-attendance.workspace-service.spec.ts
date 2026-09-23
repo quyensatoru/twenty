@@ -33,15 +33,13 @@ describe('ShiftAttendanceWorkspaceService', () => {
     const templateRepository = {
       findOne: jest.fn().mockResolvedValue(template),
     };
-    const globalWorkspaceOrmManager = {
+    const workspaceOrmManager = {
       getRepository: jest
         .fn()
-        .mockImplementation((_workspaceId: string, singularName: string) =>
-          Promise.resolve(
-            singularName === 'shiftTemplate'
-              ? templateRepository
-              : shiftRepository,
-          ),
+        .mockImplementation((singularName: string) =>
+          singularName === 'shiftTemplate'
+            ? templateRepository
+            : shiftRepository,
         ),
       executeInWorkspaceContext: jest
         .fn()
@@ -49,7 +47,7 @@ describe('ShiftAttendanceWorkspaceService', () => {
     };
 
     const service = new ShiftAttendanceWorkspaceService(
-      globalWorkspaceOrmManager as never,
+      workspaceOrmManager as never,
     );
 
     return { service, shiftRepository, templateRepository };
