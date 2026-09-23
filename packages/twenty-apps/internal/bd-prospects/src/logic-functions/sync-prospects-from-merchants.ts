@@ -16,7 +16,10 @@ import {
   collectInstalledAppKeys,
   pickMerchantEmail,
 } from '../utils/merchant-facts';
-import { resolveMerchantSelection } from '../utils/merchant-selection';
+import {
+  readMerchantSelectionRejection,
+  resolveMerchantSelection,
+} from '../utils/merchant-selection';
 import { normalizeDomain } from '../utils/normalize-domain';
 import { computeProspectId } from '../utils/prospect-id';
 import { isHighValuePlan, pickHighestPlan } from '../utils/shopify-plan';
@@ -25,8 +28,12 @@ import {
   haveAppColumnsChanged,
 } from '../utils/split-app-keys';
 
-const PAGE_SIZE = 200;
-const ID_FILTER_CHUNK_SIZE = 200;
+// Reads take 1000 a page; only writes are capped at QUERY_MAX_RECORDS. It
+// matters because the scan below is the whole run's cost: at 200 a page,
+// 37k merchants take 189 requests and the run outlives the 100s limit of the
+// proxy in front of the API, which cuts the connection with a 524.
+const PAGE_SIZE = 1000;
+const ID_FILTER_CHUNK_SIZE = 1000;
 // QUERY_MAX_RECORDS on the server rejects anything larger.
 const UPSERT_BATCH_SIZE = 200;
 // Stops well before the 600s hard timeout: a run that stops on its own reports
@@ -263,6 +270,7 @@ const handler = async (
   shopsHighValue: number;
   readsInstallFlag: boolean;
   readsEmail: boolean;
+  selectionRejection: string | null;
   prospectsCreated: number;
   prospectsRefreshed: number;
   merchantsLinked: number;
@@ -291,6 +299,7 @@ const handler = async (
       shopsHighValue: 0,
       readsInstallFlag: 'using' in merchantSelection,
       readsEmail: 'email' in merchantSelection,
+      selectionRejection: readMerchantSelectionRejection(),
       prospectsCreated: 0,
       prospectsRefreshed: 0,
       merchantsLinked: 0,
@@ -452,6 +461,7 @@ const handler = async (
     shopsHighValue: highValueDomains.length,
     readsInstallFlag: 'using' in merchantSelection,
     readsEmail: 'email' in merchantSelection,
+    selectionRejection: readMerchantSelectionRejection(),
     prospectsCreated,
     prospectsRefreshed,
     merchantsLinked,

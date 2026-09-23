@@ -78,8 +78,12 @@ export const DEALS_PIPELINE_NAV_ITEM_UID =
   'b505e209-51e0-4743-8774-083efcacd034';
 export const IMPORT_PAGE_NAV_ITEM_UID = '16262323-3ed3-46d2-8bda-b1e905b61ca7';
 
-export const BD_ROLE_UID = '3f9b3320-f1ab-4961-ba27-637507127eb1';
-export const BD_MANAGER_ROLE_UID = '76fd131a-a3c8-4e93-a752-09c8bd20137a';
+// `BD` and `BD Manager` used to be declared here. They were handed over to the
+// workspace so the team can edit their actions in Settings, which a role owned
+// by an application forbids (validate-role-belongs-to-caller-application.util).
+// The ids stay recorded so nothing else ever claims them.
+// export const BD_ROLE_UID = '3f9b3320-f1ab-4961-ba27-637507127eb1';
+// export const BD_MANAGER_ROLE_UID = '76fd131a-a3c8-4e93-a752-09c8bd20137a';
 
 export const SYNC_DEAL_STAGES_ON_CREATE_LOGIC_FUNCTION_UID =
   'ef826050-6d73-4c52-841f-14053a589872';
@@ -127,3 +131,21 @@ export const IMPORT_PAGE_LAYOUT_TAB_UID =
   '33bd371d-f1d2-46b1-9904-e251b0f9f800';
 export const IMPORT_PAGE_LAYOUT_WIDGET_UID =
   'f813098c-ed1a-462a-8793-82876c2f0c38';
+
+export const UPSELL_DEAL_FIELDS_VIEW_UID =
+  'bcb3fd22-fbf5-425c-991c-4f244dcce657';
+
+export const UPSELL_DEAL_RECORD_PAGE_LAYOUT_UID =
+  '4fe25e3a-7bee-4f75-a075-352ea072c6eb';
+
+export const UPSELL_DEAL_RECORD_PAGE_TABS = {
+  home: 'a67df555-4b05-4f4f-93c3-6e3a076d4501',
+  notes: '4a0b1eb4-658e-4d18-a190-f4a247112386',
+  timeline: '8bbea59c-b68f-465c-8736-4d87ad709a92',
+} as const;
+
+export const UPSELL_DEAL_RECORD_PAGE_WIDGETS = {
+  fields: '948ff006-485b-4fb1-b8e9-d33adc817165',
+  notes: 'a339ca5c-abcf-45c8-b8ec-d4f22ccf7c7a',
+  timeline: '48982735-f31a-474f-945c-9c67c590416f',
+} as const;

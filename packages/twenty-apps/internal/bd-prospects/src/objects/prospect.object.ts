@@ -57,7 +57,7 @@ export default defineObject({
       type: FieldType.EMAILS,
       name: 'email',
       label: 'Email',
-      description: 'Contact address BD reaches out to',
+      description: 'Contact address BD reaches out to, filled from the merchant row when left empty',
       icon: 'IconMail',
       isNullable: true,
     },
@@ -131,6 +131,13 @@ export default defineObject({
       description: `Stage of the open deal selling ${app.label} to this shop`,
       icon: 'IconProgress',
       isNullable: true as const,
+      // Read-only in the UI for everyone, admins included. The deal is the
+      // source of truth and a trigger rewrites this column after every deal
+      // change, so an edit made here would be silently thrown away. Field
+      // permissions alone were not enough: a role with canUpdateAllObjectRecords
+      // bypasses them. The flag only gates the UI, so the app's own triggers
+      // still write the column through the API.
+      isUIEditable: false as const,
       options: buildStageOptionsForApp(app),
     })),
   ],

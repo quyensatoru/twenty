@@ -31,7 +31,7 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.fields,
           title: 'Fields',
           type: 'FIELDS',
-          gridPosition: { row: 0, column: 0, rowSpan: 6, columnSpan: 12 },
+          gridPosition: { row: 0, column: 0, rowSpan: 5, columnSpan: 12 },
           // Explicit null rather than omitted: the server stores the key, so
           // leaving it out makes every plan show a phantom change.
           configuration: {
@@ -43,7 +43,9 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.homeNotes,
           title: 'BD notes',
           type: 'NOTES',
-          gridPosition: { row: 6, column: 0, rowSpan: 6, columnSpan: 12 },
+          // Note tiles are a fixed 300px tall: a shorter box hides all but the
+          // first one behind a scrollbar.
+          gridPosition: { row: 5, column: 0, rowSpan: 7, columnSpan: 12 },
           configuration: { configurationType: 'NOTES' },
         },
       ],

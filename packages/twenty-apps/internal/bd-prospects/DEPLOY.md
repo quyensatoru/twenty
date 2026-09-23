@@ -145,8 +145,18 @@ Server không tới được thì `plan` báo `Cannot reach Twenty server` và d
 ### Bước 3 — Apply
 
 ```bash
+yarn twenty dev:generate-client -r prod
 yarn twenty apply -r prod
 ```
+
+**Lệnh đầu không được bỏ qua khi vừa apply lên dev trước đó.** Bundle của logic function
+mang theo client SDK sinh từ schema của remote apply gần nhất, và client này **tự validate selection
+ngay tại chỗ** trước khi gửi request. Dev và prod lệch nhau (merchant dev không có `email` và
+`using`), nên bundle mang schema dev sẽ từ chối đọc `merchant.email` trên prod với lỗi
+``type `Merchant` does not have a field `email` `` — job chạy xong bình thường, chỉ là cột Email
+trắng trơn. `apply` có sinh lại client nhưng **sau khi đã upload**, nên không cứu được lần đó.
+
+Dấu hiệu nhận ra: kết quả job có `readsEmail: false` kèm `selectionRejection` là một lỗi schema.
 
 In plan ra lần nữa rồi ghi. Lần đầu không cần `--force` vì không có gì bị xoá. Chỉ dùng `--force`
 khi plan có destroy và bạn đã đọc kỹ danh sách đó.

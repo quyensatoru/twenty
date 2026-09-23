@@ -24,6 +24,9 @@ const CANDIDATE_EXTRAS: Record<string, unknown>[] = [
 ];
 
 let cachedSelection: Record<string, unknown> | undefined;
+// Why the widest selection was refused, for the run summary: a workspace that
+// should expose `email` and does not is a deployment problem, not a schema one.
+let lastRejection: string | undefined;
 
 export const resolveMerchantSelection = async (
   client: ApiClient,
@@ -56,6 +59,9 @@ export const resolveMerchantSelection = async (
         throw error;
       }
 
+      lastRejection =
+        error instanceof Error ? error.message : String(error);
+
       if (extras === CANDIDATE_EXTRAS[CANDIDATE_EXTRAS.length - 1]) {
         throw error;
       }
@@ -67,4 +73,8 @@ export const resolveMerchantSelection = async (
 
 export const resetMerchantSelectionCache = (): void => {
   cachedSelection = undefined;
+  lastRejection = undefined;
 };
+
+export const readMerchantSelectionRejection = (): string | null =>
+  lastRejection ?? null;

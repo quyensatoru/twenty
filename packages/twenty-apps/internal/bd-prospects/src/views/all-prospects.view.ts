@@ -10,6 +10,7 @@ import { HIGH_VALUE_SHOPIFY_PLANS } from '../constants/shopify-plans';
 import {
   ALL_PROSPECTS_VIEW_UID,
   MERCHANTS_ON_PROSPECT_FIELD_UID,
+  UPSELL_DEALS_ON_PROSPECT_FIELD_UID,
   OWNER_ON_PROSPECT_FIELD_UID,
   PROSPECT_OTHER_APPS_FIELD_UID,
   PROSPECT_OUR_APPS_FIELD_UID,
@@ -19,6 +20,11 @@ import {
   PROSPECT_SHOP_NAME_FIELD_UID,
   PROSPECT_SHOPIFY_PLAN_FIELD_UID,
 } from '../constants/universal-identifiers';
+
+// One column per sellable app sits here, so everything after it shifts when a
+// new app is added.
+const FIRST_STAGE_COLUMN = 6;
+const AFTER_STAGE_COLUMNS = FIRST_STAGE_COLUMN + SELLABLE_APPS.length;
 
 export default defineView({
   universalIdentifier: ALL_PROSPECTS_VIEW_UID,
@@ -73,21 +79,30 @@ export default defineView({
     ...SELLABLE_APPS.map((app, index) => ({
       universalIdentifier: app.stage.allProspectsViewFieldUniversalIdentifier,
       fieldMetadataUniversalIdentifier: app.stage.fieldUniversalIdentifier,
-      position: 6 + index,
+      position: FIRST_STAGE_COLUMN + index,
       isVisible: true,
       size: 150,
     })),
     {
+      // The stage columns read the pipeline but cannot link to it. This one is
+      // the way in: its chips open the deal itself.
+      universalIdentifier: 'bd88c36d-68f0-43d5-965a-5834a08e938a',
+      fieldMetadataUniversalIdentifier: UPSELL_DEALS_ON_PROSPECT_FIELD_UID,
+      position: AFTER_STAGE_COLUMNS,
+      isVisible: true,
+      size: 180,
+    },
+    {
       universalIdentifier: '0a29e350-4955-4d62-9e16-66666837a5b4',
       fieldMetadataUniversalIdentifier: OWNER_ON_PROSPECT_FIELD_UID,
-      position: 8,
+      position: AFTER_STAGE_COLUMNS + 1,
       isVisible: true,
       size: 150,
     },
     {
       universalIdentifier: '814f2ed0-e39a-4e03-b33c-4e7f4e70a1c7',
       fieldMetadataUniversalIdentifier: MERCHANTS_ON_PROSPECT_FIELD_UID,
-      position: 9,
+      position: AFTER_STAGE_COLUMNS + 2,
       // Hidden: merchant records are labelled by the same domain, so the column
       // repeated the Domain column. Still reachable from the record page.
       isVisible: false,

@@ -138,6 +138,21 @@ khung deal). Với một BD, hai ô luôn trùng nhau và chỉ tạo cơ hội 
 Chiều ngược lại không làm được: nếu owner chỉ nằm ở deal thì danh sách khách không hiện và không lọc
 được theo owner, đúng giới hạn đã gặp với cột Stage.
 
+## Cột nào người sửa được, cột nào không
+
+`BLOY stage` và `MIDA stage` là **cột gương** của deal, được trigger ghi lại trong khoảng một giây
+sau mỗi thay đổi của deal. Sửa tay ở đó thì thay đổi biến mất không báo gì, nên cả hai role `BD` và
+`BD Manager` bị khoá `canUpdateFieldValue: false` trên hai field này. Đổi stage ở deal hoặc kéo trong
+Kanban.
+
+Hai cột khác cũng do máy ghi và cũng sẽ bị ghi đè, nhưng **cố ý để mở**:
+
+- `Other apps` — job chỉ *merge* chứ không thay thế, nên app lạ BD tự điền vẫn còn.
+- `Email` — job chỉ điền khi ô đang trống, nên BD sửa lại địa chỉ đúng thì giữ nguyên.
+
+Còn `Our apps` và `Shopify plan` thì job thay thế hoàn toàn mỗi lần chạy. Hiện vẫn để mở; muốn khoá
+thì thêm vào `fieldPermissions` y như hai cột stage.
+
 ## Phân quyền thực tế
 
 - `BD`: đọc/ghi `prospect` + `upsellDeal`, đọc `app` (cho picker app đích), **không** sửa được field
@@ -227,7 +242,12 @@ không retry.
 `prospect.email` được điền từ email của merchant, **chỉ khi ô đang trống**: BD có thể đã sửa tay và
 merchant không có quyền ghi đè việc đó. Ưu tiên email trên row còn cài app.
 
-Cái bẫy của kiểu dò field này, đã vấp một lần: fall back phải **chỉ** xảy ra với lỗi schema. Bản đầu
+Client SDK **validate selection tại client**, dựa trên schema sinh lúc apply gần nhất — không phải
+schema của workspace đang chạy. Apply lên dev rồi apply thẳng lên prod là bundle prod mang schema
+dev, và `merchant.email` bị từ chối dù prod có field đó. Luôn `dev:generate-client -r <remote>` trước
+khi `apply -r <remote>` khi hai workspace lệch schema (xem DEPLOY.md bước 3).
+
+Cái bẫy thứ hai của kiểu dò field này: fall back phải **chỉ** xảy ra với lỗi schema. Bản đầu
 tôi viết catch mọi lỗi, nên một lần probe trúng rate limit là nó im lặng bỏ `email` cho cả vòng chạy,
 và job trông như không hề đọc email. Kết quả trả về của job có `readsInstallFlag` và `readsEmail`
 đúng để soi chuyện này: chạy trên prod mà thấy `readsEmail: false` là probe đã bị degrade, không phải

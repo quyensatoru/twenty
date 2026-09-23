@@ -31,9 +31,11 @@ export default defineLogicFunction({
   timeoutSeconds: 60,
   databaseEventTriggerSettings: {
     eventName: 'merchant.updated',
-    // Narrow on purpose: a merchant row is written often, and only these three
-    // fields change what the BD area shows.
-    updatedFields: ['appId', 'shopifyPlan', 'name'],
+    // Narrow on purpose: a merchant row is written often, and only these four
+    // fields change what the BD area shows. `using` has to be here or an
+    // uninstall is invisible until the next cron: MIDA flips only that flag and
+    // leaves the plan alone, so filtering on the plan alone misses it.
+    updatedFields: ['appId', 'shopifyPlan', 'name', 'using'],
   },
   handler,
 });

@@ -1,15 +1,17 @@
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 
-import { ActivityTargetsInlineCell } from '@/activities/inline-cell/components/ActivityTargetsInlineCell';
-import { useActivityTargetsComponentInstanceId } from '@/activities/inline-cell/hooks/useActivityTargetsComponentInstanceId';
 import { type Note } from '@/activities/types/Note';
+import { useDeleteOneRecord } from '@/object-record/hooks/useDeleteOneRecord';
+import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
+import { useObjectPermissionsForObject } from '@/object-record/hooks/useObjectPermissionsForObject';
 import { getActivityPreview } from '@/activities/utils/getActivityPreview';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { CoreObjectNameSingular } from 'twenty-shared/types';
-import { RecordFieldsScopeContextProvider } from '@/object-record/record-field-list/contexts/RecordFieldsScopeContext';
-import { FieldContextProvider } from '@/object-record/record-field/ui/components/FieldContextProvider';
+import { IconTrash } from 'twenty-ui/icon';
+import { LightIconButton } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { beautifyPastDateRelativeToNow } from '~/utils/date-utils';
 
 const StyledCard = styled.div<{ isSingleNote: boolean }>`
   align-items: flex-start;
@@ -18,9 +20,23 @@ const StyledCard = styled.div<{ isSingleNote: boolean }>`
   border-radius: ${themeCssVariables.border.radius.md};
   display: flex;
   flex-direction: column;
-  height: 300px;
   justify-content: space-between;
+  position: relative;
   width: 100%;
+`;
+
+// Hidden until the card is hovered: a delete button sitting permanently next to
+// a note is one stray click away from removing it.
+const StyledDeleteButton = styled.div`
+  opacity: 0;
+  position: absolute;
+  right: ${themeCssVariables.spacing[2]};
+  top: ${themeCssVariables.spacing[2]};
+
+  ${StyledCard}:hover &,
+  &:focus-within {
+    opacity: 1;
+  }
 `;
 
 const StyledCardDetailsContainer = styled.div`
@@ -31,7 +47,6 @@ const StyledCardDetailsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${themeCssVariables.spacing[2]};
-  height: calc(100% - 45px);
   justify-content: start;
   padding: ${themeCssVariables.spacing[4]};
   width: calc(100% - ${themeCssVariables.spacing[8]});
@@ -42,9 +57,14 @@ const StyledNoteTitle = styled.div`
   font-weight: ${themeCssVariables.font.weight.medium};
 `;
 
+const NOTE_PREVIEW_MAX_LINES = 6;
+
 const StyledCardContent = styled.div`
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: ${NOTE_PREVIEW_MAX_LINES};
   align-self: stretch;
   color: ${themeCssVariables.font.color.secondary};
+  display: -webkit-box;
   line-break: anywhere;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -56,13 +76,21 @@ const StyledFooter = styled.div`
   align-items: center;
   align-self: stretch;
   border-top: 1px solid ${themeCssVariables.border.color.light};
-  color: ${themeCssVariables.font.color.primary};
+  color: ${themeCssVariables.font.color.tertiary};
   display: flex;
   flex-direction: row;
-  gap: ${themeCssVariables.spacing[1]};
-  justify-content: center;
-  padding: ${themeCssVariables.spacing[2]};
-  width: calc(100% - ${themeCssVariables.spacing[4]});
+  font-size: ${themeCssVariables.font.size.xs};
+  gap: ${themeCssVariables.spacing[2]};
+  justify-content: flex-start;
+  padding: ${themeCssVariables.spacing[2]} ${themeCssVariables.spacing[4]};
+  width: calc(100% - ${themeCssVariables.spacing[8]});
+`;
+
+const StyledAuthor = styled.span`
+  color: ${themeCssVariables.font.color.secondary};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const NoteTile = ({
@@ -76,13 +104,33 @@ export const NoteTile = ({
 
   const body = getActivityPreview(note?.bodyV2?.blocknote ?? null);
 
-  const baseComponentInstanceId = `note-card-${note.id}-targets`;
-  const componentInstanceId = useActivityTargetsComponentInstanceId(
-    baseComponentInstanceId,
+  const { objectMetadataItem } = useObjectMetadataItem({
+    objectNameSingular: CoreObjectNameSingular.Note,
+  });
+  const objectPermissions = useObjectPermissionsForObject(
+    objectMetadataItem.id,
   );
+  const { deleteOneRecord } = useDeleteOneRecord({
+    objectNameSingular: CoreObjectNameSingular.Note,
+  });
 
   return (
     <StyledCard isSingleNote={isSingleNote}>
+      {objectPermissions.canSoftDeleteObjectRecords && (
+        <StyledDeleteButton>
+          <LightIconButton
+            Icon={IconTrash}
+            accent="tertiary"
+            aria-label={t`Delete note`}
+            // Deleting is a soft delete, recoverable from the Notes view, so it
+            // asks for no confirmation.
+            onClick={(event) => {
+              event.stopPropagation();
+              void deleteOneRecord(note.id);
+            }}
+          />
+        </StyledDeleteButton>
+      )}
       <StyledCardDetailsContainer
         onClick={() =>
           openRecordInSidePanel({
@@ -95,24 +143,8 @@ export const NoteTile = ({
         <StyledCardContent>{body}</StyledCardContent>
       </StyledCardDetailsContainer>
       <StyledFooter>
-        <FieldContextProvider
-          objectNameSingular={CoreObjectNameSingular.Note}
-          objectRecordId={note.id}
-          fieldMetadataName="noteTargets"
-          fieldPosition={0}
-        >
-          <RecordFieldsScopeContextProvider
-            value={{
-              scopeInstanceId: note.id,
-            }}
-          >
-            <ActivityTargetsInlineCell
-              componentInstanceId={componentInstanceId}
-              activityRecordId={note.id}
-              activityObjectNameSingular={CoreObjectNameSingular.Note}
-            />
-          </RecordFieldsScopeContextProvider>
-        </FieldContextProvider>
+        <StyledAuthor>{note.createdBy?.name ?? t`Unknown`}</StyledAuthor>
+        <span>{beautifyPastDateRelativeToNow(note.createdAt)}</span>
       </StyledFooter>
     </StyledCard>
   );
