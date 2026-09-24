@@ -14,8 +14,8 @@ import {
   assertRelationTargetAppScopeOrThrow,
 } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
+import { reserveProjectIssueNumbers } from 'src/modules/issue/utils/reserve-project-issue-numbers.util';
 import { IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
-import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
 const hasIssueKey = (issueKey: string | null | undefined): boolean =>
   isDefined(issueKey) && issueKey.length > 0;
@@ -132,25 +132,16 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
           return undefined;
         }
 
-        const projectRepository = this.workspaceOrmManager.getRepository(
-          ProjectWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
+        const reservation = await reserveProjectIssueNumbers({
+          workspaceOrmManager: this.workspaceOrmManager,
+          workspaceId: workspace.id,
+          projectId,
+          count: 1,
+        });
 
-        const result = await projectRepository
-          .createQueryBuilder()
-          .where('id = :projectId', { projectId })
-          .update()
-          .set({ nextIssueNumber: () => '"nextIssueNumber" + 1' })
-          .returning(['nextIssueNumber', 'key'])
-          .execute();
-
-        const { nextIssueNumber, key } = result.generatedMaps[0] as {
-          nextIssueNumber: number;
-          key: string;
-        };
-
-        return `${key}-${nextIssueNumber}`;
+        return isDefined(reservation)
+          ? `${reservation.key}-${reservation.firstIssueNumber}`
+          : undefined;
       }, authContext);
 
     if (isDefined(generatedIssueKey)) {

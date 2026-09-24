@@ -56,7 +56,9 @@ export const LinkIconWithLinkOverlay = ({
 }: LinkIconWithLinkOverlayProps) => {
   const { theme } = useContext(ThemeContext);
   const [localFailedLink, setLocalFailedLink] = useState<string | null>(null);
-  const faviconUrl = getLinkFaviconUrl(link);
+  // In-app paths such as /task have no favicon to fetch.
+  const isInAppPath = /^\/(?!\/)/.test((link ?? '').trim());
+  const faviconUrl = isInAppPath ? undefined : getLinkFaviconUrl(link);
   const linkKey = link ?? '';
   const isKnownFailed = failedFaviconUrls.has(linkKey);
   const showFavicon =

@@ -14,9 +14,9 @@ import {
   assertRelationTargetAppScopeOrThrow,
 } from 'src/engine/twenty-orm/utils/assert-relation-target-app-scope-or-throw.util';
 import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
+import { reserveProjectIssueNumbers } from 'src/modules/issue/utils/reserve-project-issue-numbers.util';
 import { type IssueWorkspaceEntity } from 'src/modules/issue/standard-objects/issue.workspace-entity';
 import { applyDefaultIssueReporter } from 'src/modules/issue/utils/apply-default-issue-reporter.util';
-import { ProjectWorkspaceEntity } from 'src/modules/project/standard-objects/project.workspace-entity';
 
 const buildIssueRelationTargetAppScopeEntries = (
   data: Partial<IssueWorkspaceEntity>,
@@ -119,32 +119,20 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
     }
 
     await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
-      const projectRepository = this.workspaceOrmManager.getRepository(
-        ProjectWorkspaceEntity,
-        { shouldBypassPermissionChecks: true },
-      );
-
       for (const [projectId, issues] of issuesNeedingKeyByProjectId) {
-        const result = await projectRepository
-          .createQueryBuilder()
-          .where('id = :projectId', { projectId })
-          .update()
-          .set({
-            nextIssueNumber: () => `"nextIssueNumber" + ${issues.length}`,
-          })
-          .returning(['nextIssueNumber', 'key'])
-          .execute();
+        const reservation = await reserveProjectIssueNumbers({
+          workspaceOrmManager: this.workspaceOrmManager,
+          workspaceId: workspace.id,
+          projectId,
+          count: issues.length,
+        });
 
-        const { nextIssueNumber: lastIssueNumber, key } = result
-          .generatedMaps[0] as {
-          nextIssueNumber: number;
-          key: string;
-        };
-
-        const firstIssueNumber = lastIssueNumber - issues.length + 1;
+        if (!isDefined(reservation)) {
+          continue;
+        }
 
         issues.forEach((issue, index) => {
-          issue.issueKey = `${key}-${firstIssueNumber + index}`;
+          issue.issueKey = `${reservation.key}-${reservation.firstIssueNumber + index}`;
         });
       }
     }, authContext);
