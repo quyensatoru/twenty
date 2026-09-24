@@ -128,10 +128,10 @@ export const validateAndStampShiftCreate = async ({
     );
   }
 
-  const shiftRepository = workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-    'shift',
-    { shouldBypassPermissionChecks: true },
-  );
+  const shiftRepository =
+    workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+      shouldBypassPermissionChecks: true,
+    });
 
   const shiftsOnSameSlot = await shiftRepository.find({
     where: { date: data.date, shiftTemplateId: data.shiftTemplateId },

@@ -22,7 +22,12 @@ export const ISSUE_STATUS_DATA_SEED_COLUMNS: (keyof IssueStatusDataSeed)[] = [
 // project now gets its own copy of these 5 statuses as real IssueStatus
 // records, matching what project.createOne seeds for real projects.
 const DEFAULT_ISSUE_STATUSES = [
-  { legacyValue: 'BACKLOG', name: 'Backlog', color: 'GRAY', category: 'UNSTARTED' },
+  {
+    legacyValue: 'BACKLOG',
+    name: 'Backlog',
+    color: 'GRAY',
+    category: 'UNSTARTED',
+  },
   { legacyValue: 'TODO', name: 'Todo', color: 'SKY', category: 'UNSTARTED' },
   {
     legacyValue: 'IN_PROGRESS',
@@ -39,12 +44,18 @@ const DEFAULT_ISSUE_STATUSES = [
   { legacyValue: 'DONE', name: 'Done', color: 'GREEN', category: 'DONE' },
 ] as const;
 
-type LegacyIssueStatusValue = (typeof DEFAULT_ISSUE_STATUSES)[number]['legacyValue'];
+type LegacyIssueStatusValue =
+  (typeof DEFAULT_ISSUE_STATUSES)[number]['legacyValue'];
 
-const SEED_PROJECT_IDS = [PROJECT_DATA_SEED_IDS.ID_1, PROJECT_DATA_SEED_IDS.ID_2];
+const SEED_PROJECT_IDS = [
+  PROJECT_DATA_SEED_IDS.ID_1,
+  PROJECT_DATA_SEED_IDS.ID_2,
+];
 
-const buildIssueStatusId = (projectIndex: number, statusIndex: number): string =>
-  `77777776-${projectIndex}${statusIndex}00-4e7c-8001-123456789abc`;
+const buildIssueStatusId = (
+  projectIndex: number,
+  statusIndex: number,
+): string => `77777776-${projectIndex}${statusIndex}00-4e7c-8001-123456789abc`;
 
 export const ISSUE_STATUS_DATA_SEEDS: IssueStatusDataSeed[] =
   SEED_PROJECT_IDS.flatMap((projectId, projectIndex) =>

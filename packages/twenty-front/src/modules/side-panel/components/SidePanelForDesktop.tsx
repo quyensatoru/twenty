@@ -88,7 +88,9 @@ export const SidePanelForDesktop = () => {
   const currentNavigationItem = sidePanelNavigationStack.at(-1);
   const currentRecordShowParams =
     currentNavigationItem?.page === SidePanelPages.RoutedPage
-      ? getRecordShowParamsFromPath(currentNavigationItem.routedLocation.pathname)
+      ? getRecordShowParamsFromPath(
+          currentNavigationItem.routedLocation.pathname,
+        )
       : null;
   const isViewingTaskManagerIssue =
     isDefined(currentRecordShowParams) &&

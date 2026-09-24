@@ -39,22 +39,19 @@ export class SprintUpdateOnePreQueryHook implements WorkspacePreQueryHookInstanc
       // back to the record's current project so the guard still fires.
       const effectiveProjectId = isDefined(projectId)
         ? projectId
-        : await this.workspaceOrmManager.executeInWorkspaceContext(
-            async () => {
-              const sprintRepository = this.workspaceOrmManager.getRepository(
-                SprintWorkspaceEntity,
-                { shouldBypassPermissionChecks: true },
-              );
+        : await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+            const sprintRepository = this.workspaceOrmManager.getRepository(
+              SprintWorkspaceEntity,
+              { shouldBypassPermissionChecks: true },
+            );
 
-              const sprint = await sprintRepository.findOne({
-                where: { id: payload.id },
-                select: ['id', 'projectId'],
-              });
+            const sprint = await sprintRepository.findOne({
+              where: { id: payload.id },
+              select: ['id', 'projectId'],
+            });
 
-              return sprint?.projectId ?? null;
-            },
-            authContext,
-          );
+            return sprint?.projectId ?? null;
+          }, authContext);
 
       await assertRelationTargetAppScopeOrThrow({
         authContext,

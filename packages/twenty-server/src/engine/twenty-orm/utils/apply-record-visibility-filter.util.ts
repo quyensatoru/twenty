@@ -14,7 +14,10 @@ import { resolveRoleIdsFromAuthContext } from 'src/engine/twenty-orm/utils/resol
 // so it only needs the query's own alias and the ability to append a WHERE.
 type RecordVisibilityFilterableQueryBuilder = {
   alias: string;
-  andWhere: (condition: string, parameters?: Record<string, unknown>) => unknown;
+  andWhere: (
+    condition: string,
+    parameters?: Record<string, unknown>,
+  ) => unknown;
 };
 
 // OSS equivalent of Enterprise's row-level-permission-predicate application —

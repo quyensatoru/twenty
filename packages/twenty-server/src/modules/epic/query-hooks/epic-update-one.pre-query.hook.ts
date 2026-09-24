@@ -38,22 +38,19 @@ export class EpicUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance 
       // fall back to the record's current project so the guard still fires.
       const effectiveProjectId = isDefined(projectId)
         ? projectId
-        : await this.workspaceOrmManager.executeInWorkspaceContext(
-            async () => {
-              const epicRepository = this.workspaceOrmManager.getRepository(
-                EpicWorkspaceEntity,
-                { shouldBypassPermissionChecks: true },
-              );
+        : await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+            const epicRepository = this.workspaceOrmManager.getRepository(
+              EpicWorkspaceEntity,
+              { shouldBypassPermissionChecks: true },
+            );
 
-              const epic = await epicRepository.findOne({
-                where: { id: payload.id },
-                select: ['id', 'projectId'],
-              });
+            const epic = await epicRepository.findOne({
+              where: { id: payload.id },
+              select: ['id', 'projectId'],
+            });
 
-              return epic?.projectId ?? null;
-            },
-            authContext,
-          );
+            return epic?.projectId ?? null;
+          }, authContext);
 
       await assertRelationTargetAppScopeOrThrow({
         authContext,

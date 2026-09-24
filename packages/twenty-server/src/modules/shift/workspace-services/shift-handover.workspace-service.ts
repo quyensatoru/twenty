@@ -35,62 +35,58 @@ export class ShiftHandoverWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const shiftRepository =
-          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            'shift',
-            { shouldBypassPermissionChecks: true },
-          );
-
-        // SAFE SELECT: handoverNote is the one sensitive-adjacent field this query
-        // exposes (team-readable per BR-4.6); every attendance/cancel/pay column
-        // stays out of the select list.
-        const shifts = await shiftRepository.find({
-          where: {
-            date: Between(fromDate, toDate),
-            status: 'COMPLETED',
-          },
-          select: [
-            'id',
-            'date',
-            'startTime',
-            'endTime',
-            'templateCode',
-            'templateName',
-            'memberId',
-            'handoverNote',
-          ],
-          order: { date: 'ASC', startTime: 'ASC' },
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
         });
 
-        // Only shifts that actually carry a note are handovers worth returning.
-        const withNote = shifts.filter((shift) =>
-          isNonEmptyString(shift.handoverNote),
-        );
+      // SAFE SELECT: handoverNote is the one sensitive-adjacent field this query
+      // exposes (team-readable per BR-4.6); every attendance/cancel/pay column
+      // stays out of the select list.
+      const shifts = await shiftRepository.find({
+        where: {
+          date: Between(fromDate, toDate),
+          status: 'COMPLETED',
+        },
+        select: [
+          'id',
+          'date',
+          'startTime',
+          'endTime',
+          'templateCode',
+          'templateName',
+          'memberId',
+          'handoverNote',
+        ],
+        order: { date: 'ASC', startTime: 'ASC' },
+      });
 
-        const memberNameById = await this.loadMemberNames(
-          withNote
-            .map((shift) => shift.memberId)
-            .filter((memberId): memberId is string => isDefined(memberId)),
-        );
+      // Only shifts that actually carry a note are handovers worth returning.
+      const withNote = shifts.filter((shift) =>
+        isNonEmptyString(shift.handoverNote),
+      );
 
-        return withNote.map((shift) => ({
-          id: shift.id,
-          date: shift.date,
-          startTime: shift.startTime,
-          endTime: shift.endTime,
-          templateCode: shift.templateCode,
-          templateName: shift.templateName,
-          memberName: isDefined(shift.memberId)
-            ? (memberNameById.get(shift.memberId) ?? null)
-            : null,
-          // Non-null by the filter above; the DTO field is non-nullable.
-          handoverNote: shift.handoverNote as string,
-        }));
-      },
-      authContext,
-    );
+      const memberNameById = await this.loadMemberNames(
+        withNote
+          .map((shift) => shift.memberId)
+          .filter((memberId): memberId is string => isDefined(memberId)),
+      );
+
+      return withNote.map((shift) => ({
+        id: shift.id,
+        date: shift.date,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        templateCode: shift.templateCode,
+        templateName: shift.templateName,
+        memberName: isDefined(shift.memberId)
+          ? (memberNameById.get(shift.memberId) ?? null)
+          : null,
+        // Non-null by the filter above; the DTO field is non-nullable.
+        handoverNote: shift.handoverNote as string,
+      }));
+    }, authContext);
   }
 
   // Resolve each distinct memberId to a "FirstName LastName" display string from

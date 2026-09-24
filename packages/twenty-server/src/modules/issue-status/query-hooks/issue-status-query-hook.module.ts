@@ -6,6 +6,9 @@ import { ProjectQueryHookModule } from 'src/modules/project/query-hooks/project-
 
 @Module({
   imports: [ProjectQueryHookModule],
-  providers: [IssueStatusCreateOnePostQueryHook, IssueStatusDeleteOnePostQueryHook],
+  providers: [
+    IssueStatusCreateOnePostQueryHook,
+    IssueStatusDeleteOnePostQueryHook,
+  ],
 })
 export class IssueStatusQueryHookModule {}

@@ -19,7 +19,7 @@ if [ "$MODE" = "dev" ]; then
 fi
 
 # 1. Đồng bộ dependency (yarn.lock đổi theo mỗi lần pull upstream)
-# yarn install
+yarn install
 
 # 2. Build package chung (front + server đều phụ thuộc)
 npx nx build twenty-shared

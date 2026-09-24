@@ -14,7 +14,3 @@ export const RECORD_VISIBILITY_POLICY_STATIC_FIELD_TYPES = [
   FieldMetadataType.MULTI_SELECT,
   FieldMetadataType.TEXT,
 ];
-
-export const RECORD_VISIBILITY_POLICY_CURRENT_MEMBER_FIELD_TYPES = [
-  FieldMetadataType.RELATION,
-];

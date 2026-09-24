@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { RestoreForkNavigationMenuItemsCommand } from 'src/database/commands/upgrade-version-command/2-42/2-42-workspace-command-1790216465319-restore-fork-navigation-menu-items.command';
 import { MigrateAgentHistoryToWorkspaceCommand } from 'src/database/commands/upgrade-version-command/2-42/2-42-workspace-command-1789914239896-migrate-agent-history-to-workspace.command';
 import { AgentHistoryMigrationModule } from 'src/database/commands/agent-history/agent-history-migration.module';
 import { AgentChatStreamStateModule } from 'src/engine/metadata-modules/ai/ai-chat/agent-chat-stream-state.module';
@@ -49,6 +50,7 @@ import { GateWorkflowFavoritesByCoreIndexFlagCommand } from 'src/database/comman
     SyncMessageRecordPageCommand,
     SetMessageTextDisplayedMaxRowsCommand,
     PurgeSoftDeletedRowLevelPermissionPredicatesCommand,
+    RestoreForkNavigationMenuItemsCommand,
   ],
   exports: [
     GateWorkflowFavoritesByCoreIndexFlagCommand,

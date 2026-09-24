@@ -24,11 +24,11 @@ import { WorkspaceRelatedEntity } from 'src/engine/workspace-manager/types/works
 // workspace-migration / application-manifest sync machinery — plain
 // core-schema CRUD via WorkspaceScopedRepository is enough.
 @Entity({ name: 'recordVisibilityPolicy', schema: 'core' })
-@Index('IDX_RECORD_VISIBILITY_POLICY_WORKSPACE_ROLE_OBJECT_UNIQUE', [
-  'workspaceId',
-  'roleId',
-  'objectMetadataId',
-], { unique: true })
+@Index(
+  'IDX_RECORD_VISIBILITY_POLICY_WORKSPACE_ROLE_OBJECT_UNIQUE',
+  ['workspaceId', 'roleId', 'objectMetadataId'],
+  { unique: true },
+)
 export class RecordVisibilityPolicyEntity extends WorkspaceRelatedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -55,29 +55,24 @@ export class ProjectCreateOnePreQueryHook implements WorkspacePreQueryHookInstan
   ): Promise<string> {
     const baseKey = buildProjectKeyFromName(name);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const projectRepository = this.workspaceOrmManager.getRepository(
-          ProjectWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const projectRepository = this.workspaceOrmManager.getRepository(
+        ProjectWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
 
-        let candidateKey = baseKey;
-        let suffix = 2;
+      let candidateKey = baseKey;
+      let suffix = 2;
 
-        // ponytail: a per-candidate exists() check races under concurrent
-        // creation, but the DB's unique constraint on `key` is the real
-        // safety net — a collision here just surfaces as a retryable error.
-        while (
-          await projectRepository.exists({ where: { key: candidateKey } })
-        ) {
-          candidateKey = `${baseKey}${suffix}`;
-          suffix += 1;
-        }
+      // ponytail: a per-candidate exists() check races under concurrent
+      // creation, but the DB's unique constraint on `key` is the real
+      // safety net — a collision here just surfaces as a retryable error.
+      while (await projectRepository.exists({ where: { key: candidateKey } })) {
+        candidateKey = `${baseKey}${suffix}`;
+        suffix += 1;
+      }
 
-        return candidateKey;
-      },
-      authContext,
-    );
+      return candidateKey;
+    }, authContext);
   }
 }

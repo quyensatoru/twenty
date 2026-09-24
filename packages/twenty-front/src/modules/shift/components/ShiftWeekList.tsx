@@ -206,9 +206,7 @@ const WeekShiftRow = ({ shift, template, onCancel }: WeekShiftRowProps) => {
         </StyledCodeChip>
       )}
       <Tag color={statusColor}>{statusLabel}</Tag>
-      {showOvertime && (
-        <Tag color="orange">{`×${shift.rateMultiplier}`}</Tag>
-      )}
+      {showOvertime && <Tag color="orange">{`×${shift.rateMultiplier}`}</Tag>}
       <StyledSpacer />
       {isCancellable && (
         <Dropdown

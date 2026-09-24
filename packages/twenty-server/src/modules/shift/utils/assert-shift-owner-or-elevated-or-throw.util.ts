@@ -55,10 +55,10 @@ export const assertShiftOwnerOrElevatedOrThrow = async ({
   assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
   await workspaceOrmManager.executeInWorkspaceContext(async () => {
-    const shiftRepository = workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-      'shift',
-      { shouldBypassPermissionChecks: true },
-    );
+    const shiftRepository =
+      workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+        shouldBypassPermissionChecks: true,
+      });
 
     const shift = await shiftRepository.findOne({
       where: { id: shiftId },

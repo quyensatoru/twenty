@@ -474,7 +474,9 @@ const CommentComposer = ({
         onClick={handleSend}
         disabled={isSending || !hasContent}
         color="accent"
-      >{submitLabel}</Button>
+      >
+        {submitLabel}
+      </Button>
     </StyledComposer>
   );
 };

@@ -51,25 +51,22 @@ export class ShiftCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
       );
     }
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const data = await Promise.all(
-          payload.data.map((record) =>
-            validateAndStampShiftCreate({
-              authContext,
-              data: record,
-              workspaceOrmManager: this.workspaceOrmManager,
-              shiftRateWorkspaceService: this.shiftRateWorkspaceService,
-            }),
-          ),
-        );
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const data = await Promise.all(
+        payload.data.map((record) =>
+          validateAndStampShiftCreate({
+            authContext,
+            data: record,
+            workspaceOrmManager: this.workspaceOrmManager,
+            shiftRateWorkspaceService: this.shiftRateWorkspaceService,
+          }),
+        ),
+      );
 
-        return {
-          ...payload,
-          data,
-        };
-      },
-      authContext,
-    );
+      return {
+        ...payload,
+        data,
+      };
+    }, authContext);
   }
 }

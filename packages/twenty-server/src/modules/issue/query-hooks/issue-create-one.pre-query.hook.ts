@@ -92,30 +92,27 @@ export class IssueCreateOnePreQueryHook implements WorkspacePreQueryHookInstance
     }
 
     const { nextIssueNumber, key } =
-      await this.workspaceOrmManager.executeInWorkspaceContext(
-        async () => {
-          const projectRepository = this.workspaceOrmManager.getRepository(
-            ProjectWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+      await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+        const projectRepository = this.workspaceOrmManager.getRepository(
+          ProjectWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
 
-          // ponytail: atomic UPDATE...RETURNING is enough to prevent races;
-          // a per-project Postgres sequence would only be needed if issue keys must never be reused after a rollback.
-          const result = await projectRepository
-            .createQueryBuilder()
-            .where('id = :projectId', { projectId })
-            .update()
-            .set({ nextIssueNumber: () => '"nextIssueNumber" + 1' })
-            .returning(['nextIssueNumber', 'key'])
-            .execute();
+        // ponytail: atomic UPDATE...RETURNING is enough to prevent races;
+        // a per-project Postgres sequence would only be needed if issue keys must never be reused after a rollback.
+        const result = await projectRepository
+          .createQueryBuilder()
+          .where('id = :projectId', { projectId })
+          .update()
+          .set({ nextIssueNumber: () => '"nextIssueNumber" + 1' })
+          .returning(['nextIssueNumber', 'key'])
+          .execute();
 
-          return result.generatedMaps[0] as {
-            nextIssueNumber: number;
-            key: string;
-          };
-        },
-        authContext,
-      );
+        return result.generatedMaps[0] as {
+          nextIssueNumber: number;
+          key: string;
+        };
+      }, authContext);
 
     payload.data.issueKey = `${key}-${nextIssueNumber}`;
 

@@ -24,7 +24,10 @@ const APP_SCOPE_GRANTED_APP_IDS_PARAMETER = 'appScopeGrantedAppIds';
 // so it only needs the query's own alias and the ability to append a WHERE.
 type AppScopeFilterableQueryBuilder = {
   alias: string;
-  andWhere: (condition: string, parameters?: Record<string, unknown>) => unknown;
+  andWhere: (
+    condition: string,
+    parameters?: Record<string, unknown>,
+  ) => unknown;
 };
 
 type ApplyAppScopeFilterArgs = {
@@ -153,9 +156,7 @@ export const applyAppScopeFilter = ({
   // explicitly with the workspace's schema name. Only needed once there's at
   // least one hop to walk.
   const workspaceSchemaName =
-    hops.length > 0
-      ? getWorkspaceSchemaName(internalContext.workspaceId)
-      : '';
+    hops.length > 0 ? getWorkspaceSchemaName(internalContext.workspaceId) : '';
 
   const predicateSql = buildAppScopePredicateSql({
     mainTableReference,

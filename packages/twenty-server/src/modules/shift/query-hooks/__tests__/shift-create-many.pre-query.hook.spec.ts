@@ -56,10 +56,10 @@ describe('ShiftCreateManyPreQueryHook', () => {
       getRepository: jest
         .fn()
         .mockImplementation((singularName: string) =>
-            singularName === 'shiftTemplate'
-              ? shiftTemplateRepository
-              : shiftRepository,
-          ),
+          singularName === 'shiftTemplate'
+            ? shiftTemplateRepository
+            : shiftRepository,
+        ),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),

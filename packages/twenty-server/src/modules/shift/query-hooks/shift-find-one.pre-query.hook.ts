@@ -41,38 +41,35 @@ export class ShiftFindOnePreQueryHook implements WorkspacePreQueryHookInstance {
 
     // isElevatedActor reads the AsyncLocalStorage workspace context — it must
     // run inside executeInWorkspaceContext.
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        if (isElevatedActor({ authContext, operation: 'write' })) {
-          return payload;
-        }
-
-        // A non-elevated actor with no workspace member (e.g. a non-elevated API
-        // key) owns no shift — deny rather than leak a foreign row.
-        if (!isUserAuthContext(authContext)) {
-          throw new PermissionsException(
-            PermissionsExceptionMessage.PERMISSION_DENIED,
-            PermissionsExceptionCode.PERMISSION_DENIED,
-          );
-        }
-
-        const selfMemberFilter: ObjectRecordFilter = {
-          memberId: { eq: authContext.workspaceMemberId },
-        };
-
-        // AND the id lookup with memberId = self so a foreign record can never
-        // resolve. Mutate in place (see ShiftFindManyPreQueryHook for why the
-        // in-place rewrite is safe under the hook payload deep-merge).
-        const existingFilter = payload.filter;
-
-        payload.filter =
-          existingFilter && Object.keys(existingFilter).length > 0
-            ? { and: [existingFilter, selfMemberFilter] }
-            : selfMemberFilter;
-
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      if (isElevatedActor({ authContext, operation: 'write' })) {
         return payload;
-      },
-      authContext,
-    );
+      }
+
+      // A non-elevated actor with no workspace member (e.g. a non-elevated API
+      // key) owns no shift — deny rather than leak a foreign row.
+      if (!isUserAuthContext(authContext)) {
+        throw new PermissionsException(
+          PermissionsExceptionMessage.PERMISSION_DENIED,
+          PermissionsExceptionCode.PERMISSION_DENIED,
+        );
+      }
+
+      const selfMemberFilter: ObjectRecordFilter = {
+        memberId: { eq: authContext.workspaceMemberId },
+      };
+
+      // AND the id lookup with memberId = self so a foreign record can never
+      // resolve. Mutate in place (see ShiftFindManyPreQueryHook for why the
+      // in-place rewrite is safe under the hook payload deep-merge).
+      const existingFilter = payload.filter;
+
+      payload.filter =
+        existingFilter && Object.keys(existingFilter).length > 0
+          ? { and: [existingFilter, selfMemberFilter] }
+          : selfMemberFilter;
+
+      return payload;
+    }, authContext);
   }
 }

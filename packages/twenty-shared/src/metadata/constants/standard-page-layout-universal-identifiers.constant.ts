@@ -556,182 +556,152 @@ export const STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS = {
       },
     },
   }),
-  projectRecordPage: {
-    universalIdentifier: '1b1204ab-f0ca-41aa-ac9f-2174d85af3ec',
+  projectRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.project,
     tabs: {
       home: {
-        universalIdentifier: 'f6ca20a1-9f20-4dd4-aa7b-4f2c0598eae6',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: 'b187d9cf-2416-4e6f-a43e-0599880c6bde',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  sprintRecordPage: {
-    universalIdentifier: 'd43665dc-d6e6-4521-9f8f-9473b37c5334',
+  }),
+  sprintRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.sprint,
     tabs: {
       home: {
-        universalIdentifier: '448fc205-52a6-4e68-868a-6fb5e672cf66',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '874c7912-618b-412e-a84e-3c0ecba72910',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  epicRecordPage: {
-    universalIdentifier: 'ab505298-a470-46e4-813e-5a552fe26eed',
+  }),
+  epicRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.epic,
     tabs: {
       home: {
-        universalIdentifier: '1384251a-9ce2-4850-9502-f14a6bb5a058',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: 'f953d36c-5086-4d0d-b259-5268800b10d3',
-          },
+          fields: 'Fields',
         },
       },
       timeline: {
-        universalIdentifier: '9ed67505-a5ff-4742-9ff3-e760170c0d86',
+        title: 'Timeline',
         widgets: {
-          timeline: {
-            universalIdentifier: 'd8aa7c29-0d36-4e3e-baf1-9c2643950d0b',
-          },
+          timeline: 'Timeline',
         },
       },
     },
-  },
-  issueRecordPage: {
-    universalIdentifier: '54851c38-c3f6-4853-a40e-18e942e97e55',
+  }),
+  issueRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issue,
     tabs: {
       home: {
-        universalIdentifier: 'c133e103-4229-47f9-b977-993d4e7d8555',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '5d8b1f0f-d3ad-4b66-89b5-b81b7b92608c',
-          },
+          fields: 'Fields',
         },
       },
       timeline: {
-        universalIdentifier: '9dd0bd67-8d35-4e23-b07c-0583e7b0b197',
+        title: 'Timeline',
         widgets: {
-          timeline: {
-            universalIdentifier: '4b77d8d2-6464-45a8-9497-7cdb94ce908d',
-          },
+          timeline: 'Timeline',
         },
       },
     },
-  },
-  issueCommentRecordPage: {
-    universalIdentifier: '57108a33-5331-4a0b-9649-171d0bfd4d40',
+  }),
+  issueCommentRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier:
+      STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.issueComment,
     tabs: {
       home: {
-        universalIdentifier: '8c5e17d3-96b6-4857-84df-fad20de3d4d4',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '083d7abc-b699-4e64-b65f-f595b0f780da',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  worklogRecordPage: {
-    universalIdentifier: '07b7478a-ac07-42f2-b551-31f5f7a84f32',
+  }),
+  worklogRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.worklog,
     tabs: {
       home: {
-        universalIdentifier: 'e59f540d-fc58-4f4b-b47f-b37b31149b51',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '26181cd9-cbeb-4f5e-9ef2-2b8ae51771c5',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  shiftTemplateRecordPage: {
-    universalIdentifier: '93448a17-a03a-4de2-9174-d0f811ee83f7',
+  }),
+  shiftTemplateRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier:
+      STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shiftTemplate,
     tabs: {
       home: {
-        universalIdentifier: 'b2ca63c9-df6f-4744-bd18-7f131a24cd7a',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: 'ad0bdb63-f170-4fdb-885f-a5f317829f68',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  specialDayRecordPage: {
-    universalIdentifier: 'd5ee38ca-a2fe-408e-b71d-6673d48dd74b',
+  }),
+  specialDayRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.specialDay,
     tabs: {
       home: {
-        universalIdentifier: '71698c40-9e46-4bc6-a782-1b9b6dee3f15',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '7e7a231c-74ca-46d4-9332-fbad34d229ef',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  shiftRecordPage: {
-    universalIdentifier: '7bcd575f-feb9-43a3-b492-33333a734cf5',
+  }),
+  shiftRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.shift,
     tabs: {
       home: {
-        universalIdentifier: '7fccd49a-53e4-4cf8-936e-0d11bdd78220',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: '1af603c5-71a4-42bc-b057-0e94309cab48',
-          },
+          fields: 'Fields',
         },
       },
     },
-  },
-  merchantRecordPage: {
-    universalIdentifier: '41a5a300-b048-4aba-8709-b45cc2c394d7',
+  }),
+  merchantRecordPage: buildStandardObjectRecordPageLayout({
+    objectUniversalIdentifier: STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.merchant,
     tabs: {
       home: {
-        universalIdentifier: 'eb3851ec-a8ac-497f-b9d1-fb9ffbed0919',
+        title: 'Home',
         widgets: {
-          fields: {
-            universalIdentifier: 'f846ce25-18c2-4e7d-94ec-087ddde09396',
-          },
+          fields: 'Fields',
         },
       },
       timeline: {
-        universalIdentifier: 'd78224b7-c09c-49b2-b9d1-4eaf6d62e978',
+        title: 'Timeline',
         widgets: {
-          timeline: {
-            universalIdentifier: '0dcbd900-cb34-4bba-8597-a511f2f788b0',
-          },
+          timeline: 'Timeline',
         },
       },
       tasks: {
-        universalIdentifier: 'ae2a3830-0503-4573-b0e7-c8a58cde7334',
+        title: 'Tasks',
         widgets: {
-          tasks: {
-            universalIdentifier: 'bca6819d-53d3-4d6c-afa3-e4edc9205fee',
-          },
+          tasks: 'Tasks',
         },
       },
       notes: {
-        universalIdentifier: 'f4e56c49-a12b-4b3a-8918-031b162c115f',
+        title: 'Notes',
         widgets: {
-          notes: {
-            universalIdentifier: '9c324267-9e20-4b98-91d3-a5dba740ad27',
-          },
+          notes: 'Notes',
         },
       },
       files: {
-        universalIdentifier: 'c4835f3b-128c-4f16-86d8-c50db38d494d',
+        title: 'Files',
         widgets: {
-          files: {
-            universalIdentifier: 'a22110f2-1cfc-4987-b4db-d15af445673e',
-          },
+          files: 'Files',
         },
       },
     },
-  },
+  }),
 } as const;

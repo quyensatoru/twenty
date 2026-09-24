@@ -167,7 +167,8 @@ export const resolveAppScopeHops = ({
       sourceFlatFieldMetadata: field,
       // The fields this reads (objectMetadataId, relationTargetFieldMetadataId,
       // type, morphId) are all present on the leaner OrmFlatFieldMetadata.
-      flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
+      flatFieldMetadataMaps:
+        flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
       flatObjectMetadataMaps,
     });
 
@@ -224,7 +225,8 @@ export const findAppJoinColumnName = ({
 
     const relation = resolveRelationFromFlatFieldMetadata({
       sourceFlatFieldMetadata: field,
-      flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
+      flatFieldMetadataMaps:
+        flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
       flatObjectMetadataMaps,
     });
 
@@ -270,7 +272,8 @@ const buildManyToOneEdgesByObjectId = ({
 
       const relation = resolveRelationFromFlatFieldMetadata({
         sourceFlatFieldMetadata: field,
-        flatFieldMetadataMaps: flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
+        flatFieldMetadataMaps:
+          flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
         flatObjectMetadataMaps,
       });
 

@@ -1,39 +1,36 @@
 import { Command } from 'nest-commander';
-import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 import { isDefined } from 'twenty-shared/utils';
 
 import { ProvisionedWorkspaceCommandRunner } from 'src/database/commands/command-runners/provisioned-workspace.command-runner';
 import { WorkspaceIteratorService } from 'src/database/commands/command-runners/workspace-iterator.service';
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { computeTwentyStandardApplicationAllFlatEntityMapsPre231 } from 'src/database/commands/upgrade-version-command/2-10/utils/compute-twenty-standard-application-all-flat-entity-maps-pre-2-31.util';
-import { toPre231RecordPageUniversalIdentifier } from 'src/database/commands/upgrade-version-command/2-10/utils/remap-record-page-universal-identifiers-to-pre-2-31.util';
+import { FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIER_BY_DERIVED } from 'src/database/commands/upgrade-version-command/2-31/constants/fork-pre-2-31-record-page-universal-identifiers.constant';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
 import { findFlatEntityByUniversalIdentifier } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-universal-identifier.util';
-import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { type FlatPageLayoutWidget } from 'src/engine/metadata-modules/flat-page-layout-widget/types/flat-page-layout-widget.type';
 import { isFlatPageLayoutWidgetConfigurationOfType } from 'src/engine/metadata-modules/flat-page-layout-widget/utils/is-flat-page-layout-widget-configuration-of-type.util';
 import { WidgetConfigurationType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-configuration-type.type';
-import { type FlatView } from 'src/engine/metadata-modules/flat-view/types/flat-view.type';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
-const TASK_MANAGER_RECORD_PAGE_FIELDS_VIEW_UNIVERSAL_IDENTIFIERS = [
-  STANDARD_OBJECTS.issue.views.issueRecordPageFields.universalIdentifier,
-  STANDARD_OBJECTS.project.views.projectRecordPageFields.universalIdentifier,
-  STANDARD_OBJECTS.sprint.views.sprintRecordPageFields.universalIdentifier,
-  STANDARD_OBJECTS.issueComment.views.issueCommentRecordPageFields
-    .universalIdentifier,
-  STANDARD_OBJECTS.worklog.views.worklogRecordPageFields.universalIdentifier,
-].map(toPre231RecordPageUniversalIdentifier);
+const FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIERS = new Set(
+  Object.values(FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIER_BY_DERIVED),
+);
 
-@RegisteredWorkspaceCommand('2.23.0', 1784650048100)
+// Runs right before upgrade:2-31:reconcile-standard-record-page, which walks a
+// record-page stack through its FIELDS widget's viewId: a fork widget that was
+// created with a null viewId (epic, shift, shiftTemplate, specialDay were
+// missing from the standard fields-view mapping) would be skipped there and
+// then duplicated by the backfill.
+@RegisteredWorkspaceCommand('2.31.0', 1786437480900)
 @Command({
-  name: 'upgrade:2-23:backfill-task-manager-record-page-fields-views',
+  name: 'upgrade:2-31:link-fork-record-page-fields-widget-views',
   description:
-    'Create the missing Issue/Project/Sprint/IssueComment/Worklog Fields-widget views and rewire their existing Fields widgets to use them',
+    'Point the Fields widgets of the fork record pages (task manager, merchant, shift) that have no view at their standard Fields-widget view, so the 2-31 record-page reconcile re-owns their stack instead of the backfill duplicating it',
 })
-export class BackfillTaskManagerRecordPageFieldsViewsCommand extends ProvisionedWorkspaceCommandRunner {
+export class LinkForkRecordPageFieldsWidgetViewsCommand extends ProvisionedWorkspaceCommandRunner {
   constructor(
     protected readonly workspaceIteratorService: WorkspaceIteratorService,
     private readonly applicationService: ApplicationService,
@@ -49,27 +46,11 @@ export class BackfillTaskManagerRecordPageFieldsViewsCommand extends Provisioned
   }: RunOnWorkspaceArgs): Promise<void> {
     const isDryRun = options.dryRun ?? false;
 
-    const { flatViewMaps, flatPageLayoutWidgetMaps, flatObjectMetadataMaps } =
+    const { flatPageLayoutWidgetMaps, flatViewMaps } =
       await this.workspaceCacheService.getOrRecompute(workspaceId, [
-        'flatViewMaps',
         'flatPageLayoutWidgetMaps',
-        'flatObjectMetadataMaps',
+        'flatViewMaps',
       ]);
-
-    const hasIssueObject = isDefined(
-      findFlatEntityByUniversalIdentifier<FlatObjectMetadata>({
-        flatEntityMaps: flatObjectMetadataMaps,
-        universalIdentifier: STANDARD_OBJECTS.issue.universalIdentifier,
-      }),
-    );
-
-    if (!hasIssueObject) {
-      this.logger.log(
-        `Task manager objects do not exist for workspace ${workspaceId}, skipping`,
-      );
-
-      return;
-    }
 
     const { twentyStandardFlatApplication } =
       await this.applicationService.findWorkspaceTwentyStandardAndCustomApplicationOrThrow(
@@ -83,36 +64,16 @@ export class BackfillTaskManagerRecordPageFieldsViewsCommand extends Provisioned
         twentyStandardApplicationId: twentyStandardFlatApplication.id,
       });
 
-    const viewsToCreate =
-      TASK_MANAGER_RECORD_PAGE_FIELDS_VIEW_UNIVERSAL_IDENTIFIERS.flatMap(
-        (universalIdentifier) => {
-          if (
-            isDefined(flatViewMaps.byUniversalIdentifier[universalIdentifier])
-          ) {
-            return [];
-          }
-
-          const standardView = findFlatEntityByUniversalIdentifier<FlatView>({
-            flatEntityMaps: standardAllFlatEntityMaps.flatViewMaps,
-            universalIdentifier,
-          });
-
-          if (!isDefined(standardView)) {
-            throw new Error(
-              `Could not find standard view ${universalIdentifier}`,
-            );
-          }
-
-          return [standardView];
-        },
-      );
-
     const widgetsToUpdate = Object.values(
       flatPageLayoutWidgetMaps.byUniversalIdentifier,
     )
       .filter(isDefined)
       .flatMap((widget) => {
         if (
+          !FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIERS.has(
+            widget.universalIdentifier,
+          ) ||
+          isDefined(widget.deletedAt) ||
           !isFlatPageLayoutWidgetConfigurationOfType(
             widget,
             WidgetConfigurationType.FIELDS,
@@ -139,25 +100,41 @@ export class BackfillTaskManagerRecordPageFieldsViewsCommand extends Provisioned
           return [];
         }
 
+        const standardViewUniversalIdentifier = Object.values(
+          standardAllFlatEntityMaps.flatViewMaps.byUniversalIdentifier,
+        ).find((flatView) => flatView?.id === standardWidget.configuration.viewId)
+          ?.universalIdentifier;
+
+        const existingView = isDefined(standardViewUniversalIdentifier)
+          ? flatViewMaps.byUniversalIdentifier[standardViewUniversalIdentifier]
+          : undefined;
+
+        if (!isDefined(existingView) || isDefined(existingView.deletedAt)) {
+          return [];
+        }
+
         return [
           {
             ...widget,
-            configuration: standardWidget.configuration,
+            configuration: {
+              ...widget.configuration,
+              viewId: existingView.id,
+            },
             universalConfiguration: standardWidget.universalConfiguration,
           },
         ];
       });
 
-    if (viewsToCreate.length === 0 && widgetsToUpdate.length === 0) {
+    if (widgetsToUpdate.length === 0) {
       this.logger.log(
-        `Task manager record page fields views already backfilled for workspace ${workspaceId}, skipping`,
+        `No fork Fields widget to link for workspace ${workspaceId}, skipping`,
       );
 
       return;
     }
 
     this.logger.log(
-      `${isDryRun ? '[DRY RUN] ' : ''}Creating ${viewsToCreate.length} view(s) and updating ${widgetsToUpdate.length} Fields widget(s) for workspace ${workspaceId}`,
+      `${isDryRun ? '[DRY RUN] ' : ''}Linking ${widgetsToUpdate.length} fork Fields widget(s) to their view for workspace ${workspaceId}`,
     );
 
     if (isDryRun) {
@@ -172,11 +149,6 @@ export class BackfillTaskManagerRecordPageFieldsViewsCommand extends Provisioned
           applicationUniversalIdentifier:
             twentyStandardFlatApplication.universalIdentifier,
           allFlatEntityOperationByMetadataName: {
-            view: {
-              flatEntityToCreate: viewsToCreate,
-              flatEntityToDelete: [],
-              flatEntityToUpdate: [],
-            },
             pageLayoutWidget: {
               flatEntityToCreate: [],
               flatEntityToDelete: [],
@@ -188,16 +160,16 @@ export class BackfillTaskManagerRecordPageFieldsViewsCommand extends Provisioned
 
     if (result.status === 'fail') {
       this.logger.error(
-        `Failed to backfill task manager record page fields views:\n${JSON.stringify(result, null, 2)}`,
+        `Failed to link fork Fields widgets for workspace ${workspaceId}:\n${JSON.stringify(result, null, 2)}`,
       );
 
       throw new Error(
-        `Failed to backfill task manager record page fields views for workspace ${workspaceId}`,
+        `Failed to link fork Fields widgets for workspace ${workspaceId}`,
       );
     }
 
     this.logger.log(
-      `Backfilled task manager record page fields views for workspace ${workspaceId}`,
+      `Linked ${widgetsToUpdate.length} fork Fields widget(s) for workspace ${workspaceId}`,
     );
   }
 }

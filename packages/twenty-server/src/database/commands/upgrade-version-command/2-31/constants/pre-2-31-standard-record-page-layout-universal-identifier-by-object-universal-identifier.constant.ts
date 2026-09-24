@@ -1,5 +1,7 @@
 import { STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS } from 'twenty-shared/metadata';
 
+import { FORK_PRE_2_31_RECORD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIER_BY_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/database/commands/upgrade-version-command/2-31/constants/fork-pre-2-31-record-page-universal-identifiers.constant';
+
 // The pre-2.31 pinned universal identifiers of the 20 curated standard
 // record-page layouts, keyed by their object. The 2-31 record-page re-own
 // derives layout identifiers from the object, so these literals were removed
@@ -50,4 +52,5 @@ export const PRE_2_31_STANDARD_RECORD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIER_BY_OBJECT
     'c1f0a2b3-4d5e-4f60-8a71-9b2c3d4e5f60',
   [STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS.messageCampaign]:
     '8704b091-94bd-4f8f-82b1-e2f3eab92217',
+  ...FORK_PRE_2_31_RECORD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIER_BY_OBJECT_UNIVERSAL_IDENTIFIER,
 };

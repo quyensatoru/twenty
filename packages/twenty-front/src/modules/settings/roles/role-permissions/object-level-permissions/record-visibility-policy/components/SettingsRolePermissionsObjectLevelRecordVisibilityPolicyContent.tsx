@@ -127,9 +127,7 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
       setSettingsDraftRole((previousRole) => {
         const otherObjectPolicies = (
           previousRole.recordVisibilityPolicies ?? []
-        ).filter(
-          (policy) => policy.objectMetadataId !== objectMetadataItem.id,
-        );
+        ).filter((policy) => policy.objectMetadataId !== objectMetadataItem.id);
 
         if (!hasAnyCondition) {
           return {
@@ -225,9 +223,7 @@ export const SettingsRolePermissionsObjectLevelRecordVisibilityPolicyContent =
             key={condition.id}
             condition={condition}
             fields={staticFields}
-            onChange={(updated) =>
-              handleChangeCondition(condition.id, updated)
-            }
+            onChange={(updated) => handleChangeCondition(condition.id, updated)}
             onRemove={() => handleRemoveCondition(condition.id)}
           />
         ))}

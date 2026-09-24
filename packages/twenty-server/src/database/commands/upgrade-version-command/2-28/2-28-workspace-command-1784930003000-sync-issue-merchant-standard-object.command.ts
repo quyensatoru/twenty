@@ -8,24 +8,24 @@ import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/w
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
 import { findFlatEntityByUniversalIdentifier } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-universal-identifier.util';
-import { type SyncableFlatEntity } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-from.type';
-import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type FlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metadata/types/flat-index-metadata.type';
-import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
-import { computeTwentyStandardApplicationAllFlatEntityMaps } from 'src/engine/workspace-manager/twenty-standard-application/utils/twenty-standard-application-all-flat-entity-maps.constant';
+import { computeTwentyStandardApplicationAllFlatEntityMapsPre231 } from 'src/database/commands/upgrade-version-command/2-10/utils/compute-twenty-standard-application-all-flat-entity-maps-pre-2-31.util';
+import { buildForkStandardSyncOperations } from 'src/database/commands/upgrade-version-command/utils/build-fork-standard-sync-operations.util';
+import { getStandardObjectSystemFieldUniversalIdentifiers } from 'src/database/commands/upgrade-version-command/utils/get-standard-object-system-field-universal-identifiers.util';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
 const ISSUE_MERCHANT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS = [
   STANDARD_OBJECTS.issueMerchant.universalIdentifier,
 ];
 
-// System fields (id/createdAt/updatedAt/deletedAt/position/createdBy/updatedBy/
-// searchVector) are deliberately excluded — the side-effect engine injects
-// them for a newly created object. Both sides of the many-to-many pair are
-// listed explicitly since the engine does not auto-generate the reverse side.
+// Applied through the legacy path, which injects nothing: the system fields
+// and both sides of the many-to-many pair are listed explicitly.
 const ISSUE_MERCHANT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS = [
+  ...getStandardObjectSystemFieldUniversalIdentifiers(
+    STANDARD_OBJECTS.issueMerchant.fields,
+  ),
   STANDARD_OBJECTS.issueMerchant.fields.issue.universalIdentifier,
   STANDARD_OBJECTS.issueMerchant.fields.merchant.universalIdentifier,
   STANDARD_OBJECTS.issue.fields.merchants.universalIdentifier,
@@ -54,34 +54,6 @@ const OLD_MERCHANT_ISSUES_FIELD_UNIVERSAL_IDENTIFIER =
   '19dfe96d-49c9-477d-891b-568fdc4d2cde';
 const OLD_ISSUE_MERCHANT_ID_INDEX_UNIVERSAL_IDENTIFIER =
   '978c4541-360b-4c5f-a6d9-4572f7cdb741';
-
-const getMissingStandardFlatEntitiesOrThrow = <T extends SyncableFlatEntity>({
-  standardFlatEntityMaps,
-  existingFlatEntityMaps,
-  universalIdentifiers,
-}: {
-  standardFlatEntityMaps: FlatEntityMaps<T>;
-  existingFlatEntityMaps: FlatEntityMaps<T>;
-  universalIdentifiers: string[];
-}): T[] =>
-  universalIdentifiers.flatMap((universalIdentifier) => {
-    if (
-      isDefined(
-        existingFlatEntityMaps.byUniversalIdentifier[universalIdentifier],
-      )
-    ) {
-      return [];
-    }
-
-    const standardEntity =
-      standardFlatEntityMaps.byUniversalIdentifier[universalIdentifier];
-
-    if (!isDefined(standardEntity)) {
-      throw new Error(`Could not find standard entity ${universalIdentifier}`);
-    }
-
-    return [standardEntity];
-  });
 
 @RegisteredWorkspaceCommand('2.28.0', 1784930003000)
 @Command({
@@ -131,11 +103,9 @@ export class SyncIssueMerchantStandardObjectCommand extends ProvisionedWorkspace
         { workspaceId },
       );
 
-    const now = new Date().toISOString();
-
-    const { allFlatEntityMaps: standardAllFlatEntityMaps } =
-      computeTwentyStandardApplicationAllFlatEntityMaps({
-        now,
+    const standardAllFlatEntityMaps =
+      computeTwentyStandardApplicationAllFlatEntityMapsPre231({
+        now: new Date().toISOString(),
         workspaceId,
         twentyStandardApplicationId: twentyStandardFlatApplication.id,
       });
@@ -163,52 +133,42 @@ export class SyncIssueMerchantStandardObjectCommand extends ProvisionedWorkspace
       )
       .filter(isDefined);
 
-    const allFlatEntityOperationByMetadataName = {
-      objectMetadata: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatObjectMetadata>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatObjectMetadataMaps,
-            existingFlatEntityMaps: flatObjectMetadataMaps,
-            universalIdentifiers:
-              ISSUE_MERCHANT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
+    const {
+      allFlatEntityOperationByMetadataName: creationOperations,
+      totalOperationCount: creationOperationCount,
+    } = buildForkStandardSyncOperations({
+      standardAllFlatEntityMaps,
+      existingAllFlatEntityMaps: {
+        flatObjectMetadataMaps,
+        flatFieldMetadataMaps,
+        flatIndexMaps,
       },
+      universalIdentifiersByMetadataName: {
+        objectMetadata: ISSUE_MERCHANT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS,
+        fieldMetadata: ISSUE_MERCHANT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
+        index: ISSUE_MERCHANT_INDEX_UNIVERSAL_IDENTIFIERS,
+      },
+    });
+
+    const allFlatEntityOperationByMetadataName = {
+      ...creationOperations,
       fieldMetadata: {
         flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatFieldMetadata>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatFieldMetadataMaps,
-            existingFlatEntityMaps: flatFieldMetadataMaps,
-            universalIdentifiers:
-              ISSUE_MERCHANT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
-          }),
+          creationOperations.fieldMetadata?.flatEntityToCreate ?? [],
         flatEntityToDelete: oldFieldsToDelete,
         flatEntityToUpdate: [],
       },
       index: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatIndexMetadata>({
-            standardFlatEntityMaps: standardAllFlatEntityMaps.flatIndexMaps,
-            existingFlatEntityMaps: flatIndexMaps,
-            universalIdentifiers: ISSUE_MERCHANT_INDEX_UNIVERSAL_IDENTIFIERS,
-          }),
+        flatEntityToCreate: creationOperations.index?.flatEntityToCreate ?? [],
         flatEntityToDelete: oldIndexesToDelete,
         flatEntityToUpdate: [],
       },
     };
 
-    const totalOperationCount = Object.values(
-      allFlatEntityOperationByMetadataName,
-    ).reduce(
-      (total, operations) =>
-        total +
-        operations.flatEntityToCreate.length +
-        operations.flatEntityToDelete.length,
-      0,
-    );
+    const totalOperationCount =
+      creationOperationCount +
+      oldFieldsToDelete.length +
+      oldIndexesToDelete.length;
 
     if (totalOperationCount === 0) {
       this.logger.log(
@@ -227,8 +187,9 @@ export class SyncIssueMerchantStandardObjectCommand extends ProvisionedWorkspace
     }
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
         {
+          isSystemBuild: true,
           workspaceId,
           applicationUniversalIdentifier:
             twentyStandardFlatApplication.universalIdentifier,

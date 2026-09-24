@@ -21,33 +21,30 @@ export class ShiftRateWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const specialDayRepository =
-          this.workspaceOrmManager.getRepository<SpecialDayWorkspaceEntity>(
-            'specialDay',
-            { shouldBypassPermissionChecks: true },
-          );
-
-        const specialDays = await specialDayRepository.find({
-          where: { isActive: true },
-        });
-
-        const [, monthPart, dayPart] = date.split('-').map(Number);
-
-        const matchingSpecialDays = specialDays.filter((specialDay) =>
-          specialDay.kind === 'SPECIFIC'
-            ? specialDay.date === date
-            : specialDay.month === monthPart && specialDay.day === dayPart,
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const specialDayRepository =
+        this.workspaceOrmManager.getRepository<SpecialDayWorkspaceEntity>(
+          'specialDay',
+          { shouldBypassPermissionChecks: true },
         );
 
-        return matchingSpecialDays.reduce(
-          (highestMultiplier, specialDay) =>
-            Math.max(highestMultiplier, specialDay.multiplier),
-          1,
-        );
-      },
-      authContext,
-    );
+      const specialDays = await specialDayRepository.find({
+        where: { isActive: true },
+      });
+
+      const [, monthPart, dayPart] = date.split('-').map(Number);
+
+      const matchingSpecialDays = specialDays.filter((specialDay) =>
+        specialDay.kind === 'SPECIFIC'
+          ? specialDay.date === date
+          : specialDay.month === monthPart && specialDay.day === dayPart,
+      );
+
+      return matchingSpecialDays.reduce(
+        (highestMultiplier, specialDay) =>
+          Math.max(highestMultiplier, specialDay.multiplier),
+        1,
+      );
+    }, authContext);
   }
 }

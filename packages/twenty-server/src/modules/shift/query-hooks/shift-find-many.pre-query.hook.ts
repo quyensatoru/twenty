@@ -44,40 +44,37 @@ export class ShiftFindManyPreQueryHook implements WorkspacePreQueryHookInstance 
 
     // isElevatedActor reads the AsyncLocalStorage workspace context — it must
     // run inside executeInWorkspaceContext.
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        if (isElevatedActor({ authContext, operation: 'write' })) {
-          return payload;
-        }
-
-        // A non-elevated actor with no workspace member (e.g. a non-elevated API
-        // key) owns no shift — deny rather than leak the whole table.
-        if (!isUserAuthContext(authContext)) {
-          throw new PermissionsException(
-            PermissionsExceptionMessage.PERMISSION_DENIED,
-            PermissionsExceptionCode.PERMISSION_DENIED,
-          );
-        }
-
-        const selfMemberFilter: ObjectRecordFilter = {
-          memberId: { eq: authContext.workspaceMemberId },
-        };
-
-        // AND the caller's own filter with memberId = self. A conflicting
-        // memberId filter for someone else becomes (other AND self) => empty.
-        // Mutate in place and return the same reference: executePreQueryHooks
-        // deep-merges the returned payload into itself, so an in-place rewrite is
-        // idempotent and avoids leaving a stray top-level memberId behind.
-        const existingFilter = payload.filter;
-
-        payload.filter =
-          existingFilter && Object.keys(existingFilter).length > 0
-            ? { and: [existingFilter, selfMemberFilter] }
-            : selfMemberFilter;
-
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      if (isElevatedActor({ authContext, operation: 'write' })) {
         return payload;
-      },
-      authContext,
-    );
+      }
+
+      // A non-elevated actor with no workspace member (e.g. a non-elevated API
+      // key) owns no shift — deny rather than leak the whole table.
+      if (!isUserAuthContext(authContext)) {
+        throw new PermissionsException(
+          PermissionsExceptionMessage.PERMISSION_DENIED,
+          PermissionsExceptionCode.PERMISSION_DENIED,
+        );
+      }
+
+      const selfMemberFilter: ObjectRecordFilter = {
+        memberId: { eq: authContext.workspaceMemberId },
+      };
+
+      // AND the caller's own filter with memberId = self. A conflicting
+      // memberId filter for someone else becomes (other AND self) => empty.
+      // Mutate in place and return the same reference: executePreQueryHooks
+      // deep-merges the returned payload into itself, so an in-place rewrite is
+      // idempotent and avoids leaving a stray top-level memberId behind.
+      const existingFilter = payload.filter;
+
+      payload.filter =
+        existingFilter && Object.keys(existingFilter).length > 0
+          ? { and: [existingFilter, selfMemberFilter] }
+          : selfMemberFilter;
+
+      return payload;
+    }, authContext);
   }
 }

@@ -17,57 +17,54 @@ export class SprintCompleteWorkspaceService {
     sprintId: string,
     targetSprintId: string | null,
   ): Promise<number> {
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const sprintRepository = this.workspaceOrmManager.getRepository(
-          SprintWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
-        const issueRepository = this.workspaceOrmManager.getRepository(
-          IssueWorkspaceEntity,
-          { shouldBypassPermissionChecks: true },
-        );
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const sprintRepository = this.workspaceOrmManager.getRepository(
+        SprintWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
+      const issueRepository = this.workspaceOrmManager.getRepository(
+        IssueWorkspaceEntity,
+        { shouldBypassPermissionChecks: true },
+      );
 
-        const sprint = await sprintRepository.findOne({
-          where: { id: sprintId },
+      const sprint = await sprintRepository.findOne({
+        where: { id: sprintId },
+      });
+
+      if (!isDefined(sprint)) {
+        throw new UserInputError(`Sprint ${sprintId} not found`);
+      }
+
+      if (isDefined(targetSprintId)) {
+        const targetSprint = await sprintRepository.findOne({
+          where: { id: targetSprintId },
         });
 
-        if (!isDefined(sprint)) {
-          throw new UserInputError(`Sprint ${sprintId} not found`);
+        if (
+          !isDefined(targetSprint) ||
+          targetSprint.projectId !== sprint.projectId
+        ) {
+          throw new UserInputError(
+            'Target sprint must belong to the same project',
+          );
         }
+      }
 
-        if (isDefined(targetSprintId)) {
-          const targetSprint = await sprintRepository.findOne({
-            where: { id: targetSprintId },
-          });
+      const { generatedMaps } = await issueRepository
+        .createQueryBuilder()
+        .where('"sprintId" = :sprintId', { sprintId })
+        .andWhere('"status" != :doneStatus', { doneStatus: 'DONE' })
+        .update()
+        .set({ sprintId: targetSprintId })
+        .returning(['id'])
+        .execute();
 
-          if (
-            !isDefined(targetSprint) ||
-            targetSprint.projectId !== sprint.projectId
-          ) {
-            throw new UserInputError(
-              'Target sprint must belong to the same project',
-            );
-          }
-        }
+      await sprintRepository.update(
+        { id: sprintId },
+        { state: 'CLOSED', completeDate: new Date().toISOString() },
+      );
 
-        const { generatedMaps } = await issueRepository
-          .createQueryBuilder()
-          .where('"sprintId" = :sprintId', { sprintId })
-          .andWhere('"status" != :doneStatus', { doneStatus: 'DONE' })
-          .update()
-          .set({ sprintId: targetSprintId })
-          .returning(['id'])
-          .execute();
-
-        await sprintRepository.update(
-          { id: sprintId },
-          { state: 'CLOSED', completeDate: new Date().toISOString() },
-        );
-
-        return generatedMaps.length;
-      },
-      authContext,
-    );
+      return generatedMaps.length;
+    }, authContext);
   }
 }

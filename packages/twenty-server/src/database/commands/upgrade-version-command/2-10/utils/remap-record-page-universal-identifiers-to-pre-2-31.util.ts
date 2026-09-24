@@ -3,6 +3,8 @@ import {
   STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
 } from 'twenty-shared/metadata';
 
+import { FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIER_BY_DERIVED } from 'src/database/commands/upgrade-version-command/2-31/constants/fork-pre-2-31-record-page-universal-identifiers.constant';
+
 // The 2-31 record-page reconcile re-owns every standard record-page view,
 // view field, view field group, page layout, tab and widget onto derived
 // universal identifiers, and the shared constants now resolve to that derived
@@ -135,6 +137,7 @@ export const PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIER_BY_DERIVED: Record<
     '5f21c19d-6c3e-4b8a-9d47-1e8f02a63b71',
   [MESSAGE_CAMPAIGN_RECORD_PAGE_LAYOUT.tabs.composer.widgets.messageCampaign
     .universalIdentifier]: '9c74d8e2-0b5f-4a19-8630-57d2ba14ce92',
+  ...FORK_PRE_2_31_RECORD_PAGE_UNIVERSAL_IDENTIFIER_BY_DERIVED,
 };
 
 export const toPre231RecordPageUniversalIdentifier = (

@@ -76,36 +76,33 @@ export class ProjectPostQueryHookService {
     const workspaceId = workspace.id;
 
     const issueStatuses =
-      await this.workspaceOrmManager.executeInWorkspaceContext(
-        async () => {
-          const issueStatusRepository =
-            this.workspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
-              'issueStatus',
-              { shouldBypassPermissionChecks: true },
-            );
-
-          const existingIssueStatuses = await issueStatusRepository.find({
-            where: { projectId: project.id },
-          });
-
-          if (existingIssueStatuses.length > 0) {
-            return existingIssueStatuses;
-          }
-
-          return issueStatusRepository.save(
-            DEFAULT_ISSUE_STATUSES.map((status, index) => ({
-              name: status.name,
-              color: status.color,
-              category: status.category,
-              position: index,
-              projectId: project.id,
-              createdBy: SYSTEM_ACTOR,
-              updatedBy: SYSTEM_ACTOR,
-            })),
+      await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+        const issueStatusRepository =
+          this.workspaceOrmManager.getRepository<IssueStatusWorkspaceEntity>(
+            'issueStatus',
+            { shouldBypassPermissionChecks: true },
           );
-        },
-        authContext,
-      );
+
+        const existingIssueStatuses = await issueStatusRepository.find({
+          where: { projectId: project.id },
+        });
+
+        if (existingIssueStatuses.length > 0) {
+          return existingIssueStatuses;
+        }
+
+        return issueStatusRepository.save(
+          DEFAULT_ISSUE_STATUSES.map((status, index) => ({
+            name: status.name,
+            color: status.color,
+            category: status.category,
+            position: index,
+            projectId: project.id,
+            createdBy: SYSTEM_ACTOR,
+            updatedBy: SYSTEM_ACTOR,
+          })),
+        );
+      }, authContext);
 
     const existingKanbanView = await this.findProjectKanbanView(workspaceId);
 
@@ -292,16 +289,20 @@ export class ProjectPostQueryHookService {
       return null;
     }
 
-    const issueViews = await this.viewService.findByObjectMetadataIdWithRelations(
-      workspaceId,
-      issueObjectMetadata.id,
-      undefined,
-      [ViewType.KANBAN],
-    );
+    const issueViews =
+      await this.viewService.findByObjectMetadataIdWithRelations(
+        workspaceId,
+        issueObjectMetadata.id,
+        undefined,
+        [ViewType.KANBAN],
+      );
 
     const byProjectId: Record<
       string,
-      { id: string; viewGroups: { id: string; fieldValue: string; position: number }[] }
+      {
+        id: string;
+        viewGroups: { id: string; fieldValue: string; position: number }[];
+      }
     > = {};
 
     for (const view of issueViews) {
@@ -331,7 +332,11 @@ export class ProjectPostQueryHookService {
   }
 
   private parseSelectedRecordIds(value: unknown): string[] {
-    if (isDefined(value) && typeof value === 'object' && 'selectedRecordIds' in value) {
+    if (
+      isDefined(value) &&
+      typeof value === 'object' &&
+      'selectedRecordIds' in value
+    ) {
       const { selectedRecordIds } = value as { selectedRecordIds?: unknown };
 
       if (Array.isArray(selectedRecordIds)) {

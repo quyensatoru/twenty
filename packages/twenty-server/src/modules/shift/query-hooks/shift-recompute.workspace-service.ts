@@ -32,10 +32,10 @@ export class ShiftRecomputeWorkspaceService {
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
     await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
-      const shiftRepository = this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-        'shift',
-        { shouldBypassPermissionChecks: true },
-      );
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
+        });
 
       const shift = await shiftRepository.findOne({ where: { id: shiftId } });
 

@@ -46,87 +46,83 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const shiftRepository =
-          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            'shift',
-            { shouldBypassPermissionChecks: true },
-          );
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
+        });
 
-        const shift = await shiftRepository.findOne({ where: { id: shiftId } });
+      const shift = await shiftRepository.findOne({ where: { id: shiftId } });
 
-        if (!isDefined(shift)) {
-          throw new UserInputError('Shift not found');
-        }
+      if (!isDefined(shift)) {
+        throw new UserInputError('Shift not found');
+      }
 
-        if (shift.status !== 'UPCOMING') {
-          throw new UserInputError('Shift is not open for check-in');
-        }
+      if (shift.status !== 'UPCOMING') {
+        throw new UserInputError('Shift is not open for check-in');
+      }
 
-        if (isDefined(shift.checkInAt)) {
-          throw new UserInputError('Already checked in');
-        }
+      if (isDefined(shift.checkInAt)) {
+        throw new UserInputError('Already checked in');
+      }
 
-        const template = await this.loadTemplate(shift.shiftTemplateId);
-        const earlyCheckInMinutes = template?.earlyCheckInMinutes ?? null;
+      const template = await this.loadTemplate(shift.shiftTemplateId);
+      const earlyCheckInMinutes = template?.earlyCheckInMinutes ?? null;
 
-        // Early-window guard is a no-op unless the padding is configured (null =
-        // off) and the shift is today with a scheduled start.
-        if (
-          earlyCheckInMinutes !== null &&
-          isDefined(shift.startTime) &&
-          shift.date === getTodayIct()
-        ) {
-          const opensAt = parseHHmm(shift.startTime) - earlyCheckInMinutes;
+      // Early-window guard is a no-op unless the padding is configured (null =
+      // off) and the shift is today with a scheduled start.
+      if (
+        earlyCheckInMinutes !== null &&
+        isDefined(shift.startTime) &&
+        shift.date === getTodayIct()
+      ) {
+        const opensAt = parseHHmm(shift.startTime) - earlyCheckInMinutes;
 
-          if (getIctMinutesOfDay(new Date()) < opensAt) {
-            throw new UserInputError(
-              `Too early to check in — opens ${Math.floor(opensAt / 60)}:${String(
-                opensAt % 60,
-              ).padStart(2, '0')} ICT`,
-            );
-          }
-        }
-
-        // Upper-bound guard (independent of the early padding): once the
-        // scheduled window has fully elapsed the shift is missed, not checkable.
-        // Without this a shift whose time has long passed still accepted a
-        // check-in and flipped to IN_PROGRESS.
-        if (
-          isDefined(shift.startTime) &&
-          isDefined(shift.endTime) &&
-          Date.now() >
-            getShiftEndUtcMillis(shift.date, shift.startTime, shift.endTime)
-        ) {
+        if (getIctMinutesOfDay(new Date()) < opensAt) {
           throw new UserInputError(
-            'Too late to check in — the shift window has ended',
+            `Too early to check in — opens ${Math.floor(opensAt / 60)}:${String(
+              opensAt % 60,
+            ).padStart(2, '0')} ICT`,
           );
         }
+      }
 
-        const now = new Date();
-        // BR-9.1: NO grace — punching >=1 minute past start is late.
-        const checkInLateMinutes = isDefined(shift.startTime)
-          ? computeCheckInLateMinutes({
-              date: shift.date,
-              startTime: shift.startTime,
-              checkInAt: now,
-            })
-          : null;
-
-        await shiftRepository.update(
-          { id: shiftId },
-          {
-            checkInAt: now.toISOString(),
-            status: 'IN_PROGRESS',
-            checkInLateMinutes,
-          },
+      // Upper-bound guard (independent of the early padding): once the
+      // scheduled window has fully elapsed the shift is missed, not checkable.
+      // Without this a shift whose time has long passed still accepted a
+      // check-in and flipped to IN_PROGRESS.
+      if (
+        isDefined(shift.startTime) &&
+        isDefined(shift.endTime) &&
+        Date.now() >
+          getShiftEndUtcMillis(shift.date, shift.startTime, shift.endTime)
+      ) {
+        throw new UserInputError(
+          'Too late to check in — the shift window has ended',
         );
+      }
 
-        return true;
-      },
-      authContext,
-    );
+      const now = new Date();
+      // BR-9.1: NO grace — punching >=1 minute past start is late.
+      const checkInLateMinutes = isDefined(shift.startTime)
+        ? computeCheckInLateMinutes({
+            date: shift.date,
+            startTime: shift.startTime,
+            checkInAt: now,
+          })
+        : null;
+
+      await shiftRepository.update(
+        { id: shiftId },
+        {
+          checkInAt: now.toISOString(),
+          status: 'IN_PROGRESS',
+          checkInLateMinutes,
+        },
+      );
+
+      return true;
+    }, authContext);
   }
 
   async checkOut(
@@ -145,51 +141,47 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const shiftRepository =
-          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            'shift',
-            { shouldBypassPermissionChecks: true },
-          );
-
-        const shift = await shiftRepository.findOne({ where: { id: shiftId } });
-
-        if (!isDefined(shift)) {
-          throw new UserInputError('Shift not found');
-        }
-
-        if (!isDefined(shift.checkInAt)) {
-          throw new UserInputError('Not checked in yet');
-        }
-
-        if (isDefined(shift.checkOutAt)) {
-          throw new UserInputError('Already checked out');
-        }
-
-        const now = new Date();
-
-        const workingMinutes = computePayableMinutes({
-          checkInAt: new Date(shift.checkInAt),
-          checkOutAt: now,
-          startTime: shift.startTime,
-          endTime: shift.endTime,
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
         });
 
-        await shiftRepository.update(
-          { id: shiftId },
-          {
-            checkOutAt: now.toISOString(),
-            status: 'COMPLETED',
-            workingMinutes,
-            ...(isNonEmptyString(handoverNote) ? { handoverNote } : {}),
-          },
-        );
+      const shift = await shiftRepository.findOne({ where: { id: shiftId } });
 
-        return true;
-      },
-      authContext,
-    );
+      if (!isDefined(shift)) {
+        throw new UserInputError('Shift not found');
+      }
+
+      if (!isDefined(shift.checkInAt)) {
+        throw new UserInputError('Not checked in yet');
+      }
+
+      if (isDefined(shift.checkOutAt)) {
+        throw new UserInputError('Already checked out');
+      }
+
+      const now = new Date();
+
+      const workingMinutes = computePayableMinutes({
+        checkInAt: new Date(shift.checkInAt),
+        checkOutAt: now,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+      });
+
+      await shiftRepository.update(
+        { id: shiftId },
+        {
+          checkOutAt: now.toISOString(),
+          status: 'COMPLETED',
+          workingMinutes,
+          ...(isNonEmptyString(handoverNote) ? { handoverNote } : {}),
+        },
+      );
+
+      return true;
+    }, authContext);
   }
 
   async cancel(
@@ -217,56 +209,52 @@ export class ShiftAttendanceWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const shiftRepository =
-          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            'shift',
-            { shouldBypassPermissionChecks: true },
-          );
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
+        });
 
-        const shift = await shiftRepository.findOne({ where: { id: shiftId } });
+      const shift = await shiftRepository.findOne({ where: { id: shiftId } });
 
-        if (!isDefined(shift)) {
-          throw new UserInputError('Shift not found');
-        }
+      if (!isDefined(shift)) {
+        throw new UserInputError('Shift not found');
+      }
 
-        if (shift.status === 'CANCELLED') {
-          throw new UserInputError('This shift is already cancelled');
-        }
+      if (shift.status === 'CANCELLED') {
+        throw new UserInputError('This shift is already cancelled');
+      }
 
-        if (shift.status === 'COMPLETED') {
-          throw new UserInputError('Completed shifts cannot be cancelled');
-        }
+      if (shift.status === 'COMPLETED') {
+        throw new UserInputError('Completed shifts cannot be cancelled');
+      }
 
-        // A shift whose scheduled window has fully elapsed is settled and can no
-        // longer be cancelled — past adjustments are a leader's record edit, not a
-        // member cancel. Mirrors the client (cancel is hidden for past shifts).
-        if (
-          isDefined(shift.startTime) &&
-          isDefined(shift.endTime) &&
-          Date.now() >
-            getShiftEndUtcMillis(shift.date, shift.startTime, shift.endTime)
-        ) {
-          throw new UserInputError(
-            'This shift has already ended and can no longer be cancelled',
-          );
-        }
-
-        await shiftRepository.update(
-          { id: shiftId },
-          {
-            status: 'CANCELLED',
-            cancelReason: reason,
-            cancelCategory: category,
-            cancelledAt: new Date().toISOString(),
-          },
+      // A shift whose scheduled window has fully elapsed is settled and can no
+      // longer be cancelled — past adjustments are a leader's record edit, not a
+      // member cancel. Mirrors the client (cancel is hidden for past shifts).
+      if (
+        isDefined(shift.startTime) &&
+        isDefined(shift.endTime) &&
+        Date.now() >
+          getShiftEndUtcMillis(shift.date, shift.startTime, shift.endTime)
+      ) {
+        throw new UserInputError(
+          'This shift has already ended and can no longer be cancelled',
         );
+      }
 
-        return true;
-      },
-      authContext,
-    );
+      await shiftRepository.update(
+        { id: shiftId },
+        {
+          status: 'CANCELLED',
+          cancelReason: reason,
+          cancelCategory: category,
+          cancelledAt: new Date().toISOString(),
+        },
+      );
+
+      return true;
+    }, authContext);
   }
 
   private async loadTemplate(

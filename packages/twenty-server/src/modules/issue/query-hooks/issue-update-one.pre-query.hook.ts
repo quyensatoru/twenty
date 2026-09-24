@@ -86,22 +86,19 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
       // to the record's current project so the guard still fires.
       const effectiveProjectId = isDefined(projectId)
         ? projectId
-        : await this.workspaceOrmManager.executeInWorkspaceContext(
-            async () => {
-              const issueRepository = this.workspaceOrmManager.getRepository(
-                IssueWorkspaceEntity,
-                { shouldBypassPermissionChecks: true },
-              );
+        : await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+            const issueRepository = this.workspaceOrmManager.getRepository(
+              IssueWorkspaceEntity,
+              { shouldBypassPermissionChecks: true },
+            );
 
-              const issue = await issueRepository.findOne({
-                where: { id: issueId },
-                select: ['id', 'projectId'],
-              });
+            const issue = await issueRepository.findOne({
+              where: { id: issueId },
+              select: ['id', 'projectId'],
+            });
 
-              return issue?.projectId ?? null;
-            },
-            authContext,
-          );
+            return issue?.projectId ?? null;
+          }, authContext);
 
       await assertRelationTargetAppScopeOrThrow({
         authContext,
@@ -117,47 +114,44 @@ export class IssueUpdateOnePreQueryHook implements WorkspacePreQueryHookInstance
     }
 
     const generatedIssueKey =
-      await this.workspaceOrmManager.executeInWorkspaceContext(
-        async () => {
-          const issueRepository = this.workspaceOrmManager.getRepository(
-            IssueWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+      await this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+        const issueRepository = this.workspaceOrmManager.getRepository(
+          IssueWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
 
-          const issue = await issueRepository.findOne({
-            where: { id: issueId },
-            select: ['id', 'issueKey'],
-          });
+        const issue = await issueRepository.findOne({
+          where: { id: issueId },
+          select: ['id', 'issueKey'],
+        });
 
-          // Key is generated once, on the project assignment that first makes it possible.
-          // issueKey reads back as '' (not null) for a never-set TEXT column, so an
-          // isDefined check alone would treat every issue as already keyed.
-          if (hasIssueKey(issue?.issueKey)) {
-            return undefined;
-          }
+        // Key is generated once, on the project assignment that first makes it possible.
+        // issueKey reads back as '' (not null) for a never-set TEXT column, so an
+        // isDefined check alone would treat every issue as already keyed.
+        if (hasIssueKey(issue?.issueKey)) {
+          return undefined;
+        }
 
-          const projectRepository = this.workspaceOrmManager.getRepository(
-            ProjectWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+        const projectRepository = this.workspaceOrmManager.getRepository(
+          ProjectWorkspaceEntity,
+          { shouldBypassPermissionChecks: true },
+        );
 
-          const result = await projectRepository
-            .createQueryBuilder()
-            .where('id = :projectId', { projectId })
-            .update()
-            .set({ nextIssueNumber: () => '"nextIssueNumber" + 1' })
-            .returning(['nextIssueNumber', 'key'])
-            .execute();
+        const result = await projectRepository
+          .createQueryBuilder()
+          .where('id = :projectId', { projectId })
+          .update()
+          .set({ nextIssueNumber: () => '"nextIssueNumber" + 1' })
+          .returning(['nextIssueNumber', 'key'])
+          .execute();
 
-          const { nextIssueNumber, key } = result.generatedMaps[0] as {
-            nextIssueNumber: number;
-            key: string;
-          };
+        const { nextIssueNumber, key } = result.generatedMaps[0] as {
+          nextIssueNumber: number;
+          key: string;
+        };
 
-          return `${key}-${nextIssueNumber}`;
-        },
-        authContext,
-      );
+        return `${key}-${nextIssueNumber}`;
+      }, authContext);
 
     if (isDefined(generatedIssueKey)) {
       payload.data.issueKey = generatedIssueKey;

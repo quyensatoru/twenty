@@ -135,7 +135,8 @@ export class IssueCreateManyPreQueryHook implements WorkspacePreQueryHookInstanc
           .returning(['nextIssueNumber', 'key'])
           .execute();
 
-        const { nextIssueNumber: lastIssueNumber, key } = result.generatedMaps[0] as {
+        const { nextIssueNumber: lastIssueNumber, key } = result
+          .generatedMaps[0] as {
           nextIssueNumber: number;
           key: string;
         };

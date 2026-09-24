@@ -7,12 +7,9 @@ import { WorkspaceIteratorService } from 'src/database/commands/command-runners/
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
-import { type SyncableFlatEntity } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-from.type';
-import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
-import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { type FlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metadata/types/flat-index-metadata.type';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
-import { computeTwentyStandardApplicationAllFlatEntityMaps } from 'src/engine/workspace-manager/twenty-standard-application/utils/twenty-standard-application-all-flat-entity-maps.constant';
+import { computeTwentyStandardApplicationAllFlatEntityMapsPre231 } from 'src/database/commands/upgrade-version-command/2-10/utils/compute-twenty-standard-application-all-flat-entity-maps-pre-2-31.util';
+import { buildForkStandardSyncOperations } from 'src/database/commands/upgrade-version-command/utils/build-fork-standard-sync-operations.util';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
 // New fields only, no backfill needed — they're nullable and start empty on
@@ -30,34 +27,6 @@ const APP_SCOPE_RELATION_INDEX_UNIVERSAL_IDENTIFIERS = [
   STANDARD_OBJECTS.epic.indexes.assigneeIdIndex.universalIdentifier,
   STANDARD_OBJECTS.sprint.indexes.ownerIdIndex.universalIdentifier,
 ];
-
-const getMissingStandardFlatEntitiesOrThrow = <T extends SyncableFlatEntity>({
-  standardFlatEntityMaps,
-  existingFlatEntityMaps,
-  universalIdentifiers,
-}: {
-  standardFlatEntityMaps: FlatEntityMaps<T>;
-  existingFlatEntityMaps: FlatEntityMaps<T>;
-  universalIdentifiers: string[];
-}): T[] =>
-  universalIdentifiers.flatMap((universalIdentifier) => {
-    if (
-      isDefined(
-        existingFlatEntityMaps.byUniversalIdentifier[universalIdentifier],
-      )
-    ) {
-      return [];
-    }
-
-    const standardEntity =
-      standardFlatEntityMaps.byUniversalIdentifier[universalIdentifier];
-
-    if (!isDefined(standardEntity)) {
-      throw new Error(`Could not find standard entity ${universalIdentifier}`);
-    }
-
-    return [standardEntity];
-  });
 
 @RegisteredWorkspaceCommand('2.28.0', 1784930002000)
 @Command({
@@ -107,46 +76,26 @@ export class SyncIssueEpicSprintAppScopeRelationsCommand extends ProvisionedWork
         { workspaceId },
       );
 
-    const now = new Date().toISOString();
-
-    const { allFlatEntityMaps: standardAllFlatEntityMaps } =
-      computeTwentyStandardApplicationAllFlatEntityMaps({
-        now,
+    const standardAllFlatEntityMaps =
+      computeTwentyStandardApplicationAllFlatEntityMapsPre231({
+        now: new Date().toISOString(),
         workspaceId,
         twentyStandardApplicationId: twentyStandardFlatApplication.id,
       });
 
-    const allFlatEntityOperationByMetadataName = {
-      fieldMetadata: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatFieldMetadata>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatFieldMetadataMaps,
-            existingFlatEntityMaps: flatFieldMetadataMaps,
-            universalIdentifiers:
-              APP_SCOPE_RELATION_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      index: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatIndexMetadata>({
-            standardFlatEntityMaps: standardAllFlatEntityMaps.flatIndexMaps,
-            existingFlatEntityMaps: flatIndexMaps,
-            universalIdentifiers: APP_SCOPE_RELATION_INDEX_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-    };
-
-    const totalOperationCount = Object.values(
-      allFlatEntityOperationByMetadataName,
-    ).reduce(
-      (total, operations) => total + operations.flatEntityToCreate.length,
-      0,
-    );
+    const { allFlatEntityOperationByMetadataName, totalOperationCount } =
+      buildForkStandardSyncOperations({
+        standardAllFlatEntityMaps,
+        existingAllFlatEntityMaps: {
+          flatObjectMetadataMaps,
+          flatFieldMetadataMaps,
+          flatIndexMaps,
+        },
+        universalIdentifiersByMetadataName: {
+          fieldMetadata: APP_SCOPE_RELATION_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
+          index: APP_SCOPE_RELATION_INDEX_UNIVERSAL_IDENTIFIERS,
+        },
+      });
 
     if (totalOperationCount === 0) {
       this.logger.log(
@@ -165,8 +114,9 @@ export class SyncIssueEpicSprintAppScopeRelationsCommand extends ProvisionedWork
     }
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
         {
+          isSystemBuild: true,
           workspaceId,
           applicationUniversalIdentifier:
             twentyStandardFlatApplication.universalIdentifier,

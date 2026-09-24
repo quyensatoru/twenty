@@ -451,9 +451,8 @@ export class RoleResolver {
     @Parent() role: RoleDTO,
     @AuthWorkspace() workspace: WorkspaceEntity,
   ): Promise<RecordVisibilityPolicyDTO[]> {
-    const allPolicies = await this.recordVisibilityPolicyService.findByWorkspaceId(
-      workspace.id,
-    );
+    const allPolicies =
+      await this.recordVisibilityPolicyService.findByWorkspaceId(workspace.id);
 
     return allPolicies.filter((policy) => policy.roleId === role.id);
   }

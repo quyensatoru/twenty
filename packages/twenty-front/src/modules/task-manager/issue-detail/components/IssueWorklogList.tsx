@@ -350,7 +350,9 @@ const WorklogForm = ({
           onClick={handleSubmit}
           disabled={isSubmitting || !isTimeValid}
           color="accent"
-        >{submitLabel}</Button>
+        >
+          {submitLabel}
+        </Button>
       </StyledComposerActions>
     </StyledComposer>
   );

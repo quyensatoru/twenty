@@ -327,13 +327,13 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "4d71d304-ea37-457c-9422-48812659d75e",
     "views": {
       "allApps": {
-        "universalIdentifier": "ec2295c9-cdd1-4639-9d15-a0abfc0dcb25",
+        "universalIdentifier": "25c8f661-e93d-54d8-9310-7ea00bd1bd5e",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "5ac243e6-a8c3-4ed0-bf3b-deb05e5b6e0f",
+            "universalIdentifier": "c592bf4e-5b4f-53fd-a392-f710fa46899e",
           },
           "name": {
-            "universalIdentifier": "715c6d22-eb95-4120-bb6c-20cd14018499",
+            "universalIdentifier": "3dfcd26b-d084-5f43-b7de-0f8f5fbee629",
           },
         },
       },
@@ -384,19 +384,19 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "467cc684-c385-4536-bd9a-dfdf80c2d60f",
     "views": {
       "allAppAccesses": {
-        "universalIdentifier": "7744b2dd-bc56-4e88-961f-ed116961249c",
+        "universalIdentifier": "6d57bc52-d3d3-5047-8c22-0485f03368ba",
         "viewFields": {
           "app": {
-            "universalIdentifier": "6c91245a-f589-4434-bab4-f84663b03dba",
+            "universalIdentifier": "d8aaffa3-f856-544e-a109-fb403e44e018",
           },
           "id": {
-            "universalIdentifier": "6b56183e-cd37-402b-b630-28e735535b97",
+            "universalIdentifier": "464c5b6b-5b56-5522-af9b-24acf7555f69",
           },
           "member": {
-            "universalIdentifier": "0c179af4-4a86-4420-81e3-62f52c32f2b2",
+            "universalIdentifier": "697340c5-8502-5f89-b9e8-f2176d6c0fa8",
           },
           "permissions": {
-            "universalIdentifier": "c0604a89-5a32-466a-b295-5d39fd47d0d5",
+            "universalIdentifier": "b8b5828a-d371-5a97-bb19-33ff321028bd",
           },
         },
       },
@@ -1520,21 +1520,22 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "4aef1443-d2b0-42a9-9ce9-f08891b93430",
     "views": {
       "allEpics": {
-        "universalIdentifier": "34ca2cd3-7a8b-4aa8-bcac-00b2973c307d",
+        "universalIdentifier": "0793d39e-e268-521e-961d-0eb87a0f183b",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "4b0c2e81-ce82-4379-895a-6682654d76ee",
+            "universalIdentifier": "455778c2-006f-58e3-ad0f-dc8d746d4023",
           },
           "name": {
-            "universalIdentifier": "9688cfc8-3c3e-4bac-8031-3d356d3d6703",
+            "universalIdentifier": "8b9acc5a-ff89-5f21-97c1-40163d23e931",
           },
           "project": {
-            "universalIdentifier": "f036986a-28ce-4306-88de-6ef827a7a537",
+            "universalIdentifier": "9dd19532-297d-5f19-ae10-37f71f671207",
           },
         },
       },
       "epicRecordPageFields": {
-        "universalIdentifier": "8c2c40a5-5f77-4cde-bf32-8e7b7cb4ff6d",
+        "universalIdentifier": "01c4616b-5fd0-552d-9e8f-91c703dfb32b",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -1667,31 +1668,31 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "e14a5928-2bbe-4e20-b766-ea8975ee819f",
     "views": {
       "allIssues": {
-        "universalIdentifier": "410cda21-c8e3-42ae-86c2-715915b81fb0",
+        "universalIdentifier": "abd5b3ea-8dd9-5ae4-a2f0-fd55f30bdf1f",
         "viewFields": {
           "assignee": {
-            "universalIdentifier": "7251fce7-4f65-4950-a04b-053b24c140e0",
+            "universalIdentifier": "50830ffa-a9ba-5898-b1a8-d0883049821f",
           },
           "createdAt": {
-            "universalIdentifier": "c666a03e-1d31-4e17-b8ae-ffc994b7caba",
+            "universalIdentifier": "0fcfc5a7-449a-54ba-9607-a09dd674c2a9",
           },
           "dueDate": {
-            "universalIdentifier": "17d9f321-f338-4388-8142-a6b598fd3b34",
+            "universalIdentifier": "395c3fc9-3e1b-55c4-b0ff-7f0af97d3dfb",
           },
           "epic": {
-            "universalIdentifier": "a7e36a31-f26f-4055-9b8c-a6c40c3b4c56",
+            "universalIdentifier": "4d147230-eecc-5d28-9a1a-998904b174ed",
           },
           "issueKey": {
-            "universalIdentifier": "2d23a593-afd9-4c63-bc23-34f8f5165be1",
+            "universalIdentifier": "7a268b25-7a89-514f-bd5e-9e839ea714fb",
           },
           "priority": {
-            "universalIdentifier": "ef23167b-3d6d-4226-a4ba-58d711c57250",
+            "universalIdentifier": "c12c9b44-9f78-5f31-af38-25753171dd00",
           },
           "status": {
-            "universalIdentifier": "4a34af01-60b7-4db9-9f2f-78d8d78abf5b",
+            "universalIdentifier": "0709e9b7-88e9-588c-b038-617fce9563e4",
           },
           "title": {
-            "universalIdentifier": "9ce0c1fe-ea10-44f4-947b-b420604359a1",
+            "universalIdentifier": "7a91b217-f041-5d0f-968b-66ae560d297c",
           },
         },
       },
@@ -1727,7 +1728,8 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
         },
       },
       "issueRecordPageFields": {
-        "universalIdentifier": "0c1496d8-f692-44fc-bfae-5827943ae4f8",
+        "universalIdentifier": "c388e138-cb0b-5183-a210-1c725920f250",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -1791,24 +1793,25 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "860287e4-e447-4e1b-85e4-4952c02f57dd",
     "views": {
       "allIssueComments": {
-        "universalIdentifier": "b34dac4b-570b-49b6-ac5a-da96d11a6d9e",
+        "universalIdentifier": "9582607a-3024-56f7-8304-931a851f68e5",
         "viewFields": {
           "author": {
-            "universalIdentifier": "eb9731de-1830-462d-939e-49ec75fefea4",
+            "universalIdentifier": "c5e79532-39d7-514c-ba9a-71c725f0d3ee",
           },
           "bodyV2": {
-            "universalIdentifier": "e6694bf3-ac6e-40d6-899f-9de5a84a625a",
+            "universalIdentifier": "4f5345cd-740f-5fce-a74f-a54d6480b600",
           },
           "createdAt": {
-            "universalIdentifier": "b69a4916-7fa8-487b-bd14-43b69610d2c6",
+            "universalIdentifier": "37e3c41a-080a-5e11-bc88-22fe035e6f38",
           },
           "issue": {
-            "universalIdentifier": "1751cc60-49bd-4399-a9ff-b9a85fd17dbc",
+            "universalIdentifier": "e8386691-a496-530b-a53c-983bfeeca8b3",
           },
         },
       },
       "issueCommentRecordPageFields": {
-        "universalIdentifier": "c134b7b4-7a64-409f-9bb0-5ec4ead9c8fe",
+        "universalIdentifier": "3d5624ef-8641-5965-8298-67719026d61e",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -1906,16 +1909,16 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "3439277b-2995-4a5c-b497-1b75396533a4",
     "views": {
       "allIssueStatuses": {
-        "universalIdentifier": "9ebd66bd-03cf-4e6b-b19b-e4b14c2f41e4",
+        "universalIdentifier": "10e8dad9-b8fc-57f3-9001-448ca6bd4645",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "0a2c0d4b-9da1-4b0c-86e5-b5a006fa4add",
+            "universalIdentifier": "79e97297-f592-5c44-81c2-5503792f861d",
           },
           "name": {
-            "universalIdentifier": "39a2420d-539f-40e6-b8fd-82d9f4309682",
+            "universalIdentifier": "389f40bf-70a3-5e98-8270-03c7f9027661",
           },
           "project": {
-            "universalIdentifier": "05a5f9af-5482-4c77-8d25-9864fd2958d3",
+            "universalIdentifier": "0f4d0aba-3c73-59d0-84a2-043dbd1bb86f",
           },
         },
       },
@@ -1984,18 +1987,19 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "5d9a58bd-983c-4ca4-9f0a-b53cdec4cfca",
     "views": {
       "allMerchants": {
-        "universalIdentifier": "26fdf9c2-a9fb-4ee4-b480-9c2b370b179a",
+        "universalIdentifier": "3f1da2b3-5f5f-5cb4-b88c-97ec0108b7e2",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "ccb0a9d6-2ede-4cb0-88da-a447d4bea573",
+            "universalIdentifier": "c5b93acb-0751-57c7-a1ff-e01d14577471",
           },
           "name": {
-            "universalIdentifier": "5c1d2ebf-d8fb-4972-be96-66a5ca426cc1",
+            "universalIdentifier": "66cba7a8-691f-55de-be4a-7230e349f6da",
           },
         },
       },
       "merchantRecordPageFields": {
-        "universalIdentifier": "58e3910e-f640-498a-b9db-932459bc9e64",
+        "universalIdentifier": "f3277385-a1a4-5488-99ed-099169fc5ace",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -3589,27 +3593,28 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "bf773e17-d100-40b8-9e8d-ef476c1d2fb8",
     "views": {
       "allProjects": {
-        "universalIdentifier": "84edc4ee-3c2e-42ad-b375-a6dc50cc5dac",
+        "universalIdentifier": "ff1e4e09-42bb-5bb3-b074-20c017837253",
         "viewFields": {
           "category": {
-            "universalIdentifier": "cd4bf1ad-082c-4dae-8f7c-73ed2475332d",
+            "universalIdentifier": "a722cc88-8109-574d-a0f2-7480c45b8761",
           },
           "createdAt": {
-            "universalIdentifier": "7d1a030e-de6d-44bd-ac05-bf72a4d55438",
+            "universalIdentifier": "ea816871-e4f0-5186-9ff9-03492dbfb2b5",
           },
           "key": {
-            "universalIdentifier": "3a05ffe3-c661-4208-a823-0ba578fbc6bb",
+            "universalIdentifier": "29143e4f-8745-5a5f-80a3-41c15aec0684",
           },
           "lead": {
-            "universalIdentifier": "31a4d47d-9e45-4bc3-a37a-147386db7c8f",
+            "universalIdentifier": "9a85b245-09e1-52f1-a1a2-54a3e65db402",
           },
           "name": {
-            "universalIdentifier": "631cb31e-d6a7-4198-8ea9-8b2bc36fcb34",
+            "universalIdentifier": "78f15d2f-48cf-5a19-ba88-0cd36c75e621",
           },
         },
       },
       "projectRecordPageFields": {
-        "universalIdentifier": "96e24b69-a724-4dfa-aa0f-d3e3d903ff26",
+        "universalIdentifier": "94480ca5-5833-55e8-aa10-1dfff12a7e6a",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -3771,39 +3776,40 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "476bd249-6ab7-472f-82e0-3e538b41722d",
     "views": {
       "allShifts": {
-        "universalIdentifier": "fdd1d968-9ff8-43ff-a3fe-a8bdffa06ca4",
+        "universalIdentifier": "386f818f-67cd-56de-8f38-6091543cce6e",
         "viewFields": {
           "checkInAt": {
-            "universalIdentifier": "d9a1818d-ee2f-4b6a-89ca-14e8b07bd4a2",
+            "universalIdentifier": "9e0808c1-a7f5-5e5d-a29e-8bde9e375113",
           },
           "checkInLateMinutes": {
-            "universalIdentifier": "04603f50-3eb9-4ec0-8312-461a8322b5a1",
+            "universalIdentifier": "bd2b2868-5a2b-5fd5-9c2c-8014757e8c25",
           },
           "checkOutAt": {
-            "universalIdentifier": "aedd443f-f742-4a7c-b111-26960c53545c",
+            "universalIdentifier": "55d5c08c-2c5e-5f32-bb0d-f7e3a84b1f99",
           },
           "date": {
-            "universalIdentifier": "ee06751f-662b-4282-a0b7-cba48397bd40",
+            "universalIdentifier": "6df25f3c-6d14-5d35-a0a9-ddb607a58d19",
           },
           "member": {
-            "universalIdentifier": "5cde2759-2ecd-482e-b372-62a03a1f5eaf",
+            "universalIdentifier": "2314c478-1dd0-558c-bd48-40f13f2288bd",
           },
           "name": {
-            "universalIdentifier": "98a8825c-7409-47b4-a7a2-c39c6257f016",
+            "universalIdentifier": "26ef831a-d85a-59c0-a359-8070297dba5e",
           },
           "status": {
-            "universalIdentifier": "9f1503f4-00be-486d-a467-fbc7659811cb",
+            "universalIdentifier": "1eab051f-b2c9-5649-a3fb-1d506129c3f7",
           },
           "templateCode": {
-            "universalIdentifier": "e3c5e0ac-1e86-4969-ada3-f29514ac5d3a",
+            "universalIdentifier": "50af0315-39af-5891-8d7d-cab696671cc7",
           },
           "workingMinutes": {
-            "universalIdentifier": "f9f68168-4ef1-48bd-859e-096306fcff56",
+            "universalIdentifier": "d2207658-a92c-52d7-91d7-2e336b45b10c",
           },
         },
       },
       "shiftRecordPageFields": {
-        "universalIdentifier": "735d170d-641e-4aad-a7bb-d326051c7f04",
+        "universalIdentifier": "59222e0c-ddd3-5dd4-b945-635d20805d8a",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -3882,30 +3888,31 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "930c8d12-0e7e-427c-87ec-5b155483b5d4",
     "views": {
       "allShiftTemplates": {
-        "universalIdentifier": "461b371e-7660-45c7-8fd4-0de5fe885ee6",
+        "universalIdentifier": "0aa187f4-860e-5fad-b0ef-90d4d3572f50",
         "viewFields": {
           "code": {
-            "universalIdentifier": "748df8ac-f9a3-41de-bb20-44b224ebd66b",
+            "universalIdentifier": "2d073673-fca2-5884-9def-a0b7df2dc3cf",
           },
           "dayKind": {
-            "universalIdentifier": "8c8aa303-8bde-44f7-9413-a1d7fe74bb02",
+            "universalIdentifier": "64b2be7a-78db-51ac-8433-97e63fc97e61",
           },
           "endTime": {
-            "universalIdentifier": "c6104dc2-a62a-4876-a42b-c61f214c17d9",
+            "universalIdentifier": "3a8cfa8b-277f-5347-af82-3cc76a69998b",
           },
           "isActive": {
-            "universalIdentifier": "1b395bf8-205e-42d4-9cfa-90ced9f7fd31",
+            "universalIdentifier": "ac1d67a1-8f71-5ed2-b81f-98537fe4c298",
           },
           "name": {
-            "universalIdentifier": "2140d08d-3171-4c67-bf4c-0369d3a7745f",
+            "universalIdentifier": "d97798cf-2ada-5d00-9429-9c60918c156c",
           },
           "startTime": {
-            "universalIdentifier": "49061331-d42f-4d09-8a37-2cf7c282956c",
+            "universalIdentifier": "08c242c7-27b7-5479-9a22-229fcd61318e",
           },
         },
       },
       "shiftTemplateRecordPageFields": {
-        "universalIdentifier": "ed7e1a4e-9540-4dfb-8d1e-0943a9040b1f",
+        "universalIdentifier": "b5651000-d97a-5c34-9a2b-f4c740f4d29a",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -3966,33 +3973,34 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "25080a86-ab21-450f-b33b-b8be58f36a59",
     "views": {
       "allSpecialDays": {
-        "universalIdentifier": "73cf6a3d-d307-405e-8c77-532308046b26",
+        "universalIdentifier": "9a6e965d-1c5e-5677-9f71-10f4e4f9c7eb",
         "viewFields": {
           "date": {
-            "universalIdentifier": "d0c04b1f-0a08-4d9c-8740-867a34f0d692",
+            "universalIdentifier": "0f4794d6-37ff-587e-93cd-6fa0df6769a3",
           },
           "day": {
-            "universalIdentifier": "6ef7e509-1dc6-4e73-9d53-11000a6accc9",
+            "universalIdentifier": "6078530c-e9ef-53a9-8c59-14cd12cc4600",
           },
           "isActive": {
-            "universalIdentifier": "7a253726-1d1c-446a-b85a-9f63a67b7dc2",
+            "universalIdentifier": "0c78e2c5-2a3a-55c0-8683-610afe896855",
           },
           "kind": {
-            "universalIdentifier": "6a512d00-2eae-4146-b4b1-d2b7424fcf73",
+            "universalIdentifier": "ab9077cb-4771-526c-94c9-f34edea82fb1",
           },
           "month": {
-            "universalIdentifier": "2ba13915-0dc5-450b-bbbd-788f562b2e27",
+            "universalIdentifier": "4fd807ac-31ba-5ec8-84b8-7a1af906565e",
           },
           "multiplier": {
-            "universalIdentifier": "92167e2e-8f67-4229-9775-59115899aa2c",
+            "universalIdentifier": "27a4cdc6-4db4-5d51-b7c8-1d0c9aabf6e0",
           },
           "name": {
-            "universalIdentifier": "af650b93-77c4-4f86-9fc3-cd6031b8964a",
+            "universalIdentifier": "ee2f2dce-b289-5829-b824-a248ce71d7b0",
           },
         },
       },
       "specialDayRecordPageFields": {
-        "universalIdentifier": "be66aa00-a0c4-46a7-81c2-5bbb4cd5abcc",
+        "universalIdentifier": "349c7be0-e074-5084-bb05-98d17eb8233e",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -4062,27 +4070,28 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "6acc95fa-4a04-49f1-ac53-50efe1032cbf",
     "views": {
       "allSprints": {
-        "universalIdentifier": "2b5d2c5a-41e6-4ed8-80fe-489515b23aa9",
+        "universalIdentifier": "08331415-f44d-512b-a3ea-d9db6715d32f",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "c9715992-719f-4147-ae5c-44fe9964b8dd",
+            "universalIdentifier": "b60e2753-417f-5fe0-8b04-93c0f0e2ccf7",
           },
           "name": {
-            "universalIdentifier": "4e7af099-0b39-437e-8e45-3ba47b9328fb",
+            "universalIdentifier": "1804e2cc-15f2-542a-9065-d6d1d198b03b",
           },
           "project": {
-            "universalIdentifier": "c8f1d4ea-c07e-4865-b4b0-85e72ee1fcc5",
+            "universalIdentifier": "e23b1381-6cc2-5e26-bc96-4b8eeb302445",
           },
           "startDate": {
-            "universalIdentifier": "194c445a-88f2-412a-9b9b-6b2ed594dafc",
+            "universalIdentifier": "9f2207ed-1ef3-5892-9dc5-08546335332d",
           },
           "state": {
-            "universalIdentifier": "872abc2f-6fa9-4be6-9ac2-0a2de749a304",
+            "universalIdentifier": "cdb3aabd-197d-563f-9abf-f9820b589146",
           },
         },
       },
       "sprintRecordPageFields": {
-        "universalIdentifier": "1dff7b19-4859-4298-b9ea-f9ee8a9832c7",
+        "universalIdentifier": "3e0c6849-8e02-5ea5-83c5-0a1286f7e8fa",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },
@@ -5048,27 +5057,28 @@ exports[`STANDARD_OBJECTS universal identifiers should never change without an e
     "universalIdentifier": "8e4d81e8-6ab8-42c4-9e61-16b98bab83fa",
     "views": {
       "allWorklogs": {
-        "universalIdentifier": "1f0b4e5a-55a0-4830-8b2a-d4994ce3450a",
+        "universalIdentifier": "c683e76c-a775-5158-ae52-08562711f815",
         "viewFields": {
           "createdAt": {
-            "universalIdentifier": "37b6364e-3914-4000-87b3-7dac92e6794f",
+            "universalIdentifier": "f479ce16-5db0-57b7-a14e-e618a6e17926",
           },
           "description": {
-            "universalIdentifier": "7c0de405-9601-4989-a058-e78253650985",
+            "universalIdentifier": "91bdee1c-7435-5bb4-bcd0-d78fee23b2d3",
           },
           "issue": {
-            "universalIdentifier": "35fd7f11-fef1-43e6-b98d-261be4d68839",
+            "universalIdentifier": "1b6f6b4d-f019-5fc2-bf06-041159cf3619",
           },
           "startedAt": {
-            "universalIdentifier": "0d567057-8fd6-4ad1-96d6-9898a948f210",
+            "universalIdentifier": "10f1e7f7-0311-5324-a607-fb4cd0b6a9d7",
           },
           "timeSpentMinutes": {
-            "universalIdentifier": "4624361d-2b1e-40d1-8f22-0041743d6b3c",
+            "universalIdentifier": "add23ca7-f81b-5734-9e26-3061f8fc3e31",
           },
         },
       },
       "worklogRecordPageFields": {
-        "universalIdentifier": "6dd98746-e30f-4598-9c01-53595bad2b5b",
+        "universalIdentifier": "f7a61695-a482-5a0a-9ad7-d2186db33b11",
+        "viewFieldGroups": {},
         "viewFields": {},
       },
     },

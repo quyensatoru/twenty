@@ -232,7 +232,11 @@ const ShiftReportRow = ({ shift, template }: ShiftReportRowProps) => {
       <StyledCell>{formatInstantTime(shift.checkOutAt)}</StyledCell>
       <StyledCell>{workingHours}</StyledCell>
       <StyledCell>
-        {isOvertime ? <Tag color="orange">{multiplierLabel}</Tag> : multiplierLabel}
+        {isOvertime ? (
+          <Tag color="orange">{multiplierLabel}</Tag>
+        ) : (
+          multiplierLabel
+        )}
       </StyledCell>
       <StyledCell>
         <StyledFlags>

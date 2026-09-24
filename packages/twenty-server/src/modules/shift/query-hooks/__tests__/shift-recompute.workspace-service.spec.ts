@@ -24,10 +24,10 @@ describe('ShiftRecomputeWorkspaceService.recomputeAttendance', () => {
       getRepository: jest
         .fn()
         .mockImplementation((singularName: string) =>
-            singularName === 'shiftTemplate'
-              ? templateRepository
-              : shiftRepository,
-          ),
+          singularName === 'shiftTemplate'
+            ? templateRepository
+            : shiftRepository,
+        ),
       executeInWorkspaceContext: jest
         .fn()
         .mockImplementation((fn: () => unknown) => fn()),

@@ -10,20 +10,11 @@ import { WorkspaceIteratorService } from 'src/database/commands/command-runners/
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
-import { type SyncableFlatEntity } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-from.type';
-import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
-import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { type FlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metadata/types/flat-index-metadata.type';
-import { type FlatNavigationMenuItem } from 'src/engine/metadata-modules/flat-navigation-menu-item/types/flat-navigation-menu-item.type';
-import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
-import { type FlatPageLayoutTab } from 'src/engine/metadata-modules/flat-page-layout-tab/types/flat-page-layout-tab.type';
-import { type FlatPageLayoutWidget } from 'src/engine/metadata-modules/flat-page-layout-widget/types/flat-page-layout-widget.type';
-import { type FlatPageLayout } from 'src/engine/metadata-modules/flat-page-layout/types/flat-page-layout.type';
-import { type FlatViewField } from 'src/engine/metadata-modules/flat-view-field/types/flat-view-field.type';
-import { type FlatView } from 'src/engine/metadata-modules/flat-view/types/flat-view.type';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { STANDARD_NAVIGATION_MENU_ITEMS } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-navigation-menu-item.constant';
-import { computeTwentyStandardApplicationAllFlatEntityMaps } from 'src/engine/workspace-manager/twenty-standard-application/utils/twenty-standard-application-all-flat-entity-maps.constant';
+import { computeTwentyStandardApplicationAllFlatEntityMapsPre231 } from 'src/database/commands/upgrade-version-command/2-10/utils/compute-twenty-standard-application-all-flat-entity-maps-pre-2-31.util';
+import { buildForkStandardSyncOperations } from 'src/database/commands/upgrade-version-command/utils/build-fork-standard-sync-operations.util';
+import { getStandardObjectSystemFieldUniversalIdentifiers } from 'src/database/commands/upgrade-version-command/utils/get-standard-object-system-field-universal-identifiers.util';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
 // NOTE (go-live): this migration provisions METADATA only (objects, fields,
@@ -41,13 +32,18 @@ const SHIFT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS = [
   STANDARD_OBJECTS.shift.universalIdentifier,
 ];
 
-// System fields (id/createdAt/updatedAt/deletedAt/position/createdBy/updatedBy/
-// searchVector) are deliberately excluded — the side-effect engine injects
-// them for a newly created object. Both sides of every relation pair are
-// listed explicitly since the engine does not auto-generate the reverse side:
-//   shift.member <-> workspaceMember.shifts
-//   shift.shiftTemplate <-> shiftTemplate.shifts
+// Applied through the legacy path, which injects nothing: the system fields
+// and both sides of every relation pair are listed explicitly.
 const SHIFT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS = [
+  ...getStandardObjectSystemFieldUniversalIdentifiers(
+    STANDARD_OBJECTS.shiftTemplate.fields,
+  ),
+  ...getStandardObjectSystemFieldUniversalIdentifiers(
+    STANDARD_OBJECTS.specialDay.fields,
+  ),
+  ...getStandardObjectSystemFieldUniversalIdentifiers(
+    STANDARD_OBJECTS.shift.fields,
+  ),
   // shiftTemplate business fields
   STANDARD_OBJECTS.shiftTemplate.fields.name.universalIdentifier,
   STANDARD_OBJECTS.shiftTemplate.fields.code.universalIdentifier,
@@ -191,34 +187,6 @@ const SHIFT_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS = [
   STANDARD_NAVIGATION_MENU_ITEMS.allSpecialDays.universalIdentifier,
 ];
 
-const getMissingStandardFlatEntitiesOrThrow = <T extends SyncableFlatEntity>({
-  standardFlatEntityMaps,
-  existingFlatEntityMaps,
-  universalIdentifiers,
-}: {
-  standardFlatEntityMaps: FlatEntityMaps<T>;
-  existingFlatEntityMaps: FlatEntityMaps<T>;
-  universalIdentifiers: string[];
-}): T[] =>
-  universalIdentifiers.flatMap((universalIdentifier) => {
-    if (
-      isDefined(
-        existingFlatEntityMaps.byUniversalIdentifier[universalIdentifier],
-      )
-    ) {
-      return [];
-    }
-
-    const standardEntity =
-      standardFlatEntityMaps.byUniversalIdentifier[universalIdentifier];
-
-    if (!isDefined(standardEntity)) {
-      throw new Error(`Could not find standard entity ${universalIdentifier}`);
-    }
-
-    return [standardEntity];
-  });
-
 @RegisteredWorkspaceCommand('2.29.0', 1784940000000)
 @Command({
   name: 'upgrade:2-29:sync-shift-standard-objects',
@@ -284,121 +252,39 @@ export class SyncShiftStandardObjectsCommand extends ProvisionedWorkspaceCommand
         { workspaceId },
       );
 
-    const now = new Date().toISOString();
-
-    const { allFlatEntityMaps: standardAllFlatEntityMaps } =
-      computeTwentyStandardApplicationAllFlatEntityMaps({
-        now,
+    const standardAllFlatEntityMaps =
+      computeTwentyStandardApplicationAllFlatEntityMapsPre231({
+        now: new Date().toISOString(),
         workspaceId,
         twentyStandardApplicationId: twentyStandardFlatApplication.id,
       });
 
-    const allFlatEntityOperationByMetadataName = {
-      objectMetadata: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatObjectMetadata>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatObjectMetadataMaps,
-            existingFlatEntityMaps: flatObjectMetadataMaps,
-            universalIdentifiers: SHIFT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      fieldMetadata: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatFieldMetadata>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatFieldMetadataMaps,
-            existingFlatEntityMaps: flatFieldMetadataMaps,
-            universalIdentifiers: SHIFT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      index: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatIndexMetadata>({
-            standardFlatEntityMaps: standardAllFlatEntityMaps.flatIndexMaps,
-            existingFlatEntityMaps: flatIndexMaps,
-            universalIdentifiers: SHIFT_INDEX_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      view: {
-        flatEntityToCreate: getMissingStandardFlatEntitiesOrThrow<FlatView>({
-          standardFlatEntityMaps: standardAllFlatEntityMaps.flatViewMaps,
-          existingFlatEntityMaps: flatViewMaps,
-          universalIdentifiers: SHIFT_VIEW_UNIVERSAL_IDENTIFIERS,
-        }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      viewField: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatViewField>({
-            standardFlatEntityMaps: standardAllFlatEntityMaps.flatViewFieldMaps,
-            existingFlatEntityMaps: flatViewFieldMaps,
-            universalIdentifiers: SHIFT_VIEW_FIELD_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      pageLayout: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatPageLayout>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatPageLayoutMaps,
-            existingFlatEntityMaps: flatPageLayoutMaps,
-            universalIdentifiers: SHIFT_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      pageLayoutTab: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatPageLayoutTab>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatPageLayoutTabMaps,
-            existingFlatEntityMaps: flatPageLayoutTabMaps,
-            universalIdentifiers: SHIFT_PAGE_LAYOUT_TAB_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      pageLayoutWidget: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatPageLayoutWidget>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatPageLayoutWidgetMaps,
-            existingFlatEntityMaps: flatPageLayoutWidgetMaps,
-            universalIdentifiers:
-              SHIFT_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-      navigationMenuItem: {
-        flatEntityToCreate:
-          getMissingStandardFlatEntitiesOrThrow<FlatNavigationMenuItem>({
-            standardFlatEntityMaps:
-              standardAllFlatEntityMaps.flatNavigationMenuItemMaps,
-            existingFlatEntityMaps: flatNavigationMenuItemMaps,
-            universalIdentifiers:
-              SHIFT_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
-          }),
-        flatEntityToDelete: [],
-        flatEntityToUpdate: [],
-      },
-    };
-
-    const totalOperationCount = Object.values(
-      allFlatEntityOperationByMetadataName,
-    ).reduce(
-      (total, operations) => total + operations.flatEntityToCreate.length,
-      0,
-    );
+    const { allFlatEntityOperationByMetadataName, totalOperationCount } =
+      buildForkStandardSyncOperations({
+        standardAllFlatEntityMaps,
+        existingAllFlatEntityMaps: {
+          flatObjectMetadataMaps,
+          flatFieldMetadataMaps,
+          flatIndexMaps,
+          flatViewMaps,
+          flatViewFieldMaps,
+          flatPageLayoutMaps,
+          flatPageLayoutTabMaps,
+          flatPageLayoutWidgetMaps,
+          flatNavigationMenuItemMaps,
+        },
+        universalIdentifiersByMetadataName: {
+          objectMetadata: SHIFT_OBJECT_METADATA_UNIVERSAL_IDENTIFIERS,
+          fieldMetadata: SHIFT_FIELD_METADATA_UNIVERSAL_IDENTIFIERS,
+          index: SHIFT_INDEX_UNIVERSAL_IDENTIFIERS,
+          view: SHIFT_VIEW_UNIVERSAL_IDENTIFIERS,
+          viewField: SHIFT_VIEW_FIELD_UNIVERSAL_IDENTIFIERS,
+          pageLayout: SHIFT_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
+          pageLayoutTab: SHIFT_PAGE_LAYOUT_TAB_UNIVERSAL_IDENTIFIERS,
+          pageLayoutWidget: SHIFT_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIERS,
+          navigationMenuItem: SHIFT_NAVIGATION_MENU_ITEM_UNIVERSAL_IDENTIFIERS,
+        },
+      });
 
     if (totalOperationCount === 0) {
       this.logger.log(
@@ -417,8 +303,9 @@ export class SyncShiftStandardObjectsCommand extends ProvisionedWorkspaceCommand
     }
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
         {
+          isSystemBuild: true,
           workspaceId,
           applicationUniversalIdentifier:
             twentyStandardFlatApplication.universalIdentifier,

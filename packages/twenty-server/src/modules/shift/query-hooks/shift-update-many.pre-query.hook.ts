@@ -37,18 +37,15 @@ export class ShiftUpdateManyPreQueryHook implements WorkspacePreQueryHookInstanc
 
     // isElevatedActor reads the AsyncLocalStorage workspace context — it must
     // run inside executeInWorkspaceContext.
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        if (!isElevatedActor({ authContext, operation: 'write' })) {
-          throw new PermissionsException(
-            PermissionsExceptionMessage.PERMISSION_DENIED,
-            PermissionsExceptionCode.PERMISSION_DENIED,
-          );
-        }
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      if (!isElevatedActor({ authContext, operation: 'write' })) {
+        throw new PermissionsException(
+          PermissionsExceptionMessage.PERMISSION_DENIED,
+          PermissionsExceptionCode.PERMISSION_DENIED,
+        );
+      }
 
-        return payload;
-      },
-      authContext,
-    );
+      return payload;
+    }, authContext);
   }
 }

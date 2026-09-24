@@ -33,58 +33,54 @@ export class ShiftRosterWorkspaceService {
 
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
-    return this.workspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const shiftRepository =
-          this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>(
-            'shift',
-            { shouldBypassPermissionChecks: true },
-          );
-
-        // SAFE FIELDS ONLY: the select list is the security boundary — sensitive
-        // attendance/cancel/pay columns are never read out of the database here.
-        const shifts = await shiftRepository.find({
-          where: {
-            date: Between(fromDate, toDate),
-            status: Not('CANCELLED'),
-          },
-          select: [
-            'id',
-            'date',
-            'status',
-            'templateCode',
-            'templateName',
-            'startTime',
-            'endTime',
-            'shiftTemplateId',
-            'memberId',
-          ],
-          order: { date: 'ASC', startTime: 'ASC' },
+    return this.workspaceOrmManager.executeInWorkspaceContext(async () => {
+      const shiftRepository =
+        this.workspaceOrmManager.getRepository<ShiftWorkspaceEntity>('shift', {
+          shouldBypassPermissionChecks: true,
         });
 
-        const memberNameById = await this.loadMemberNames(
-          shifts
-            .map((shift) => shift.memberId)
-            .filter((memberId): memberId is string => isDefined(memberId)),
-        );
+      // SAFE FIELDS ONLY: the select list is the security boundary — sensitive
+      // attendance/cancel/pay columns are never read out of the database here.
+      const shifts = await shiftRepository.find({
+        where: {
+          date: Between(fromDate, toDate),
+          status: Not('CANCELLED'),
+        },
+        select: [
+          'id',
+          'date',
+          'status',
+          'templateCode',
+          'templateName',
+          'startTime',
+          'endTime',
+          'shiftTemplateId',
+          'memberId',
+        ],
+        order: { date: 'ASC', startTime: 'ASC' },
+      });
 
-        return shifts.map((shift) => ({
-          id: shift.id,
-          date: shift.date,
-          status: shift.status,
-          templateCode: shift.templateCode,
-          templateName: shift.templateName,
-          startTime: shift.startTime,
-          endTime: shift.endTime,
-          shiftTemplateId: shift.shiftTemplateId,
-          memberId: shift.memberId,
-          memberName: isDefined(shift.memberId)
-            ? (memberNameById.get(shift.memberId) ?? null)
-            : null,
-        }));
-      },
-      authContext,
-    );
+      const memberNameById = await this.loadMemberNames(
+        shifts
+          .map((shift) => shift.memberId)
+          .filter((memberId): memberId is string => isDefined(memberId)),
+      );
+
+      return shifts.map((shift) => ({
+        id: shift.id,
+        date: shift.date,
+        status: shift.status,
+        templateCode: shift.templateCode,
+        templateName: shift.templateName,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        shiftTemplateId: shift.shiftTemplateId,
+        memberId: shift.memberId,
+        memberName: isDefined(shift.memberId)
+          ? (memberNameById.get(shift.memberId) ?? null)
+          : null,
+      }));
+    }, authContext);
   }
 
   // Resolve each distinct memberId to a "FirstName LastName" display string from
