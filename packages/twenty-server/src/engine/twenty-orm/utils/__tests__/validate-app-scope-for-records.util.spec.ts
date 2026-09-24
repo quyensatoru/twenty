@@ -6,16 +6,9 @@ import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/wo
 import { RelationType } from 'src/engine/metadata-modules/field-metadata/interfaces/relation-type.interface';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { resolveRelationFromFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { PermissionsException } from 'src/engine/metadata-modules/permissions/permissions.exception';
 import { validateAppScopeForRecords } from 'src/engine/twenty-orm/utils/validate-app-scope-for-records.util';
-
-jest.mock(
-  'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util',
-);
-
-const resolveRelationMock = jest.mocked(resolveRelationFromFlatFieldMetadata);
 
 const MEMBER_ID = 'member-1';
 const GRANTED_APP_ID = 'app-granted';
@@ -62,6 +55,8 @@ const buildInternalContext = (): WorkspaceInternalContext => {
           id,
           name: 'app',
           type: FieldMetadataType.RELATION,
+          settings: { relationType: RelationType.MANY_TO_ONE },
+          relationTargetObjectMetadataId: RELATIONS[id]?.targetObjectId ?? null,
         } as unknown as FlatFieldMetadata,
       ]),
     ),
@@ -70,21 +65,6 @@ const buildInternalContext = (): WorkspaceInternalContext => {
     ),
   } as unknown as FlatEntityMaps<FlatFieldMetadata>;
 
-  resolveRelationMock.mockImplementation(({ sourceFlatFieldMetadata }) => {
-    const relation = RELATIONS[sourceFlatFieldMetadata.id];
-
-    if (!relation) {
-      return null;
-    }
-
-    return {
-      type: RelationType.MANY_TO_ONE,
-      sourceObjectMetadata: { id: sourceFlatFieldMetadata.id.split('.')[0] },
-      targetObjectMetadata: { id: relation.targetObjectId },
-      sourceFieldMetadata: { name: relation.fieldName },
-      targetFieldMetadata: { name: relation.fieldName },
-    } as ReturnType<typeof resolveRelationFromFlatFieldMetadata>;
-  });
 
   return {
     workspaceId: 'workspace-1',
@@ -124,10 +104,6 @@ const validate = ({
     shouldBypassPermissionChecks: false,
     mode,
   });
-
-afterEach(() => {
-  resolveRelationMock.mockReset();
-});
 
 describe('validateAppScopeForRecords', () => {
   it('accepts an insert into an app the member can write', () => {

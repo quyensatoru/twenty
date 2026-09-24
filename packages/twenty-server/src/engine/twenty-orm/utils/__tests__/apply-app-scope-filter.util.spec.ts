@@ -6,15 +6,8 @@ import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/wo
 import { RelationType } from 'src/engine/metadata-modules/field-metadata/interfaces/relation-type.interface';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { resolveRelationFromFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { applyAppScopeFilter } from 'src/engine/twenty-orm/utils/apply-app-scope-filter.util';
-
-jest.mock(
-  'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util',
-);
-
-const resolveRelationMock = jest.mocked(resolveRelationFromFlatFieldMetadata);
 
 const MEMBER_ID = 'member-1';
 const GRANTED_APP_ID = 'app-granted';
@@ -63,6 +56,8 @@ const buildInternalContext = (): WorkspaceInternalContext => {
           id,
           name: 'app',
           type: FieldMetadataType.RELATION,
+          settings: { relationType: RelationType.MANY_TO_ONE },
+          relationTargetObjectMetadataId: RELATIONS[id]?.targetObjectId ?? null,
         } as unknown as FlatFieldMetadata,
       ]),
     ),
@@ -71,21 +66,6 @@ const buildInternalContext = (): WorkspaceInternalContext => {
     ),
   } as unknown as FlatEntityMaps<FlatFieldMetadata>;
 
-  resolveRelationMock.mockImplementation(({ sourceFlatFieldMetadata }) => {
-    const relation = RELATIONS[sourceFlatFieldMetadata.id];
-
-    if (!relation) {
-      return null;
-    }
-
-    return {
-      type: RelationType.MANY_TO_ONE,
-      sourceObjectMetadata: { id: sourceFlatFieldMetadata.id.split('.')[0] },
-      targetObjectMetadata: { id: relation.targetObjectId },
-      sourceFieldMetadata: { name: relation.fieldName },
-      targetFieldMetadata: { name: relation.fieldName },
-    } as ReturnType<typeof resolveRelationFromFlatFieldMetadata>;
-  });
 
   return {
     // getWorkspaceSchemaName base36-encodes this as a UUID hex string, so it
@@ -135,10 +115,6 @@ const applyFilterOn = ({
 
   return queryBuilder;
 };
-
-afterEach(() => {
-  resolveRelationMock.mockReset();
-});
 
 describe('applyAppScopeFilter', () => {
   it('keeps app-less rows of an unassigned-visible object reachable', () => {

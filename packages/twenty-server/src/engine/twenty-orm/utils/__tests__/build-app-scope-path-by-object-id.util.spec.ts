@@ -3,15 +3,8 @@ import { FieldMetadataType } from 'twenty-shared/types';
 import { RelationType } from 'src/engine/metadata-modules/field-metadata/interfaces/relation-type.interface';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { resolveRelationFromFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { buildAppScopePathByObjectId } from 'src/engine/twenty-orm/utils/build-app-scope-path-by-object-id.util';
-
-jest.mock(
-  'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util',
-);
-
-const resolveRelationMock = jest.mocked(resolveRelationFromFlatFieldMetadata);
 
 // Every relation in this fixture is MANY_TO_ONE, keyed by the "many" side
 // that owns the field: `app` (the scope root's target), `project` (the
@@ -63,6 +56,9 @@ const buildFixtures = () => {
         {
           id,
           type: FieldMetadataType.RELATION,
+          name: RELATIONS[id]?.fieldName,
+          settings: { relationType: RelationType.MANY_TO_ONE },
+          relationTargetObjectMetadataId: RELATIONS[id]?.targetObjectId ?? null,
         } as unknown as FlatFieldMetadata,
       ]),
     ),
@@ -71,30 +67,9 @@ const buildFixtures = () => {
     ),
   } as unknown as FlatEntityMaps<FlatFieldMetadata>;
 
-  resolveRelationMock.mockImplementation(({ sourceFlatFieldMetadata }) => {
-    const relation = RELATIONS[sourceFlatFieldMetadata.id];
-
-    if (!relation) {
-      return null;
-    }
-
-    const sourceObjectId = sourceFlatFieldMetadata.id.split('.')[0];
-
-    return {
-      type: RelationType.MANY_TO_ONE,
-      sourceObjectMetadata: { id: sourceObjectId },
-      targetObjectMetadata: { id: relation.targetObjectId },
-      sourceFieldMetadata: { name: relation.fieldName },
-      targetFieldMetadata: { name: relation.fieldName },
-    } as ReturnType<typeof resolveRelationFromFlatFieldMetadata>;
-  });
 
   return { flatObjectMetadataMaps, flatFieldMetadataMaps };
 };
-
-afterEach(() => {
-  resolveRelationMock.mockReset();
-});
 
 describe('buildAppScopePathByObjectId', () => {
   it('marks `app` itself as IS_APP_ITSELF', () => {

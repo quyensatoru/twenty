@@ -9,7 +9,8 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
 // granted permissions, plus the raw all-object-records role flags used for
 // app-scope bypass). Discovered automatically by WorkspaceCacheService via
 // NestJS's DiscoveryService, so this module only needs to be imported
-// somewhere in the app's module graph — see MetadataEngineModule.
+// somewhere in the app's module graph. TwentyOrmModule imports it because
+// every workspace ORM context (API server and queue worker alike) loads it.
 @Module({
   imports: [TypeOrmModule.forFeature([RoleEntity])],
   providers: [

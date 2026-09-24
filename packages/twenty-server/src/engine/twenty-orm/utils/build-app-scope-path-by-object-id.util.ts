@@ -6,10 +6,8 @@ import { RelationType } from 'src/engine/metadata-modules/field-metadata/interfa
 import { computeMorphOrRelationFieldJoinColumnName } from 'src/engine/metadata-modules/field-metadata/utils/compute-morph-or-relation-field-join-column-name.util';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
-import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type OrmFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/orm-flat-field-metadata.type';
 import { isFlatFieldMetadataOfType } from 'src/engine/metadata-modules/flat-field-metadata/utils/is-flat-field-metadata-of-type.util';
-import { resolveRelationFromFlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/utils/resolve-relation-from-flat-field-metadata.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { buildObjectIdByNameMaps } from 'src/engine/metadata-modules/flat-object-metadata/utils/build-object-id-by-name-maps.util';
 
@@ -64,8 +62,19 @@ export type AppScopePathByObjectId = Record<
 
 type ManyToOneEdge = { fieldName: string; targetObjectId: string };
 
+// Reads the relation straight off the source field: resolving it through the
+// target field would need universalSettings, which the ORM field projection
+// does not carry, and crashes on morph relations.
+const getManyToOneTargetObjectId = (
+  field: OrmFlatFieldMetadata<FieldMetadataType.RELATION>,
+): string | null =>
+  field.settings?.relationType === RelationType.MANY_TO_ONE &&
+  isDefined(field.relationTargetObjectMetadataId)
+    ? field.relationTargetObjectMetadataId
+    : null;
+
 // A single forward MANY_TO_ONE hop, resolved to its full target FlatObjectMetadata
-// (not the DTO shape `resolveRelationFromFlatFieldMetadata` returns, which is
+// (not a RelationDTO, which is
 // missing fields like `applicationUniversalIdentifier` needed to compute table names).
 export type AppScopeHop = {
   joinColumnName: string;
@@ -163,23 +172,16 @@ export const resolveAppScopeHops = ({
       return [];
     }
 
-    const relation = resolveRelationFromFlatFieldMetadata({
-      sourceFlatFieldMetadata: field,
-      // The fields this reads (objectMetadataId, relationTargetFieldMetadataId,
-      // type, morphId) are all present on the leaner OrmFlatFieldMetadata.
-      flatFieldMetadataMaps:
-        flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
-      flatObjectMetadataMaps,
-    });
+    const targetObjectId = getManyToOneTargetObjectId(field);
 
-    const targetObjectMetadata = isDefined(relation)
+    const targetObjectMetadata = isDefined(targetObjectId)
       ? findFlatEntityByIdInFlatEntityMaps({
-          flatEntityId: relation.targetObjectMetadata.id,
+          flatEntityId: targetObjectId,
           flatEntityMaps: flatObjectMetadataMaps,
         })
       : undefined;
 
-    if (!isDefined(relation) || !isDefined(targetObjectMetadata)) {
+    if (!isDefined(targetObjectMetadata)) {
       return [];
     }
 
@@ -223,18 +225,7 @@ export const findAppJoinColumnName = ({
       continue;
     }
 
-    const relation = resolveRelationFromFlatFieldMetadata({
-      sourceFlatFieldMetadata: field,
-      flatFieldMetadataMaps:
-        flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
-      flatObjectMetadataMaps,
-    });
-
-    if (
-      !isDefined(relation) ||
-      relation.type !== RelationType.MANY_TO_ONE ||
-      relation.targetObjectMetadata.id !== appObjectId
-    ) {
+    if (getManyToOneTargetObjectId(field) !== appObjectId) {
       continue;
     }
 
@@ -270,28 +261,15 @@ const buildManyToOneEdgesByObjectId = ({
         continue;
       }
 
-      const relation = resolveRelationFromFlatFieldMetadata({
-        sourceFlatFieldMetadata: field,
-        flatFieldMetadataMaps:
-          flatFieldMetadataMaps as unknown as FlatEntityMaps<FlatFieldMetadata>,
-        flatObjectMetadataMaps,
-      });
+      // Only forward MANY_TO_ONE hops (the side holding the foreign key),
+      // never the reverse ONE_TO_MANY: we only ever walk "up" toward parents.
+      const targetObjectId = getManyToOneTargetObjectId(field);
 
-      if (!isDefined(relation) || relation.type !== RelationType.MANY_TO_ONE) {
+      if (!isDefined(targetObjectId)) {
         continue;
       }
 
-      // Only forward hops owned by the current object (the "many" side, i.e.
-      // the one holding the foreign key) — never the reverse ONE_TO_MANY
-      // inverse field. We only ever want to walk "up" toward parents.
-      if (relation.sourceObjectMetadata.id !== objectMetadata.id) {
-        continue;
-      }
-
-      edges.push({
-        fieldName: field.name,
-        targetObjectId: relation.targetObjectMetadata.id,
-      });
+      edges.push({ fieldName: field.name, targetObjectId });
     }
 
     edgesByObjectId[objectMetadata.id] = edges;
