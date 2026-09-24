@@ -3,7 +3,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Usage: ./run.sh [dev|prod]  (default: prod)
+# Usage: ./run.sh [dev|prod|build]  (default: prod)
+#   build: chỉ build + upgrade DB + flush cache rồi thoát, để pm2
+#          (ecosystem.config.js) chạy server/worker
+#          -> bash run.sh build && pm2 reload ecosystem.config.js
 MODE="${1:-prod}"
 
 if [ "$MODE" = "dev" ]; then
@@ -42,6 +45,10 @@ cp -r packages/twenty-front/build packages/twenty-server/dist/front
 cd packages/twenty-server
 env NODE_ENV=production node dist/command/command.js upgrade
 env NODE_ENV=production node dist/command/command.js cache:flush
+
+if [ "$MODE" = "build" ]; then
+  exit 0
+fi
 
 # 7. Chạy server + worker production (serve luôn cả front, 1 port duy nhất)
 env NODE_ENV=production node dist/main.js &
