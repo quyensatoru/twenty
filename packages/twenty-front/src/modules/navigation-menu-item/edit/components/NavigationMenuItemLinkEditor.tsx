@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
-import { ensureAbsoluteUrl, isDefined, isValidUrl } from 'twenty-shared/utils';
+import { isDefined, isValidUrl } from 'twenty-shared/utils';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { type NavigationMenuItem } from '~/generated-metadata/graphql';
 import { DoubleTextInput } from '@/ui/field/input/components/DoubleTextInput';
+import { normalizeNavigationMenuItemLink } from '@/navigation-menu-item/common/utils/normalizeNavigationMenuItemLink';
 import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
 
 const StyledError = styled.div`
@@ -36,8 +37,9 @@ export const NavigationMenuItemLinkEditor = ({
     firstValue: string;
     secondValue: string;
   }) => {
-    const link = ensureAbsoluteUrl(secondValue.trim());
-    if (!isValidUrl(link)) {
+    const link = normalizeNavigationMenuItemLink(secondValue);
+    const isInAppPath = /^\/(?!\/)./.test(link);
+    if (!isInAppPath && !isValidUrl(link)) {
       setError(true);
       return;
     }
