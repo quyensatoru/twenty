@@ -21,12 +21,15 @@ const viewHasProjectFilter = (
       return false;
     }
 
-    try {
-      const parsedValue = JSON.parse(viewFilter.value) as {
-        selectedRecordIds?: string[];
-      };
+    // Seeded filters come back as an object, UI-saved ones as a JSON string.
+    const rawValue: unknown = viewFilter.value;
 
-      return parsedValue.selectedRecordIds?.includes(projectId) ?? false;
+    try {
+      const parsedValue = (
+        typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue
+      ) as { selectedRecordIds?: string[] } | null;
+
+      return parsedValue?.selectedRecordIds?.includes(projectId) ?? false;
     } catch {
       return false;
     }

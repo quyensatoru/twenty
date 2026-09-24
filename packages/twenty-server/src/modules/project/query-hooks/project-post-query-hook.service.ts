@@ -331,7 +331,20 @@ export class ProjectPostQueryHookService {
     return { byProjectId };
   }
 
-  private parseSelectedRecordIds(value: unknown): string[] {
+  // Filters saved from the UI store their value as a JSON string, while the
+  // ones seeded here store a plain object: both must match, or a project with
+  // a user-made Kanban view gets a duplicate empty one.
+  private parseSelectedRecordIds(rawValue: unknown): string[] {
+    let value = rawValue;
+
+    if (typeof rawValue === 'string') {
+      try {
+        value = JSON.parse(rawValue);
+      } catch {
+        return [];
+      }
+    }
+
     if (
       isDefined(value) &&
       typeof value === 'object' &&
