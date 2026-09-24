@@ -80,11 +80,8 @@ export const useNavigationMenuItemFolderOpenState = ({
     }
 
     if (!isOpen) {
-      const firstNonLinkItem = folderChildrenNavigationMenuItems.find(
+      const firstNavigableItem = folderChildrenNavigationMenuItems.find(
         (item) => {
-          if (item.type === NavigationMenuItemType.LINK) {
-            return false;
-          }
           const computedLink = getNavigationMenuItemComputedLink({
             item,
             objectMetadataItems,
@@ -92,19 +89,26 @@ export const useNavigationMenuItemFolderOpenState = ({
             lastVisitedViewPerObjectMetadataItem,
             isInitialObjectViewEnabled,
           });
+
+          // External links must not open on their own; in-app paths such as
+          // /task route inside the app like object items do.
+          if (item.type === NavigationMenuItemType.LINK) {
+            return /^\/(?!\/)./.test(computedLink);
+          }
+
           return isNonEmptyString(computedLink);
         },
       );
-      if (isDefined(firstNonLinkItem)) {
+      if (isDefined(firstNavigableItem)) {
         const link = getNavigationMenuItemComputedLink({
-          item: firstNonLinkItem,
+          item: firstNavigableItem,
           objectMetadataItems,
           views,
           lastVisitedViewPerObjectMetadataItem,
           isInitialObjectViewEnabled,
         });
         if (isNonEmptyString(link)) {
-          setLastClickedNavigationMenuItemId(firstNonLinkItem.id);
+          setLastClickedNavigationMenuItemId(firstNavigableItem.id);
           navigate(link);
         }
       }
