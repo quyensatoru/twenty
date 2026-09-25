@@ -8,6 +8,7 @@ import { useAttachmentSync } from '@/blocknote-editor/hooks/useAttachmentSync';
 import { useReplaceBlockEditorContent } from '@/blocknote-editor/hooks/useReplaceBlockEditorContent';
 import { parseInitialBlocknote } from '@/blocknote-editor/utils/parseInitialBlocknote';
 import { prepareBodyWithSignedUrls } from '@/blocknote-editor/utils/prepareBodyWithSignedUrls';
+import { stripFileTokensFromBlocknote } from '@/blocknote-editor/utils/stripFileTokensFromBlocknote';
 import { type Attachment } from '@/activities/files/types/Attachment';
 import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
 import { getActivityTargetObjectFieldIdName } from '@/activities/utils/getActivityTargetObjectFieldIdName';
@@ -149,7 +150,9 @@ export const RichTextFieldEditor = ({
 
   const { updateDraft, markDirty, flush, draftResyncKey } =
     useRecordSeededDraft({
-      upstreamDraft: { blocknote: fieldValue?.blocknote ?? '' },
+      upstreamDraft: {
+        blocknote: stripFileTokensFromBlocknote(fieldValue?.blocknote),
+      },
       persistDebounceMs: 300,
       resetKey: recordId,
       onPersist: ({ blocknote }) => {
@@ -243,7 +246,9 @@ export const RichTextFieldEditor = ({
     // persisting optimistically rewrites the record, and doing that earlier
     // would make the attachment diff below compare the new body with itself,
     // leaving attachments removed from the body undeleted.
-    updateDraft({ blocknote: newStringifiedBody });
+    updateDraft({
+      blocknote: stripFileTokensFromBlocknote(newStringifiedBody),
+    });
 
     await syncAttachments(newStringifiedBody, oldFieldValue?.blocknote);
   };
