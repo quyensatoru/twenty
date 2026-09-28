@@ -1,0 +1,38 @@
+// Twenty's own CSS variables, so the pages follow light and dark mode. The
+// fallbacks only matter when a page renders outside a Twenty host.
+export const SHIFT_TOKENS = {
+  fontFamily: 'var(--t-font-family, Inter, sans-serif)',
+  textPrimary: 'var(--t-font-color-primary, #333333)',
+  textSecondary: 'var(--t-font-color-secondary, #666666)',
+  textTertiary: 'var(--t-font-color-tertiary, #999999)',
+  textInverted: 'var(--t-font-color-inverted, #ffffff)',
+  textDanger: 'var(--t-font-color-danger, #d92d20)',
+  background: 'var(--t-background-primary, #ffffff)',
+  backgroundSecondary: 'var(--t-background-secondary, #fcfcfc)',
+  backgroundTertiary: 'var(--t-background-tertiary, #f1f1f1)',
+  backgroundHover: 'var(--t-background-transparent-light, rgba(0,0,0,0.04))',
+  backgroundTransparentLighter:
+    'var(--t-background-transparent-lighter, rgba(0,0,0,0.02))',
+  backgroundBlue: 'var(--t-background-transparent-blue, rgba(25,97,237,0.08))',
+  backgroundOrange:
+    'var(--t-background-transparent-orange, rgba(234,88,12,0.08))',
+  border: 'var(--t-border-color-medium, #ebebeb)',
+  borderLight: 'var(--t-border-color-light, #f1f1f1)',
+  borderStrong: 'var(--t-border-color-strong, #d6d6d6)',
+  accent: 'var(--t-color-blue, #1961ed)',
+  accentSoft: 'var(--t-accent-tertiary, #e8efff)',
+  accentHover: 'var(--t-accent-accent10, #1450c7)',
+  green: 'var(--t-color-green, #16a34a)',
+  greenSoft: 'var(--t-tag-background-green, #e6f6ec)',
+  greenText: 'var(--t-tag-text-green, #167d3c)',
+  orange: 'var(--t-color-orange, #ea580c)',
+  red: 'var(--t-color-red, #dc2626)',
+  redSoft: 'var(--t-tag-background-red, #fdeceb)',
+  redText: 'var(--t-tag-text-red, #b3261e)',
+  yellow: 'var(--t-color-yellow, #ca8a04)',
+  gray: 'var(--t-color-gray, #8a8f98)',
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  shadow: 'var(--t-box-shadow-strong, 0 4px 16px rgba(0,0,0,0.12))',
+  radius: 'var(--t-border-radius-md, 8px)',
+  radiusSmall: 'var(--t-border-radius-sm, 4px)',
+} as const;
