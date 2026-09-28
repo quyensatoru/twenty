@@ -247,13 +247,33 @@ SDK không export đường ship stylesheet, nên `:hover` / `:focus` / media qu
 khiển bằng state qua event. Màu lấy từ CSS variable của Twenty (`src/front-components/components/
 task-tokens.ts`) nên vẫn theo light/dark mode.
 
-### 5.10 `issue.merchant` thành quan hệ nhiều-nhiều
+### 5.10 `issue.merchants` — quan hệ junction, giữ nguyên
 
-Fork có `issue.merchantId` (một merchant cho một issue). App dùng object nối `issueMerchant` với
-unique index `(merchantId, issueId)` — một issue liên kết được nhiều merchant. Xem `MIGRATION.md`
-cho phần dữ liệu.
+Entity cũ của fork có `issue.merchantId` (một merchant cho một issue), nhưng metadata thực tế đã là
+**junction**: `issue.merchants` và `merchant.issues` là hai field `ONE_TO_MANY` mang
+`junctionTargetFieldId`, đi qua object nối `issueMerchant` (unique index `(merchantId, issueId)`).
+Một issue liên kết được nhiều merchant và ngược lại.
 
-### 5.11 View mặc định
+App khai lại đúng hình dạng đó bằng `universalSettings.junctionTargetFieldUniversalIdentifier`
+(`src/fields/merchants-on-issue.field.ts`, `src/fields/issues-on-merchant.field.ts`), nên **picker
+merchant trên issue và picker issue trên merchant giữ nguyên như bản fork** — không phải đi vòng
+qua bản ghi `issueMerchant`.
+
+Nếu chỉ khai hai vế `MANY_TO_ONE` trên `issueMerchant` thì `plan` sẽ **xoá** hai field junction này
+(dữ liệu trong `_issueMerchant` vẫn còn, nhưng picker trực tiếp thì mất). Diễn tập đã gặp đúng lỗi
+đó.
+
+### 5.11 `issueMerchant` hiện ra trong UI
+
+Fork đánh dấu `issueMerchant` là `isSystem` để giấu khỏi UI, nhưng app sync từ chối sửa system
+object nên bước re-parent phải gỡ cờ (`scripts/02-reparent-metadata.sql`). **Hệ quả: `issueMerchant`
+xuất hiện như một object bình thường**, có bảng record riêng.
+
+Nó chỉ là bảng nối; người dùng nên thao tác qua picker `Merchants` trên issue (mục 5.10). App không
+tạo navigation item cho nó, nên nó chỉ lộ ra ở màn Search và danh sách object trong Settings. Muốn
+giấu hẳn thì tắt quyền đọc object đó cho role Member (mục 4.1).
+
+### 5.12 View mặc định
 
 Các view `INDEX` ("All Issues", "All Projects"…) mà engine tự tạo cho object standard không tái sử
 dụng được: manifest của app luôn tạo view **bổ sung**. App ship view riêng tên "Issues",

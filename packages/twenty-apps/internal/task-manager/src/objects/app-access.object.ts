@@ -1,7 +1,7 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
 
-import { APP_ACCESS_PERMISSION_OPTIONS } from '../constants/app-access-permission-options';
 import { getSystemFieldUniversalIdentifier } from '../constants/derived-system-field-identifiers';
+import { APP_ACCESS_PERMISSION_OPTIONS } from '../constants/app-access-permission-options';
 import {
   APP_ACCESS_OBJECT_UID,
   APP_ACCESS_PERMISSIONS_FIELD_UID,
@@ -19,6 +19,13 @@ export default defineObject({
   labelPlural: 'App Accesses',
   description: 'A grant of app-scoped permissions to a workspace member',
   icon: 'IconLock',
+  // `id` is engine-derived, so it can never appear in `fields` below and
+  // `twenty plan` warns that it cannot verify this identifier. The warning is
+  // a false alarm here and the two alternatives are both worse: omitting the
+  // identifier makes the engine synthesise a `name` column on the table, and
+  // declaring `id` in `fields` is rejected outright with
+  // FIELD_MUTATION_NOT_ALLOWED. The derived values are pinned by
+  // __tests__/derived-label-identifiers.test.ts against what the engine stores.
   labelIdentifierFieldMetadataUniversalIdentifier:
     getSystemFieldUniversalIdentifier({
       objectUniversalIdentifier: APP_ACCESS_OBJECT_UID,

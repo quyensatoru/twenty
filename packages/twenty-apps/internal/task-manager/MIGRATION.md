@@ -101,18 +101,50 @@ bảng cần đổi chủ:
 | `fieldMetadata` | **có** | Bỏ sót là mất cột (và dữ liệu trong cột) |
 | `indexMetadata` | **có** | Bỏ sót là mất index, gồm cả unique index trên `issue.issueKey` mà vòng retry cấp key dựa vào |
 | `searchFieldMetadata` | **có** | Cột `searchVector` của `app`, `issue`, `merchant`, `appAccess` |
-| `indexFieldMetadata` | không | Không có cột `applicationId`, đi theo `indexMetadata` qua `indexMetadataId` |
-| `viewFilter`, `viewFilterGroup`, `viewSort`, `objectPermission`, `fieldPermission` | không | **Không có cột `applicationId`** trong repo hiện tại, dù `CUTOVER.md` có nhắc tên |
-| `view`, `viewField`, `viewGroup`, `viewFieldGroup` | không | Xem mục 4.1 |
+| `view`, `viewField`, `viewGroup`, `viewFieldGroup`, `viewFilter`, `viewFilterGroup`, `viewSort` | **có** | Bỏ sót thì `apply` dừng với `ENTITY_ALREADY_EXISTS: ... already exists in view maps from application "20202020-…"` |
+| `objectPermission`, `fieldPermission` | **có** (nếu còn dòng thuộc twenty-standard) | Quyền do người dùng cấu hình thuộc workspace Custom application nên không bị đụng |
+| `indexFieldMetadata` | không | Là bảng duy nhất trong nhóm này **thật sự** không có `applicationId`; đi theo `indexMetadata` qua `indexMetadataId` |
 | `pageLayout`, `pageLayoutTab`, `pageLayoutWidget`, `navigationMenuItem` | không | Chỉ là trình bày; app ship lại bằng universalIdentifier mới. Bản standard cũ bị standard sync dọn |
+
+> **Cái bẫy đã làm sót `view` trong lần diễn tập đầu.** Mọi bảng metadata mang
+> `applicationId` đều **kế thừa** cột đó từ lớp cha `SyncableEntity`, nên `grep
+> applicationId` trên file entity trả về rỗng dù cột vẫn tồn tại. Đừng kết luận
+> từ file entity — đọc `SyncableEntity`, hoặc hỏi thẳng database:
+>
+> ```sql
+> SELECT table_name FROM information_schema.columns
+>  WHERE table_schema = 'core' AND column_name = 'applicationId'
+>  ORDER BY table_name;
+> ```
+>
+> Vì lý do đó `02-reparent-metadata.sql` kết thúc bằng một khối chốt chặn quét
+> lại toàn bộ quan hệ và `RAISE EXCEPTION` nếu còn bất kỳ dòng nào của object
+> task-manager thuộc twenty-standard. Nó nằm trong cùng transaction, nên một lần
+> re-parent thiếu sẽ rollback chứ không bao giờ commit được một nửa. Đã kiểm
+> chứng cả hai chiều: chạy trên database đã cutover thì im lặng đi qua, còn khi
+> cố tình trả 3 dòng `viewField` về twenty-standard thì dừng với
+> `Con metadata thuoc twenty-standard tren object task-manager: viewField=3`.
 
 ### 4.1 View: cái gì mất, cái gì còn
 
-- **View `INDEX` do engine sinh ra** cho `issue`, `project`, `sprint`… thuộc
-  standard application → standard sync xoá ở Bước 4. Tuỳ biến người dùng lưu
-  trên chúng (ẩn/hiện cột, sort, độ rộng) **mất**. App ship view thay thế tên
-  "Issues", "Projects", "Sprints"… và engine cũng sinh lại view `INDEX` mới cho
-  object đã thuộc app.
+- **View `All {objectLabelPlural}` khoá `INDEX` và `X Record Page Fields` khoá
+  `FIELDS_WIDGET`** là view engine tự cấp: chúng **còn nguyên**. `apply` không
+  xoá view có `key`, và đây cũng là view người dùng bấm vào mặc định.
+- **10 view `All Xs` (không có `key`)** — bản do fork sinh ra — bị `apply` xoá
+  cùng 41 viewField của chúng, và app tạo lại 10 view tương đương mang tên
+  "Issues", "Projects", "Sprints"… Đo trên database diễn tập: cả 10 view này có
+  **0 viewFilter và 0 viewSort**, tức chưa ai tuỳ biến gì ngoài tập cột mặc
+  định, mà tập cột đó chính là tập app ship lại (lấy từ `viewFieldNames` của
+  fork). Không có bảng `favorite` trong workspace schema nên cũng không có
+  favourite nào trỏ vào chúng.
+
+  **Vì sao không tái dùng universalIdentifier của chúng để tránh churn:** các
+  UID đó là UUIDv5 **do engine dẫn xuất** (`b7c29366-c24b-58f9-…`, nibble phiên
+  bản `5`), không phải hằng số do người viết đặt. Hard-code chúng vào manifest
+  là tranh chấp định danh với chính engine — và Bước 2b vừa cho thấy dẫn xuất
+  đổi theo namespace application, nên một lần re-parent nữa sẽ làm chúng lệch
+  lại. Mất mát thực tế là 0 dòng dữ liệu và 0 tuỳ biến, nên đổi mới sạch hơn là
+  đi mượn.
 - **View Kanban per-project** mà post-hook `project.createOne` của fork tạo lúc
   runtime **vẫn còn nguyên**: `ViewService.createOne` gán chúng cho
   *workspace Custom application*, không phải standard, nên cả hai vòng sync đều

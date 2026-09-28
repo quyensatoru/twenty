@@ -50,6 +50,7 @@ export default defineObject({
       isNullable: true,
       isUnique: true,
       isUIEditable: false,
+      isSearchable: true,
     },
     {
       universalIdentifier: ISSUE_DESCRIPTION_FIELD_UID,

@@ -41,6 +41,7 @@ export default defineObject({
       icon: 'IconKey',
       isNullable: true,
       isUnique: true,
+      isSearchable: true,
     },
     {
       universalIdentifier: PROJECT_NEXT_ISSUE_NUMBER_FIELD_UID,
@@ -61,6 +62,7 @@ export default defineObject({
       description: 'Project description',
       icon: 'IconFilePencil',
       isNullable: true,
+      isSearchable: true,
     },
     {
       universalIdentifier: PROJECT_CATEGORY_FIELD_UID,

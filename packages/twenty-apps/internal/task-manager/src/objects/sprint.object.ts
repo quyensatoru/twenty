@@ -49,6 +49,7 @@ export default defineObject({
       description: 'Sprint goal',
       icon: 'IconTarget',
       isNullable: true,
+      isSearchable: true,
     },
     {
       universalIdentifier: SPRINT_START_DATE_FIELD_UID,

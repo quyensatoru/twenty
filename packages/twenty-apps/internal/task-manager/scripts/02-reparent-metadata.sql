@@ -248,6 +248,75 @@ UPDATE core."viewFilter" fl
  WHERE fl."viewId" IN (SELECT "id" FROM owned_views)
    AND fl."applicationId" <> (SELECT "id" FROM owner);
 
+-- viewFieldGroup và viewFilterGroup: cùng họ với các bảng con của view ở trên.
+-- Chúng kế thừa applicationId từ SyncableEntity nên không thấy cột này khi đọc
+-- entity file — phải đọc lớp cha. Rehearsal không có dòng nào, production thì
+-- có thể.
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewFieldGroup" g
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE g."viewId" IN (SELECT "id" FROM owned_views)
+   AND g."applicationId" <> (SELECT "id" FROM owner);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewFilterGroup" g
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE g."viewId" IN (SELECT "id" FROM owned_views)
+   AND g."applicationId" <> (SELECT "id" FROM owner);
+
+-- objectPermission và fieldPermission treo trực tiếp trên object/field, không
+-- qua view. Role do người dùng cấu hình thuộc workspace Custom application nên
+-- không bị đụng; chỉ những dòng còn thuộc twenty-standard mới chuyển.
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+standard AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '20202020-64aa-4b6f-b003-9c74b97cee20'
+),
+owned_objects AS (
+  SELECT "id" FROM core."objectMetadata"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."objectPermission" p
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE p."objectMetadataId" IN (SELECT "id" FROM owned_objects)
+   AND p."applicationId" = (SELECT "id" FROM standard);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+standard AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '20202020-64aa-4b6f-b003-9c74b97cee20'
+),
+owned_objects AS (
+  SELECT "id" FROM core."objectMetadata"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."fieldPermission" p
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE p."objectMetadataId" IN (SELECT "id" FROM owned_objects)
+   AND p."applicationId" = (SELECT "id" FROM standard);
+
 -- ---------------------------------------------------------------------------
 -- Cờ isSystem.
 --
@@ -265,5 +334,73 @@ UPDATE core."fieldMetadata"
    SET "isSystem" = false
  WHERE "universalIdentifier" = 'cf46bf2b-8c71-4925-9533-9abc7d2e57cb'
    AND "isSystem";
+
+-- ---------------------------------------------------------------------------
+-- CHỐT CHẶN — không phụ thuộc vào việc liệt kê đủ bảng ở trên.
+--
+-- Mọi bảng metadata mang applicationId đều kế thừa nó từ SyncableEntity, nên
+-- đọc entity file sẽ KHÔNG thấy cột (đây chính là cái bẫy đã làm sót view ở
+-- lần diễn tập đầu). Khối này quét lại theo quan hệ thật và dừng transaction
+-- nếu còn bất kỳ dòng nào của object task-manager thuộc twenty-standard.
+-- ---------------------------------------------------------------------------
+
+DO $$
+DECLARE
+  leftovers text;
+BEGIN
+  WITH owner AS (
+    SELECT "id" FROM core."application"
+     WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+  ),
+  standard AS (
+    SELECT "id" FROM core."application"
+     WHERE "universalIdentifier" = '20202020-64aa-4b6f-b003-9c74b97cee20'
+  ),
+  obj AS (
+    SELECT "id" FROM core."objectMetadata"
+     WHERE "applicationId" = (SELECT "id" FROM owner)
+  ),
+  vw AS (
+    SELECT "id" FROM core."view" WHERE "objectMetadataId" IN (SELECT "id" FROM obj)
+  ),
+  found AS (
+    SELECT 'objectMetadata' AS t, count(*) AS n FROM core."objectMetadata" x
+      WHERE x."id" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'fieldMetadata', count(*) FROM core."fieldMetadata" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'indexMetadata', count(*) FROM core."indexMetadata" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'searchFieldMetadata', count(*) FROM core."searchFieldMetadata" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'view', count(*) FROM core."view" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewField', count(*) FROM core."viewField" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewGroup', count(*) FROM core."viewGroup" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewFieldGroup', count(*) FROM core."viewFieldGroup" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewFilter', count(*) FROM core."viewFilter" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewFilterGroup', count(*) FROM core."viewFilterGroup" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'viewSort', count(*) FROM core."viewSort" x
+      WHERE x."viewId" IN (SELECT "id" FROM vw) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'objectPermission', count(*) FROM core."objectPermission" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+    UNION ALL SELECT 'fieldPermission', count(*) FROM core."fieldPermission" x
+      WHERE x."objectMetadataId" IN (SELECT "id" FROM obj) AND x."applicationId" = (SELECT "id" FROM standard)
+  )
+  SELECT string_agg(t || '=' || n, ', ' ORDER BY t) INTO leftovers
+    FROM found WHERE n > 0;
+
+  IF leftovers IS NOT NULL THEN
+    RAISE EXCEPTION
+      'Con metadata thuoc twenty-standard tren object task-manager: %. Bo sung UPDATE roi chay lai.',
+      leftovers;
+  END IF;
+
+  RAISE NOTICE 'Re-parent day du: khong con dong nao thuoc twenty-standard.';
+END $$;
 
 COMMIT;

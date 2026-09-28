@@ -16,6 +16,13 @@ export default defineObject({
   labelPlural: 'Worklogs',
   description: 'A logged time entry on an issue',
   icon: 'IconClock',
+  // `id` is engine-derived, so it can never appear in `fields` below and
+  // `twenty plan` warns that it cannot verify this identifier. The warning is
+  // a false alarm here and the two alternatives are both worse: omitting the
+  // identifier makes the engine synthesise a `name` column on the table, and
+  // declaring `id` in `fields` is rejected outright with
+  // FIELD_MUTATION_NOT_ALLOWED. The derived values are pinned by
+  // __tests__/derived-label-identifiers.test.ts against what the engine stores.
   labelIdentifierFieldMetadataUniversalIdentifier:
     getSystemFieldUniversalIdentifier({
       objectUniversalIdentifier: WORKLOG_OBJECT_UID,
@@ -30,6 +37,7 @@ export default defineObject({
       description: 'Worklog description',
       icon: 'IconNotes',
       isNullable: true,
+      isSearchable: true,
     },
     {
       universalIdentifier: WORKLOG_TIME_SPENT_MINUTES_FIELD_UID,
