@@ -294,8 +294,6 @@ export const TASK_MANAGER_FOLDER_NAV_ITEM_UID =
 export const BOARD_NAV_ITEM_UID = '01e75528-be2e-4f06-9e8d-07eaac653cde';
 export const BACKLOG_NAV_ITEM_UID = 'bd8c2fa9-79c3-4639-84cc-7db41ad988de';
 export const ROADMAP_NAV_ITEM_UID = '9ca57e58-e4c7-4334-8ae1-0a0c86faff84';
-export const ISSUE_DETAIL_NAV_ITEM_UID =
-  '75ccbce9-b1c3-4e1f-8300-be86089841dc';
 export const PROJECTS_NAV_ITEM_UID = 'df0304b5-36e3-4f7d-b787-9a5b54a44951';
 export const ISSUES_NAV_ITEM_UID = '37e62b52-051f-4457-b77b-a40e0af06f5a';
 export const SPRINTS_NAV_ITEM_UID = '28187522-2df6-4a0e-a856-7828dd81f3e2';
@@ -332,14 +330,38 @@ export const ROADMAP_PAGE_LAYOUT_WIDGET_UID =
   'c80fdc39-7693-4e02-b2e6-192ff9c26317';
 export const ROADMAP_FRONT_COMPONENT_UID =
   '5e73f09a-6847-4582-97e0-bbc247d6fafe';
-export const ISSUE_DETAIL_PAGE_LAYOUT_UID =
+// The issue detail page is a RECORD_PAGE of host-rendered widgets, not a front
+// component: description needs the host's real BlockNote editor, which cannot
+// run inside the sandbox, and the field panel the fork hand-rolled is what the
+// FIELDS widget already is.
+export const ISSUE_RECORD_PAGE_LAYOUT_UID =
   'cef71956-64b4-41a1-9771-84b0aa0d474b';
-export const ISSUE_DETAIL_PAGE_LAYOUT_TAB_UID =
+export const ISSUE_RECORD_PAGE_FIELDS_TAB_UID =
   'e80796d1-e0a1-4f1a-aa89-6f257efa1556';
-export const ISSUE_DETAIL_PAGE_LAYOUT_WIDGET_UID =
+export const ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID =
   '116c8bd6-51bb-4153-ab56-86aedb836282';
-export const ISSUE_DETAIL_FRONT_COMPONENT_UID =
-  'd2889eec-e50b-4a8d-8d60-32cd43980a07';
+export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
+  '21f425f4-489a-4920-a42a-64085f6fafb5';
+export const ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID =
+  'e749f306-0cfd-46cd-8e62-6fa425d5d02c';
+export const ISSUE_RECORD_PAGE_COMMENTS_WIDGET_UID =
+  'afee41f0-1817-4d9f-8e2d-3a5e735190df';
+export const ISSUE_RECORD_PAGE_WORKLOGS_WIDGET_UID =
+  'e3c040b4-9b24-4485-bea4-287e7041e158';
+export const ISSUE_RECORD_PAGE_TIMELINE_TAB_UID =
+  'ea1200fc-59bb-4ade-b5bf-41a98d668707';
+export const ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID =
+  '6c18aa28-7604-4e72-9aff-099f62d4a0b3';
+export const ISSUE_RECORD_PAGE_FILES_TAB_UID =
+  '049f1ba2-6e42-48f7-94bf-7f3b3dacc0e1';
+export const ISSUE_RECORD_PAGE_FILES_WIDGET_UID =
+  'f64f2c56-7fde-4287-97f7-e658ea2b2ce4';
+
+// Views the record page's list widgets point at.
+export const ISSUE_COMMENTS_ON_ISSUE_VIEW_UID =
+  '6b30cb9e-eaa9-48b2-bf1a-e4c514f205d8';
+export const WORKLOGS_ON_ISSUE_VIEW_UID =
+  'f0d02352-649e-4b0c-9a4d-2dd43ad8f8f4';
 
 // Logic functions.
 export const BOARD_DATA_LOGIC_FUNCTION_UID =

@@ -3,6 +3,7 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import {
   EPIC_SELECTION,
   ISSUE_SELECTION,
+  ISSUE_STATUS_SELECTION,
   PROJECT_SELECTION,
 } from '../constants/record-selections';
 import { ROADMAP_DATA_ROUTE_PATH } from '../constants/route-paths';
@@ -37,10 +38,16 @@ const handler = async (event: RoutePayload<RoadmapDataBody>) =>
         : projects[0]?.id;
 
     if (projectId === undefined) {
-      return { projects, project: null, epics: [], issues: [] };
+      return {
+        projects,
+        project: null,
+        epics: [],
+        issues: [],
+        issueStatuses: [],
+      };
     }
 
-    const [epics, issues] = await Promise.all([
+    const [epics, issues, issueStatuses] = await Promise.all([
       listScopedRecords({
         client,
         pluralName: 'epics',
@@ -55,6 +62,13 @@ const handler = async (event: RoutePayload<RoadmapDataBody>) =>
         selection: ISSUE_SELECTION,
         orderBy: [{ dueDate: 'AscNullsLast' }],
       }),
+      listScopedRecords({
+        client,
+        pluralName: 'issueStatuses',
+        filter: { projectId: { eq: projectId } },
+        selection: ISSUE_STATUS_SELECTION,
+        orderBy: [{ position: 'AscNullsLast' }],
+      }),
     ]);
 
     return {
@@ -62,6 +76,7 @@ const handler = async (event: RoutePayload<RoadmapDataBody>) =>
       project: projects.find((project) => project.id === projectId) ?? null,
       epics,
       issues,
+      issueStatuses,
     };
   });
 
