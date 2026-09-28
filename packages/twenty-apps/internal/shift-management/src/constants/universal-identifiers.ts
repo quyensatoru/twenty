@@ -267,3 +267,26 @@ export const UPDATE_SHIFT_LOGIC_FUNCTION_UID =
   '5ffca9ac-e6a1-4656-aafc-d2437930eee8';
 export const SHIFT_MEMBERS_LOGIC_FUNCTION_UID =
   'cf03f108-4ff8-4560-a183-272c31550a2a';
+
+// --- Application variables.
+export const SHIFT_LEADER_EMAILS_VARIABLE_UID =
+  'e8227482-fa56-460d-b47d-46092de94ad5';
+
+// --- Index field identifiers. `core."indexFieldMetadata"` has neither a
+// universalIdentifier nor an applicationId column, so these are SDK-level ids
+// only: nothing in the database has to match them and the cutover does not
+// re-parent them.
+export const SHIFT_DATE_INDEX_FIELD_UID =
+  'ddbf0fc3-5784-4eba-8f56-c70f4153fad7';
+export const SHIFT_MEMBER_ID_INDEX_FIELD_UID =
+  'bfc82868-2126-4393-83c9-c7c98a792f08';
+export const SHIFT_TEMPLATE_ID_INDEX_FIELD_UID =
+  '374dce72-c988-4128-90a6-b0aa97d1e319';
+export const SHIFT_TEMPLATE_CODE_INDEX_FIELD_UID =
+  '42d06e6b-6972-46fb-9aeb-965f56e53d43';
+export const SHIFT_TEMPLATE_IS_ACTIVE_INDEX_FIELD_UID =
+  'e9bc658c-36ac-4a8b-b304-970c4fa9ed34';
+export const SPECIAL_DAY_KIND_INDEX_FIELD_UID =
+  '8051fb61-6552-4337-9a84-41a157bf0dee';
+export const SPECIAL_DAY_IS_ACTIVE_INDEX_FIELD_UID =
+  '19627f00-85ac-44ec-887e-4368591c2ded';
