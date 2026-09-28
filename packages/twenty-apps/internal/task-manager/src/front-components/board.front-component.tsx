@@ -2,10 +2,14 @@ import { useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { t } from 'twenty-sdk/front-component';
 
-import { UPDATE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
+import {
+  CREATE_ISSUE_ROUTE_PATH,
+  UPDATE_ISSUE_ROUTE_PATH,
+} from '../constants/route-paths';
 import { BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { type IssueRow } from '../types/task-manager-rows';
 import { BoardColumn } from './components/board-column';
+import { NewIssueComposer } from './components/new-issue-composer';
 import { TaskMessage } from './components/task-message';
 import { TaskPageHeader } from './components/task-page-header';
 import { TaskSelect } from './components/task-select';
@@ -29,6 +33,7 @@ const Board = () => {
   );
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data, isLoading, loadError, reload, setData } = useBoardData({
     projectId,
@@ -91,6 +96,38 @@ const Board = () => {
     } catch (error) {
       setMoveError(readErrorText(error));
       await reload();
+    }
+  };
+
+  const createIssue = async (title: string) => {
+    const projectId = data.project?.id;
+
+    if (projectId === undefined) {
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      await postAppRoute(CREATE_ISSUE_ROUTE_PATH, {
+        projectId,
+        data: {
+          title,
+          // New work lands in the first column and, when a sprint is being
+          // viewed, in that sprint — which is where the person adding it is
+          // looking.
+          ...(data.issueStatuses[0] === undefined
+            ? {}
+            : { statusId: data.issueStatuses[0].id }),
+          ...(data.sprintId === null ? {} : { sprintId: data.sprintId }),
+        },
+      });
+      setMoveError(null);
+      await reload();
+    } catch (error) {
+      setMoveError(readErrorText(error));
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -191,6 +228,12 @@ const Board = () => {
               setProjectId(nextProjectId);
               setSprintSelection(undefined);
             }}
+          />
+        )}
+        {data.project !== null && (
+          <NewIssueComposer
+            isBusy={isCreating}
+            onCreate={(title) => void createIssue(title)}
           />
         )}
         {data.sprints.length > 0 && (

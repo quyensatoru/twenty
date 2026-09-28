@@ -197,7 +197,7 @@ chúng trong route:
 | --- | --- |
 | Seed 5 trạng thái mặc định (Backlog / Todo / In Progress / In Review / Done) | route `create-project` |
 | Sinh `project.key` từ tên | route `create-project` |
-| Sinh `issue.issueKey` | route `create-issue`, `update-issue` |
+| Sinh `issue.issueKey` | route `create-issue`, `update-issue` — trên UI là ô **Issue mới** ở đầu màn Board |
 | Gán `issue.reporter` mặc định là người tạo | route `create-issue` |
 | Gán `worklog.member` mặc định là người ghi | route `create-worklog` |
 | Tính lại `issue.timeSpentMinutes` / `remainingEstimateMinutes` | route `create-worklog`, `update-worklog`, `delete-worklog` |
@@ -278,7 +278,8 @@ Danh sách kiểm bằng tay, theo thứ tự:
    nào." — đúng, fail-closed.
 4. Tạo project qua route (API hoặc UI có gọi route), gán app vừa tạo → project có key và 5 trạng
    thái.
-5. Tạo issue → có `issueKey` dạng `<KEY>-1`, `reporter` là chính mình.
+5. **Board** → gõ tiêu đề vào ô **Issue mới** → Tạo. Thẻ hiện ở cột đầu tiên với `issueKey` dạng
+   `<KEY>-1`, `reporter` là chính mình.
 6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới.
 7. Mở issue → tab Issue có bảng field và editor BlockNote cho Description; tab Activity có bảng
    Comments và Worklogs.
