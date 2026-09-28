@@ -238,8 +238,9 @@ Ngoài phần chung ở `CUTOVER.md` Bước 7:
    tổng worklog.
 7. Tạo issue mới trong project cũ nhất → key tiếp nối đúng, không nhảy số bất
    thường (mục 7).
-8. Làm bước khoá quyền ở `DEPLOY.md` mục 4.1, rồi đăng nhập bằng một member
-   không có `appAccess` và gọi thẳng GraphQL `issues`: phải rỗng.
+8. Chọn mức khoá quyền ở `DEPLOY.md` mục 4.1 và làm. Rồi đăng nhập bằng một
+   member không có `appAccess` trên app đó: Board phải rỗng ở cả hai mức; gọi
+   thẳng GraphQL `issues` chỉ rỗng nếu chọn Mức B.
 
 ## 9. Rollback
 

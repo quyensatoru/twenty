@@ -43,5 +43,9 @@ export type IssueRow = {
   epicId?: string | null;
   parentId?: string | null;
   assigneeId?: string | null;
+  reporterId?: string | null;
   projectId?: string | null;
+  timeSpentMinutes?: number | null;
+  originalEstimateMinutes?: number | null;
+  remainingEstimateMinutes?: number | null;
 };

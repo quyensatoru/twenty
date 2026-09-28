@@ -344,10 +344,16 @@ export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
 export const ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID =
   'e749f306-0cfd-46cd-8e62-6fa425d5d02c';
-export const ISSUE_RECORD_PAGE_COMMENTS_WIDGET_UID =
+// Comments and worklogs are a front component, not a RECORD_TABLE widget: a
+// host widget reads and writes with the VIEWER's token, so it goes blank the
+// moment the Member role loses direct access to these objects — which is
+// exactly the step that makes app-scope real (DEPLOY.md 4.1). Writing through
+// the app's routes is also what keeps the worklog time-tracking recomputation
+// and the comment author rule applied.
+export const ISSUE_ACTIVITY_WIDGET_UID =
   'afee41f0-1817-4d9f-8e2d-3a5e735190df';
-export const ISSUE_RECORD_PAGE_WORKLOGS_WIDGET_UID =
-  'e3c040b4-9b24-4485-bea4-287e7041e158';
+export const ISSUE_ACTIVITY_FRONT_COMPONENT_UID =
+  'd2889eec-e50b-4a8d-8d60-32cd43980a07';
 export const ISSUE_RECORD_PAGE_TIMELINE_TAB_UID =
   'ea1200fc-59bb-4ade-b5bf-41a98d668707';
 export const ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID =
@@ -357,11 +363,6 @@ export const ISSUE_RECORD_PAGE_FILES_TAB_UID =
 export const ISSUE_RECORD_PAGE_FILES_WIDGET_UID =
   'f64f2c56-7fde-4287-97f7-e658ea2b2ce4';
 
-// Views the record page's list widgets point at.
-export const ISSUE_COMMENTS_ON_ISSUE_VIEW_UID =
-  '6b30cb9e-eaa9-48b2-bf1a-e4c514f205d8';
-export const WORKLOGS_ON_ISSUE_VIEW_UID =
-  'f0d02352-649e-4b0c-9a4d-2dd43ad8f8f4';
 
 // Logic functions.
 export const BOARD_DATA_LOGIC_FUNCTION_UID =

@@ -89,22 +89,39 @@ Việc phải làm thay vào đó là **tạo dữ liệu `app` và `appAccess`*
 
 ## 4. Việc phải làm tay sau khi cài
 
-### 4.1 Gỡ quyền đọc/ghi trực tiếp khỏi role Member — **bắt buộc**
+### 4.1 Gỡ quyền trực tiếp khỏi role Member — **bắt buộc**
 
-Kiến trúc này dựa vào việc member **không** đọc/ghi thẳng object qua GraphQL/REST. App-scope được
-thực thi trong route (`src/logic-functions/app-scope/`), không phải trong ORM như bản fork. Nghĩa là
-**một request GraphQL thẳng tới `issues` vẫn trả về mọi issue của workspace** nếu role còn quyền.
+App-scope được thực thi trong route (`src/logic-functions/app-scope/`), không phải trong ORM như bản
+fork. Nghĩa là **một request GraphQL thẳng tới `issues` vẫn trả về mọi issue của workspace** nếu role
+còn quyền. Chưa làm bước này thì app-scope **chưa có hiệu lực**.
 
-Settings → Roles → role **Member** (và mọi role không phải admin) → với từng object dưới đây, tắt
-`canReadObjectRecords` và `canUpdateObjectRecords`:
+Settings → Roles → role **Member** (và mọi role không phải admin) → với từng object dưới đây:
 
 ```
 Project, Issue, Issue Status, Issue Comment, Issue Merchant,
 Epic, Sprint, Worklog, Merchant, App, App Access
 ```
 
-Chưa làm bước này thì app-scope **chưa có hiệu lực**. Đây là khác biệt lớn nhất so với bản fork, nơi
-ORM tự chèn mệnh đề WHERE vào mọi query.
+Có hai mức, chọn một. Khác nhau ở chỗ widget do host render (FIELDS, FIELD_RICH_TEXT, TIMELINE,
+FILES) **đọc và ghi bằng token của chính người đang xem**, nên chúng tắt ngóm nếu role mất quyền đọc.
+
+| | Mức A — khoá ghi | Mức B — khoá cả đọc |
+| --- | --- | --- |
+| `canUpdateObjectRecords` | tắt | tắt |
+| `canReadObjectRecords` | **giữ** | tắt |
+| Ghi đi qua route, app-scope ghi có hiệu lực | có | có |
+| App-scope **đọc** có hiệu lực | **không** — member gọi thẳng API đọc được mọi dòng | có |
+| Trang chi tiết issue (field, Description BlockNote, Timeline, Files) | chạy | **không mở được** |
+| Board / Backlog / Roadmap / tab Activity | chạy | chạy |
+
+**Mức A là mặc định nên dùng.** Nó giữ trọn vẹn tính toàn vẹn dữ liệu — cấp `issueKey`, tính lại
+thời gian, seed trạng thái, kiểm tra app-scope khi ghi — và vẫn dùng được editor thật của host. Cái
+mất là phạm vi **đọc**: đây là khác biệt lớn nhất so với bản fork và phải nói rõ với khách hàng.
+
+**Mức B** dành cho workspace bắt buộc phải giấu dữ liệu giữa các app. Lúc đó member chỉ làm việc qua
+Board / Backlog / Roadmap; trang chi tiết issue thành màn của admin. Tab **Activity** (bình luận và
+worklog) là front component gọi route nên **vẫn chạy ở cả hai mức** — đó là lý do nó không phải
+widget RECORD_TABLE.
 
 Role `Task Manager runtime` mà app tạo ra là role của chính app (route chạy bằng token application),
 đừng gán cho người.
@@ -196,17 +213,26 @@ Fork có mutation `completeSprint(sprintId, targetSprintId)`. Giờ là `POST /s
 `issue.status` đã là quan hệ tới `issueStatus` từ lâu nên điều kiện đó luôn đúng và **mọi** issue bị
 đẩy đi. App so theo `issueStatus.category = 'DONE'`.
 
-### 5.7 Màn chi tiết issue: tốt hơn fork, không phải kém hơn
+### 5.7 Màn chi tiết issue
 
-`CUTOVER.md` ghi "editor rich text xuống cấp" — với app này **không đúng**. Màn chi tiết issue là
-một RECORD_PAGE layout gồm toàn widget do host render:
+Là một RECORD_PAGE layout, phần lớn dùng widget do host render:
 
-- `description` dùng widget `FIELD_RICH_TEXT` → **BlockNote thật của host**, không xuống cấp;
+- `description` dùng widget `FIELD_RICH_TEXT` → **BlockNote thật của host**, không xuống cấp so với
+  fork. `CUTOVER.md` ghi "editor rich text xuống cấp" — với riêng `description` thì không đúng;
 - bảng field dùng widget `FIELDS` → thay cho `IssueFieldPanel` viết tay của fork;
-- comment và worklog dùng widget `RECORD_TABLE` → sửa `bodyV2` bằng editor thật của host;
-- có thêm tab Files và tab Timeline mà bản fork không có.
+- thêm tab Files và tab Timeline mà bản fork không có;
+- tab **Activity** (bình luận + worklog) là **front component**, không phải widget `RECORD_TABLE`.
 
-Chỉ **Board**, **Backlog** và **Roadmap** là front component thật sự (những thứ host không có sẵn).
+Vì sao Activity không phải widget: widget host đọc/ghi bằng token của người xem, nên ở Mức B (mục
+4.1) nó tắt ngóm, và ngay ở Mức A một lần ghi trực tiếp cũng **bỏ qua** việc tính lại
+`timeSpentMinutes` / `remainingEstimateMinutes` và bỏ qua quy tắc chỉ tác giả được sửa bình luận.
+Đi qua route thì cả hai vẫn được áp dụng.
+
+Cái mất: soạn bình luận và worklog bằng ô văn bản thường, ghi vào nửa `markdown` của trường
+RICH_TEXT (BlockNote không chạy trong sandbox). Host đọc lại giá trị chỉ-có-markdown bình thường —
+cùng đường mà trình import CSV dùng — nên nội dung không hỏng, chỉ là lúc soạn không có định dạng.
+
+**Board**, **Backlog**, **Roadmap** và **Activity** là bốn front component của app.
 
 ### 5.8 Kéo thả viết tay
 
@@ -258,8 +284,10 @@ Danh sách kiểm bằng tay, theo thứ tự:
    Comments và Worklogs.
 8. **Backlog** → tạo sprint, kéo issue vào, bấm **Bắt đầu sprint** rồi **Kết thúc sprint**.
 9. Đăng nhập bằng một member **không** có `appAccess` trên app đó → Board hiện rỗng, không lỗi.
-10. Vẫn member đó, gọi thẳng GraphQL `issues` → **phải trả về rỗng**. Nếu trả về dữ liệu tức là bước
-    4.1 chưa làm.
+10. Mở issue → tab **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên đúng, và
+    `Time spent` trên tab Issue tăng đúng 30 phút (route tự tính lại).
+11. Nếu chọn **Mức B** ở bước 4.1: vẫn member đó, gọi thẳng GraphQL `issues` → **phải trả về rỗng**.
+    Ở Mức A câu này trả về dữ liệu, đúng như bảng ở mục 4.1 mô tả.
 
 ## 7. Gỡ
 

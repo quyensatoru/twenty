@@ -5,10 +5,10 @@ import {
 } from 'twenty-sdk/define';
 
 import {
-  ISSUE_COMMENTS_ON_ISSUE_VIEW_UID,
+  ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
+  ISSUE_ACTIVITY_WIDGET_UID,
   ISSUE_OBJECT_UID,
   ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID,
-  ISSUE_RECORD_PAGE_COMMENTS_WIDGET_UID,
   ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
   ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
@@ -17,16 +17,18 @@ import {
   ISSUE_RECORD_PAGE_LAYOUT_UID,
   ISSUE_RECORD_PAGE_TIMELINE_TAB_UID,
   ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID,
-  ISSUE_RECORD_PAGE_WORKLOGS_WIDGET_UID,
-  WORKLOGS_ON_ISSUE_VIEW_UID,
 } from '../constants/universal-identifiers';
 
-// Every widget here is host-rendered. The fork shipped this screen as custom
-// React (IssueFieldPanel, IssueCommentThread, IssueWorklogList) because it had
-// the whole front at its disposal; inside an app sandbox that same code would
-// lose the BlockNote editor entirely — there is no contentEditable and no
-// Selection API — so the FIELD_RICH_TEXT widget renders `description` with the
-// host's real editor instead, and FIELDS replaces the hand-rolled panel.
+// Fields and description are host-rendered: FIELDS replaces the fork's
+// hand-rolled IssueFieldPanel, and FIELD_RICH_TEXT gives `description` the
+// host's real BlockNote editor, which cannot run inside the sandbox.
+//
+// Comments and worklogs are NOT host widgets. A host widget reads and writes
+// with the viewer's own token, so it would go blank the moment the Member role
+// loses direct access to these objects — the step that makes app-scope real
+// (DEPLOY.md 4.1). They go through the app's routes instead, which is also
+// what keeps worklog time-tracking recomputed and the comment author rule
+// enforced. The cost is a plain markdown composer rather than BlockNote.
 export default definePageLayout({
   universalIdentifier: ISSUE_RECORD_PAGE_LAYOUT_UID,
   name: 'Issue Record Page',
@@ -62,21 +64,14 @@ export default definePageLayout({
       layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgets: [
         {
-          universalIdentifier: ISSUE_RECORD_PAGE_COMMENTS_WIDGET_UID,
-          title: 'Comments',
-          type: 'RECORD_TABLE',
+          universalIdentifier: ISSUE_ACTIVITY_WIDGET_UID,
+          title: 'Activity',
+          type: 'FRONT_COMPONENT',
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
-            configurationType: 'RECORD_TABLE',
-            viewUniversalIdentifier: ISSUE_COMMENTS_ON_ISSUE_VIEW_UID,
-          },
-        },
-        {
-          universalIdentifier: ISSUE_RECORD_PAGE_WORKLOGS_WIDGET_UID,
-          title: 'Worklogs',
-          type: 'RECORD_TABLE',
-          configuration: {
-            configurationType: 'RECORD_TABLE',
-            viewUniversalIdentifier: WORKLOGS_ON_ISSUE_VIEW_UID,
+            configurationType: 'FRONT_COMPONENT',
+            frontComponentUniversalIdentifier:
+              ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
           },
         },
       ],

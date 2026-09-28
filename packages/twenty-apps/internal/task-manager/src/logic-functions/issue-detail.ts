@@ -37,7 +37,12 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
     });
 
     const issueConnection = issueResult?.issues as
-      | Connection<{ id: string; projectId?: string | null }>
+      | Connection<{
+          id: string;
+          projectId?: string | null;
+          assigneeId?: string | null;
+          reporterId?: string | null;
+        }>
       | undefined;
     const issue = issueConnection?.edges?.[0]?.node ?? null;
 
@@ -47,13 +52,13 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
 
     const [issueComments, worklogs, issueMerchantLinks, issueStatuses] =
       await Promise.all([
-        listScopedRecords({
+        listScopedRecords<{ id: string; authorId?: string | null }>({
           client,
           pluralName: 'issueComments',
           filter: { issueId: { eq: issueId } },
           selection: ISSUE_COMMENT_SELECTION,
         }),
-        listScopedRecords({
+        listScopedRecords<{ id: string; memberId?: string | null }>({
           client,
           pluralName: 'worklogs',
           filter: { issueId: { eq: issueId } },
@@ -87,7 +92,46 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
             selection: MERCHANT_SELECTION,
           });
 
-    return { issue, issueComments, worklogs, merchants, issueStatuses };
+    // Names for every member the panel has to label: comment authors, worklog
+    // owners, and the issue's own assignee and reporter. Resolved here so the
+    // front component needs one round trip, not one per row.
+    const memberIds = [
+      ...new Set(
+        [
+          ...issueComments.map((comment) => comment.authorId),
+          ...worklogs.map((worklog) => worklog.memberId),
+          issue.assigneeId,
+          issue.reporterId,
+        ].filter((memberId): memberId is string => typeof memberId === 'string'),
+      ),
+    ];
+
+    const members =
+      memberIds.length === 0
+        ? []
+        : await listScopedRecords({
+            client,
+            pluralName: 'workspaceMembers',
+            filter: { id: { in: memberIds } },
+            selection: {
+              id: true,
+              name: { firstName: true, lastName: true },
+              avatarUrl: true,
+            },
+          });
+
+    return {
+      issue,
+      issueComments,
+      worklogs,
+      merchants,
+      issueStatuses,
+      members,
+      // Who is asking. The panel decides which edit and delete controls to
+      // offer from this; the routes re-check the same rule themselves, so a
+      // wrong answer here can only hide a control, never authorise a write.
+      currentWorkspaceMemberId: scope.workspaceMemberId,
+    };
   });
 
 export default defineLogicFunction({
