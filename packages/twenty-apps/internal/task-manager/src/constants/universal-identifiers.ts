@@ -272,6 +272,10 @@ export const WORKLOG_MEMBER_ID_INDEX_FIELD_UID =
 // Views.
 export const ALL_PROJECTS_VIEW_UID = '3eec03a9-65c4-4307-8358-8050056d7446';
 export const ALL_ISSUES_VIEW_UID = '2b14a34e-2550-4599-82d6-8a380001877d';
+// Kanban registered in the fork as `byStatus` — identifier reused verbatim so
+// the production re-parent keeps the existing view and its columns.
+export const ISSUES_BY_STATUS_VIEW_UID =
+  '29063dae-1487-4cfc-89d2-438980dfc340';
 export const ALL_SPRINTS_VIEW_UID = '9c85c09d-bccc-425d-a9fe-2038b77e04dd';
 export const ALL_EPICS_VIEW_UID = '8df38d57-39ef-417c-b8f4-9eef2bb62596';
 export const ALL_ISSUE_STATUSES_VIEW_UID =
