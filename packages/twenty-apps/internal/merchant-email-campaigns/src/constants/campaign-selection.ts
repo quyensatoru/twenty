@@ -1,0 +1,18 @@
+export const CAMPAIGN_SELECTION = {
+  id: true,
+  name: true,
+  campaignType: true,
+  status: true,
+  trigger: true,
+  eventName: true,
+  delayMinutes: true,
+  audienceFilter: true,
+  fromEmail: true,
+  replyTo: true,
+  sendOncePerMerchant: true,
+  scheduledAt: true,
+  startedAt: true,
+  completedAt: true,
+  lastError: true,
+  templateId: true,
+} as const;
