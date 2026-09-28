@@ -40,7 +40,9 @@ VALUES (
   'packages/twenty-apps/internal/shift-management',
   :'workspace_id'
 )
-ON CONFLICT ("universalIdentifier", "workspaceId") DO NOTHING;
+ON CONFLICT ("universalIdentifier", "workspaceId")
+  WHERE "deletedAt" IS NULL AND "universalIdentifier" IS NOT NULL
+DO NOTHING;
 
 -- Phải trả về đúng 1 dòng trước khi đi tiếp.
 SELECT id, "universalIdentifier", "name", "state", "workspaceId"

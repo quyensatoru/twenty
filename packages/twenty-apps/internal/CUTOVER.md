@@ -104,6 +104,34 @@ Lọc theo `universalIdentifier` của object, không theo tên — tên đổi 
 
 Script: `scripts/02-reparent-metadata.sql` của từng app.
 
+### Bước 2b — Tính lại universalIdentifier dẫn xuất
+
+```bash
+node packages/twenty-apps/internal/rewrite-derived-identifiers.mjs --dry-run
+node packages/twenty-apps/internal/rewrite-derived-identifiers.mjs --apply
+```
+
+**Bỏ bước này thì `apply` chắc chắn hỏng.** universalIdentifier của field hệ thống
+(`id`, `createdAt`, `updatedAt`, `deletedAt`, `position`, `createdBy`, `updatedBy`, `searchVector`)
+và của relation hệ thống không phải hằng số — engine sinh chúng bằng
+
+```ts
+v5(`fieldMetadata:${objectUid}:${name}`, applicationUniversalIdentifier)
+```
+
+trong đó applicationUniversalIdentifier là **namespace** của UUIDv5 (`compute-deterministic-uuid.util.ts`).
+Đổi chủ sở hữu object là đổi namespace, nên mọi UID dẫn xuất phải tính lại.
+
+Kiểm chứng trên dữ liệu thật: `issue.createdAt` lưu `e2cec8e3-fb98-51f4-93fa-bad3de2540e2`, đúng
+bằng dẫn xuất theo namespace twenty-standard; app Task Manager tính ra `193ea224-6a73-549d-a0b9-ce666fd4178c`.
+Trong lần diễn tập có **106 field** lệch kiểu này.
+
+Triệu chứng nếu bỏ qua: `apply` báo `INVALID_VIEW_DATA: Field metadata not found` và
+`ENTITY_ALREADY_EXISTS: ... already exists in ... maps from application "20202020-…"`.
+
+Script chỉ ghi đè dòng mà UID hiện tại khớp **đúng** giá trị dẫn xuất theo twenty-standard, nên
+field có UID literal do người viết đặt thì không bị đụng.
+
 ### Bước 3 — Đổi tên bảng vật lý
 
 ```sql

@@ -24,14 +24,14 @@ export default defineView({
     {
       universalIdentifier: '72428bd7-2352-4355-9813-4cc76979839a',
       fieldMetadataUniversalIdentifier: ISSUE_KEY_FIELD_UID,
-      position: 0,
+      position: 1,
       isVisible: true,
       size: 110,
     },
     {
       universalIdentifier: 'aba617ab-3bb9-4c99-915a-81c5d6d76961',
       fieldMetadataUniversalIdentifier: ISSUE_TITLE_FIELD_UID,
-      position: 1,
+      position: 0,
       isVisible: true,
       size: 280,
     },

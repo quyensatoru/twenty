@@ -172,4 +172,98 @@ WHERE om."universalIdentifier" = '5d9a58bd-983c-4ca4-9f0a-b53cdec4cfca'::uuid
   AND a."universalIdentifier" <> '819550d5-882b-4b96-8afd-b02e0d2b41c1'::uuid
 ORDER BY fm."name";
 
+
+-- ---------------------------------------------------------------------------
+-- View và con của view.
+--
+-- Thiếu khối này thì `twenty apply` dừng với
+--   ENTITY_ALREADY_EXISTS: ... already exists in view maps from application
+--   "20202020-64aa-4b6f-b003-9c74b97cee20"
+-- vì view cũ vẫn thuộc twenty-standard còn app thì cố tạo mới cùng
+-- universalIdentifier.
+-- ---------------------------------------------------------------------------
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_objects AS (
+  SELECT "id" FROM core."objectMetadata"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."view" v
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE v."objectMetadataId" IN (SELECT "id" FROM owned_objects)
+   AND v."applicationId" <> (SELECT "id" FROM owner);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewField" f
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE f."viewId" IN (SELECT "id" FROM owned_views)
+   AND f."applicationId" <> (SELECT "id" FROM owner);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewGroup" g
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE g."viewId" IN (SELECT "id" FROM owned_views)
+   AND g."applicationId" <> (SELECT "id" FROM owner);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewSort" s
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE s."viewId" IN (SELECT "id" FROM owned_views)
+   AND s."applicationId" <> (SELECT "id" FROM owner);
+
+WITH owner AS (
+  SELECT "id" FROM core."application"
+   WHERE "universalIdentifier" = '819550d5-882b-4b96-8afd-b02e0d2b41c1'
+),
+owned_views AS (
+  SELECT "id" FROM core."view"
+   WHERE "applicationId" = (SELECT "id" FROM owner)
+)
+UPDATE core."viewFilter" fl
+   SET "applicationId" = (SELECT "id" FROM owner)
+ WHERE fl."viewId" IN (SELECT "id" FROM owned_views)
+   AND fl."applicationId" <> (SELECT "id" FROM owner);
+
+-- ---------------------------------------------------------------------------
+-- Cờ isSystem.
+--
+-- Fork đánh dấu junction issueMerchant và project.nextIssueNumber là system để
+-- giấu khỏi UI. App sync từ chối sửa system object/field, nên phải gỡ cờ.
+-- HỆ QUẢ: issueMerchant sẽ hiện trong UI thay vì ẩn.
+-- ---------------------------------------------------------------------------
+
+UPDATE core."objectMetadata"
+   SET "isSystem" = false
+ WHERE "universalIdentifier" = 'a469cd28-a0f7-4132-8f5d-d89fa044f516'
+   AND "isSystem";
+
+UPDATE core."fieldMetadata"
+   SET "isSystem" = false
+ WHERE "universalIdentifier" = 'cf46bf2b-8c71-4925-9533-9abc7d2e57cb'
+   AND "isSystem";
+
 COMMIT;
