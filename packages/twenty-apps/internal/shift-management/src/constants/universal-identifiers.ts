@@ -290,3 +290,14 @@ export const SPECIAL_DAY_KIND_INDEX_FIELD_UID =
   '8051fb61-6552-4337-9a84-41a157bf0dee';
 export const SPECIAL_DAY_IS_ACTIVE_INDEX_FIELD_UID =
   '19627f00-85ac-44ec-887e-4368591c2ded';
+
+// --- Analytics "Charts" tab: host GRAPH widgets over the shift object. New,
+// so these are fresh identifiers.
+export const ANALYTICS_CHARTS_TAB_UID =
+  '51b0ea91-7b01-46b4-bbf9-486906a8a142';
+export const ANALYTICS_STATUS_CHART_WIDGET_UID =
+  '1d3abcc5-033a-4d38-9055-435135e9e70a';
+export const ANALYTICS_HOURS_BY_TEMPLATE_WIDGET_UID =
+  'bd30cbd3-d001-471c-9748-31619d65afbd';
+export const ANALYTICS_TOTAL_HOURS_WIDGET_UID =
+  'ad0659ae-2bcb-4d24-b4fe-da19f775d31c';
