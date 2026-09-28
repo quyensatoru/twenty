@@ -28,7 +28,6 @@ export type ORMWorkspaceContext = {
   objectIdByNameSingular: Record<string, string>;
   featureFlagsMap: Record<FeatureFlagKey, boolean>;
   billingEntitlements: BillingEntitlements;
-  isLegacyRecordAccessOpen?: boolean;
   permissionsPerRoleId: ObjectsPermissionsByRoleId;
   userWorkspaceRoleMap: UserWorkspaceRoleMap;
   apiKeyRoleMap: Record<string, string>;

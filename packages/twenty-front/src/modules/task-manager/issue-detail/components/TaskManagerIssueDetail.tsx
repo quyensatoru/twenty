@@ -420,8 +420,8 @@ export const TaskManagerIssueDetail = ({
             <ResizablePanelGap
               side="left"
               constraints={RIGHT_COLUMN_CONSTRAINTS}
-              currentWidth={rightColumnWidth}
-              onWidthChange={setRightColumnWidth}
+              currentSize={rightColumnWidth}
+              onSizeChange={setRightColumnWidth}
               onCollapse={() => {}}
               gapWidth={0}
               cssVariableName={RIGHT_COLUMN_WIDTH_CSS_VAR}

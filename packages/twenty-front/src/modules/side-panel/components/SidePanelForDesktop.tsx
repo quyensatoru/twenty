@@ -199,8 +199,8 @@ export const SidePanelForDesktop = () => {
       <ResizablePanelGap
         side="left"
         constraints={sidePanelWidthConstraints}
-        currentWidth={activeSidePanelWidth}
-        onWidthChange={handleWidthChange}
+        currentSize={activeSidePanelWidth}
+        onSizeChange={handleWidthChange}
         onCollapse={handleCollapse}
         gapWidth={0}
         cssVariableName={SIDE_PANEL_WIDTH_VAR}

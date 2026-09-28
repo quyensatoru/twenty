@@ -136,6 +136,7 @@ export const MerchantCustomSettingFieldInput = ({
     return (
       <DropdownMenuInnerSelect
         dropdownId={`${instanceIdPrefix}-select-${entry.key}`}
+        aria-label={entry.label}
         options={selectOptions}
         selectedOption={selectedOption}
         onChange={(option) => onChange(option.value as string)}
