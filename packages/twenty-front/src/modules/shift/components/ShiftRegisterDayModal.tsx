@@ -5,7 +5,7 @@ import { isDefined } from 'twenty-shared/utils';
 import { IconLock } from 'twenty-ui/icon';
 import { Button, Checkbox } from 'twenty-ui/primitives/input';
 import { Dialog } from 'twenty-ui/primitives/surfaces';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { type ShiftDayRegistrationResult } from '@/shift/hooks/useShiftRegistration';
 import { type ShiftTemplateRecord } from '@/shift/hooks/useShiftTemplates';

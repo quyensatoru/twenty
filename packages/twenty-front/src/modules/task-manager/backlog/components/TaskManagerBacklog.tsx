@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
 import { BacklogSprintSection } from '@/task-manager/backlog/components/BacklogSprintSection';

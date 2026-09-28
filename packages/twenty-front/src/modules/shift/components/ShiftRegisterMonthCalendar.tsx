@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import { isDefined } from 'twenty-shared/utils';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { type ShiftRosterEntry } from '@/shift/hooks/useShiftRoster';
 import { type ShiftTemplateRecord } from '@/shift/hooks/useShiftTemplates';

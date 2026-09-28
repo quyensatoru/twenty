@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { createOneOperationFactory } from 'test/integration/graphql/utils/create-one-operation-factory.util';
 import { findManyOperationFactory } from 'test/integration/graphql/utils/find-many-operation-factory.util';
 import { groupByOperationFactory } from 'test/integration/graphql/utils/group-by-operation-factory.util';
-import { makeGraphqlAPIRequest } from 'test/integration/graphql/utils/make-graphql-api-request.util';
+import { makeGraphqlApiRequest } from 'test/integration/graphql/utils/make-graphql-api-request.util';
 import { findManyObjectMetadata } from 'test/integration/metadata/suites/object-metadata/utils/find-many-object-metadata.util';
 import { upsertObjectPermissions } from 'test/integration/metadata/suites/object-permission/utils/upsert-object-permissions.util';
 import { createOneRole } from 'test/integration/metadata/suites/role/utils/create-one-role.util';
@@ -55,7 +55,7 @@ describe('app-scope permission enforcement', () => {
     objectMetadataSingularName: string,
     data: object,
   ): Promise<void> => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       createOneOperationFactory({
         objectMetadataSingularName,
         gqlFields: 'id',
@@ -294,7 +294,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-1: read filter — Jony (BLOY-only grant) sees the BLOY project but not Fraud or the no-app project', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'project',
         objectMetadataPluralName: 'projects',
@@ -315,7 +315,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-13: transitive read filter (1 hop) — Jony sees issues in the BLOY project but not Fraud', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'issue',
         objectMetadataPluralName: 'issues',
@@ -335,7 +335,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-13b: transitive read filter (1 hop) also applies in the Kanban board group-by-with-records query — Jony sees the BLOY issue but not Fraud, even though both default to the same "TODO" status group', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       groupByOperationFactory({
         objectMetadataSingularName: 'issue',
         objectMetadataPluralName: 'issues',
@@ -357,7 +357,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-14: transitive read filter (2 hops) — Jony sees worklogs under the BLOY issue but not Fraud', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'worklog',
         objectMetadataPluralName: 'worklogs',
@@ -378,7 +378,7 @@ describe('app-scope permission enforcement', () => {
 
   it('AC-3: create guard — Jony can create an issue in the BLOY project (write granted)', async () => {
     const newIssueId = randomUUID();
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       createOneOperationFactory({
         objectMetadataSingularName: 'issue',
         gqlFields: 'id',
@@ -397,7 +397,7 @@ describe('app-scope permission enforcement', () => {
 
   it('AC-3: create guard — Jony is denied creating an issue in the Fraud project (no grant on Fraud)', async () => {
     const newIssueId = randomUUID();
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       createOneOperationFactory({
         objectMetadataSingularName: 'issue',
         gqlFields: 'id',
@@ -418,7 +418,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-8: empty grant — Phil (Role access, zero appAccess grants) sees no projects at all', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'project',
         objectMetadataPluralName: 'projects',
@@ -439,7 +439,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-2: bypass — Jane (Admin, blanket canReadAllObjectRecords) sees all projects regardless of app grants', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'project',
         objectMetadataPluralName: 'projects',
@@ -460,7 +460,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-16: App self-scope — Jony (BLOY-only appAccess grant) sees BLOY in the apps list but not Fraud, despite Role read access to `app`', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'app',
         objectMetadataPluralName: 'apps',
@@ -478,7 +478,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-17: App self-scope — Phil (Role access, zero appAccess grants) sees no apps at all', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'app',
         objectMetadataPluralName: 'apps',
@@ -496,7 +496,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-18: App self-scope — Jane (Admin, blanket canReadAllObjectRecords) sees all apps regardless of app grants', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'app',
         objectMetadataPluralName: 'apps',
@@ -514,7 +514,7 @@ describe('app-scope permission enforcement', () => {
   });
 
   it('AC-15: NULL project.app hides the whole subtree from non-bypass members even with Role access', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'project',
         objectMetadataPluralName: 'projects',

@@ -8,8 +8,7 @@ import { getAppPath, isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconArrowLeft, IconBrowserMaximize, IconLink } from 'twenty-ui/icon';
 import { LightIconButton, TabButton } from 'twenty-ui/components';
-import { type ThemeColor } from 'twenty-ui/theme';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { type ThemeColor, themeCssVariables } from 'twenty-ui/theme';
 
 import { FilesCard } from '@/activities/files/components/FilesCard';
 import { TimelineCard } from '@/activities/timeline-activities/components/TimelineCard';

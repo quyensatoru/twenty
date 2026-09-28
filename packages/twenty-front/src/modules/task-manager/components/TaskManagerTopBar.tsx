@@ -6,7 +6,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
 import { IconPlus } from 'twenty-ui/icon';
 import { Button, type SelectOption } from 'twenty-ui/primitives/input';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { useCreateOneRecord } from '@/object-record/hooks/useCreateOneRecord';
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';

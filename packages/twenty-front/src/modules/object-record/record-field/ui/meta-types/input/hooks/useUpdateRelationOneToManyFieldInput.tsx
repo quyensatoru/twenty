@@ -13,7 +13,7 @@ import {
   computeMorphRelationGqlFieldName,
   isDefined,
 } from 'twenty-shared/utils';
-import { useToast } from 'twenty-ui/primitives/feedback';
+import { useToast } from 'twenty-ui/components';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 
 export const useUpdateRelationOneToManyFieldInput = () => {

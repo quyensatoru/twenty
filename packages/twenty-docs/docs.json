@@ -157,6 +157,23 @@
                 ]
               },
               {
+                "group": "Email Campaigns",
+                "icon": "paper-plane",
+                "pages": [
+                  "user-guide/email-campaigns/overview",
+                  {
+                    "group": "How-Tos",
+                    "pages": [
+                      "user-guide/email-campaigns/how-tos/set-up-a-sending-domain",
+                      "user-guide/email-campaigns/how-tos/email-campaign-best-practices",
+                      "user-guide/email-campaigns/how-tos/send-your-first-campaign",
+                      "user-guide/email-campaigns/how-tos/create-a-campaign-with-ai",
+                      "user-guide/email-campaigns/how-tos/manage-unsubscribes-and-topics"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Workflows",
                 "icon": "bolt",
                 "pages": [
@@ -328,7 +345,8 @@
                     "group": "Reference",
                     "pages": [
                       "user-guide/billing/capabilities/pricing-plans",
-                      "user-guide/billing/capabilities/credits"
+                      "user-guide/billing/capabilities/credits",
+                      "user-guide/billing/capabilities/usage-limits"
                     ]
                   },
                   {
@@ -515,12 +533,29 @@
                     "pages": [
                       "ui/primitives/overview",
                       {
+                        "group": "Accessibility",
+                        "pages": [
+                          "ui/primitives/accessibility/visibility-hidden"
+                        ]
+                      },
+                      {
                         "group": "Data display",
                         "pages": [
                           "ui/primitives/data-display/avatar",
                           "ui/primitives/data-display/chip",
                           "ui/primitives/data-display/tag",
-                          "ui/primitives/data-display/status"
+                          "ui/primitives/data-display/status",
+                          "ui/primitives/data-display/color-sample",
+                          "ui/primitives/data-display/pill"
+                        ]
+                      },
+                      {
+                        "group": "Feedback",
+                        "pages": [
+                          "ui/primitives/feedback/banner",
+                          "ui/primitives/feedback/circular-progress-bar",
+                          "ui/primitives/feedback/loader",
+                          "ui/primitives/feedback/progress-bar"
                         ]
                       },
                       {
@@ -537,36 +572,44 @@
                           "ui/primitives/input/radio-group",
                           "ui/primitives/input/select",
                           "ui/primitives/input/slider",
-                          "ui/primitives/input/switch"
+                          "ui/primitives/input/switch",
+                          "ui/primitives/input/segmented-control"
+                        ]
+                      },
+                      {
+                        "group": "Layout",
+                        "pages": [
+                          "ui/primitives/layout/animated-expandable-container",
+                          "ui/primitives/layout/horizontal-separator",
+                          "ui/primitives/layout/resize-handle",
+                          "ui/primitives/layout/text-direction-provider"
                         ]
                       },
                       {
                         "group": "Navigation",
                         "pages": [
                           "ui/primitives/navigation/list-item",
-                          "ui/primitives/navigation/tabs"
+                          "ui/primitives/navigation/tabs",
+                          "ui/primitives/navigation/click-to-action-link"
                         ]
                       },
                       {
                         "group": "Surfaces",
                         "pages": [
                           "ui/primitives/surfaces/alert-dialog",
+                          "ui/primitives/surfaces/card",
                           "ui/primitives/surfaces/dialog",
                           "ui/primitives/surfaces/menu",
-                          "ui/primitives/surfaces/popover"
-                        ]
-                      },
-                      {
-                        "group": "Feedback",
-                        "pages": [
-                          "ui/primitives/feedback/toast"
+                          "ui/primitives/surfaces/popover",
+                          "ui/primitives/surfaces/tooltip"
                         ]
                       },
                       {
                         "group": "Typography",
                         "pages": [
                           "ui/primitives/typography/heading",
-                          "ui/primitives/typography/text"
+                          "ui/primitives/typography/text",
+                          "ui/primitives/typography/overflowing-text-with-tooltip"
                         ]
                       }
                     ]
@@ -581,8 +624,10 @@
                       "ui/components/input/light-icon-button",
                       "ui/components/section",
                       "ui/components/settings-row",
+                      "ui/components/dropdown",
                       "ui/components/tab-button",
-                      "ui/components/code-editor"
+                      "ui/components/code-editor",
+                      "ui/components/toast"
                     ]
                   }
                 ]
@@ -7363,6 +7408,22 @@
     {
       "source": "/user-guide/billing/capabilities/billing-and-pricing-faq",
       "destination": "/user-guide/billing/how-tos/billing-faq"
+    },
+    {
+      "source": "/ui/primitives/feedback/toast",
+      "destination": "/ui/components/toast"
+    },
+    {
+      "source": "/ui/primitives/surfaces/card-header",
+      "destination": "/ui/primitives/surfaces/card"
+    },
+    {
+      "source": "/ui/primitives/surfaces/card-content",
+      "destination": "/ui/primitives/surfaces/card"
+    },
+    {
+      "source": "/ui/primitives/surfaces/card-footer",
+      "destination": "/ui/primitives/surfaces/card"
     }
   ]
 }

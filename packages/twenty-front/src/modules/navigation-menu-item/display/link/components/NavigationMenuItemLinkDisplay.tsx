@@ -1,7 +1,6 @@
-import { useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { IconArrowUpRight } from 'twenty-ui/icon';
-import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
+import { useTheme, themeCssVariables } from 'twenty-ui/theme';
 
 import { isLayoutCustomizationModeEnabledState } from '@/layout-customization/states/isLayoutCustomizationModeEnabledState';
 import { NavigationMenuItemIcon } from '@/navigation-menu-item/display/components/NavigationMenuItemIcon';
@@ -22,7 +21,7 @@ export const NavigationMenuItemLinkDisplay = ({
   const isLayoutCustomizationModeEnabled = useAtomStateValue(
     isLayoutCustomizationModeEnabledState,
   );
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme();
   const location = useLocation();
 
   const label = getLinkNavigationMenuItemLabel(item);

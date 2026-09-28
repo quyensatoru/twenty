@@ -3,8 +3,8 @@ import { type KeyboardEvent, useRef, useState } from 'react';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { Tag } from 'twenty-ui/primitives/data-display';
-import { SearchInput } from 'twenty-ui/primitives/input';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { SearchInput } from 'twenty-ui/components';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { useOpenRecordInSidePanel } from '@/side-panel/hooks/useOpenRecordInSidePanel';
 import { useTaskManagerIssueSearch } from '@/task-manager/hooks/useTaskManagerIssueSearch';

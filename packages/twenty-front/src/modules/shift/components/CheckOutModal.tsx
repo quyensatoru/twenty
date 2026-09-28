@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { Button } from 'twenty-ui/primitives/input';
 import { Dialog } from 'twenty-ui/primitives/surfaces';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { TextArea } from '@/ui/input/components/TextArea';
 import { DialogInstance } from '@/ui/layout/dialog/components/DialogInstance';

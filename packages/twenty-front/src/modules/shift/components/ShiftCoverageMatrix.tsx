@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react';
 
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import {
   type CoverageMatrix,

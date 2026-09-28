@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { createOneOperationFactory } from 'test/integration/graphql/utils/create-one-operation-factory.util';
 import { findManyOperationFactory } from 'test/integration/graphql/utils/find-many-operation-factory.util';
-import { makeGraphqlAPIRequest } from 'test/integration/graphql/utils/make-graphql-api-request.util';
+import { makeGraphqlApiRequest } from 'test/integration/graphql/utils/make-graphql-api-request.util';
 import { findManyObjectMetadata } from 'test/integration/metadata/suites/object-metadata/utils/find-many-object-metadata.util';
 import { upsertObjectPermissions } from 'test/integration/metadata/suites/object-permission/utils/upsert-object-permissions.util';
 import { deleteRecordVisibilityPolicy } from 'test/integration/metadata/suites/record-visibility-policy/utils/delete-record-visibility-policy.util';
@@ -51,7 +51,7 @@ describe('record visibility policy enforcement', () => {
     objectMetadataSingularName: string,
     data: object,
   ): Promise<void> => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       createOneOperationFactory({
         objectMetadataSingularName,
         gqlFields: 'id',
@@ -280,11 +280,17 @@ describe('record visibility policy enforcement', () => {
     if (customRoleId) {
       await deleteRecordVisibilityPolicy({
         expectToFail: true, // role is about to be deleted anyway; best-effort
-        input: { roleId: customRoleId, objectMetadataId: companyObjectMetadataId },
+        input: {
+          roleId: customRoleId,
+          objectMetadataId: companyObjectMetadataId,
+        },
       });
       await deleteRecordVisibilityPolicy({
         expectToFail: true,
-        input: { roleId: customRoleId, objectMetadataId: issueObjectMetadataId },
+        input: {
+          roleId: customRoleId,
+          objectMetadataId: issueObjectMetadataId,
+        },
       });
 
       await deleteOneRole({
@@ -295,7 +301,7 @@ describe('record visibility policy enforcement', () => {
   });
 
   it('RVP-1: static filter — Jony sees the Company matching the static rule', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'company',
         objectMetadataPluralName: 'companies',
@@ -315,7 +321,7 @@ describe('record visibility policy enforcement', () => {
   });
 
   it('RVP-2: currentMemberFieldName — Jony sees only the issue assigned to Jony', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'issue',
         objectMetadataPluralName: 'issues',
@@ -335,7 +341,7 @@ describe('record visibility policy enforcement', () => {
   });
 
   it('RVP-3: currentMemberFieldName — Phil sees only the issue assigned to Phil', async () => {
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'issue',
         objectMetadataPluralName: 'issues',
@@ -356,7 +362,7 @@ describe('record visibility policy enforcement', () => {
 
   it('RVP-4: currentMemberFieldName — Jony is denied creating an issue assigned to someone else', async () => {
     const newIssueId = randomUUID();
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       createOneOperationFactory({
         objectMetadataSingularName: 'issue',
         gqlFields: 'id',
@@ -382,7 +388,7 @@ describe('record visibility policy enforcement', () => {
       },
     });
 
-    const response = await makeGraphqlAPIRequest(
+    const response = await makeGraphqlApiRequest(
       findManyOperationFactory({
         objectMetadataSingularName: 'company',
         objectMetadataPluralName: 'companies',

@@ -5,7 +5,7 @@ import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconAlertTriangle } from 'twenty-ui/icon';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { type ShiftRecord } from '@/shift/hooks/useMyShifts';
 import { type ShiftTemplateRecord } from '@/shift/hooks/useShiftTemplates';

@@ -1,9 +1,9 @@
-import { useContext, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { styled } from '@linaria/react';
 import { isDefined } from 'twenty-shared/utils';
 import { useIcons } from 'twenty-ui/icon';
-import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables, useTheme } from 'twenty-ui/theme';
 import { FeatureFlagKey } from '~/generated-metadata/graphql';
 
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
@@ -161,7 +161,7 @@ const TaskManagerCustomFieldDisplay = ({
   children,
 }: TaskManagerCustomFieldDisplayProps) => {
   const { getIcon } = useIcons();
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme();
   const { isFocused, setIsFocused } = useFieldFocus();
 
   const IconLabel = fieldDefinition.iconName

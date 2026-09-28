@@ -16,7 +16,7 @@ import { type WorkspaceRepository } from 'src/engine/twenty-orm/repository/works
 import { type WorkspaceTransactionScope } from 'src/engine/twenty-orm/types/workspace-transaction-scope.type';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
 import { WorkspaceOrmManager } from 'src/engine/twenty-orm/workspace-orm.manager';
-import { type TimelineActivityPayload } from 'src/modules/timeline/types/timeline-activity-payload';
+import { type TimelineActivityPayload } from 'src/modules/timeline/types/timeline-activity-payload.type';
 import {
   buildTimelineActivityMergeKey,
   buildTimelineActivityMergeKeyCandidates,

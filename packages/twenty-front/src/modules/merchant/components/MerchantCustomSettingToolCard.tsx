@@ -3,8 +3,9 @@ import { Fragment, useState } from 'react';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { Tag, type TagColor } from 'twenty-ui/primitives/data-display';
-import { Button, InputLabel } from 'twenty-ui/primitives/input';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { InputLabel } from '@/ui/input/components/internal/InputLabel/InputLabel';
+import { Button } from 'twenty-ui/primitives/input';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';
 import {

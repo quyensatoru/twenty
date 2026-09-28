@@ -28,7 +28,7 @@ import { useStore } from 'jotai';
 import { type AnimationEvent, useCallback, useState } from 'react';
 import { SidePanelPages } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 const StyledSidePanelWrapper = styled.div<{
   isOpen: boolean;

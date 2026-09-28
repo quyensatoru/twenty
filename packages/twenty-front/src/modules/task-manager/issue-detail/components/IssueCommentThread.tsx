@@ -19,10 +19,9 @@ import {
   IconTrash,
 } from 'twenty-ui/icon';
 import { Button } from 'twenty-ui/primitives/input';
-import { LightIconButton } from 'twenty-ui/components';
-import { MenuItem } from 'twenty-ui/primitives/navigation';
+import { LightIconButton, MenuItem } from 'twenty-ui/components';
 import { Tooltip } from 'twenty-ui/primitives/surfaces';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { useUploadAttachmentFile } from '@/activities/files/hooks/useUploadAttachmentFile';
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';

@@ -5,9 +5,9 @@ import { isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/primitives/data-display';
 import { IconDotsVertical } from 'twenty-ui/icon';
 import { Button } from 'twenty-ui/primitives/input';
-import { MenuItem, UndecoratedLink } from 'twenty-ui/primitives/navigation';
-import { LightIconButton } from 'twenty-ui/components';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { UndecoratedLink } from '@/ui/navigation/link/components/UndecoratedLink/UndecoratedLink';
+import { LightIconButton, MenuItem } from 'twenty-ui/components';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { CancelShiftModal } from '@/shift/components/CancelShiftModal';
 import { type ShiftRecord } from '@/shift/hooks/useMyShifts';

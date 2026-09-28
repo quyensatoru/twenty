@@ -77,6 +77,7 @@ import { ProjectQueryHookModule } from 'src/modules/project/query-hooks/project-
     DevSeederDataService,
     TimelineActivitySeederService,
     provideWorkspaceScopedRepository(RoleEntity),
+    provideWorkspaceScopedRepository(ObjectMetadataEntity),
   ],
 })
 export class DevSeederModule {}

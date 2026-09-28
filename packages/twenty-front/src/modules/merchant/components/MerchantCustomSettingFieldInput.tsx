@@ -7,7 +7,7 @@ import {
   Checkbox,
   type SelectOption,
 } from 'twenty-ui/primitives/input';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import {
   type CustomSettingFieldSchemaEntry,
@@ -138,7 +138,6 @@ export const MerchantCustomSettingFieldInput = ({
         dropdownId={`${instanceIdPrefix}-select-${entry.key}`}
         options={selectOptions}
         selectedOption={selectedOption}
-        isDropdownInModal
         onChange={(option) => onChange(option.value as string)}
       />
     );

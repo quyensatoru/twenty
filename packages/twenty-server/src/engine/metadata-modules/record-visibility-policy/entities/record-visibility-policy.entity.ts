@@ -14,7 +14,7 @@ import { type RecordGqlOperationFilter } from 'twenty-shared/types';
 
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
-import { WorkspaceRelatedEntity } from 'src/engine/workspace-manager/types/workspace-related-entity';
+import { WorkspaceRelatedEntity } from 'src/engine/workspace-manager/types/workspace-related-entity.type';
 
 // OSS equivalent of Enterprise's rowLevelPermissionPredicate(Group), scoped to
 // one (role, object) pair like the original — deliberately simplified to a

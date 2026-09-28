@@ -5,9 +5,10 @@ import { useLingui } from '@lingui/react/macro';
 import { v4 as uuidv4 } from 'uuid';
 import { IconSettings } from 'twenty-ui/icon';
 import { IconButton, Section } from 'twenty-ui/components';
-import { Button, InputLabel } from 'twenty-ui/primitives/input';
+import { InputLabel } from '@/ui/input/components/internal/InputLabel/InputLabel';
+import { Button } from 'twenty-ui/primitives/input';
 import { Dialog } from 'twenty-ui/primitives/surfaces';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { currentUserState } from '@/auth/states/currentUserState';
 import { useDirectFileUpload } from '@/file/hooks/useDirectFileUpload';

@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { styled } from '@linaria/react';
 import { Trans } from '@lingui/react/macro';
 import { AppPath } from 'twenty-shared/types';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 const StyledTopBar = styled.div`
   align-items: center;

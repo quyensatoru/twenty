@@ -5,7 +5,7 @@ import { isDefined } from 'twenty-shared/utils';
 import { Tag } from 'twenty-ui/primitives/data-display';
 import { Button } from 'twenty-ui/primitives/input';
 import { Tooltip } from 'twenty-ui/primitives/surfaces';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme';
 
 import { CheckOutModal } from '@/shift/components/CheckOutModal';
 import { type ShiftHandoverEntry } from '@/shift/hooks/useShiftHandovers';
