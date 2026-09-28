@@ -8,7 +8,6 @@ import {
 import {
   ISSUE_PARENT_FIELD_UID,
   ISSUE_OBJECT_UID,
-  ISSUE_OBJECT_UID,
   ISSUE_CHILDREN_FIELD_UID,
 } from '../constants/universal-identifiers';
 

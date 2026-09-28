@@ -8,7 +8,6 @@ import {
 import {
   ISSUE_COMMENT_PARENT_COMMENT_FIELD_UID,
   ISSUE_COMMENT_OBJECT_UID,
-  ISSUE_COMMENT_OBJECT_UID,
   ISSUE_COMMENT_REPLIES_FIELD_UID,
 } from '../constants/universal-identifiers';
 

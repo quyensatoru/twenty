@@ -6,7 +6,7 @@
     "node": "^24.5.0",
     "npm": "please-use-yarn",
     "yarn": ">=4.0.2",
-    "twenty": ">=2.44.0"
+    "twenty": ">=2.43.0"
   },
   "keywords": [
     "twenty-app"
@@ -25,9 +25,9 @@
     "oxlint": "^0.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "twenty-client-sdk": "2.44.0",
-    "twenty-sdk": "2.44.0",
-    "twenty-ui": "2.44.0",
+    "twenty-client-sdk": "2.43.0",
+    "twenty-sdk": "2.43.0",
+    "twenty-ui": "2.43.0",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9"
   }

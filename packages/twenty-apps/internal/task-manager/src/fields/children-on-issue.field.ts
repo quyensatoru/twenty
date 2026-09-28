@@ -3,7 +3,6 @@ import { defineField, FieldType, RelationType } from 'twenty-sdk/define';
 import {
   ISSUE_CHILDREN_FIELD_UID,
   ISSUE_OBJECT_UID,
-  ISSUE_OBJECT_UID,
   ISSUE_PARENT_FIELD_UID,
 } from '../constants/universal-identifiers';
 
