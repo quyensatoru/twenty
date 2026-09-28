@@ -23,28 +23,28 @@ export default defineView({
   position: 1,
   fields: [
     {
-      universalIdentifier: '3d94b8e0-8818-4b34-be96-6d545335623f',
+      universalIdentifier: '9d2c8b43-92b9-49fc-89f5-b8baf7ba4868',
       fieldMetadataUniversalIdentifier: WORKLOG_DESCRIPTION_FIELD_UID,
       position: 0,
       isVisible: true,
       size: 300,
     },
     {
-      universalIdentifier: '464950bb-b3d8-4074-8ac2-0c6dcb6b8c18',
+      universalIdentifier: '503aadf2-cc99-4db6-8265-8d9b98cc4d8e',
       fieldMetadataUniversalIdentifier: WORKLOG_TIME_SPENT_MINUTES_FIELD_UID,
       position: 1,
       isVisible: true,
       size: 150,
     },
     {
-      universalIdentifier: '2132c185-a07b-4c97-9c39-f089b053e9e3',
+      universalIdentifier: 'f6155525-7791-4e69-b1f5-58c05a612f3d',
       fieldMetadataUniversalIdentifier: WORKLOG_STARTED_AT_FIELD_UID,
       position: 2,
       isVisible: true,
       size: 170,
     },
     {
-      universalIdentifier: 'b56b0efd-24ba-4fd9-81db-274358900571',
+      universalIdentifier: 'd433f5ea-508a-492e-ad93-a441a15f0ada',
       fieldMetadataUniversalIdentifier: WORKLOG_MEMBER_FIELD_UID,
       position: 3,
       isVisible: true,
@@ -53,7 +53,7 @@ export default defineView({
   ],
   sorts: [
     {
-      universalIdentifier: '734cb4e8-1c37-46fb-bd24-a112a3beab16',
+      universalIdentifier: '9a598ae5-b801-4d62-a8a5-a0cdbd01bae3',
       fieldMetadataUniversalIdentifier: WORKLOG_STARTED_AT_FIELD_UID,
       direction: ViewSortDirection.DESC,
     },
