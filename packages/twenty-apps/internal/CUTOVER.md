@@ -185,9 +185,13 @@ phải dump toàn bộ database và phải kiểm tra khôi phục được trư
 
 Ghi ở đây để không ai bất ngờ sau golive. Chi tiết trong `DEPLOY.md` của từng app.
 
-- **Không có kéo thả.** Front component chạy trong Remote DOM: không có `window`/`document`, không
-  đọc được vị trí con trỏ, `PointerEvent is not a constructor`. Kanban đổi cột và backlog đổi sprint
-  chuyển sang chọn rồi đổi giá trị, không kéo được nữa.
+- **Kéo thả vẫn còn**, nhưng viết tay bằng HTML5 drag-and-drop thay vì `@hello-pangea/dnd`. Remote
+  DOM forward đủ `dragstart`/`dragover`/`drop` cùng `clientX`/`clientY`, và `draggable` cross sang
+  host DOM (có test assert ở `div-events.stories.tsx`, story `DragDrop`). Thư viện cũ không dùng
+  được vì nó hit-test bằng `document.elementFromPoint`, mà sandbox không có `document`.
+- **CSS chỉ có inline.** `style={{}}` dùng được mọi thuộc tính, nhưng không ship được stylesheet
+  (SDK không export `remote-style`), nên `:hover`, media query và keyframes phải điều khiển bằng
+  state qua event `mouseenter`/`mouseleave`/`focus`/`blur` — các event này đều được forward.
 - **Editor rich text xuống cấp.** BlockNote không chạy trong sandbox; comment và worklog dùng editor
   đơn giản hơn.
 - **Cấp `issueKey` không còn atomic bằng SQL.** App không có raw SQL và không có transaction; thay
