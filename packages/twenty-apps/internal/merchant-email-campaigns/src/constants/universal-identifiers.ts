@@ -1,0 +1,172 @@
+// `merchant` and `app` are standard objects of this fork, not of upstream
+// Twenty, so the published SDK constants do not carry them. Same values as
+// bd-prospects: they come from core.objectMetadata and must not change.
+export const MERCHANT_OBJECT_UID = '5d9a58bd-983c-4ca4-9f0a-b53cdec4cfca';
+export const APP_OBJECT_UID = '4d71d304-ea37-457c-9422-48812659d75e';
+
+// Every universalIdentifier the app owns, in one place: a duplicate or a typo
+// silently creates a second entity on install instead of updating the
+// existing one. Never change a value after the first sync.
+
+export const APPLICATION_UID = 'afd80b02-f218-41be-a9a1-3c62737f9411';
+export const APP_RUNTIME_ROLE_UID = '6e911b23-2f7e-4d18-bc2c-7f791cc58acc';
+export const RESEND_API_KEY_VARIABLE_UID =
+  'af1434c6-736b-4c30-aa73-cd1332589421';
+export const DEFAULT_FROM_EMAIL_VARIABLE_UID =
+  '59d47cd3-7f00-443b-a141-14271359777b';
+export const DEFAULT_REPLY_TO_VARIABLE_UID =
+  '697a5151-df13-4c5e-9d2a-23d5e8fcc63e';
+export const UNSUBSCRIBE_SECRET_VARIABLE_UID =
+  '4d81ba64-8a86-4c65-b7bc-01682753652c';
+export const PUBLIC_SERVER_URL_VARIABLE_UID =
+  '0164575e-f1ce-4f00-9b94-f3efac232fee';
+export const CAMPAIGN_SENDERS_VARIABLE_UID =
+  '707fc7cb-6c0d-48df-a11d-3e02e83a414d';
+export const EMAIL_TEMPLATE_OBJECT_UID = '6495440b-92aa-417d-810b-a2359024b7d9';
+export const EMAIL_TEMPLATE_NAME_FIELD_UID =
+  '294d102b-6f1d-4dfa-811d-9b19e53ff216';
+export const EMAIL_TEMPLATE_SUBJECT_FIELD_UID =
+  '64cd899b-fbef-4612-9536-a60c00d08d65';
+export const EMAIL_TEMPLATE_PREVIEW_TEXT_FIELD_UID =
+  '66eb41ac-4fb4-4083-a1fa-7d77217fb403';
+export const EMAIL_TEMPLATE_DESIGN_FIELD_UID =
+  'f6391f6c-5718-4337-bbf7-ae7e9fe5ea35';
+export const EMAIL_CAMPAIGN_OBJECT_UID = 'ede3d58a-9bf1-4e60-9ad2-cde8be8271da';
+export const EMAIL_CAMPAIGN_NAME_FIELD_UID =
+  'a44ad04d-b95b-4790-aee7-8e775da6fdff';
+export const EMAIL_CAMPAIGN_TYPE_FIELD_UID =
+  '8dd8f810-e4c2-4a70-abea-2da187f4533c';
+export const EMAIL_CAMPAIGN_STATUS_FIELD_UID =
+  '75f9c82a-a669-4ef6-82c4-eef22c00f04f';
+export const EMAIL_CAMPAIGN_TRIGGER_FIELD_UID =
+  'b9b8ba9a-8d18-4d56-9cfd-b9b9812da0ca';
+export const EMAIL_CAMPAIGN_DELAY_MINUTES_FIELD_UID =
+  '1787b0ca-5d58-4cab-a092-b6c3cc4862da';
+export const EMAIL_CAMPAIGN_AUDIENCE_FILTER_FIELD_UID =
+  'a2552b9e-2211-4b56-a995-35e95e9e75ff';
+export const EMAIL_CAMPAIGN_FROM_EMAIL_FIELD_UID =
+  'd13ec6d1-4351-42d3-a6cb-2b87349a476f';
+export const EMAIL_CAMPAIGN_REPLY_TO_FIELD_UID =
+  'd7b0ee50-bd1c-4bd3-b9b2-c2a829eb3e4c';
+export const EMAIL_CAMPAIGN_SEND_ONCE_FIELD_UID =
+  '42dbfe12-bd87-4b26-8d89-75ffa58ac196';
+export const EMAIL_CAMPAIGN_SCHEDULED_AT_FIELD_UID =
+  '958bbd34-8a38-4951-8566-0646982badce';
+export const EMAIL_CAMPAIGN_STARTED_AT_FIELD_UID =
+  '4ae01c13-5b0f-4778-bbe9-2849b9b4a794';
+export const EMAIL_CAMPAIGN_COMPLETED_AT_FIELD_UID =
+  '0b8f1c29-34b7-49b7-aa3f-92b3abd296b0';
+export const EMAIL_CAMPAIGN_LAST_ERROR_FIELD_UID =
+  '3a94b9db-91c4-4eea-a9e7-945ba445b3be';
+export const EMAIL_SEND_OBJECT_UID = 'a15ec72c-ce9d-4598-bd28-05ec5881e594';
+export const EMAIL_SEND_NAME_FIELD_UID = '83ef2017-85aa-4b7e-a20b-5a49f24bc6f5';
+export const EMAIL_SEND_SUBJECT_FIELD_UID =
+  '3034defc-bafb-4846-8539-38ce220e1245';
+export const EMAIL_SEND_STATUS_FIELD_UID =
+  'cb2f110c-4ea8-42cc-ba06-0bca45cfe146';
+export const EMAIL_SEND_TRIGGER_FIELD_UID =
+  '284b238a-baf3-4bab-a1c7-7399ae2ec7c0';
+export const EMAIL_SEND_PROVIDER_MESSAGE_ID_FIELD_UID =
+  'c70fba0b-f89d-466b-a87c-ae5d5d2a2ca1';
+export const EMAIL_SEND_ERROR_MESSAGE_FIELD_UID =
+  'd208e9ed-1f0d-4c8c-a46d-52ee64236034';
+export const EMAIL_SEND_SENT_AT_FIELD_UID =
+  '12fa2962-0441-447e-92d6-90019e2942cd';
+export const TEMPLATE_ON_CAMPAIGN_FIELD_UID =
+  '20c512bd-2c64-4d21-b1e1-0362105a0347';
+export const CAMPAIGNS_ON_TEMPLATE_FIELD_UID =
+  '63262825-d346-4888-922b-6fc055d50199';
+export const CAMPAIGN_ON_SEND_FIELD_UID =
+  'b248f962-8d77-42d5-8cda-ed1519004eb8';
+export const SENDS_ON_CAMPAIGN_FIELD_UID =
+  '441c84d0-071e-4802-81a9-619dee4ca9c0';
+export const MERCHANT_ON_SEND_FIELD_UID =
+  'a7ee4bd1-5184-4cc7-b8ee-888f96d637b7';
+export const SENDS_ON_MERCHANT_FIELD_UID =
+  'd9703e2b-4ae3-487e-a690-0dd35d4c493a';
+export const MERCHANT_EMAIL_FIELD_UID = 'b6c7bf1f-f1c0-40a2-916d-2563550f9389';
+export const MERCHANT_CONTACT_NAME_FIELD_UID =
+  'd43b3e9b-4b1f-432e-92b1-5e97269da88c';
+export const MERCHANT_EMAIL_UNSUBSCRIBED_FIELD_UID =
+  '99d4c986-e607-4bbd-9e70-f4ee755bba2c';
+export const MERCHANT_EMAIL_UNSUBSCRIBED_AT_FIELD_UID =
+  '9fa5342b-095f-47d1-a622-7b878909ff48';
+export const ON_MERCHANT_CREATED_LOGIC_FUNCTION_UID =
+  'c3e857fd-4f26-45c8-b713-90a65b7a8879';
+export const ON_MERCHANT_UPDATED_LOGIC_FUNCTION_UID =
+  '875ba189-b947-4cf2-b50d-4b2780380bcf';
+export const SEND_AUTOMATION_EMAIL_LOGIC_FUNCTION_UID =
+  '83a24e6d-c819-463c-a321-c18838968941';
+export const RUN_BROADCAST_BATCH_LOGIC_FUNCTION_UID =
+  '16ebe089-ce8b-4f8c-aefc-58355eb149e9';
+export const START_SCHEDULED_CAMPAIGNS_LOGIC_FUNCTION_UID =
+  '4306eb58-8459-41ec-a7b9-571b6f5e1078';
+export const LAUNCH_CAMPAIGN_LOGIC_FUNCTION_UID =
+  '7fb17663-020c-479c-9993-ea9a05c2edc7';
+export const SEND_TEST_EMAIL_LOGIC_FUNCTION_UID =
+  '2fd5c6cc-569a-4afd-9fcd-63e5523064b7';
+export const PREVIEW_AUDIENCE_LOGIC_FUNCTION_UID =
+  '994f4898-db56-4ab5-bbf1-a297efa7d070';
+export const UNSUBSCRIBE_PAGE_LOGIC_FUNCTION_UID =
+  '089e2d3f-b776-4a36-903c-db6359e3b4c2';
+export const UNSUBSCRIBE_ONE_CLICK_LOGIC_FUNCTION_UID =
+  '089a8b93-c165-46ce-9d3d-4c9d95095304';
+export const HEALTH_CHECK_LOGIC_FUNCTION_UID =
+  'f5abded9-39d9-4b97-bf3c-7a42b08bda27';
+export const EMAIL_STUDIO_FRONT_COMPONENT_UID =
+  'f19885bb-7660-4717-b6ff-afdf759fe7cb';
+export const EMAIL_STUDIO_PAGE_LAYOUT_UID =
+  '9f33158e-568f-4c06-8af0-d7df1c1dd1e2';
+export const EMAIL_STUDIO_PAGE_LAYOUT_TAB_UID =
+  'b0707e22-225a-490d-924f-cb88121dc7c9';
+export const EMAIL_STUDIO_PAGE_LAYOUT_WIDGET_UID =
+  '5846c632-2e40-4d34-8b9f-1bff5abff44a';
+export const EMAIL_FOLDER_NAV_ITEM_UID = '90fd83ef-4b0d-45d2-83a9-6a7187fb5d14';
+export const EMAIL_STUDIO_NAV_ITEM_UID = '60545877-07e8-497b-9984-4fa61ebdbc3a';
+export const CAMPAIGNS_NAV_ITEM_UID = 'f2efecb1-4983-4676-bc80-4dabfc2a8f8a';
+export const TEMPLATES_NAV_ITEM_UID = 'a28f254f-0c1c-4ae8-be17-854072e0ea7d';
+export const SENDS_NAV_ITEM_UID = '9cc86850-9667-4b7d-8f59-ce911ce7a380';
+export const ALL_CAMPAIGNS_VIEW_UID = '23ca7ad2-1c5d-48de-9b6c-6c4e26d18ed2';
+export const ALL_TEMPLATES_VIEW_UID = '72ad11aa-702d-40c8-a327-1fef644b0e4b';
+export const ALL_SENDS_VIEW_UID = '6eb12731-b5be-45af-8684-79ed28fcbfd3';
+export const LIST_APPS_LOGIC_FUNCTION_UID =
+  'cc6462d2-94b7-407b-bfe6-d1e45ad43c20';
+export const CAMPAIGN_STATS_LOGIC_FUNCTION_UID =
+  '2891ac79-4dd1-47dc-a158-06138b79cb1b';
+export const EMAIL_PROVIDER_VARIABLE_UID =
+  '2178bf9d-e276-4a09-aa2c-fe3cd858c856';
+export const CUSTOM_EMAIL_ENDPOINT_VARIABLE_UID =
+  '0f455831-359d-4d29-bcf9-d654cae53337';
+export const CUSTOM_EMAIL_HEADERS_VARIABLE_UID =
+  '7813be5b-0549-42cc-849c-9324bd50889d';
+export const CUSTOM_EMAIL_BODY_TEMPLATE_VARIABLE_UID =
+  '8060419b-e091-411b-9cdb-37226c01d398';
+export const INBOUND_EVENTS_API_KEY_VARIABLE_UID =
+  '7ac5597d-48fa-49f6-a9c3-ed071a3b5782';
+export const MERCHANT_EVENT_OBJECT_UID = 'e211e4a6-a0fb-4aff-b1cd-1c3467996db9';
+export const MERCHANT_EVENT_NAME_FIELD_UID =
+  '09a6fd78-1e84-4571-a752-47e4d102fa0a';
+export const MERCHANT_EVENT_EMAIL_FIELD_UID =
+  'fe083d60-ba9c-4f4a-a984-d887f247b332';
+export const MERCHANT_EVENT_DOMAIN_FIELD_UID =
+  'e9080297-0767-467b-aa81-4d979d23fcbf';
+export const MERCHANT_EVENT_PROPERTIES_FIELD_UID =
+  'e3b924de-9502-42e7-a6d9-5be97148915d';
+export const MERCHANT_EVENT_OCCURRED_AT_FIELD_UID =
+  '40fcd3d9-cfe4-4f3f-81ff-8c68b765ed33';
+export const MERCHANT_EVENT_STATUS_FIELD_UID =
+  'ae737b24-1541-4e84-a84b-52f53c0ae6f5';
+export const MERCHANT_EVENT_CAMPAIGNS_QUEUED_FIELD_UID =
+  '937e74f5-d42c-4c79-a46f-ecc530ea1b1d';
+export const MERCHANT_ON_EVENT_FIELD_UID =
+  '68fd38d3-e6ef-4ec7-8c03-12dc01e893ad';
+export const EVENTS_ON_MERCHANT_FIELD_UID =
+  '003d5eb9-b311-45ee-9709-cd49556495bc';
+export const EMAIL_CAMPAIGN_EVENT_NAME_FIELD_UID =
+  '0e083320-f983-47da-8dd1-281911c3d62b';
+export const INGEST_EVENT_LOGIC_FUNCTION_UID =
+  'cb00c8a5-881d-41ab-9730-0aa477e2bc52';
+export const INTEGRATION_INFO_LOGIC_FUNCTION_UID =
+  'f9f31053-f480-4023-a14e-92c5bab7509d';
+export const ALL_EVENTS_VIEW_UID = '880de6d9-300f-4e86-a9bd-0e0a3bc01232';
+export const EVENTS_NAV_ITEM_UID = '11215592-1a83-422e-9a87-ca827153790d';

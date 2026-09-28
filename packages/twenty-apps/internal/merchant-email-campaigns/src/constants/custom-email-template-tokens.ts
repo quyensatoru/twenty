@@ -1,0 +1,16 @@
+export const CUSTOM_EMAIL_TEMPLATE_TOKENS = [
+  'to',
+  'from',
+  'fromEmail',
+  'fromName',
+  'replyTo',
+  'subject',
+  'html',
+  'text',
+  'unsubscribeUrl',
+  'shopDomain',
+  'campaignId',
+  'campaignName',
+  'merchantId',
+  'idempotencyKey',
+] as const;
