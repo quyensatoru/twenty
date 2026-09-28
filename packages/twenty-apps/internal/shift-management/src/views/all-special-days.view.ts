@@ -1,0 +1,80 @@
+import { defineView, ViewType } from 'twenty-sdk/define';
+
+import {
+  ALL_SPECIAL_DAYS_VIEW_DATE_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_DAY_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_IS_ACTIVE_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_KIND_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_MONTH_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_MULTIPLIER_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_NAME_FIELD_UID,
+  ALL_SPECIAL_DAYS_VIEW_UID,
+  SPECIAL_DAY_DATE_FIELD_UID,
+  SPECIAL_DAY_DAY_FIELD_UID,
+  SPECIAL_DAY_IS_ACTIVE_FIELD_UID,
+  SPECIAL_DAY_KIND_FIELD_UID,
+  SPECIAL_DAY_MONTH_FIELD_UID,
+  SPECIAL_DAY_MULTIPLIER_FIELD_UID,
+  SPECIAL_DAY_NAME_FIELD_UID,
+  SPECIAL_DAY_OBJECT_UID,
+} from '../constants/universal-identifiers';
+
+export default defineView({
+  universalIdentifier: ALL_SPECIAL_DAYS_VIEW_UID,
+  name: 'All Special Days',
+  objectUniversalIdentifier: SPECIAL_DAY_OBJECT_UID,
+  type: ViewType.TABLE,
+  icon: 'IconCalendarStar',
+  position: 0,
+  fields: [
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_NAME_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_NAME_FIELD_UID,
+      position: 0,
+      isVisible: true,
+      size: 200,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_KIND_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_KIND_FIELD_UID,
+      position: 1,
+      isVisible: true,
+      size: 140,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_MONTH_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_MONTH_FIELD_UID,
+      position: 2,
+      isVisible: true,
+      size: 100,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_DAY_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_DAY_FIELD_UID,
+      position: 3,
+      isVisible: true,
+      size: 100,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_DATE_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_DATE_FIELD_UID,
+      position: 4,
+      isVisible: true,
+      size: 130,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_MULTIPLIER_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_MULTIPLIER_FIELD_UID,
+      position: 5,
+      isVisible: true,
+      size: 120,
+    },
+    {
+      universalIdentifier: ALL_SPECIAL_DAYS_VIEW_IS_ACTIVE_FIELD_UID,
+      fieldMetadataUniversalIdentifier: SPECIAL_DAY_IS_ACTIVE_FIELD_UID,
+      position: 6,
+      isVisible: true,
+      size: 100,
+    },
+  ],
+});

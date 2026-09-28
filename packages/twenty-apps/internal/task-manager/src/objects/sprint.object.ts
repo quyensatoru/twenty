@@ -1,0 +1,81 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+
+import { SPRINT_STATE_OPTIONS } from '../constants/sprint-state-options';
+import {
+  SPRINT_COMPLETE_DATE_FIELD_UID,
+  SPRINT_END_DATE_FIELD_UID,
+  SPRINT_GOAL_FIELD_UID,
+  SPRINT_NAME_FIELD_UID,
+  SPRINT_OBJECT_UID,
+  SPRINT_START_DATE_FIELD_UID,
+  SPRINT_STATE_FIELD_UID,
+} from '../constants/universal-identifiers';
+
+export default defineObject({
+  universalIdentifier: SPRINT_OBJECT_UID,
+  nameSingular: 'sprint',
+  namePlural: 'sprints',
+  labelSingular: 'Sprint',
+  labelPlural: 'Sprints',
+  description: 'A sprint',
+  icon: 'IconRun',
+  labelIdentifierFieldMetadataUniversalIdentifier: SPRINT_NAME_FIELD_UID,
+  fields: [
+    {
+      universalIdentifier: SPRINT_NAME_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'name',
+      label: 'Name',
+      description: 'Sprint name',
+      icon: 'IconRun',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: SPRINT_STATE_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'state',
+      label: 'State',
+      description: 'Sprint state',
+      icon: 'IconStatusChange',
+      isNullable: true,
+      defaultValue: "'FUTURE'",
+      options: [...SPRINT_STATE_OPTIONS],
+    },
+    {
+      universalIdentifier: SPRINT_GOAL_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'goal',
+      label: 'Goal',
+      description: 'Sprint goal',
+      icon: 'IconTarget',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: SPRINT_START_DATE_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'startDate',
+      label: 'Start date',
+      description: 'Sprint start date',
+      icon: 'IconCalendarEvent',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: SPRINT_END_DATE_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'endDate',
+      label: 'End date',
+      description: 'Sprint end date',
+      icon: 'IconCalendarEvent',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: SPRINT_COMPLETE_DATE_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'completeDate',
+      label: 'Complete date',
+      description: 'Sprint complete date',
+      icon: 'IconCalendarCheck',
+      isNullable: true,
+    },
+  ],
+});
