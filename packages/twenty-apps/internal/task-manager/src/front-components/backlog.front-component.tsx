@@ -8,13 +8,18 @@ import {
   UPDATE_SPRINT_ROUTE_PATH,
 } from '../constants/route-paths';
 import { BACKLOG_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
+import { matchIssueSearch } from './utils/match-issue-search.util';
 import { BacklogSprintSection } from './components/backlog-sprint-section';
 import { TaskButton } from './components/task-button';
+import { TaskFieldVisibilityMenu } from './components/task-field-visibility-menu';
 import { TaskMessage } from './components/task-message';
 import { TaskPageHeader } from './components/task-page-header';
+import { TaskSearchInput } from './components/task-search-input';
 import { TaskSelect } from './components/task-select';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useBacklogData } from './hooks/use-backlog-data';
+import { type MemberRow } from './hooks/use-issue-detail';
+import { useVisibleIssueCardFields } from './hooks/use-visible-issue-card-fields';
 import { computeDropPosition } from './utils/compute-drop-position.util';
 import {
   groupIssuesBy,
@@ -29,6 +34,8 @@ const Backlog = () => {
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActing, setIsActing] = useState(false);
+  const [search, setSearch] = useState('');
+  const { visibleFields, toggleField } = useVisibleIssueCardFields();
 
   const { data, isLoading, loadError, reload, setData } = useBacklogData({
     projectId,
@@ -44,14 +51,25 @@ const Backlog = () => {
     [openSprints],
   );
 
+  const visibleIssues = useMemo(
+    () => data.issues.filter((issue) => matchIssueSearch(issue, search)),
+    [data.issues, search],
+  );
+
+  const membersById = useMemo(
+    () =>
+      new Map<string, MemberRow>(data.members.map((member) => [member.id, member])),
+    [data.members],
+  );
+
   const issuesBySprint = useMemo(
     () =>
       groupIssuesBy({
-        issues: data.issues,
+        issues: visibleIssues,
         groupKey: 'sprintId',
         groupIds: openSprints.map((sprint) => sprint.id),
       }),
-    [data.issues, openSprints],
+    [visibleIssues, openSprints],
   );
 
   const moveIssue = async ({
@@ -144,6 +162,8 @@ const Backlog = () => {
             sprint={sprint}
             title={sprint.name ?? ''}
             issues={issuesBySprint.get(sprint.id) ?? []}
+            visibleFields={visibleFields}
+            membersById={membersById}
             draggingIssueId={draggingIssueId}
             onDragStartIssue={setDraggingIssueId}
             onDragEndIssue={() => setDraggingIssueId(null)}
@@ -154,6 +174,7 @@ const Backlog = () => {
             actions={
               sprint.state === 'FUTURE' ? (
                 <TaskButton
+                  size="small"
                   isDisabled={isActing}
                   onClick={() =>
                     void runSprintAction(() =>
@@ -171,6 +192,7 @@ const Backlog = () => {
                 </TaskButton>
               ) : sprint.state === 'ACTIVE' ? (
                 <TaskButton
+                  size="small"
                   isDisabled={isActing}
                   onClick={() =>
                     void runSprintAction(() =>
@@ -195,6 +217,8 @@ const Backlog = () => {
         <BacklogSprintSection
           title={t('Backlog')}
           issues={issuesBySprint.get(UNGROUPED_GROUP_KEY) ?? []}
+          visibleFields={visibleFields}
+          membersById={membersById}
           draggingIssueId={draggingIssueId}
           onDragStartIssue={setDraggingIssueId}
           onDragEndIssue={() => setDraggingIssueId(null)}
@@ -217,6 +241,17 @@ const Backlog = () => {
       }}
     >
       <TaskPageHeader title={t('Backlog')} subtitle={actionError ?? undefined}>
+        <TaskSearchInput
+          ariaLabel={t('Search issues')}
+          clearLabel={t('Clear search')}
+          placeholder={t('Search by key or title')}
+          value={search}
+          onChange={setSearch}
+        />
+        <TaskFieldVisibilityMenu
+          visibleFields={visibleFields}
+          onToggleField={toggleField}
+        />
         {data.projects.length > 0 && (
           <TaskSelect
             ariaLabel={t('Project')}

@@ -1,49 +1,83 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
+import { useStableFieldValue } from '../hooks/use-stable-field-value';
+import { getTaskControlStyle, TASK_BARE_FIELD_STYLE } from './task-control-styles';
 import { TASK_TOKENS } from './task-tokens';
 
 type TaskTextInputProps = {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
   ariaLabel: string;
-  type?: 'text' | 'datetime-local';
+  placeholder?: string;
+  type?: 'text' | 'number' | 'datetime-local';
+  prefixIcon?: ReactNode;
+  suffix?: ReactNode;
+  onEnter?: () => void;
   width?: number | string;
+  height?: number;
 };
 
 export const TaskTextInput = ({
   value,
   onChange,
-  placeholder,
   ariaLabel,
+  placeholder,
   type = 'text',
+  prefixIcon,
+  suffix,
+  onEnter,
   width = '100%',
+  height = 32,
 }: TaskTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const { fieldValue, fieldKey, report } = useStableFieldValue(value);
 
   return (
-    <input
-      aria-label={ariaLabel}
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
+    <div
       style={{
-        background: TASK_TOKENS.backgroundTransparentLighter,
-        border: `1px solid ${isFocused ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
-        borderRadius: TASK_TOKENS.radiusSmall,
-        boxShadow: isFocused ? `0 0 0 3px ${TASK_TOKENS.accentSoft}` : 'none',
-        boxSizing: 'border-box',
-        color: TASK_TOKENS.textPrimary,
-        fontFamily: TASK_TOKENS.fontFamily,
-        fontSize: 13,
-        height: 28,
-        outline: 'none',
+        ...getTaskControlStyle(isFocused),
+        alignItems: 'center',
+        display: 'flex',
+        gap: 6,
+        height,
         padding: '0 8px',
         width,
       }}
-    />
+    >
+      {prefixIcon}
+      <input
+        key={fieldKey}
+        aria-label={ariaLabel}
+        type={type}
+        value={fieldValue}
+        placeholder={placeholder}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            onEnter?.();
+          }
+        }}
+        onChange={(event) => {
+          report(event.target.value);
+          onChange(event.target.value);
+        }}
+        style={{
+          ...TASK_BARE_FIELD_STYLE,
+          // Strips the browser's own spinner and date glyph so a
+          // datetime-local field reads as a Twenty field rather than as raw
+          // browser chrome. Cosmetic only — the native picker still opens.
+          WebkitAppearance: 'none',
+          MozAppearance: 'textfield',
+          appearance: 'none',
+          colorScheme: 'inherit',
+        }}
+      />
+      {suffix === undefined ? null : (
+        <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}>
+          {suffix}
+        </span>
+      )}
+    </div>
   );
 };

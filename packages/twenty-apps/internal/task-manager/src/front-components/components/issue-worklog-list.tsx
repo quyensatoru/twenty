@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
+import { IconClock, IconTrash } from 'twenty-ui/icon';
 
 import { formatMinutes, parseMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, type WorklogRow } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskButton } from './task-button';
+import { TaskDateTimeInput } from './task-date-time-input';
+import { TaskIconButton } from './task-icon-button';
 import { TaskTextArea } from './task-text-area';
 import { TaskTextInput } from './task-text-input';
 import { TASK_TOKENS } from './task-tokens';
@@ -47,6 +50,7 @@ export const IssueWorklogList = ({
 }: IssueWorklogListProps) => {
   const [timeSpent, setTimeSpent] = useState('');
   const [description, setDescription] = useState('');
+  const [descriptionKey, setDescriptionKey] = useState(0);
   const [startedAt, setStartedAt] = useState(toDateTimeLocalValue(new Date()));
 
   const parsedMinutes = parseMinutes(timeSpent);
@@ -63,22 +67,12 @@ export const IssueWorklogList = ({
     });
     setTimeSpent('');
     setDescription('');
+    setDescriptionKey((current) => current + 1);
   };
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <header style={{ alignItems: 'baseline', display: 'flex', gap: 8 }}>
-        <h2
-          style={{
-            color: TASK_TOKENS.textPrimary,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 13,
-            fontWeight: 600,
-            margin: 0,
-          }}
-        >
-          {t('Worklogs')}
-        </h2>
         <span
           style={{
             color: TASK_TOKENS.textTertiary,
@@ -144,13 +138,14 @@ export const IssueWorklogList = ({
             {formatDate(worklog.startedAt)}
           </span>
           {currentMemberId !== null && worklog.memberId === currentMemberId && (
-            <TaskButton
-              variant="ghost"
+            <TaskIconButton
+              label={t('Delete')}
+              isDanger
               isDisabled={isBusy}
               onClick={() => onDelete(worklog.id)}
             >
-              {t('Delete')}
-            </TaskButton>
+              <IconTrash size={14} />
+            </TaskIconButton>
           )}
         </article>
       ))}
@@ -161,17 +156,17 @@ export const IssueWorklogList = ({
           value={timeSpent}
           onChange={setTimeSpent}
           placeholder={t('e.g. 90 or 1h30m')}
-          width={140}
+          width={150}
+          prefixIcon={<IconClock size={14} color={TASK_TOKENS.textTertiary} />}
         />
-        <TaskTextInput
+        <TaskDateTimeInput
           ariaLabel={t('Started at')}
-          type="datetime-local"
           value={startedAt}
           onChange={setStartedAt}
-          width={200}
         />
       </div>
       <TaskTextArea
+        key={descriptionKey}
         ariaLabel={t('What you worked on')}
         value={description}
         onChange={setDescription}

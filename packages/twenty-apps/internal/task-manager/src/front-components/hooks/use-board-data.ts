@@ -7,6 +7,7 @@ import {
   type ProjectRow,
   type SprintRow,
 } from '../../types/task-manager-rows';
+import { type MemberRow } from './use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
@@ -17,6 +18,7 @@ type BoardData = {
   sprints: SprintRow[];
   sprintId: string | null;
   issues: IssueRow[];
+  members: MemberRow[];
 };
 
 const EMPTY_BOARD: BoardData = {
@@ -26,6 +28,7 @@ const EMPTY_BOARD: BoardData = {
   sprints: [],
   sprintId: null,
   issues: [],
+  members: [],
 };
 
 export const useBoardData = ({
@@ -56,6 +59,7 @@ export const useBoardData = ({
         sprints: result.sprints ?? [],
         sprintId: result.sprintId ?? null,
         issues: result.issues ?? [],
+        members: result.members ?? [],
       });
       setLoadError(null);
     } catch (error) {

@@ -7,6 +7,7 @@ import {
   type ProjectRow,
   type SprintRow,
 } from '../../types/task-manager-rows';
+import { type MemberRow } from './use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
@@ -15,6 +16,7 @@ type BacklogData = {
   project: ProjectRow | null;
   sprints: SprintRow[];
   issues: IssueRow[];
+  members: MemberRow[];
   issueStatuses: IssueStatusRow[];
 };
 
@@ -23,6 +25,7 @@ const EMPTY_BACKLOG: BacklogData = {
   project: null,
   sprints: [],
   issues: [],
+  members: [],
   issueStatuses: [],
 };
 
@@ -43,6 +46,7 @@ export const useBacklogData = ({ projectId }: { projectId?: string }) => {
         project: result.project ?? null,
         sprints: result.sprints ?? [],
         issues: result.issues ?? [],
+        members: result.members ?? [],
         issueStatuses: result.issueStatuses ?? [],
       });
       setLoadError(null);

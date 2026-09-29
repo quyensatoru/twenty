@@ -37,6 +37,7 @@ export type IssueRow = {
   priority?: string | null;
   storyPoints?: number | null;
   dueDate?: string | null;
+  labels?: string[] | null;
   position?: number | null;
   statusId?: string | null;
   sprintId?: string | null;

@@ -273,7 +273,32 @@ Nó chỉ là bảng nối; người dùng nên thao tác qua picker `Merchants`
 tạo navigation item cho nó, nên nó chỉ lộ ra ở màn Search và danh sách object trong Settings. Muốn
 giấu hẳn thì tắt quyền đọc object đó cho role Member (mục 4.1).
 
-### 5.12 View mặc định
+### 5.12 Không có tab Files, Timeline, Notes, Tasks trên object của app
+
+Bốn widget này của host đều phân giải qua **nhánh morph trên object upstream** trỏ ngược vào object
+task-manager:
+
+| Widget | Cột nó cần |
+| --- | --- |
+| Files | `attachment.targetIssueId`, `targetProjectId`, `targetMerchantId`, `targetIssueCommentId` |
+| Timeline | `timelineActivity.targetIssueId`, `targetEpicId`, `targetMerchantId` |
+| Notes | `noteTarget.targetMerchantId` |
+| Tasks | `taskTarget.targetMerchantId` |
+
+Các nhánh đó thuộc twenty-standard và **đã bị xoá trong cutover**: giữ lại thì đồ thị metadata không
+hợp lệ — vế nghịch nằm bên app còn `relationTargetFieldMetadataId` NULL, và mọi trang của workspace
+đổ về `Could not find flat entity in maps`, chặn luôn `apply` của mọi app. SDK chưa cho app khai lại
+một nhánh vào field MORPH của standard object, nên không dựng lại được.
+
+Hệ quả: **đừng khai widget `FILES`, `TIMELINE`, `NOTES` hay `TASKS` trong page layout của bất kỳ
+object nào app này sở hữu.** Khai rồi thì người dùng thấy
+`Invalid filter : timelineActivity object doesn't have any "targetIssueId" field` thay vì nội dung.
+`src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có hai tab: **Issue** (field + mô tả
+BlockNote) và **Activity** (bình luận + worklog).
+
+Dữ liệu cũ không mất, chỉ mất liên kết, và các cặp id đã được giữ lại — xem `MIGRATION.md` mục 5.
+
+### 5.13 View mặc định
 
 Các view `INDEX` ("All Issues", "All Projects"…) mà engine tự tạo cho object standard không tái sử
 dụng được: manifest của app luôn tạo view **bổ sung**. App ship view riêng tên "Issues",
@@ -300,9 +325,13 @@ Danh sách kiểm bằng tay, theo thứ tự:
    thái.
 5. **Board** → gõ tiêu đề vào ô **Issue mới** → Tạo. Thẻ hiện ở cột đầu tiên với `issueKey` dạng
    `<KEY>-1`, `reporter` là chính mình.
-6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới.
-7. Mở issue → tab Issue có bảng field và editor BlockNote cho Description; tab Activity có bảng
-   Comments và Worklogs.
+6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới. Gõ vào ô **tìm kiếm** thì
+   danh sách lọc theo key/tiêu đề ngay; menu **Fields** bật tắt được chip trên thẻ. Bấm vào một thẻ
+   thì mở **side panel** chi tiết, board vẫn ở phía sau.
+7. Mở issue → chỉ có **hai** tab: **Issue** (bảng field + editor BlockNote cho Description) và
+   **Activity**. Không có tab Files/Timeline — xem mục 5.12. Trong Activity, chuyển qua lại giữa
+   **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải trông như control của Twenty, không
+   phải control mặc định của trình duyệt.
 8. **Backlog** → tạo sprint, kéo issue vào, bấm **Bắt đầu sprint** rồi **Kết thúc sprint**.
 9. Đăng nhập bằng một member **không** có `appAccess` trên app đó → Board hiện rỗng, không lỗi.
 10. Mở issue → tab **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên đúng, và

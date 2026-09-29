@@ -1,6 +1,8 @@
 import { type DragEvent, useState } from 'react';
 
+import { type IssueCardFieldName } from '../../constants/issue-card-fields';
 import { type IssueRow, type IssueStatusRow } from '../../types/task-manager-rows';
+import { type MemberRow } from '../hooks/use-issue-detail';
 import { IssueCard } from './issue-card';
 import { TaskTag } from './task-tag';
 import { TASK_TOKENS } from './task-tokens';
@@ -9,6 +11,8 @@ type BoardColumnProps = {
   issueStatus: IssueStatusRow | null;
   title: string;
   issues: IssueRow[];
+  visibleFields: IssueCardFieldName[];
+  membersById: Map<string, MemberRow>;
   draggingIssueId: string | null;
   onDragStartIssue: (issueId: string) => void;
   onDragEndIssue: () => void;
@@ -24,6 +28,8 @@ export const BoardColumn = ({
   issueStatus,
   title,
   issues,
+  visibleFields,
+  membersById,
   draggingIssueId,
   onDragStartIssue,
   onDragEndIssue,
@@ -113,6 +119,8 @@ export const BoardColumn = ({
             <IssueCard
               issue={issue}
               isDragging={draggingIssueId === issue.id}
+              visibleFields={visibleFields}
+              membersById={membersById}
               onDragStart={(event) => {
                 // Some browsers refuse to start a drag with no payload set.
                 event.dataTransfer.setData('text/plain', issue.id);

@@ -1,7 +1,9 @@
 import { type DragEvent, type ReactNode, useState } from 'react';
 
+import { type IssueCardFieldName } from '../../constants/issue-card-fields';
 import { SPRINT_STATE_OPTIONS } from '../../constants/sprint-state-options';
 import { type IssueRow, type SprintRow } from '../../types/task-manager-rows';
+import { type MemberRow } from '../hooks/use-issue-detail';
 import { readSelectOption } from '../../utils/read-select-option.util';
 import { BacklogIssueRow } from './backlog-issue-row';
 import { TaskTag } from './task-tag';
@@ -11,6 +13,8 @@ type BacklogSprintSectionProps = {
   sprint?: SprintRow;
   title: string;
   issues: IssueRow[];
+  visibleFields: IssueCardFieldName[];
+  membersById: Map<string, MemberRow>;
   draggingIssueId: string | null;
   onDragStartIssue: (issueId: string) => void;
   onDragEndIssue: () => void;
@@ -23,6 +27,8 @@ export const BacklogSprintSection = ({
   sprint,
   title,
   issues,
+  visibleFields,
+  membersById,
   draggingIssueId,
   onDragStartIssue,
   onDragEndIssue,
@@ -108,6 +114,8 @@ export const BacklogSprintSection = ({
             <BacklogIssueRow
               issue={issue}
               isDragging={draggingIssueId === issue.id}
+              visibleFields={visibleFields}
+              membersById={membersById}
               onDragStart={(event) => {
                 // Some browsers refuse to start a drag with no payload set.
                 event.dataTransfer.setData('text/plain', issue.id);

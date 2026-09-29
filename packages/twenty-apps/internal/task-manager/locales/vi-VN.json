@@ -20,6 +20,7 @@
   "Cannot Reproduce": "Không tái hiện được",
   "Category": "Phân loại",
   "Child issues": "Issue con",
+  "Clear search": "Xoá tìm kiếm",
   "Closed": "Đã đóng",
   "Color": "Màu sắc",
   "Comment": "Bình luận",
@@ -43,6 +44,7 @@
   "End date": "Ngày kết thúc",
   "Enhancement": "Cải tiến",
   "Field Schema": "Cấu trúc trường",
+  "Fields": "Trường",
   "Future": "Sắp tới",
   "Goal": "Mục tiêu",
   "Gold": "Vàng kim",
@@ -103,6 +105,8 @@
   "Roadmap": "Lộ trình",
   "Ruby": "Ruby",
   "Save": "Lưu",
+  "Search by key or title": "Tìm theo key hoặc tiêu đề",
+  "Search issues": "Tìm issue",
   "Sky": "Xanh trời",
   "Soft delete": "Xoá mềm",
   "Software": "Phần mềm",
@@ -175,10 +179,12 @@
     "Issue's worklogs": "Thời gian đã ghi nhận của issue",
     "Issues assigned to the workspace member": "Các issue được giao cho thành viên này",
     "Issues currently in this status": "Các issue đang ở trạng thái này",
+    "Issues linked to the merchant": "Các issue liên kết với merchant này",
     "Issues reported by the workspace member": "Các issue do thành viên này tạo",
     "Logged issue": "Issue được ghi nhận thời gian",
     "Merchant name": "Tên merchant",
     "Merchant's app": "App của merchant",
+    "Merchants linked to this issue": "Các merchant liên kết với issue này",
     "Merchants using this app": "Các merchant đang dùng app này",
     "Name": "Tên",
     "Original time estimate in minutes": "Thời gian ước lượng ban đầu, tính bằng phút",
@@ -345,10 +351,8 @@
     "Activity": "Hoạt động",
     "Backlog": "Backlog",
     "Board": "Bảng",
-    "Files": "Tập tin",
     "Issue": "Issue",
-    "Roadmap": "Lộ trình",
-    "Timeline": "Dòng thời gian"
+    "Roadmap": "Lộ trình"
   },
   "pageLayoutWidget.title": {
     "Activity": "Hoạt động",
@@ -356,9 +360,7 @@
     "Board": "Bảng",
     "Description": "Mô tả",
     "Fields": "Trường",
-    "Files": "Tập tin",
-    "Roadmap": "Lộ trình",
-    "Timeline": "Dòng thời gian"
+    "Roadmap": "Lộ trình"
   },
   "view.name": {
     "App Accesses": "Quyền truy cập app",

@@ -14,6 +14,7 @@ import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 import { IssueCommentList } from './components/issue-comment-list';
 import { IssueWorklogList } from './components/issue-worklog-list';
 import { TaskMessage } from './components/task-message';
+import { TaskTabs } from './components/task-tabs';
 import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
 import { type MemberRow, useIssueDetail } from './hooks/use-issue-detail';
@@ -31,6 +32,11 @@ const IssueActivity = () => {
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  // The fork put comments and worklogs behind two tabs rather than stacking
+  // them; keeping that split is what makes the panel read the same.
+  const [activityTab, setActivityTab] = useState<'comments' | 'worklogs'>(
+    'comments',
+  );
 
   const membersById = useMemo(
     () => new Map<string, MemberRow>(data.members.map((m) => [m.id, m])),
@@ -106,6 +112,24 @@ const IssueActivity = () => {
         </section>
       )}
 
+      <TaskTabs
+        value={activityTab}
+        onChange={setActivityTab}
+        tabs={[
+          {
+            value: 'comments',
+            label: t('Comments'),
+            count: data.issueComments.length,
+          },
+          {
+            value: 'worklogs',
+            label: t('Worklogs'),
+            count: data.worklogs.length,
+          },
+        ]}
+      />
+
+      {activityTab === 'comments' ? (
       <IssueCommentList
         comments={data.issueComments}
         membersById={membersById}
@@ -135,7 +159,7 @@ const IssueActivity = () => {
           )
         }
       />
-
+      ) : (
       <IssueWorklogList
         worklogs={data.worklogs}
         membersById={membersById}
@@ -160,6 +184,7 @@ const IssueActivity = () => {
           )
         }
       />
+      )}
     </main>
   );
 };

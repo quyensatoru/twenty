@@ -10,6 +10,7 @@ import { BOARD_DATA_ROUTE_PATH } from '../constants/route-paths';
 import { BOARD_DATA_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
+import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -44,7 +45,14 @@ const handler = async (event: RoutePayload<BoardDataBody>) =>
         : projects[0]?.id;
 
     if (projectId === undefined) {
-      return { projects, project: null, issueStatuses: [], sprints: [], issues: [] };
+      return {
+        projects,
+        project: null,
+        issueStatuses: [],
+        sprints: [],
+        issues: [],
+        members: [],
+      };
     }
 
     const issueStatuses = await listScopedRecords({
@@ -71,7 +79,10 @@ const handler = async (event: RoutePayload<BoardDataBody>) =>
           ? requestedSprintId
           : (sprints.find((sprint) => sprint.state === 'ACTIVE')?.id ?? null);
 
-    const issues = await listScopedRecords({
+    const issues = await listScopedRecords<{
+      assigneeId?: string | null;
+      reporterId?: string | null;
+    }>({
       client,
       pluralName: 'issues',
       filter: {
@@ -89,6 +100,7 @@ const handler = async (event: RoutePayload<BoardDataBody>) =>
       sprints,
       sprintId,
       issues,
+      members: await listIssueMembers({ client, issues }),
     };
   });
 

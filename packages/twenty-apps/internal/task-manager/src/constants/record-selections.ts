@@ -66,6 +66,9 @@ export const EPIC_SELECTION = {
 export const ISSUE_COMMENT_SELECTION = {
   id: true,
   issueId: true,
+  // RICH_TEXT is composite: without naming the sub-fields the body comes back
+  // absent and every comment renders blank.
+  bodyV2: { blocknote: true, markdown: true },
   authorId: true,
   parentCommentId: true,
   createdAt: true,

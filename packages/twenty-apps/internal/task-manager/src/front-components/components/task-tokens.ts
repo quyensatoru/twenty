@@ -18,6 +18,7 @@ export const TASK_TOKENS = {
   accent: 'var(--t-color-blue, #1961ed)',
   accentSoft: 'var(--t-accent-tertiary, #e8efff)',
   accentHover: 'var(--t-accent-accent10, #1450c7)',
+  red: 'var(--t-color-red, #dc2626)',
   radius: 'var(--t-border-radius-md, 8px)',
   radiusSmall: 'var(--t-border-radius-sm, 4px)',
   shadowStrong: 'var(--t-box-shadow-strong, 0 2px 8px rgba(0,0,0,0.16))',

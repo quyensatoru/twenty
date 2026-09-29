@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
+import { IconPencil, IconTrash } from 'twenty-ui/icon';
 
 import { readRichTextPlainValue } from '../../utils/read-rich-text-plain-value.util';
 import {
@@ -8,6 +9,7 @@ import {
 } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskButton } from './task-button';
+import { TaskIconButton } from './task-icon-button';
 import { TaskTextArea } from './task-text-area';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -34,6 +36,7 @@ export const IssueCommentList = ({
   onDelete,
 }: IssueCommentListProps) => {
   const [draft, setDraft] = useState('');
+  const [draftKey, setDraftKey] = useState(0);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
 
@@ -44,22 +47,13 @@ export const IssueCommentList = ({
 
     onCreate(draft.trim());
     setDraft('');
+    // useStableFieldValue only remounts on a value it never saw typed, and ''
+    // was typed on the way in, so clearing the box needs an explicit remount.
+    setDraftKey((current) => current + 1);
   };
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <h2
-        style={{
-          color: TASK_TOKENS.textPrimary,
-          fontFamily: TASK_TOKENS.fontFamily,
-          fontSize: 13,
-          fontWeight: 600,
-          margin: 0,
-        }}
-      >
-        {t('Comments')}
-      </h2>
-
       {comments.map((comment) => {
         const isEditing = editingCommentId === comment.id;
         // The route enforces the same rule; hiding the controls just stops the
@@ -104,23 +98,24 @@ export const IssueCommentList = ({
               </span>
               {canEdit && !isEditing && (
                 <>
-                  <TaskButton
-                    variant="ghost"
+                  <TaskIconButton
+                    label={t('Edit')}
                     isDisabled={isBusy}
                     onClick={() => {
                       setEditingCommentId(comment.id);
                       setEditDraft(readRichTextPlainValue(comment.bodyV2));
                     }}
                   >
-                    {t('Edit')}
-                  </TaskButton>
-                  <TaskButton
-                    variant="ghost"
+                    <IconPencil size={14} />
+                  </TaskIconButton>
+                  <TaskIconButton
+                    label={t('Delete')}
+                    isDanger
                     isDisabled={isBusy}
                     onClick={() => onDelete(comment.id)}
                   >
-                    {t('Delete')}
-                  </TaskButton>
+                    <IconTrash size={14} />
+                  </TaskIconButton>
                 </>
               )}
             </header>
@@ -135,6 +130,7 @@ export const IssueCommentList = ({
                 <div style={{ display: 'flex', gap: 6 }}>
                   <TaskButton
                     variant="primary"
+                    size="small"
                     isDisabled={isBusy || editDraft.trim() === ''}
                     onClick={() => {
                       onUpdate(comment.id, editDraft.trim());
@@ -143,7 +139,10 @@ export const IssueCommentList = ({
                   >
                     {t('Save')}
                   </TaskButton>
-                  <TaskButton onClick={() => setEditingCommentId(null)}>
+                  <TaskButton
+                    size="small"
+                    onClick={() => setEditingCommentId(null)}
+                  >
                     {t('Cancel')}
                   </TaskButton>
                 </div>
@@ -167,6 +166,7 @@ export const IssueCommentList = ({
       })}
 
       <TaskTextArea
+        key={draftKey}
         ariaLabel={t('Write a comment')}
         value={draft}
         onChange={setDraft}

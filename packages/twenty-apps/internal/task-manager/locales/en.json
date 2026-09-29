@@ -20,6 +20,7 @@
   "Cannot Reproduce": "Cannot Reproduce",
   "Category": "Category",
   "Child issues": "Child issues",
+  "Clear search": "Clear search",
   "Closed": "Closed",
   "Color": "Color",
   "Comment": "Comment",
@@ -43,6 +44,7 @@
   "End date": "End date",
   "Enhancement": "Enhancement",
   "Field Schema": "Field Schema",
+  "Fields": "Fields",
   "Future": "Future",
   "Goal": "Goal",
   "Gold": "Gold",
@@ -103,6 +105,8 @@
   "Roadmap": "Roadmap",
   "Ruby": "Ruby",
   "Save": "Save",
+  "Search by key or title": "Search by key or title",
+  "Search issues": "Search issues",
   "Sky": "Sky",
   "Soft delete": "Soft delete",
   "Software": "Software",
@@ -175,10 +179,12 @@
     "Issue's worklogs": "Issue's worklogs",
     "Issues assigned to the workspace member": "Issues assigned to the workspace member",
     "Issues currently in this status": "Issues currently in this status",
+    "Issues linked to the merchant": "Issues linked to the merchant",
     "Issues reported by the workspace member": "Issues reported by the workspace member",
     "Logged issue": "Logged issue",
     "Merchant name": "Merchant name",
     "Merchant's app": "Merchant's app",
+    "Merchants linked to this issue": "Merchants linked to this issue",
     "Merchants using this app": "Merchants using this app",
     "Name": "Name",
     "Original time estimate in minutes": "Original time estimate in minutes",
@@ -345,10 +351,8 @@
     "Activity": "Activity",
     "Backlog": "Backlog",
     "Board": "Board",
-    "Files": "Files",
     "Issue": "Issue",
-    "Roadmap": "Roadmap",
-    "Timeline": "Timeline"
+    "Roadmap": "Roadmap"
   },
   "pageLayoutWidget.title": {
     "Activity": "Activity",
@@ -356,9 +360,7 @@
     "Board": "Board",
     "Description": "Description",
     "Fields": "Fields",
-    "Files": "Files",
-    "Roadmap": "Roadmap",
-    "Timeline": "Timeline"
+    "Roadmap": "Roadmap"
   },
   "view.name": {
     "App Accesses": "App Accesses",

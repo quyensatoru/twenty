@@ -8,6 +8,9 @@ type TaskButtonProps = {
   variant?: 'primary' | 'secondary' | 'ghost';
   isDisabled?: boolean;
   title?: string;
+  // 32 lines up with the text controls in a form row; 24 is the compact size
+  // twenty-ui uses for buttons sitting inside a list row.
+  size?: 'small' | 'medium';
 };
 
 const VARIANT_STYLES = {
@@ -41,6 +44,7 @@ export const TaskButton = ({
   variant = 'secondary',
   isDisabled = false,
   title,
+  size = 'medium',
 }: TaskButtonProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const style = VARIANT_STYLES[variant];
@@ -68,10 +72,10 @@ export const TaskButton = ({
         fontSize: 13,
         fontWeight: 500,
         gap: 4,
-        height: 24,
+        height: size === 'small' ? 24 : 32,
         justifyContent: 'center',
         opacity: isDisabled ? 0.5 : 1,
-        padding: '0 8px',
+        padding: size === 'small' ? '0 8px' : '0 12px',
         whiteSpace: 'nowrap',
       }}
     >

@@ -10,6 +10,7 @@ import { BACKLOG_DATA_ROUTE_PATH } from '../constants/route-paths';
 import { BACKLOG_DATA_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
+import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -41,7 +42,14 @@ const handler = async (event: RoutePayload<BacklogDataBody>) =>
         : projects[0]?.id;
 
     if (projectId === undefined) {
-      return { projects, project: null, sprints: [], issues: [], issueStatuses: [] };
+      return {
+        projects,
+        project: null,
+        sprints: [],
+        issues: [],
+        issueStatuses: [],
+        members: [],
+      };
     }
 
     const [sprints, issues, issueStatuses] = await Promise.all([
@@ -52,7 +60,10 @@ const handler = async (event: RoutePayload<BacklogDataBody>) =>
         selection: SPRINT_SELECTION,
         orderBy: [{ position: 'AscNullsLast' }],
       }),
-      listScopedRecords({
+      listScopedRecords<{
+        assigneeId?: string | null;
+        reporterId?: string | null;
+      }>({
         client,
         pluralName: 'issues',
         filter: { projectId: { eq: projectId } },
@@ -74,6 +85,7 @@ const handler = async (event: RoutePayload<BacklogDataBody>) =>
       sprints,
       issues,
       issueStatuses,
+      members: await listIssueMembers({ client, issues }),
     };
   });
 

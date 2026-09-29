@@ -8,13 +8,18 @@ import {
 } from '../constants/route-paths';
 import { BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { type IssueRow } from '../types/task-manager-rows';
+import { matchIssueSearch } from './utils/match-issue-search.util';
 import { BoardColumn } from './components/board-column';
 import { NewIssueComposer } from './components/new-issue-composer';
+import { TaskFieldVisibilityMenu } from './components/task-field-visibility-menu';
 import { TaskMessage } from './components/task-message';
 import { TaskPageHeader } from './components/task-page-header';
+import { TaskSearchInput } from './components/task-search-input';
 import { TaskSelect } from './components/task-select';
 import { TASK_TOKENS } from './components/task-tokens';
+import { type MemberRow } from './hooks/use-issue-detail';
 import { useBoardData } from './hooks/use-board-data';
+import { useVisibleIssueCardFields } from './hooks/use-visible-issue-card-fields';
 import { computeDropPosition } from './utils/compute-drop-position.util';
 import {
   groupIssuesBy,
@@ -34,6 +39,8 @@ const Board = () => {
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [search, setSearch] = useState('');
+  const { visibleFields, toggleField } = useVisibleIssueCardFields();
 
   const { data, isLoading, loadError, reload, setData } = useBoardData({
     projectId,
@@ -45,14 +52,24 @@ const Board = () => {
           : sprintSelection,
   });
 
+  const visibleIssues = useMemo(
+    () => data.issues.filter((issue) => matchIssueSearch(issue, search)),
+    [data.issues, search],
+  );
+
+  const membersById = useMemo(
+    () => new Map<string, MemberRow>(data.members.map((member) => [member.id, member])),
+    [data.members],
+  );
+
   const issuesByStatus = useMemo(
     () =>
       groupIssuesBy({
-        issues: data.issues,
+        issues: visibleIssues,
         groupKey: 'statusId',
         groupIds: data.issueStatuses.map((issueStatus) => issueStatus.id),
       }),
-    [data.issues, data.issueStatuses],
+    [visibleIssues, data.issueStatuses],
   );
 
   const moveIssue = async ({
@@ -176,6 +193,8 @@ const Board = () => {
             issueStatus={issueStatus}
             title={issueStatus.name ?? ''}
             issues={issuesByStatus.get(issueStatus.id) ?? []}
+            visibleFields={visibleFields}
+            membersById={membersById}
             draggingIssueId={draggingIssueId}
             onDragStartIssue={setDraggingIssueId}
             onDragEndIssue={() => setDraggingIssueId(null)}
@@ -190,6 +209,8 @@ const Board = () => {
             issueStatus={null}
             title={t('No status')}
             issues={unassigned}
+            visibleFields={visibleFields}
+            membersById={membersById}
             draggingIssueId={draggingIssueId}
             onDragStartIssue={setDraggingIssueId}
             onDragEndIssue={() => setDraggingIssueId(null)}
@@ -230,6 +251,17 @@ const Board = () => {
             }}
           />
         )}
+        <TaskSearchInput
+          ariaLabel={t('Search issues')}
+          clearLabel={t('Clear search')}
+          placeholder={t('Search by key or title')}
+          value={search}
+          onChange={setSearch}
+        />
+        <TaskFieldVisibilityMenu
+          visibleFields={visibleFields}
+          onToggleField={toggleField}
+        />
         {data.project !== null && (
           <NewIssueComposer
             isBusy={isCreating}

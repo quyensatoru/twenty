@@ -1,10 +1,11 @@
-import { AppPath, navigate } from 'twenty-sdk/front-component';
+import { openSidePanelPage, SidePanelPages } from 'twenty-sdk/front-component';
 
-// Opens the host's own issue record page, which is where the RECORD_PAGE
-// layout (fields, BlockNote description, comments, worklogs) lives.
+// The fork opened the issue detail in the side panel when a card was clicked,
+// keeping the board behind it. `navigate` would replace the board instead.
 export const openIssue = (issueId: string): void => {
-  void navigate(AppPath.RecordShowPage, {
+  void openSidePanelPage({
+    page: SidePanelPages.ViewRecord,
+    recordId: issueId,
     objectNameSingular: 'issue',
-    objectRecordId: issueId,
   });
 };

@@ -354,14 +354,10 @@ export const ISSUE_ACTIVITY_WIDGET_UID =
   'afee41f0-1817-4d9f-8e2d-3a5e735190df';
 export const ISSUE_ACTIVITY_FRONT_COMPONENT_UID =
   'd2889eec-e50b-4a8d-8d60-32cd43980a07';
-export const ISSUE_RECORD_PAGE_TIMELINE_TAB_UID =
-  'ea1200fc-59bb-4ade-b5bf-41a98d668707';
-export const ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID =
-  '6c18aa28-7604-4e72-9aff-099f62d4a0b3';
-export const ISSUE_RECORD_PAGE_FILES_TAB_UID =
-  '049f1ba2-6e42-48f7-94bf-7f3b3dacc0e1';
-export const ISSUE_RECORD_PAGE_FILES_WIDGET_UID =
-  'f64f2c56-7fde-4287-97f7-e658ea2b2ce4';
+// No Files or Timeline widget identifiers: both widgets resolve through morph
+// branches the cutover deleted (attachment.targetIssueId,
+// timelineActivity.targetIssueId), so declaring them renders an invalid-filter
+// error. See DEPLOY.md 5.13.
 
 
 // Logic functions.

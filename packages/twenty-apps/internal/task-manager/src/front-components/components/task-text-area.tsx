@@ -1,50 +1,44 @@
 import { useState } from 'react';
 
-import { TASK_TOKENS } from './task-tokens';
+import { useStableFieldValue } from '../hooks/use-stable-field-value';
+import { getTaskControlStyle } from './task-control-styles';
 
 type TaskTextAreaProps = {
   value: string;
   onChange: (value: string) => void;
+  ariaLabel: string;
   placeholder?: string;
   rows?: number;
-  ariaLabel: string;
 };
 
-// Twenty's text-field look, rebuilt from a plain textarea: twenty-ui's inputs
-// are base-ui backed and construct PointerEvents the sandbox has no
-// constructor for. Focus styling is state-driven because an app cannot ship a
-// stylesheet, so there is no `:focus` to declare.
 export const TaskTextArea = ({
   value,
   onChange,
+  ariaLabel,
   placeholder,
   rows = 3,
-  ariaLabel,
 }: TaskTextAreaProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const { fieldValue, fieldKey, report } = useStableFieldValue(value);
 
   return (
     <textarea
+      key={fieldKey}
       aria-label={ariaLabel}
-      value={value}
+      value={fieldValue}
       rows={rows}
       placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
+      onChange={(event) => {
+        report(event.target.value);
+        onChange(event.target.value);
+      }}
       style={{
-        background: TASK_TOKENS.backgroundTransparentLighter,
-        border: `1px solid ${isFocused ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
-        borderRadius: TASK_TOKENS.radiusSmall,
-        boxShadow: isFocused ? `0 0 0 3px ${TASK_TOKENS.accentSoft}` : 'none',
-        boxSizing: 'border-box',
-        color: TASK_TOKENS.textPrimary,
-        fontFamily: TASK_TOKENS.fontFamily,
-        fontSize: 13,
-        outline: 'none',
+        ...getTaskControlStyle(isFocused),
+        lineHeight: 1.5,
         padding: 8,
         resize: 'vertical',
-        width: '100%',
       }}
     />
   );

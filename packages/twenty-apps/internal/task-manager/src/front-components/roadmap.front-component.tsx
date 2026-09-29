@@ -4,9 +4,11 @@ import { t } from 'twenty-sdk/front-component';
 
 import { ROADMAP_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { type IssueStatusRow } from '../types/task-manager-rows';
+import { matchIssueSearch } from './utils/match-issue-search.util';
 import { RoadmapEpicCard } from './components/roadmap-epic-card';
 import { TaskMessage } from './components/task-message';
 import { TaskPageHeader } from './components/task-page-header';
+import { TaskSearchInput } from './components/task-search-input';
 import { TaskSelect } from './components/task-select';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useRoadmapData } from './hooks/use-roadmap-data';
@@ -14,7 +16,13 @@ import { openIssue } from './utils/open-issue.util';
 
 const Roadmap = () => {
   const [projectId, setProjectId] = useState<string | undefined>(undefined);
+  const [search, setSearch] = useState('');
   const { data, isLoading, loadError } = useRoadmapData({ projectId });
+
+  const visibleIssues = useMemo(
+    () => data.issues.filter((issue) => matchIssueSearch(issue, search)),
+    [data.issues, search],
+  );
 
   const issueStatusById = useMemo(
     () =>
@@ -35,8 +43,8 @@ const Roadmap = () => {
   // Sub-tasks roll up under their parent, so only top-level issues without an
   // epic get their own section.
   const issuesWithoutEpic = useMemo(
-    () => data.issues.filter((issue) => !issue.epicId && !issue.parentId),
-    [data.issues],
+    () => visibleIssues.filter((issue) => !issue.epicId && !issue.parentId),
+    [visibleIssues],
   );
 
   const renderBody = () => {
@@ -62,7 +70,7 @@ const Roadmap = () => {
           <RoadmapEpicCard
             key={epic.id}
             title={epic.name ?? ''}
-            issues={data.issues.filter((issue) => issue.epicId === epic.id)}
+            issues={visibleIssues.filter((issue) => issue.epicId === epic.id)}
             issueStatusById={issueStatusById}
             doneStatusIds={doneStatusIds}
             onOpenIssue={openIssue}
@@ -93,6 +101,13 @@ const Roadmap = () => {
       }}
     >
       <TaskPageHeader title={t('Roadmap')}>
+        <TaskSearchInput
+          ariaLabel={t('Search issues')}
+          clearLabel={t('Clear search')}
+          placeholder={t('Search by key or title')}
+          value={search}
+          onChange={setSearch}
+        />
         {data.projects.length > 0 && (
           <TaskSelect
             ariaLabel={t('Project')}

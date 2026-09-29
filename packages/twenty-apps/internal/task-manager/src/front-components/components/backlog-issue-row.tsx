@@ -1,14 +1,19 @@
 import { type DragEvent, useState } from 'react';
 
+import { type IssueCardFieldName } from '../../constants/issue-card-fields';
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { type IssueRow } from '../../types/task-manager-rows';
 import { readSelectOption } from '../../utils/read-select-option.util';
+import { type MemberRow } from '../hooks/use-issue-detail';
+import { readMemberName } from '../utils/read-member-name.util';
 import { TaskTag } from './task-tag';
 import { TASK_TOKENS } from './task-tokens';
 
 type BacklogIssueRowProps = {
   issue: IssueRow;
   isDragging: boolean;
+  visibleFields: IssueCardFieldName[];
+  membersById: Map<string, MemberRow>;
   onDragStart: (event: DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
   onOpen: (issueId: string) => void;
@@ -17,6 +22,8 @@ type BacklogIssueRowProps = {
 export const BacklogIssueRow = ({
   issue,
   isDragging,
+  visibleFields,
+  membersById,
   onDragStart,
   onDragEnd,
   onOpen,
@@ -47,16 +54,18 @@ export const BacklogIssueRow = ({
         padding: '6px 8px',
       }}
     >
-      <span
-        style={{
-          color: TASK_TOKENS.textTertiary,
-          fontSize: 12,
-          flexShrink: 0,
-          minWidth: 64,
-        }}
-      >
-        {issue.issueKey ?? ''}
-      </span>
+      {visibleFields.includes('issueKey') ? (
+        <span
+          style={{
+            color: TASK_TOKENS.textTertiary,
+            fontSize: 12,
+            flexShrink: 0,
+            minWidth: 64,
+          }}
+        >
+          {issue.issueKey ?? ''}
+        </span>
+      ) : null}
       <span
         style={{
           color: TASK_TOKENS.textPrimary,
@@ -69,12 +78,19 @@ export const BacklogIssueRow = ({
       >
         {issue.title ?? ''}
       </span>
-      {priority !== undefined && (
+      {visibleFields.includes('priority') && priority !== undefined && (
         <TaskTag color={priority.color}>{priority.label}</TaskTag>
       )}
-      {typeof issue.storyPoints === 'number' && (
-        <TaskTag color="gray">{`${issue.storyPoints} pts`}</TaskTag>
-      )}
+      {visibleFields.includes('storyPoints') &&
+        typeof issue.storyPoints === 'number' && (
+          <TaskTag color="gray">{`${issue.storyPoints} pts`}</TaskTag>
+        )}
+      {visibleFields.includes('assignee') &&
+        typeof issue.assigneeId === 'string' && (
+          <TaskTag color="turquoise">
+            {readMemberName(membersById, issue.assigneeId, '—')}
+          </TaskTag>
+        )}
     </div>
   );
 };

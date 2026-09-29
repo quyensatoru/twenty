@@ -12,16 +12,20 @@ import {
   ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
   ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
-  ISSUE_RECORD_PAGE_FILES_TAB_UID,
-  ISSUE_RECORD_PAGE_FILES_WIDGET_UID,
   ISSUE_RECORD_PAGE_LAYOUT_UID,
-  ISSUE_RECORD_PAGE_TIMELINE_TAB_UID,
-  ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID,
 } from '../constants/universal-identifiers';
 
 // Fields and description are host-rendered: FIELDS replaces the fork's
 // hand-rolled IssueFieldPanel, and FIELD_RICH_TEXT gives `description` the
 // host's real BlockNote editor, which cannot run inside the sandbox.
+//
+// There is no Files or Timeline tab. Both widgets resolve through morph
+// branches on upstream objects — attachment.targetIssueId and
+// timelineActivity.targetIssueId — that the cutover had to delete: they were
+// twenty-standard-owned branches pointing into task-manager objects, and
+// leaving them made the metadata graph invalid for the whole workspace.
+// Declaring the widgets anyway renders
+// `Invalid filter : timelineActivity object doesn't have any "targetIssueId" field`.
 //
 // Comments and worklogs are NOT host widgets. A host widget reads and writes
 // with the viewer's own token, so it would go blank the moment the Member role
@@ -73,36 +77,6 @@ export default definePageLayout({
             frontComponentUniversalIdentifier:
               ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
           },
-        },
-      ],
-    },
-    {
-      universalIdentifier: ISSUE_RECORD_PAGE_FILES_TAB_UID,
-      title: 'Files',
-      position: 20,
-      icon: 'IconPaperclip',
-      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-      widgets: [
-        {
-          universalIdentifier: ISSUE_RECORD_PAGE_FILES_WIDGET_UID,
-          title: 'Files',
-          type: 'FILES',
-          configuration: { configurationType: 'FILES' },
-        },
-      ],
-    },
-    {
-      universalIdentifier: ISSUE_RECORD_PAGE_TIMELINE_TAB_UID,
-      title: 'Timeline',
-      position: 30,
-      icon: 'IconTimelineEvent',
-      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-      widgets: [
-        {
-          universalIdentifier: ISSUE_RECORD_PAGE_TIMELINE_WIDGET_UID,
-          title: 'Timeline',
-          type: 'TIMELINE',
-          configuration: { configurationType: 'TIMELINE' },
         },
       ],
     },
