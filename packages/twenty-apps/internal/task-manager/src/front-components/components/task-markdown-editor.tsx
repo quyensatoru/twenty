@@ -34,12 +34,12 @@ import {
 } from '../utils/upload-image-from-url.util';
 import { getTaskControlStyle } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
-import { TaskMarkdownView } from './task-markdown-view';
 import { TASK_TOKENS } from './task-tokens';
 
 type TaskMarkdownEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   ariaLabel: string;
   placeholder?: string;
   rows?: number;
@@ -153,19 +153,20 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
   },
 ];
 
-// Markdown source in a textarea with a formatting toolbar and a rendered
-// preview, because a WYSIWYG editor cannot exist here: the sandbox has no
-// contentEditable remote element and no Selection API, so BlockNote and
-// ProseMirror have nothing to attach to.
+// Markdown source in a textarea with a formatting toolbar, because a WYSIWYG
+// editor cannot exist here: the sandbox has no contentEditable remote element
+// and no Selection API, so BlockNote and ProseMirror have nothing to attach to.
+// Rendering is every caller's own business — each one already shows saved
+// markdown through TaskMarkdownView.
 export const TaskMarkdownEditor = ({
   value,
   onChange,
+  onBlur,
   ariaLabel,
   placeholder,
   rows = 4,
 }: TaskMarkdownEditorProps) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [isPreviewShown, setIsPreviewShown] = useState(false);
   const { fieldValue, fieldKey, report } = useStableFieldValue(value);
   // The host applies the pasted text natively and only then fires the change,
   // so the URL is rewritten on the way through that change rather than by
@@ -199,7 +200,6 @@ export const TaskMarkdownEditor = ({
     lastValueRef.current = result.value;
     onChange(result.value);
   };
-
 
   const rememberSelection = (eventTarget: unknown) => {
     const selection = readTextareaSelection(eventTarget);
@@ -382,88 +382,56 @@ export const TaskMarkdownEditor = ({
             {action.icon}
           </TaskIconButton>
         ))}
-        <span style={{ flex: 1 }} />
-        <button
-          type="button"
-          aria-pressed={isPreviewShown}
-          onClick={() => setIsPreviewShown((current) => !current)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: isPreviewShown
-              ? TASK_TOKENS.accent
-              : TASK_TOKENS.textTertiary,
-            cursor: 'pointer',
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 11,
-            padding: 0,
-          }}
-        >
-          {isPreviewShown ? t('Edit') : t('Preview')}
-        </button>
       </div>
 
-      {isPreviewShown ? (
-        <div
-          style={{
-            ...getTaskControlStyle(false),
-            minHeight: rows * 20,
-            padding: 8,
-          }}
-        >
-          <TaskMarkdownView
-            markdown={value}
-            emptyText={t('Nothing to preview yet.')}
-          />
-        </div>
-      ) : (
-        <textarea
-          key={fieldKey}
-          aria-label={ariaLabel}
-          value={fieldValue}
-          rows={rows}
-          placeholder={placeholder}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onKeyUp={(event) => rememberSelection(event.target)}
-          onMouseUp={(event) => rememberSelection(event.target)}
-          onClick={(event) => rememberSelection(event.target)}
-          onPaste={(event) => {
-            if (handleTransferredFiles(event.clipboardData)) {
-              return;
-            }
+      <textarea
+        key={fieldKey}
+        aria-label={ariaLabel}
+        value={fieldValue}
+        rows={rows}
+        placeholder={placeholder}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => {
+          setIsFocused(false);
+          onBlur?.();
+        }}
+        onKeyUp={(event) => rememberSelection(event.target)}
+        onMouseUp={(event) => rememberSelection(event.target)}
+        onClick={(event) => rememberSelection(event.target)}
+        onPaste={(event) => {
+          if (handleTransferredFiles(event.clipboardData)) {
+            return;
+          }
 
-            const clipboardText = event.clipboardData?.getData('text') ?? '';
+          const clipboardText = event.clipboardData?.getData('text') ?? '';
 
-            if (clipboardText === '') {
-              return;
-            }
+          if (clipboardText === '') {
+            return;
+          }
 
-            const urlMatch = URL_ONLY_PATTERN.exec(clipboardText);
+          const urlMatch = URL_ONLY_PATTERN.exec(clipboardText);
 
-            pendingPastedUrlRef.current =
-              urlMatch === null ? null : urlMatch[1];
-          }}
-          onDragOver={() => {
-            // Registering the handler is how the host learns to cancel the
-            // browser's own drop, which would otherwise navigate to the file.
-          }}
-          onDrop={(event) => {
-            handleTransferredFiles(event.dataTransfer);
-          }}
-          onChange={(event) => {
-            rememberSelection(event.target);
-            handleChange(event.target.value);
-          }}
-          style={{
-            ...getTaskControlStyle(isFocused),
-            fontFamily: TASK_TOKENS.fontFamily,
-            lineHeight: 1.5,
-            padding: 8,
-            resize: 'vertical',
-          }}
-        />
-      )}
+          pendingPastedUrlRef.current = urlMatch === null ? null : urlMatch[1];
+        }}
+        onDragOver={() => {
+          // Registering the handler is how the host learns to cancel the
+          // browser's own drop, which would otherwise navigate to the file.
+        }}
+        onDrop={(event) => {
+          handleTransferredFiles(event.dataTransfer);
+        }}
+        onChange={(event) => {
+          rememberSelection(event.target);
+          handleChange(event.target.value);
+        }}
+        style={{
+          ...getTaskControlStyle(isFocused),
+          fontFamily: TASK_TOKENS.fontFamily,
+          lineHeight: 1.5,
+          padding: 8,
+          resize: 'vertical',
+        }}
+      />
     </div>
   );
 };
