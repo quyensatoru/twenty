@@ -29,7 +29,7 @@ import {
 export default definePageLayout({
   universalIdentifier: ANALYTICS_PAGE_LAYOUT_UID,
   name: 'Shift Analytics',
-  type: PageLayoutType.DASHBOARD,
+  type: PageLayoutType.STANDALONE_PAGE,
   tabs: [
     {
       universalIdentifier: ANALYTICS_PAGE_LAYOUT_TAB_UID,
@@ -115,6 +115,7 @@ export default definePageLayout({
             aggregateOperation: AggregateOperations.SUM,
             primaryAxisGroupByFieldMetadataUniversalIdentifier:
               SHIFT_TEMPLATE_CODE_SNAPSHOT_FIELD_UID,
+            layout: 'VERTICAL',
           },
         },
       ],

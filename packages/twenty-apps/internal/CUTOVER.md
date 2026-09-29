@@ -144,6 +144,43 @@ index không tham gia vào việc ORM dựng query).
 
 Script: `scripts/03-rename-tables.sql` của từng app.
 
+### Bước 3b — Gỡ liên kết chéo mồ côi
+
+```bash
+psql "$DATABASE_URL" -v schema=<workspace_schema> \
+  -f packages/twenty-apps/internal/task-manager/scripts/04-preserve-cross-object-links.sql
+```
+
+Fork thêm nhánh morph trỏ vào object task-manager trên bốn object của upstream:
+`attachment` (targetIssue, targetIssueComment, targetProject, targetMerchant), `noteTarget`
+(targetMerchant), `taskTarget` (targetMerchant), `timelineActivity` (targetIssue, targetEpic,
+targetMerchant). Chín field này thuộc twenty-standard nhưng upstream không khai báo chúng, và sau
+re-parent thì đích của chúng đã thuộc app — metadata graph không còn hợp lệ.
+
+Script trên chỉ **sao lưu** cặp id vào bảng `_cutover_link_*`. Sau đó phải xoá chính các field đó,
+và phải gỡ tham chiếu phía nghịch trước vì `fieldMetadata` có khoá ngoại tự trỏ
+(`relationTargetFieldMetadataId`, constraint `FK_47a6c57e1652b6475f8248cff78`):
+
+```sql
+BEGIN;
+CREATE TEMP TABLE dangling AS
+SELECT f.id FROM core."fieldMetadata" f
+JOIN core.application a ON a.id = f."applicationId"
+WHERE a.name = 'Standard'
+  AND f.name ~ '^target(Issue|Project|Merchant|Epic|IssueComment)$';
+
+UPDATE core."fieldMetadata" SET "relationTargetFieldMetadataId" = NULL
+ WHERE "relationTargetFieldMetadataId" IN (SELECT id FROM dangling);
+
+DELETE FROM core."fieldMetadata" WHERE id IN (SELECT id FROM dangling);
+COMMIT;
+```
+
+**Bước này chặn cả những app không liên quan.** Trong lần diễn tập, bỏ qua nó làm
+`shift-management` apply hỏng với `Field Metadata of type RELATION or MORPH_RELATION with id … has
+no relation target object metadata`, dù shift không dính gì tới attachment hay timelineActivity.
+Sync xác thực toàn bộ metadata graph của workspace, không chỉ phần của app đang apply.
+
 ### Bước 4 — Deploy server `apps/zero-core`
 
 ```bash
@@ -208,6 +245,14 @@ application id, xoá dòng application), rồi deploy lại nhánh fork.
 
 Từ bước 4 trở đi, rollback là khôi phục dump của bước 0 và deploy lại nhánh fork. Đó là lý do bước 0
 phải dump toàn bộ database và phải kiểm tra khôi phục được trước khi đi tiếp.
+
+## Quy ước bắt buộc của route app
+
+Path trong `httpRouteTriggerSettings` **phải bắt đầu bằng `/`** và nên có namespace theo app
+(`/task-manager/...`, `/shift/...`, `/email-campaigns/...`). Path trần như `board-data` đăng ký
+được vào metadata nhưng router không khớp: gọi `/s/board-data` trả **404**, trong khi path đúng trả
+500 khi thiếu auth. Triệu chứng phía người dùng là front component của app báo
+`Request to http://localhost:3001/s/<path> failed with status 404 Not Found`.
 
 ## Điều chưa giữ được nguyên vẹn
 
