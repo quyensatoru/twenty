@@ -1,9 +1,11 @@
+import { markdownToBlocknote } from './markdown-to-blocknote.util';
+
 type RichTextValue = { blocknote?: string | null; markdown?: string | null };
 
 // A RICH_TEXT field holds both a BlockNote document and a markdown rendering.
-// The sandbox cannot run BlockNote — no contentEditable, no Selection API — so
-// the app reads and writes the markdown half. The host's own editor renders
-// markdown-only values correctly, which is the same path the CSV importer uses.
+// BlockNote itself cannot run in the sandbox — there is no contentEditable
+// remote element and no Selection API — so markdown is the half the composer
+// edits, and the BlockNote half is derived from it on write.
 export const readRichTextPlainValue = (
   value: RichTextValue | null | undefined,
 ): string => {
@@ -48,9 +50,12 @@ const collectText = (node: unknown): string => {
   return `${content}${children}${isBlock ? '\n' : ''}`;
 };
 
+// Both halves are written. Markdown is the source of truth the composer edits;
+// the BlockNote half is derived from it so the host's own editor and any record
+// table cell render the same document instead of an empty one.
 export const buildRichTextValue = (
   markdown: string,
-): { blocknote: null; markdown: string } => ({
-  blocknote: null,
+): { blocknote: string | null; markdown: string } => ({
+  blocknote: markdownToBlocknote(markdown),
   markdown,
 });

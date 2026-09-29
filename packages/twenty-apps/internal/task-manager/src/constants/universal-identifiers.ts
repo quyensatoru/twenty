@@ -330,10 +330,11 @@ export const ROADMAP_PAGE_LAYOUT_WIDGET_UID =
   'c80fdc39-7693-4e02-b2e6-192ff9c26317';
 export const ROADMAP_FRONT_COMPONENT_UID =
   '5e73f09a-6847-4582-97e0-bbc247d6fafe';
-// The issue detail page is a RECORD_PAGE of host-rendered widgets, not a front
-// component: description needs the host's real BlockNote editor, which cannot
-// run inside the sandbox, and the field panel the fork hand-rolled is what the
-// FIELDS widget already is.
+// The issue detail page is a RECORD_PAGE. The field panel the fork hand-rolled
+// is what the host's FIELDS widget already is, so that one stays host-rendered.
+// Description is not: the host's FIELD_RICH_TEXT card resolves no field from
+// its configuration and reads a field literally named `bodyV2`, which no
+// task-manager object has.
 export const ISSUE_RECORD_PAGE_LAYOUT_UID =
   'cef71956-64b4-41a1-9771-84b0aa0d474b';
 export const ISSUE_RECORD_PAGE_FIELDS_TAB_UID =
@@ -342,6 +343,8 @@ export const ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID =
   '116c8bd6-51bb-4153-ab56-86aedb836282';
 export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
+export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =
+  '2a707f35-232e-431c-9468-58913cbbcf67';
 export const ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID =
   'e749f306-0cfd-46cd-8e62-6fa425d5d02c';
 // Comments and worklogs are a front component, not a RECORD_TABLE widget: a

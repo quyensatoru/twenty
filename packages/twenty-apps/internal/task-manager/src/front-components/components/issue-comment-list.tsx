@@ -10,7 +10,8 @@ import {
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskButton } from './task-button';
 import { TaskIconButton } from './task-icon-button';
-import { TaskTextArea } from './task-text-area';
+import { TaskMarkdownEditor } from './task-markdown-editor';
+import { TaskMarkdownView } from './task-markdown-view';
 import { TASK_TOKENS } from './task-tokens';
 
 type IssueCommentListProps = {
@@ -122,7 +123,7 @@ export const IssueCommentList = ({
 
             {isEditing ? (
               <>
-                <TaskTextArea
+                <TaskMarkdownEditor
                   ariaLabel={t('Edit comment')}
                   value={editDraft}
                   onChange={setEditDraft}
@@ -148,29 +149,18 @@ export const IssueCommentList = ({
                 </div>
               </>
             ) : (
-              <p
-                style={{
-                  color: TASK_TOKENS.textPrimary,
-                  fontFamily: TASK_TOKENS.fontFamily,
-                  fontSize: 13,
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {readRichTextPlainValue(comment.bodyV2)}
-              </p>
+              <TaskMarkdownView markdown={readRichTextPlainValue(comment.bodyV2)} />
             )}
           </article>
         );
       })}
 
-      <TaskTextArea
+      <TaskMarkdownEditor
         key={draftKey}
         ariaLabel={t('Write a comment')}
         value={draft}
         onChange={setDraft}
-        placeholder={t('Write a comment…')}
+        placeholder={t('Write a comment in markdown…')}
       />
       <div>
         <TaskButton

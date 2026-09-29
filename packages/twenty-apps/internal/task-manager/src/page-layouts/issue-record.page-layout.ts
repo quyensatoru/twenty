@@ -7,6 +7,7 @@ import {
 import {
   ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
   ISSUE_ACTIVITY_WIDGET_UID,
+  ISSUE_DESCRIPTION_FRONT_COMPONENT_UID,
   ISSUE_OBJECT_UID,
   ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID,
   ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
@@ -15,9 +16,17 @@ import {
   ISSUE_RECORD_PAGE_LAYOUT_UID,
 } from '../constants/universal-identifiers';
 
-// Fields and description are host-rendered: FIELDS replaces the fork's
-// hand-rolled IssueFieldPanel, and FIELD_RICH_TEXT gives `description` the
-// host's real BlockNote editor, which cannot run inside the sandbox.
+// The field table is host-rendered: FIELDS replaces the fork's hand-rolled
+// IssueFieldPanel.
+//
+// Description is NOT the host's FIELD_RICH_TEXT widget. That widget's
+// configuration carries no field reference (FieldRichTextConfiguration is
+// `{ configurationType }` and nothing else) and its card reads a field named
+// `bodyV2` off the target record, so on `issue` — whose rich text field is
+// `description` — it stays on its loading skeleton forever and shows an empty
+// grey bar. Renaming the field would not be enough either: the host editor
+// persists with the VIEWER's token, which Member no longer has here, and it
+// lists attachments through the deleted `attachment.targetIssueId` branch.
 //
 // There is no Files or Timeline tab. Both widgets resolve through morph
 // branches on upstream objects — attachment.targetIssueId and
@@ -55,8 +64,12 @@ export default definePageLayout({
         {
           universalIdentifier: ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
           title: 'Description',
-          type: 'FIELD_RICH_TEXT',
-          configuration: { configurationType: 'FIELD_RICH_TEXT' },
+          type: 'FRONT_COMPONENT',
+          configuration: {
+            configurationType: 'FRONT_COMPONENT',
+            frontComponentUniversalIdentifier:
+              ISSUE_DESCRIPTION_FRONT_COMPONENT_UID,
+          },
         },
       ],
     },

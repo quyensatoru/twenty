@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconClock, IconTrash } from 'twenty-ui/icon';
+import { IconClock, IconPencil, IconTrash } from 'twenty-ui/icon';
 
 import { formatMinutes, parseMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, type WorklogRow } from '../hooks/use-issue-detail';
@@ -8,7 +8,8 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskButton } from './task-button';
 import { TaskDateTimeInput } from './task-date-time-input';
 import { TaskIconButton } from './task-icon-button';
-import { TaskTextArea } from './task-text-area';
+import { TaskMarkdownEditor } from './task-markdown-editor';
+import { TaskMarkdownView } from './task-markdown-view';
 import { TaskTextInput } from './task-text-input';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -23,6 +24,7 @@ type IssueWorklogListProps = {
     description: string;
     startedAt: string;
   }) => void;
+  onUpdateDescription: (worklogId: string, description: string) => void;
   onDelete: (worklogId: string) => void;
 };
 
@@ -46,12 +48,15 @@ export const IssueWorklogList = ({
   totalMinutes,
   isBusy,
   onCreate,
+  onUpdateDescription,
   onDelete,
 }: IssueWorklogListProps) => {
   const [timeSpent, setTimeSpent] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionKey, setDescriptionKey] = useState(0);
   const [startedAt, setStartedAt] = useState(toDateTimeLocalValue(new Date()));
+  const [editingWorklogId, setEditingWorklogId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
 
   const parsedMinutes = parseMinutes(timeSpent);
 
@@ -96,59 +101,101 @@ export const IssueWorklogList = ({
         </span>
       )}
 
-      {worklogs.map((worklog) => (
-        <article
-          key={worklog.id}
-          style={{
-            alignItems: 'center',
-            borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
-            display: 'flex',
-            fontFamily: TASK_TOKENS.fontFamily,
-            gap: 8,
-            padding: '6px 0',
-          }}
-        >
-          <span
+      {worklogs.map((worklog) => {
+        const isOwn =
+          currentMemberId !== null && worklog.memberId === currentMemberId;
+        const isEditing = editingWorklogId === worklog.id;
+
+        return (
+          <article
+            key={worklog.id}
             style={{
-              color: TASK_TOKENS.textPrimary,
-              flexShrink: 0,
-              fontSize: 12,
-              fontWeight: 600,
-              minWidth: 56,
+              borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
+              display: 'flex',
+              flexDirection: 'column',
+              fontFamily: TASK_TOKENS.fontFamily,
+              gap: 4,
+              padding: '6px 0',
             }}
           >
-            {formatMinutes(worklog.timeSpentMinutes)}
-          </span>
-          <span
-            style={{
-              color: TASK_TOKENS.textPrimary,
-              flex: 1,
-              fontSize: 13,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {worklog.description ?? ''}
-          </span>
-          <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
-            {readMemberName(membersById, worklog.memberId, t('Unknown'))}
-          </span>
-          <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
-            {formatDate(worklog.startedAt)}
-          </span>
-          {currentMemberId !== null && worklog.memberId === currentMemberId && (
-            <TaskIconButton
-              label={t('Delete')}
-              isDanger
-              isDisabled={isBusy}
-              onClick={() => onDelete(worklog.id)}
-            >
-              <IconTrash size={14} />
-            </TaskIconButton>
-          )}
-        </article>
-      ))}
+            <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+              <span
+                style={{
+                  color: TASK_TOKENS.textPrimary,
+                  flexShrink: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  minWidth: 56,
+                }}
+              >
+                {formatMinutes(worklog.timeSpentMinutes)}
+              </span>
+              <span
+                style={{ color: TASK_TOKENS.textTertiary, flex: 1, fontSize: 11 }}
+              >
+                {readMemberName(membersById, worklog.memberId, t('Unknown'))}
+              </span>
+              <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
+                {formatDate(worklog.startedAt)}
+              </span>
+              {isOwn && !isEditing && (
+                <>
+                  <TaskIconButton
+                    label={t('Edit')}
+                    isDisabled={isBusy}
+                    onClick={() => {
+                      setEditingWorklogId(worklog.id);
+                      setEditDraft(worklog.description ?? '');
+                    }}
+                  >
+                    <IconPencil size={14} />
+                  </TaskIconButton>
+                  <TaskIconButton
+                    label={t('Delete')}
+                    isDanger
+                    isDisabled={isBusy}
+                    onClick={() => onDelete(worklog.id)}
+                  >
+                    <IconTrash size={14} />
+                  </TaskIconButton>
+                </>
+              )}
+            </div>
+
+            {isEditing ? (
+              <>
+                <TaskMarkdownEditor
+                  ariaLabel={t('Edit worklog description')}
+                  value={editDraft}
+                  onChange={setEditDraft}
+                  rows={3}
+                />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <TaskButton
+                    variant="primary"
+                    size="small"
+                    isDisabled={isBusy}
+                    onClick={() => {
+                      onUpdateDescription(worklog.id, editDraft.trim());
+                      setEditingWorklogId(null);
+                    }}
+                  >
+                    {t('Save')}
+                  </TaskButton>
+                  <TaskButton
+                    size="small"
+                    onClick={() => setEditingWorklogId(null)}
+                  >
+                    {t('Cancel')}
+                  </TaskButton>
+                </div>
+              </>
+            ) : (
+              <TaskMarkdownView markdown={worklog.description ?? ''} />
+            )}
+          </article>
+        );
+      })}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         <TaskTextInput
@@ -165,13 +212,13 @@ export const IssueWorklogList = ({
           onChange={setStartedAt}
         />
       </div>
-      <TaskTextArea
+      <TaskMarkdownEditor
         key={descriptionKey}
         ariaLabel={t('What you worked on')}
         value={description}
         onChange={setDescription}
-        placeholder={t('Write what you worked on…')}
-        rows={2}
+        placeholder={t('Write what you worked on, in markdown…')}
+        rows={3}
       />
       <div>
         <TaskButton

@@ -8,6 +8,7 @@ import {
   DELETE_ISSUE_COMMENT_ROUTE_PATH,
   DELETE_WORKLOG_ROUTE_PATH,
   UPDATE_ISSUE_COMMENT_ROUTE_PATH,
+  UPDATE_WORKLOG_ROUTE_PATH,
 } from '../constants/route-paths';
 import { ISSUE_ACTIVITY_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
@@ -175,6 +176,14 @@ const IssueActivity = () => {
                 description: input.description,
                 startedAt: input.startedAt,
               },
+            }),
+          )
+        }
+        onUpdateDescription={(worklogId, description) =>
+          void run(() =>
+            postAppRoute(UPDATE_WORKLOG_ROUTE_PATH, {
+              worklogId,
+              data: { description },
             }),
           )
         }

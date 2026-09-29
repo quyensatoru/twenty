@@ -33,6 +33,7 @@ export type EpicRow = {
 export type IssueRow = {
   id: string;
   title?: string | null;
+  description?: { blocknote?: string | null; markdown?: string | null } | null;
   issueKey?: string | null;
   priority?: string | null;
   storyPoints?: number | null;

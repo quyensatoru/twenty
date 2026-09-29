@@ -76,12 +76,7 @@ describe('readRichTextPlainValue', () => {
 });
 
 describe('buildRichTextValue', () => {
-  // The host renders a markdown-only value with its own editor, so writing the
-  // markdown half alone is a complete write, not a partial one.
-  it('writes the markdown half and clears the blocknote half', () => {
-    expect(buildRichTextValue('Some text')).toEqual({
-      blocknote: null,
-      markdown: 'Some text',
-    });
+  it('clears the blocknote half when there is nothing to write', () => {
+    expect(buildRichTextValue('')).toEqual({ blocknote: null, markdown: '' });
   });
 });

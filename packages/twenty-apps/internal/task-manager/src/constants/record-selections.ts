@@ -1,6 +1,9 @@
 export const ISSUE_SELECTION = {
   id: true,
   title: true,
+  // RICH_TEXT is composite: without naming the sub-fields the description comes
+  // back absent and the description widget renders blank.
+  description: { blocknote: true, markdown: true },
   issueKey: true,
   issueType: true,
   priority: true,

@@ -102,8 +102,8 @@ Project, Issue, Issue Status, Issue Comment, Issue Merchant,
 Epic, Sprint, Worklog, Merchant, App, App Access
 ```
 
-Có hai mức, chọn một. Khác nhau ở chỗ widget do host render (FIELDS, FIELD_RICH_TEXT, TIMELINE,
-FILES) **đọc và ghi bằng token của chính người đang xem**, nên chúng tắt ngóm nếu role mất quyền đọc.
+Có hai mức, chọn một. Khác nhau ở chỗ widget do host render (ở app này chỉ còn `FIELDS`) **đọc và
+ghi bằng token của chính người đang xem**, nên nó tắt ngóm nếu role mất quyền đọc.
 
 | | Mức A — khoá ghi | Mức B — khoá cả đọc |
 | --- | --- | --- |
@@ -111,11 +111,12 @@ FILES) **đọc và ghi bằng token của chính người đang xem**, nên ch�
 | `canReadObjectRecords` | **giữ** | tắt |
 | Ghi đi qua route, app-scope ghi có hiệu lực | có | có |
 | App-scope **đọc** có hiệu lực | **không** — member gọi thẳng API đọc được mọi dòng | có |
-| Trang chi tiết issue (field, Description BlockNote, Timeline, Files) | chạy | **không mở được** |
+| Trang chi tiết issue — bảng **Fields** (widget host) | chạy | **không mở được** |
+| Widget **Description** (front component) | chạy | chạy |
 | Board / Backlog / Roadmap / tab Activity | chạy | chạy |
 
 **Mức A là mặc định nên dùng.** Nó giữ trọn vẹn tính toàn vẹn dữ liệu — cấp `issueKey`, tính lại
-thời gian, seed trạng thái, kiểm tra app-scope khi ghi — và vẫn dùng được editor thật của host. Cái
+thời gian, seed trạng thái, kiểm tra app-scope khi ghi — và vẫn xem được bảng field của host. Cái
 mất là phạm vi **đọc**: đây là khác biệt lớn nhất so với bản fork và phải nói rõ với khách hàng.
 
 **Mức B** dành cho workspace bắt buộc phải giấu dữ liệu giữa các app. Lúc đó member chỉ làm việc qua
@@ -215,24 +216,54 @@ Fork có mutation `completeSprint(sprintId, targetSprintId)`. Giờ là `POST /s
 
 ### 5.7 Màn chi tiết issue
 
-Là một RECORD_PAGE layout, phần lớn dùng widget do host render:
+Là một RECORD_PAGE layout với hai tab:
 
-- `description` dùng widget `FIELD_RICH_TEXT` → **BlockNote thật của host**, không xuống cấp so với
-  fork. `CUTOVER.md` ghi "editor rich text xuống cấp" — với riêng `description` thì không đúng;
-- bảng field dùng widget `FIELDS` → thay cho `IssueFieldPanel` viết tay của fork;
-- thêm tab Files và tab Timeline mà bản fork không có;
-- tab **Activity** (bình luận + worklog) là **front component**, không phải widget `RECORD_TABLE`.
+- bảng field dùng widget `FIELDS` của host → thay cho `IssueFieldPanel` viết tay của fork;
+- **Description** là **front component**, không phải widget `FIELD_RICH_TEXT`;
+- tab **Activity** (bình luận + worklog) cũng là **front component**, không phải widget
+  `RECORD_TABLE`;
+- không có tab Files và Timeline — xem mục 5.12.
+
+**Vì sao Description không dùng widget `FIELD_RICH_TEXT`.** Widget đó không phân giải được field
+nào cả. `FieldRichTextConfiguration` chỉ có đúng một khoá `configurationType` — không có
+`fieldMetadataId` — và `FieldRichTextCard` của host đọc thẳng field **tên là `bodyV2`** trên bản ghi
+đang xem, rồi hiện skeleton khi không thấy. Field rich text của `issue` tên là `description`, nên
+widget này đứng nguyên ở skeleton: người dùng thấy một thanh xám rỗng. Đổi tên field thành `bodyV2`
+cũng không cứu được: editor của host ghi bằng token của **người xem** (role Member không còn quyền
+ghi sau mục 4.1) và nó truy vấn attachment qua `attachment.targetIssueId` — nhánh morph mà cutover
+đã xoá (mục 5.12) — nên mỗi lần mở sẽ lỗi filter.
 
 Vì sao Activity không phải widget: widget host đọc/ghi bằng token của người xem, nên ở Mức B (mục
 4.1) nó tắt ngóm, và ngay ở Mức A một lần ghi trực tiếp cũng **bỏ qua** việc tính lại
 `timeSpentMinutes` / `remainingEstimateMinutes` và bỏ qua quy tắc chỉ tác giả được sửa bình luận.
 Đi qua route thì cả hai vẫn được áp dụng.
 
-Cái mất: soạn bình luận và worklog bằng ô văn bản thường, ghi vào nửa `markdown` của trường
-RICH_TEXT (BlockNote không chạy trong sandbox). Host đọc lại giá trị chỉ-có-markdown bình thường —
-cùng đường mà trình import CSV dùng — nên nội dung không hỏng, chỉ là lúc soạn không có định dạng.
+Cái mất: không có WYSIWYG. Sandbox không có remote element contentEditable và không có Selection
+API, nên BlockNote/ProseMirror không chạy được ở đó. Thay vào đó Description, bình luận và mô tả
+worklog dùng chung một **editor markdown**: ô textarea + thanh công cụ (đậm, nghiêng, code, tiêu đề,
+danh sách, trích dẫn, liên kết) + nút **Preview** render tại chỗ. Ghi vào cả hai nửa của trường
+RICH_TEXT — `markdown` là bản gốc, `blocknote` sinh ra từ nó — nên editor thật của host và ô record
+table đọc lại vẫn đúng nội dung.
 
-**Board**, **Backlog**, **Roadmap** và **Activity** là bốn front component của app.
+Ba giới hạn của sandbox mà thanh công cụ phải sống chung, đã kiểm chứng trên trình duyệt:
+
+- **`selectionStart`/`selectionEnd` của textarea không sang được sandbox.** Host chỉ serialize một
+  danh sách property cố định lên remote element (`applySerializedEventTargetProperties`:
+  `value`, `checked`, `files`, scroll và các property media) và selection không nằm trong đó. App
+  suy ra **vị trí con trỏ** bằng cách diff giá trị cũ với giá trị mới ở mỗi lần sửa — chính xác cho
+  gõ, dán và xoá — nhưng **vùng bôi đen bằng chuột thì không biết được**, nên nút định dạng chèn
+  một placeholder (`**bold text**`) tại con trỏ thay vì bọc chữ đang chọn.
+- **Dán/thả FILE không mang theo byte.** `SerializedFileData` chỉ có `{name, size, type,
+  lastModified}`, và trường `files` chỉ được đọc từ `event.target.files` của một `<input
+  type="file">` — không từ `dataTransfer` (thả) cũng không từ `clipboardData` (dán). Đọc clipboard
+  cũng bị chặn hẳn (`installClipboardPolyfill` chỉ polyfill `writeText`). Nghĩa là `uploadFile` của
+  SDK **không thể** nhận tệp người dùng chọn; nó chỉ dùng được cho Blob do chính sandbox tạo ra
+  (ví dụ MediaRecorder).
+- **Dán TEXT thì được.** Sự kiện `paste` mang `clipboardText`, nên dán một URL sẽ tự thành markdown:
+  `![tên](url)` nếu là ảnh, `[tên](url)` nếu không. Thả tệp chỉ hiện một snackbar nói rõ là không
+  được, kèm hướng dẫn dán URL.
+
+**Board**, **Backlog**, **Roadmap**, **Description** và **Activity** là năm front component của app.
 
 ### 5.8 Kéo thả viết tay
 
@@ -293,8 +324,8 @@ một nhánh vào field MORPH của standard object, nên không dựng lại đ
 Hệ quả: **đừng khai widget `FILES`, `TIMELINE`, `NOTES` hay `TASKS` trong page layout của bất kỳ
 object nào app này sở hữu.** Khai rồi thì người dùng thấy
 `Invalid filter : timelineActivity object doesn't have any "targetIssueId" field` thay vì nội dung.
-`src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có hai tab: **Issue** (field + mô tả
-BlockNote) và **Activity** (bình luận + worklog).
+`src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có hai tab: **Issue** (bảng field + mô tả)
+và **Activity** (bình luận + worklog).
 
 Dữ liệu cũ không mất, chỉ mất liên kết, và các cặp id đã được giữ lại — xem `MIGRATION.md` mục 5.
 
@@ -328,10 +359,12 @@ Danh sách kiểm bằng tay, theo thứ tự:
 6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới. Gõ vào ô **tìm kiếm** thì
    danh sách lọc theo key/tiêu đề ngay; menu **Fields** bật tắt được chip trên thẻ. Bấm vào một thẻ
    thì mở **side panel** chi tiết, board vẫn ở phía sau.
-7. Mở issue → chỉ có **hai** tab: **Issue** (bảng field + editor BlockNote cho Description) và
-   **Activity**. Không có tab Files/Timeline — xem mục 5.12. Trong Activity, chuyển qua lại giữa
-   **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải trông như control của Twenty, không
-   phải control mặc định của trình duyệt.
+7. Mở issue → chỉ có **hai** tab: **Issue** (bảng field + widget **Description**) và **Activity**.
+   Không có tab Files/Timeline — xem mục 5.12. Description phải hiện nội dung, **không** phải một
+   thanh xám rỗng; bấm **Edit** → sửa markdown → **Save** thì nội dung render lại có định dạng.
+   Trong Activity, chuyển qua lại giữa **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải
+   trông như control của Twenty, không phải control mặc định của trình duyệt. Thử **Preview** trên ô
+   soạn bình luận và dán một URL ảnh — nó phải tự thành `![…](…)`.
 8. **Backlog** → tạo sprint, kéo issue vào, bấm **Bắt đầu sprint** rồi **Kết thúc sprint**.
 9. Đăng nhập bằng một member **không** có `appAccess` trên app đó → Board hiện rỗng, không lỗi.
 10. Mở issue → tab **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên đúng, và
