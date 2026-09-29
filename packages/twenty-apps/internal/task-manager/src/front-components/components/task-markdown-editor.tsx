@@ -25,6 +25,7 @@ import { replaceMarkdownLinkUrl } from '../../utils/replace-markdown-link-url.ut
 import { useStableFieldValue } from '../hooks/use-stable-field-value';
 import { readTextareaSelection } from '../utils/read-textarea-selection.util';
 import { readTransferredFiles } from '../utils/read-transferred-files.util';
+import { resolvePasteIntent } from '../utils/resolve-paste-intent.util';
 import {
   isTransferredImageFile,
   uploadImageFromTransferredFile,
@@ -58,8 +59,6 @@ type ToolbarAction = {
   placeholder: string;
   icon: ReactNode;
 };
-
-const URL_ONLY_PATTERN = /^\s*(https?:\/\/[^\s]+)\s*$/;
 
 // Only images become markdown here. Anything else still belongs in the
 // Attachments field, which is where the host's own picker puts it. Written as
@@ -374,28 +373,27 @@ export const TaskMarkdownEditor = ({
     }
   };
 
-  // Returns true when the event carried files and was dealt with here.
-  const handleTransferredFiles = (transfer: unknown): boolean => {
-    const transferredFiles = readTransferredFiles(transfer);
-
-    if (transferredFiles.length === 0) {
-      return false;
-    }
-
-    const imageFiles = transferredFiles.filter(isTransferredImageFile);
-
+  const handleTransferredImages = (imageFiles: TransferredFile[]) => {
     if (imageFiles.length === 0) {
       void enqueueSnackbar({
         message: readNonImageFileGuidance(),
         variant: 'info',
       });
 
-      return true;
+      return;
     }
 
     void storeTransferredImages(imageFiles);
+  };
 
-    return true;
+  // Drops are cancelled by the host, so nothing of the drop reaches the box on
+  // its own and there is no inserted text to undo here.
+  const handleDroppedFiles = (transfer: unknown) => {
+    const transferredFiles = readTransferredFiles(transfer);
+
+    if (transferredFiles.length > 0) {
+      handleTransferredImages(transferredFiles.filter(isTransferredImageFile));
+    }
   };
 
   const handleChange = (nextValue: string) => {
@@ -508,32 +506,28 @@ export const TaskMarkdownEditor = ({
       onMouseUp={(event) => rememberSelection(event.target)}
       onClick={(event) => rememberSelection(event.target)}
       onPaste={(event) => {
-        const clipboardText = event.clipboardData?.getData('text') ?? '';
+        const intent = resolvePasteIntent({
+          clipboardText: event.clipboardData?.getData('text') ?? '',
+          transfer: event.clipboardData,
+        });
 
-        if (handleTransferredFiles(event.clipboardData)) {
-          // The paste is not cancelled — the host only cancels dragover and
-          // drop — so the path the clipboard carries beside the file still
-          // lands in the box. It is taken back out when the change arrives.
-          pendingNativePasteTextRef.current =
-            clipboardText === '' ? null : clipboardText;
+        if (intent.kind === 'files') {
+          pendingNativePasteTextRef.current = intent.nativePastedText;
+          handleTransferredImages(intent.imageFiles);
 
           return;
         }
 
-        if (clipboardText === '') {
-          return;
+        if (intent.kind === 'url') {
+          pendingPastedUrlRef.current = intent.url;
         }
-
-        const urlMatch = URL_ONLY_PATTERN.exec(clipboardText);
-
-        pendingPastedUrlRef.current = urlMatch === null ? null : urlMatch[1];
       }}
       onDragOver={() => {
         // Registering the handler is how the host learns to cancel the
         // browser's own drop, which would otherwise navigate to the file.
       }}
       onDrop={(event) => {
-        handleTransferredFiles(event.dataTransfer);
+        handleDroppedFiles(event.dataTransfer);
       }}
       onChange={(event) => {
         rememberSelection(event.target);

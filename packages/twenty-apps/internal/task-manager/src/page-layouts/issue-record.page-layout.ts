@@ -11,6 +11,7 @@ import {
   ISSUE_OBJECT_UID,
   ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
+  ISSUE_RECORD_PAGE_FIELDS_VIEW_UID,
   ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
   ISSUE_RECORD_PAGE_LAYOUT_UID,
 } from '../constants/universal-identifiers';
@@ -38,7 +39,14 @@ import {
 // (height 100% + overflowY auto), so the fixed row budget is what bounds it.
 //
 // The field table is host-rendered: FIELDS replaces the fork's hand-rolled
-// IssueFieldPanel.
+// IssueFieldPanel. It points at a view of its own
+// (src/views/issue-record-page-fields.view.ts) rather than being left to the
+// host's fallback, because the fallback orders fields by whatever order
+// metadata returns, hides every relation field with no way to reach it, and
+// makes Twenty's own Edit Fields editor fail on save — it writes view fields,
+// and a widget with no view has none. With the view bound, show, hide and
+// reorder are the host's own controls (layout customization mode → click the
+// widget → Edit Fields), so there is nothing here to rebuild.
 //
 // Description is NOT the host's FIELD_RICH_TEXT widget. That widget's
 // configuration carries no field reference (FieldRichTextConfiguration is
@@ -111,7 +119,15 @@ export default definePageLayout({
             rowSpan: FIELDS_ROW_SPAN,
             columnSpan: SIDE_COLUMN_SPAN,
           },
-          configuration: { configurationType: 'FIELDS' },
+          configuration: {
+            configurationType: 'FIELDS',
+            viewUniversalIdentifier: ISSUE_RECORD_PAGE_FIELDS_VIEW_UID,
+            // The fields the view hides go into a collapsed "More" section
+            // instead of disappearing, and a field somebody adds to `issue`
+            // later shows up rather than landing there silently.
+            shouldAllowUserToSeeHiddenFields: true,
+            newFieldDefaultVisibility: true,
+          },
         },
         {
           universalIdentifier: ISSUE_ACTIVITY_WIDGET_UID,

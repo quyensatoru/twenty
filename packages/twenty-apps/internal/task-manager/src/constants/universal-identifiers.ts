@@ -344,6 +344,10 @@ export const ISSUE_RECORD_PAGE_FIELDS_TAB_UID =
   'e80796d1-e0a1-4f1a-aa89-6f257efa1556';
 export const ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID =
   '116c8bd6-51bb-4153-ab56-86aedb836282';
+// The FIELDS widget needs a view of its own, or Twenty's show/hide/reorder
+// editor has nothing to write to — see src/views/issue-record-page-fields.view.ts.
+export const ISSUE_RECORD_PAGE_FIELDS_VIEW_UID =
+  'b3e9f1d4-7c58-4a0e-9f21-5d8c6a41b703';
 export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
 export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =

@@ -246,6 +246,29 @@ bản render. Lưu vẫn là autosave: debounce 700ms cộng một lần flush k
 được từ trong sandbox — `autofocus` không nằm trong danh sách property mà renderer đẩy sang remote
 element — nên lớp phủ trong suốt là cách duy nhất để một cú bấm vừa vào chữ vừa vào ô soạn.
 
+**Bảng field bật/tắt và sắp xếp lại được — bằng công cụ của chính Twenty, không phải đồ tự viết.**
+Widget `FIELDS` đọc danh sách field từ một **view kiểu `FIELDS_WIDGET`**; app ship sẵn view đó ở
+`src/views/issue-record-page-fields.view.ts` và trỏ `viewUniversalIdentifier` của widget vào nó.
+Thứ tự mặc định theo panel của Jira: mã task, rồi ai/trạng thái, rồi field kế hoạch, rồi field thời
+gian. Những field để `isVisible: false` không biến mất mà nằm trong mục **More** thu gọn
+(`shouldAllowUserToSeeHiddenFields: true`).
+
+Để người dùng đổi: **Layout customization mode** → bấm vào widget → **Edit Fields** → kéo để đổi
+thứ tự, bấm biểu tượng con mắt để hiện/ẩn. Ba điều phải nói rõ với khách:
+
+- cần permission flag **`LAYOUTS`**;
+- **chỉ mở được ở trang record đầy đủ, không mở được trong side panel**
+  (`RecordPageLayoutEditModeProvider`: `isInEditMode = isLayoutCustomizationModeEnabled &&
+  !isInSidePanel`);
+- thay đổi lưu vào **metadata view của cả workspace**, không phải per-user: một người sắp xếp lại
+  là mọi người thấy như nhau. Với entity do app sở hữu, host ghi dưới dạng **override** nên bản
+  `apply` sau của app không xoá mất tuỳ biến đó.
+
+**Đừng gỡ `viewUniversalIdentifier` ra.** Không có view thì host rơi về
+`buildDefaultFieldsWidgetGroups`: thứ tự field là thứ tự metadata trả về, **mọi field quan hệ bị ẩn
+và không có đường nào mở ra**, và Edit Fields **lưu thất bại** ("Some layout changes could not be
+saved") vì `fields-widget-upsert.service.ts` ném `Fields widget has no associated view`.
+
 **Ảnh hiện cả khi đang soạn.** Textarea chỉ chứa text, nên mọi ảnh mà markdown trỏ tới được render
 thành một dải ngay dưới ô soạn (`src/utils/collect-markdown-images.util.ts`). Không có nó thì người
 viết đang sửa một URL ký dài ngoằng mà không biết đó là ảnh nào.
