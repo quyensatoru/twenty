@@ -5,6 +5,7 @@ import { IconClock, IconPencil, IconTrash } from 'twenty-ui/icon';
 import { formatMinutes, parseMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, type WorklogRow } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
+import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskDateTimeInput } from './task-date-time-input';
 import { TaskIconButton } from './task-icon-button';
@@ -130,6 +131,15 @@ export const IssueWorklogList = ({
               >
                 {formatMinutes(worklog.timeSpentMinutes)}
               </span>
+              <TaskAvatar
+                name={readMemberName(membersById, worklog.memberId, t('Unknown'))}
+                avatarUrl={
+                  typeof worklog.memberId === 'string'
+                    ? membersById.get(worklog.memberId)?.avatarUrl
+                    : null
+                }
+                size={20}
+              />
               <span
                 style={{ color: TASK_TOKENS.textTertiary, flex: 1, fontSize: 11 }}
               >

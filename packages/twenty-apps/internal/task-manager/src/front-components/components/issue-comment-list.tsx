@@ -8,6 +8,7 @@ import {
   type MemberRow,
 } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
+import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskIconButton } from './task-icon-button';
 import { TaskMarkdownEditor } from './task-markdown-editor';
@@ -41,6 +42,12 @@ export const IssueCommentList = ({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
 
+  const currentMemberName = readMemberName(
+    membersById,
+    currentMemberId,
+    t('You'),
+  );
+
   const submitDraft = () => {
     if (draft.trim() === '') {
       return;
@@ -55,12 +62,56 @@ export const IssueCommentList = ({
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* First, not last: the composer is the control people reach for most,
+          and at the bottom of a long thread it sits below the fold. */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <TaskAvatar
+          name={currentMemberName}
+          avatarUrl={
+            currentMemberId === null
+              ? null
+              : membersById.get(currentMemberId)?.avatarUrl
+          }
+        />
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            gap: 6,
+            minWidth: 0,
+          }}
+        >
+          <TaskMarkdownEditor
+            key={draftKey}
+            ariaLabel={t('Write a comment')}
+            value={draft}
+            onChange={setDraft}
+            placeholder={t('Write a comment in markdown…')}
+          />
+          <div>
+            <TaskButton
+              variant="primary"
+              isDisabled={isBusy || draft.trim() === ''}
+              onClick={submitDraft}
+            >
+              {t('Comment')}
+            </TaskButton>
+          </div>
+        </div>
+      </div>
+
       {comments.map((comment) => {
         const isEditing = editingCommentId === comment.id;
         // The route enforces the same rule; hiding the controls just stops the
         // UI from offering an action the server will refuse.
         const canEdit =
           currentMemberId !== null && comment.authorId === currentMemberId;
+        const authorName = readMemberName(
+          membersById,
+          comment.authorId,
+          t('Unknown'),
+        );
 
         return (
           <article
@@ -77,6 +128,15 @@ export const IssueCommentList = ({
             <header
               style={{ alignItems: 'center', display: 'flex', gap: 8 }}
             >
+              <TaskAvatar
+                name={authorName}
+                avatarUrl={
+                  typeof comment.authorId === 'string'
+                    ? membersById.get(comment.authorId)?.avatarUrl
+                    : null
+                }
+                size={20}
+              />
               <span
                 style={{
                   color: TASK_TOKENS.textPrimary,
@@ -85,7 +145,7 @@ export const IssueCommentList = ({
                   fontWeight: 600,
                 }}
               >
-                {readMemberName(membersById, comment.authorId, t('Unknown'))}
+                {authorName}
               </span>
               <span
                 style={{
@@ -154,23 +214,6 @@ export const IssueCommentList = ({
           </article>
         );
       })}
-
-      <TaskMarkdownEditor
-        key={draftKey}
-        ariaLabel={t('Write a comment')}
-        value={draft}
-        onChange={setDraft}
-        placeholder={t('Write a comment in markdown…')}
-      />
-      <div>
-        <TaskButton
-          variant="primary"
-          isDisabled={isBusy || draft.trim() === ''}
-          onClick={submitDraft}
-        >
-          {t('Comment')}
-        </TaskButton>
-      </div>
     </section>
   );
 };

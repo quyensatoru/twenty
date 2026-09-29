@@ -7,6 +7,7 @@ import { ISSUE_DESCRIPTION_FRONT_COMPONENT_UID } from '../constants/universal-id
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 import { TaskMarkdownEditor } from './components/task-markdown-editor';
 import { TaskMessage } from './components/task-message';
+import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
@@ -146,6 +147,16 @@ const IssueDescription = () => {
         width: '100%',
       }}
     >
+      {/* The task code is what people quote to each other. In the field table
+          it is one row among twenty; here it is the first thing in the reading
+          column. */}
+      {typeof data.issue.issueKey === 'string' &&
+        data.issue.issueKey !== '' && (
+          <div style={{ display: 'flex' }}>
+            <TaskTag color="gray">{data.issue.issueKey}</TaskTag>
+          </div>
+        )}
+
       {saveError !== null && (
         <span style={{ color: TASK_TOKENS.textDanger, fontSize: 12 }}>
           {saveError}
