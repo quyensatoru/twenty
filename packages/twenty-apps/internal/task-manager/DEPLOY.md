@@ -216,13 +216,49 @@ Fork có mutation `completeSprint(sprintId, targetSprintId)`. Giờ là `POST /s
 
 ### 5.7 Màn chi tiết issue
 
-Là một RECORD_PAGE layout với hai tab:
+Là một RECORD_PAGE layout **một tab duy nhất**, tab đó ở chế độ `GRID` và xếp như Jira:
 
-- bảng field dùng widget `FIELDS` của host → thay cho `IssueFieldPanel` viết tay của fork;
-- **Description** là **front component**, không phải widget `FIELD_RICH_TEXT`;
-- tab **Activity** (bình luận + worklog) cũng là **front component**, không phải widget
-  `RECORD_TABLE`;
+- **Description** (front component) chiếm cột đọc rộng bên trái, trên cùng;
+- bảng field dùng widget `FIELDS` của host nằm ở cột hẹp bên phải → thay cho `IssueFieldPanel`
+  viết tay của fork;
+- **Activity** (bình luận + worklog, cũng là front component) nằm **dưới** Description, không còn
+  là một tab riêng;
 - không có tab Files và Timeline — xem mục 5.12.
+
+**Lưới của host: 12 cột, mỗi dòng cao đúng 55px cộng 8px khe** (`PAGE_LAYOUT_CONFIG` và
+`PAGE_LAYOUT_GRID_ROW_HEIGHT` trong twenty-front). Chiều cao **không** theo nội dung, nên `rowSpan`
+của mỗi widget là một hạn mức pixel cố định và hai front component tự cuộn bên trong.
+
+Hai hệ quả phải biết trước khi sửa `issue-record.page-layout.ts`:
+
+- **`heightBehavior` không dùng được ở tab `GRID`.** Nó chỉ tồn tại trên position kiểu
+  `VERTICAL_LIST`, và `normalizePageLayoutTabManifest` **từ chối cả manifest** nếu một widget trong
+  tab GRID khai nó.
+- **Lưới tự gộp về một cột khi container hẹp hơn 768px** — side panel (320-600px) và pinned left
+  panel (348px) luôn rơi vào trường hợp này. Lúc đó mỗi widget giữ nguyên `row` của nó và chiếm
+  trọn bề ngang. Vì vậy `row` khai trong source là **thứ tự đọc** (Description → Details →
+  Activity), còn hình dạng hai cột trên màn rộng do React Grid Layout nén dọc tạo ra.
+
+**Description không có nút Edit và không có nút Save.** Nội dung hiện ở dạng **đã render**; ô soạn
+markdown nằm ngay dưới nó và lớp render cho con trỏ đi xuyên qua (`pointer-events: none`), nên bấm
+vào chính đoạn văn là bấm vào textarea: con trỏ nhảy đúng chỗ vừa bấm. Rời ô (blur) thì quay lại
+bản render. Lưu vẫn là autosave: debounce 700ms cộng một lần flush khi blur. Không gọi `.focus()`
+được từ trong sandbox — `autofocus` không nằm trong danh sách property mà renderer đẩy sang remote
+element — nên lớp phủ trong suốt là cách duy nhất để một cú bấm vừa vào chữ vừa vào ô soạn.
+
+**Ảnh hiện cả khi đang soạn.** Textarea chỉ chứa text, nên mọi ảnh mà markdown trỏ tới được render
+thành một dải ngay dưới ô soạn (`src/utils/collect-markdown-images.util.ts`). Không có nó thì người
+viết đang sửa một URL ký dài ngoằng mà không biết đó là ảnh nào.
+
+**Dán một tệp thì trình duyệt dán kèm cả đường dẫn của nó.** Trên Linux, clipboard của một ảnh
+chụp màn hình mang **cả** tệp **lẫn** đường dẫn ở dạng `text/plain`. App không huỷ được cú dán đó:
+`preventDefaultThenForwardToRemote` của renderer chỉ được gắn cho `dragover`, `drop` và `form
+submit`, còn `preventDefault` do chính handler trong sandbox gọi thì sang tới nơi sau khi trình
+duyệt đã dán xong (`packages/twenty-front-component-renderer/src/host/events/utils/`). Vì vậy app
+**gỡ lại** đoạn text đó khi sự kiện change mang nó về
+(`src/utils/remove-native-paste-insertion.util.ts`) — chỉ gỡ đúng trường hợp giá trị mới bằng giá
+trị cũ cộng đúng đoạn vừa dán, nên một phím gõ bình thường không bao giờ bị nuốt. Không làm thế thì
+người dùng thấy **ảnh cộng thêm một dòng đường dẫn cũ** nằm lại trong nội dung.
 
 **Vì sao Description không dùng widget `FIELD_RICH_TEXT`.** Widget đó không phân giải được field
 nào cả. `FieldRichTextConfiguration` chỉ có đúng một khoá `configurationType` — không có
@@ -380,8 +416,8 @@ Hệ quả: **đừng khai widget `FILES`, `TIMELINE`, `NOTES` hay `TASKS` trong
 object nào app này sở hữu.** Điều này **không** liên quan tới field kiểu `FILES` — `issue.attachments`
 là field, do widget `FIELDS` render, không đi qua `attachment` hay nhánh morph nào (mục 5.7.1). Khai rồi thì người dùng thấy
 `Invalid filter : timelineActivity object doesn't have any "targetIssueId" field` thay vì nội dung.
-`src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có hai tab: **Issue** (bảng field + mô tả)
-và **Activity** (bình luận + worklog).
+`src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có **một** tab: **Issue** (mô tả + bảng
+field + bình luận/worklog) — xem mục 5.7.
 
 Dữ liệu cũ không mất, chỉ mất liên kết, và các cặp id đã được giữ lại — xem `MIGRATION.md` mục 5.
 
@@ -415,10 +451,15 @@ Danh sách kiểm bằng tay, theo thứ tự:
 6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới. Gõ vào ô **tìm kiếm** thì
    danh sách lọc theo key/tiêu đề ngay; menu **Fields** bật tắt được chip trên thẻ. Bấm vào một thẻ
    thì mở **side panel** chi tiết, board vẫn ở phía sau.
-7. Mở issue → chỉ có **hai** tab: **Issue** (bảng field + widget **Description**) và **Activity**.
-   Không có tab Files/Timeline — xem mục 5.12. Description phải hiện nội dung, **không** phải một
-   thanh xám rỗng; bấm **Edit** → sửa markdown → **Save** thì nội dung render lại có định dạng.
-   Trong Activity, chuyển qua lại giữa **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải
+7. Mở issue → chỉ có **một** tab **Issue**, xếp hai cột: **Description** trên bên trái (kèm chip mã
+   task `TM-…`), **Details** bên phải, **Activity** dưới Description. Không có tab Files/Timeline —
+   xem mục 5.12. Description phải hiện nội dung **đã render**, không phải markdown thô và không
+   phải một thanh xám rỗng; bấm thẳng vào đoạn văn → ô soạn markdown mở ra ngay tại chỗ vừa bấm,
+   sửa xong bấm ra ngoài thì nội dung render lại có định dạng (không có nút Edit, không có nút
+   Save). Thu hẹp cửa sổ dưới 768px → ba khối xếp một cột theo thứ tự Description → Details →
+   Activity.
+   Trong Activity, ô soạn bình luận phải nằm **trên** danh sách bình luận và mỗi bình luận có avatar
+   tác giả. Chuyển qua lại giữa **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải
    trông như control của Twenty, không phải control mặc định của trình duyệt. Thử **Preview** trên ô
    soạn bình luận và dán một URL ảnh công khai — markdown phải tự thành `![…](…)` và URL trong đó
    phải đổi thành `<SERVER_URL>/file/files-field/…` sau một hai giây (ảnh đã vào storage của Twenty).
@@ -427,8 +468,8 @@ Danh sách kiểm bằng tay, theo thứ tự:
    field Attachments, không được im lặng. Xem mục 5.7.1.
 8. **Backlog** → tạo sprint, kéo issue vào, bấm **Bắt đầu sprint** rồi **Kết thúc sprint**.
 9. Đăng nhập bằng một member **không** có `appAccess` trên app đó → Board hiện rỗng, không lỗi.
-10. Mở issue → tab **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên đúng, và
-    `Time spent` trên tab Issue tăng đúng 30 phút (route tự tính lại).
+10. Mở issue → khối **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên và avatar
+    đúng, và `Time spent` ở bảng **Details** tăng đúng 30 phút (route tự tính lại).
 11. Nếu chọn **Mức B** ở bước 4.1: vẫn member đó, gọi thẳng GraphQL `issues` → **phải trả về rỗng**.
     Ở Mức A câu này trả về dữ liệu, đúng như bảng ở mục 4.1 mô tả.
 
