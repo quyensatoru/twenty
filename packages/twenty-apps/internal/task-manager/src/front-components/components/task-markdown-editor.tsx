@@ -17,6 +17,7 @@ import {
   type MarkdownFormat,
 } from '../../utils/apply-markdown-format.util';
 import { appendImageMarkdown as buildValueWithImageMarkdown } from '../../utils/append-image-markdown.util';
+import { collectMarkdownImages } from '../../utils/collect-markdown-images.util';
 import { deriveCaretPosition } from '../../utils/derive-caret-position.util';
 import { isImageUrl } from '../../utils/parse-markdown-inline.util';
 import { removeNativePasteInsertion } from '../../utils/remove-native-paste-insertion.util';
@@ -462,6 +463,38 @@ export const TaskMarkdownEditor = ({
     </div>
   );
 
+  // A textarea holds text and nothing else, so the pictures the markdown points
+  // at are shown beside the source rather than inside it. Without this the
+  // author edits `![shot](https://…)` with no idea which shot that is.
+  const markdownImages = collectMarkdownImages(value);
+  const imageStrip =
+    markdownImages.length === 0 ? null : (
+      <div
+        style={{
+          alignItems: 'flex-start',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 6,
+        }}
+      >
+        {markdownImages.map((image) => (
+          <img
+            key={image.url}
+            src={image.url}
+            alt={image.alt}
+            title={image.alt}
+            style={{
+              border: `1px solid ${TASK_TOKENS.border}`,
+              borderRadius: TASK_TOKENS.radiusSmall,
+              maxHeight: 140,
+              maxWidth: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        ))}
+      </div>
+    );
+
   const textarea = (
     <textarea
       key={fieldKey}
@@ -524,6 +557,7 @@ export const TaskMarkdownEditor = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {toolbar}
         {textarea}
+        {imageStrip}
       </div>
     );
   }
@@ -580,6 +614,7 @@ export const TaskMarkdownEditor = ({
         </div>
       </div>
       {isEditing && toolbar}
+      {isEditing && imageStrip}
     </div>
   );
 };
