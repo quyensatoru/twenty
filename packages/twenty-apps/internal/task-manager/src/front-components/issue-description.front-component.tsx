@@ -5,9 +5,7 @@ import { t, useRecordId } from 'twenty-sdk/front-component';
 import { UPDATE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DESCRIPTION_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
-import { TaskButton } from './components/task-button';
 import { TaskMarkdownEditor } from './components/task-markdown-editor';
-import { TaskMarkdownView } from './components/task-markdown-view';
 import { TaskMessage } from './components/task-message';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useIssueDetail } from './hooks/use-issue-detail';
@@ -29,7 +27,7 @@ const SAVE_DEBOUNCE_MS = 700;
 // `attachment.targetIssueId`, a morph branch the cutover deleted.
 const IssueDescription = () => {
   const issueId = useRecordId();
-  const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
+  const { data, isLoading, loadError } = useIssueDetail(issueId);
   const [draft, setDraft] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>(
@@ -113,11 +111,6 @@ const IssueDescription = () => {
     }, SAVE_DEBOUNCE_MS);
   };
 
-  const closeEditor = async () => {
-    await flushSave();
-    setDraft(null);
-    await reload();
-  };
 
   if (issueId === null) {
     return <TaskMessage text={t('No issue selected.')} />;
@@ -152,39 +145,18 @@ const IssueDescription = () => {
         </span>
       )}
 
-      {draft === null ? (
-        <>
-          <TaskMarkdownView
-            markdown={storedMarkdown}
-            emptyText={t('No description yet.')}
-          />
-          <div>
-            <TaskButton size="small" onClick={() => setDraft(storedMarkdown)}>
-              {storedMarkdown === '' ? t('Add description') : t('Edit')}
-            </TaskButton>
-          </div>
-        </>
-      ) : (
-        <>
-          <TaskMarkdownEditor
-            ariaLabel={t('Issue description')}
-            value={draft}
-            onChange={handleDraftChange}
-            onBlur={() => void flushSave()}
-            placeholder={t('Describe the issue in markdown…')}
-            rows={6}
-          />
-          <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-            <TaskButton size="small" onClick={() => void closeEditor()}>
-              {t('Done')}
-            </TaskButton>
-            {saveState !== 'idle' && (
-              <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
-                {saveState === 'saving' ? t('Saving…') : t('Saved')}
-              </span>
-            )}
-          </div>
-        </>
+      <TaskMarkdownEditor
+        ariaLabel={t('Issue description')}
+        value={draft ?? storedMarkdown}
+        onChange={handleDraftChange}
+        onBlur={() => void flushSave()}
+        placeholder={t('Describe the issue in markdown…')}
+        rows={6}
+      />
+      {saveState !== 'idle' && (
+        <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
+          {saveState === 'saving' ? t('Saving…') : t('Saved')}
+        </span>
       )}
     </section>
   );
