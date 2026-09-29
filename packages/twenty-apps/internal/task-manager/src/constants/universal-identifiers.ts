@@ -348,8 +348,6 @@ export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
 export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =
   '2a707f35-232e-431c-9468-58913cbbcf67';
-export const ISSUE_RECORD_PAGE_ACTIVITY_TAB_UID =
-  'e749f306-0cfd-46cd-8e62-6fa425d5d02c';
 // Comments and worklogs are a front component, not a RECORD_TABLE widget: a
 // host widget reads and writes with the VIEWER's token, so it goes blank the
 // moment the Member role loses direct access to these objects — which is

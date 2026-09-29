@@ -16,6 +16,11 @@ import { readErrorText } from './utils/read-error-text.util';
 // pause of a sentence already has the text on the server.
 const SAVE_DEBOUNCE_MS = 700;
 
+// Markdown is the storage format, never the reading format: the panel shows
+// the rendered text and only turns into the source box under the pointer that
+// clicked it, so nobody has to read `## Kế hoạch` to find out what an issue is
+// about. Saving stays on the debounce plus the blur flush below.
+//
 // The host's FIELD_RICH_TEXT widget cannot render this field. Its card is hard
 // wired to a field literally named `bodyV2` (FieldRichTextCard reads
 // `recordStoreFamilySelector` with fieldName 'bodyV2' and shows a skeleton when
@@ -131,10 +136,12 @@ const IssueDescription = () => {
   return (
     <section
       style={{
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: TASK_TOKENS.fontFamily,
         gap: 8,
+        height: '100%',
         padding: '4px 0',
         width: '100%',
       }}
@@ -152,6 +159,7 @@ const IssueDescription = () => {
         onBlur={() => void flushSave()}
         placeholder={t('Describe the issue in markdown…')}
         rows={6}
+        isClickToEdit
       />
       {saveState !== 'idle' && (
         <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>

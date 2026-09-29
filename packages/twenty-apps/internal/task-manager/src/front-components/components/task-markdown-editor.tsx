@@ -16,8 +16,10 @@ import {
   buildMarkdownForUrl,
   type MarkdownFormat,
 } from '../../utils/apply-markdown-format.util';
+import { appendImageMarkdown as buildValueWithImageMarkdown } from '../../utils/append-image-markdown.util';
 import { deriveCaretPosition } from '../../utils/derive-caret-position.util';
 import { isImageUrl } from '../../utils/parse-markdown-inline.util';
+import { removeNativePasteInsertion } from '../../utils/remove-native-paste-insertion.util';
 import { replaceMarkdownLinkUrl } from '../../utils/replace-markdown-link-url.util';
 import { useStableFieldValue } from '../hooks/use-stable-field-value';
 import { readTextareaSelection } from '../utils/read-textarea-selection.util';
@@ -34,6 +36,7 @@ import {
 } from '../utils/upload-image-from-url.util';
 import { getTaskControlStyle } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
+import { TaskMarkdownView } from './task-markdown-view';
 import { TASK_TOKENS } from './task-tokens';
 
 type TaskMarkdownEditorProps = {
@@ -43,6 +46,9 @@ type TaskMarkdownEditorProps = {
   ariaLabel: string;
   placeholder?: string;
   rows?: number;
+  // Shows the rendered markdown until the author clicks into the text, instead
+  // of a permanently open source box.
+  isClickToEdit?: boolean;
 };
 
 type ToolbarAction = {
@@ -165,19 +171,66 @@ export const TaskMarkdownEditor = ({
   ariaLabel,
   placeholder,
   rows = 4,
+  isClickToEdit = false,
 }: TaskMarkdownEditorProps) => {
   const [isFocused, setIsFocused] = useState(false);
-  const { fieldValue, fieldKey, report } = useStableFieldValue(value);
+  const [isPointerInside, setIsPointerInside] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { fieldValue, fieldKey, report, reset } = useStableFieldValue(value);
   // The host applies the pasted text natively and only then fires the change,
   // so the URL is rewritten on the way through that change rather than by
   // cancelling the paste — a remote event's preventDefault never reaches the
   // host element.
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingPastedUrlRef = useRef<string | null>(null);
+  // Set when a paste was claimed as a file, so the text the browser inserted
+  // alongside it can be recognised in the change that follows.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const pendingNativePasteTextRef = useRef<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
   const selectionRef = useRef<{ start: number; end: number } | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
   const lastValueRef = useRef(value);
+  // Read inside the blur handler, which can run before a render caused by the
+  // pointer leaving has flushed, so state alone would be stale there.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const isPointerInsideRef = useRef(false);
+  // oxlint-disable-next-line twenty/no-state-useref
+  const isFocusedRef = useRef(false);
+
+  // Leaving edit mode while the pointer is still inside would unmount the
+  // toolbar between the button's mousedown — which is what blurred the box —
+  // and its mouseup, so the click would never land.
+  const handleTextareaFocus = () => {
+    isFocusedRef.current = true;
+    setIsFocused(true);
+    setIsEditing(true);
+  };
+
+  const handleTextareaBlur = () => {
+    isFocusedRef.current = false;
+    setIsFocused(false);
+
+    if (!isPointerInsideRef.current) {
+      setIsEditing(false);
+    }
+
+    onBlur?.();
+  };
+
+  const handlePointerEnter = () => {
+    isPointerInsideRef.current = true;
+    setIsPointerInside(true);
+  };
+
+  const handlePointerLeave = () => {
+    isPointerInsideRef.current = false;
+    setIsPointerInside(false);
+
+    if (!isFocusedRef.current) {
+      setIsEditing(false);
+    }
+  };
 
   const applyFormat = (action: ToolbarAction) => {
     const selection = selectionRef.current ?? {
@@ -230,6 +283,21 @@ export const TaskMarkdownEditor = ({
     onChange(nextValue);
   };
 
+  // Puts back the text the box held before the host applied a paste of its own.
+  // The reverted value was typed already, so the field has to be told to take
+  // it again — otherwise the box keeps showing what the host pasted.
+  const revertNativePaste = (
+    typedValue: string,
+    revertedValue: string,
+    caretPosition: number,
+  ) => {
+    report(typedValue);
+    selectionRef.current = { start: caretPosition, end: caretPosition };
+    lastValueRef.current = revertedValue;
+    reset(revertedValue);
+    onChange(revertedValue);
+  };
+
   // The markdown link is written the moment the paste lands and only its target
   // is swapped once the upload finishes, so a slow or blocked upload costs the
   // author nothing: the URL they pasted is already in the text.
@@ -273,15 +341,9 @@ export const TaskMarkdownEditor = ({
     });
   };
 
-  // The caret is not serialised onto a remote element, so an upload that lands
-  // while the author keeps typing appends at the end of what they have now
-  // rather than at a position that no longer means anything.
   const appendImageMarkdown = (name: string, url: string) => {
     const currentValue = lastValueRef.current;
-    const separator =
-      currentValue === '' || currentValue.endsWith('\n') ? '' : '\n';
-    const markdown = `${separator}![${name}](${url})`;
-    const nextValue = currentValue + markdown;
+    const nextValue = buildValueWithImageMarkdown(currentValue, name, url);
 
     replaceTypedValue(currentValue, nextValue, nextValue.length);
   };
@@ -337,9 +399,25 @@ export const TaskMarkdownEditor = ({
 
   const handleChange = (nextValue: string) => {
     const pastedUrl = pendingPastedUrlRef.current;
+    const nativePasteText = pendingNativePasteTextRef.current;
     const caretPosition = deriveCaretPosition(lastValueRef.current, nextValue);
 
     pendingPastedUrlRef.current = null;
+    pendingNativePasteTextRef.current = null;
+
+    if (nativePasteText !== null) {
+      const removal = removeNativePasteInsertion(
+        lastValueRef.current,
+        nextValue,
+        nativePasteText,
+      );
+
+      if (removal !== null) {
+        revertNativePaste(nextValue, removal.value, removal.caretPosition);
+
+        return;
+      }
+    }
 
     if (pastedUrl !== null && nextValue.includes(pastedUrl)) {
       const insertionIndex = nextValue.lastIndexOf(pastedUrl);
@@ -366,72 +444,142 @@ export const TaskMarkdownEditor = ({
     commit(nextValue, caretPosition);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div
-        role="toolbar"
-        aria-label={t('Formatting')}
-        style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 2 }}
-      >
-        {TOOLBAR_ACTIONS.map((action) => (
-          <TaskIconButton
-            key={action.format}
-            label={t(action.label)}
-            onClick={() => applyFormat(action)}
-          >
-            {action.icon}
-          </TaskIconButton>
-        ))}
+  const toolbar = (
+    <div
+      role="toolbar"
+      aria-label={t('Formatting')}
+      style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 2 }}
+    >
+      {TOOLBAR_ACTIONS.map((action) => (
+        <TaskIconButton
+          key={action.format}
+          label={t(action.label)}
+          onClick={() => applyFormat(action)}
+        >
+          {action.icon}
+        </TaskIconButton>
+      ))}
+    </div>
+  );
+
+  const textarea = (
+    <textarea
+      key={fieldKey}
+      aria-label={ariaLabel}
+      value={fieldValue}
+      rows={rows}
+      placeholder={isClickToEdit ? undefined : placeholder}
+      onFocus={handleTextareaFocus}
+      onBlur={handleTextareaBlur}
+      onKeyUp={(event) => rememberSelection(event.target)}
+      onMouseUp={(event) => rememberSelection(event.target)}
+      onClick={(event) => rememberSelection(event.target)}
+      onPaste={(event) => {
+        const clipboardText = event.clipboardData?.getData('text') ?? '';
+
+        if (handleTransferredFiles(event.clipboardData)) {
+          // The paste is not cancelled — the host only cancels dragover and
+          // drop — so the path the clipboard carries beside the file still
+          // lands in the box. It is taken back out when the change arrives.
+          pendingNativePasteTextRef.current =
+            clipboardText === '' ? null : clipboardText;
+
+          return;
+        }
+
+        if (clipboardText === '') {
+          return;
+        }
+
+        const urlMatch = URL_ONLY_PATTERN.exec(clipboardText);
+
+        pendingPastedUrlRef.current = urlMatch === null ? null : urlMatch[1];
+      }}
+      onDragOver={() => {
+        // Registering the handler is how the host learns to cancel the
+        // browser's own drop, which would otherwise navigate to the file.
+      }}
+      onDrop={(event) => {
+        handleTransferredFiles(event.dataTransfer);
+      }}
+      onChange={(event) => {
+        rememberSelection(event.target);
+        handleChange(event.target.value);
+      }}
+      style={{
+        ...getTaskControlStyle(isFocused),
+        fontFamily: TASK_TOKENS.fontFamily,
+        lineHeight: 1.5,
+        padding: 8,
+        resize: isClickToEdit ? 'none' : 'vertical',
+        ...(isClickToEdit
+          ? { gridArea: '1 / 1', height: '100%', opacity: isEditing ? 1 : 0 }
+          : {}),
+      }}
+    />
+  );
+
+  if (!isClickToEdit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {toolbar}
+        {textarea}
       </div>
+    );
+  }
 
-      <textarea
-        key={fieldKey}
-        aria-label={ariaLabel}
-        value={fieldValue}
-        rows={rows}
-        placeholder={placeholder}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => {
-          setIsFocused(false);
-          onBlur?.();
-        }}
-        onKeyUp={(event) => rememberSelection(event.target)}
-        onMouseUp={(event) => rememberSelection(event.target)}
-        onClick={(event) => rememberSelection(event.target)}
-        onPaste={(event) => {
-          if (handleTransferredFiles(event.clipboardData)) {
-            return;
-          }
-
-          const clipboardText = event.clipboardData?.getData('text') ?? '';
-
-          if (clipboardText === '') {
-            return;
-          }
-
-          const urlMatch = URL_ONLY_PATTERN.exec(clipboardText);
-
-          pendingPastedUrlRef.current = urlMatch === null ? null : urlMatch[1];
-        }}
-        onDragOver={() => {
-          // Registering the handler is how the host learns to cancel the
-          // browser's own drop, which would otherwise navigate to the file.
-        }}
-        onDrop={(event) => {
-          handleTransferredFiles(event.dataTransfer);
-        }}
-        onChange={(event) => {
-          rememberSelection(event.target);
-          handleChange(event.target.value);
-        }}
+  // The rendered markdown is an overlay that lets the pointer through, so the
+  // text the author sees IS the click target: the click reaches the textarea
+  // underneath and the browser puts the caret where they aimed. Focusing it
+  // from here is not an option — `autofocus` is not one of the properties the
+  // renderer forwards to a remote textarea, and the sandbox has no element
+  // reference to call focus() on.
+  //
+  // The toolbar sits below the field so that showing it does not push the text
+  // down under the pointer mid-click.
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flex: 1,
+        flexDirection: 'column',
+        gap: 4,
+        minHeight: 0,
+      }}
+      onMouseEnter={handlePointerEnter}
+      onMouseLeave={handlePointerLeave}
+    >
+      <div
         style={{
-          ...getTaskControlStyle(isFocused),
-          fontFamily: TASK_TOKENS.fontFamily,
-          lineHeight: 1.5,
-          padding: 8,
-          resize: 'vertical',
+          background:
+            !isEditing && isPointerInside
+              ? TASK_TOKENS.backgroundHover
+              : 'transparent',
+          borderRadius: TASK_TOKENS.radiusSmall,
+          cursor: 'text',
+          display: 'grid',
+          flex: 1,
+          minHeight: 0,
         }}
-      />
+      >
+        {textarea}
+        <div
+          style={{
+            gridArea: '1 / 1',
+            opacity: isEditing ? 0 : 1,
+            // The grid row is a fixed pixel budget, so text longer than the
+            // widget has to scroll. Reading it needs a click into the box:
+            // letting the pointer through is what makes the text itself the
+            // click target, and a scrollable overlay cannot do both.
+            overflowY: 'auto',
+            padding: 9,
+            pointerEvents: 'none',
+          }}
+        >
+          <TaskMarkdownView markdown={value} emptyText={placeholder} />
+        </div>
+      </div>
+      {isEditing && toolbar}
     </div>
   );
 };

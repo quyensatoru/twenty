@@ -11,9 +11,9 @@ const MAX_TRACKED_VALUES = 500;
 // Renders lag behind keystrokes, so the parent can pass back any earlier typed
 // value, not only the latest one. Every reported value is remembered, and only
 // a value that was never typed counts as an outside change; `fieldKey` then
-// remounts the field so the host takes the new text. A parent that sets the
-// field back to an earlier typed value (clearing a draft after submit) has to
-// remount it itself, with a `key`.
+// remounts the field so the host takes the new text. Putting the field back to
+// an earlier typed value (clearing a draft after submit, undoing a paste the
+// host applied by itself) therefore needs `reset`, or an outer `key`.
 export const useStableFieldValue = (value: string) => {
   const reportedValues = useRef(new Set([value]));
   const [field, setField] = useState({ value, key: 0 });
@@ -35,5 +35,13 @@ export const useStableFieldValue = (value: string) => {
     reportedValues.current.add(nextValue);
   };
 
-  return { fieldValue: field.value, fieldKey: field.key, report };
+  // Forces the field back to a value it has already seen typed — undoing an
+  // edit the host applied on its own, which the effect above deliberately
+  // ignores because the value is in the reported set.
+  const reset = (nextValue: string) => {
+    reportedValues.current = new Set([nextValue]);
+    setField((current) => ({ value: nextValue, key: current.key + 1 }));
+  };
+
+  return { fieldValue: field.value, fieldKey: field.key, report, reset };
 };
