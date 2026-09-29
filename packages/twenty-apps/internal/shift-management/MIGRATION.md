@@ -7,6 +7,31 @@ lại.
 Shift độc lập với hai app còn lại (không chia sẻ object nào với `task-manager` hay
 `merchant-email-campaigns`), nên cài lúc nào trong cửa sổ bảo trì cũng được.
 
+
+## Hai bước chung dễ bị bỏ sót
+
+Cả hai nằm trong `packages/twenty-apps/internal/CUTOVER.md`; ghi lại đây vì bỏ qua chúng thì
+`apply` của shift hỏng dù nguyên nhân không nằm ở shift.
+
+**Bước 2b — tính lại universalIdentifier dẫn xuất.** `id`, `createdAt`, `updatedAt`, `deletedAt`,
+`position`, `createdBy`, `updatedBy`, `searchVector` và relation hệ thống có UID sinh bằng
+`v5(\`fieldMetadata:${objectUid}:${name}\`, applicationUniversalIdentifier)`, với application UID
+làm namespace. Re-parent đổi namespace nên phải chạy:
+
+```bash
+node packages/twenty-apps/internal/rewrite-derived-identifiers.mjs --apply
+```
+
+Trong lần diễn tập, 24 field của shift nằm trong số 106 field phải viết lại.
+
+**Bước 3b — gỡ liên kết chéo mồ côi.** Chín field của twenty-standard
+(`attachment.targetIssue`, `timelineActivity.targetMerchant`, …) trỏ sang object đã thuộc app.
+Chúng làm metadata graph không hợp lệ, và **sync xác thực toàn bộ graph của workspace**, nên
+`apply` của shift dừng với `Field Metadata of type RELATION or MORPH_RELATION with id … has no
+relation target object metadata` — dù shift không liên quan gì tới attachment. Chạy
+`task-manager/scripts/04-preserve-cross-object-links.sql` rồi xoá chín field đó theo hướng dẫn ở
+CUTOVER.md bước 3b.
+
 ## Cái gì được chuyển
 
 | Loại | Chi tiết |

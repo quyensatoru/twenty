@@ -238,6 +238,25 @@ Chưa làm bước này thì app-scope chưa có hiệu lực: member gọi th�
 - Mở UI từng app, kiểm tra vài bản ghi thật.
 - `yarn twenty dev:function:logs --remote prod` xem có lỗi bị nuốt không.
 
+## Kết quả diễn tập (2026-09-29)
+
+Chạy đủ bước 0-5 trên một database có dữ liệu seed đại diện: 30 dòng / 14 bảng, gồm issueKey đã cấp,
+`nextIssueNumber` đã tăng, quan hệ tự trỏ (subtask, comment lồng), junction, field do app khác sở
+hữu trên `merchant`, và grant appAccess.
+
+| Mốc | Kết quả |
+|---|---|
+| Sau `ALTER TABLE RENAME` | 30/30 dòng |
+| Sau deploy `upstream/main` + `upgrade` | 30/30 dòng — standard sync **không** xoá gì |
+| Sau `apply` cả ba app | 30/30 dòng, nội dung issue khớp tuyệt đối |
+| Tạo issue mới từ UI sau cutover | `TM-4`, `nextIssueNumber` 3→4, `createdBySource=APPLICATION` |
+
+Mốc cuối là bằng chứng end-to-end: vòng cấp `issueKey` bằng unique index + retry (thay cho raw SQL
+atomic của bản fork) chạy đúng trên dữ liệu đã migrate, và write đi qua route của app.
+
+Mỗi lần `apply` thất bại đều **atomic** — đối chiếu lại sau từng lần đều 30/30. Không cần rollback
+giữa chừng.
+
 ## Rollback
 
 Trước bước 4, rollback là hoàn tác bước 1–3 theo chiều ngược (đổi tên bảng về, re-parent về standard

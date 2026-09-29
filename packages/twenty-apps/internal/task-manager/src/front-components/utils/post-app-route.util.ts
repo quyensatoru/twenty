@@ -12,7 +12,7 @@ export const postAppRoute = async <TResult extends RouteResult>(
   body: Record<string, unknown>,
 ): Promise<TResult> => {
   const result = (await new RestApiClient().post(
-    `/s/${routePath}`,
+    `/s${routePath}`,
     body,
   )) as TResult;
 
