@@ -21,6 +21,13 @@ import { isImageUrl } from '../../utils/parse-markdown-inline.util';
 import { replaceMarkdownLinkUrl } from '../../utils/replace-markdown-link-url.util';
 import { useStableFieldValue } from '../hooks/use-stable-field-value';
 import { readTextareaSelection } from '../utils/read-textarea-selection.util';
+import { readTransferredFiles } from '../utils/read-transferred-files.util';
+import {
+  isTransferredImageFile,
+  uploadImageFromTransferredFile,
+  type TransferredFile,
+  type UploadImageFromTransferredFileFailure,
+} from '../utils/upload-image-from-transferred-file.util';
 import {
   uploadImageFromUrl,
   type UploadImageFromUrlFailure,
@@ -47,13 +54,30 @@ type ToolbarAction = {
 
 const URL_ONLY_PATTERN = /^\s*(https?:\/\/[^\s]+)\s*$/;
 
-// Local files reach the workspace through the host's own picker on the
-// Attachments field, which is why that field exists at all. Written as a
-// literal inside t() because the extractor only sees literals.
-const readLocalFileGuidance = (): string =>
+// Only images become markdown here. Anything else still belongs in the
+// Attachments field, which is where the host's own picker puts it. Written as
+// a literal inside t() because the extractor only sees literals.
+const readNonImageFileGuidance = (): string =>
   t(
-    'A file from your computer cannot be dropped or pasted here. Add it in the Attachments field on the Issue tab, then paste its link. Pasting an image URL does work — the image is stored in Twenty.',
+    'Only an image can be pasted or dropped here. Add any other file in the Attachments field on the Issue tab.',
   );
+
+const readTransferredUploadFailureMessage = (
+  failure: UploadImageFromTransferredFileFailure,
+): string => {
+  switch (failure) {
+    case 'host-too-old':
+      return t(
+        'This Twenty server cannot receive a pasted or dropped file yet. Add the image in the Attachments field on the Issue tab.',
+      );
+    case 'no-attachment-field':
+      return t(
+        'The Attachments field is missing, so the image could not be stored.',
+      );
+    case 'upload-failed':
+      return t('The image could not be stored in Twenty.');
+  }
+};
 
 const readUploadFailureMessage = (
   failure: UploadImageFromUrlFailure,
@@ -249,6 +273,68 @@ export const TaskMarkdownEditor = ({
     });
   };
 
+  // The caret is not serialised onto a remote element, so an upload that lands
+  // while the author keeps typing appends at the end of what they have now
+  // rather than at a position that no longer means anything.
+  const appendImageMarkdown = (name: string, url: string) => {
+    const currentValue = lastValueRef.current;
+    const separator =
+      currentValue === '' || currentValue.endsWith('\n') ? '' : '\n';
+    const markdown = `${separator}![${name}](${url})`;
+    const nextValue = currentValue + markdown;
+
+    replaceTypedValue(currentValue, nextValue, nextValue.length);
+  };
+
+  // The bytes stayed on the host: each file arrives as a single-use handle and
+  // the host uploads the file it kept, so the markdown can only be written once
+  // the URL comes back.
+  const storeTransferredImages = async (files: TransferredFile[]) => {
+    for (const file of files) {
+      const result = await uploadImageFromTransferredFile(file);
+
+      if (result.status === 'failed') {
+        void enqueueSnackbar({
+          message: readTransferredUploadFailureMessage(result.failure),
+          variant: 'warning',
+        });
+
+        continue;
+      }
+
+      appendImageMarkdown(result.name, result.url);
+
+      void enqueueSnackbar({
+        message: t('Image stored in Twenty.'),
+        variant: 'success',
+      });
+    }
+  };
+
+  // Returns true when the event carried files and was dealt with here.
+  const handleTransferredFiles = (transfer: unknown): boolean => {
+    const transferredFiles = readTransferredFiles(transfer);
+
+    if (transferredFiles.length === 0) {
+      return false;
+    }
+
+    const imageFiles = transferredFiles.filter(isTransferredImageFile);
+
+    if (imageFiles.length === 0) {
+      void enqueueSnackbar({
+        message: readNonImageFileGuidance(),
+        variant: 'info',
+      });
+
+      return true;
+    }
+
+    void storeTransferredImages(imageFiles);
+
+    return true;
+  };
+
   const handleChange = (nextValue: string) => {
     const pastedUrl = pendingPastedUrlRef.current;
     const caretPosition = deriveCaretPosition(lastValueRef.current, nextValue);
@@ -343,18 +429,13 @@ export const TaskMarkdownEditor = ({
           onMouseUp={(event) => rememberSelection(event.target)}
           onClick={(event) => rememberSelection(event.target)}
           onPaste={(event) => {
+            if (handleTransferredFiles(event.clipboardData)) {
+              return;
+            }
+
             const clipboardText = event.clipboardData?.getData('text') ?? '';
 
-            // A pasted file arrives with no text at all: the host reconstructs
-            // the clipboard from its text only, and there is no format through
-            // which the bytes could follow. Point at the control that does take
-            // a file rather than dropping the paste in silence.
             if (clipboardText === '') {
-              void enqueueSnackbar({
-                message: readLocalFileGuidance(),
-                variant: 'info',
-              });
-
               return;
             }
 
@@ -363,14 +444,12 @@ export const TaskMarkdownEditor = ({
             pendingPastedUrlRef.current =
               urlMatch === null ? null : urlMatch[1];
           }}
-          onDrop={() => {
-            // A dropped file's bytes never cross into the sandbox either: the
-            // host serialises an event to name, size and type only, and only
-            // from a file input's own `files`, never from `dataTransfer`.
-            void enqueueSnackbar({
-              message: readLocalFileGuidance(),
-              variant: 'info',
-            });
+          onDragOver={() => {
+            // Registering the handler is how the host learns to cancel the
+            // browser's own drop, which would otherwise navigate to the file.
+          }}
+          onDrop={(event) => {
+            handleTransferredFiles(event.dataTransfer);
           }}
           onChange={(event) => {
             rememberSelection(event.target);
