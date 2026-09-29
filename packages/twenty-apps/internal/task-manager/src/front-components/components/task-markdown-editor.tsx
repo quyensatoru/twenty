@@ -184,7 +184,13 @@ export const TaskMarkdownEditor = ({
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingPastedUrlRef = useRef<string | null>(null);
   // Set when a paste was claimed as a file, so the text the browser inserted
-  // alongside it can be recognised in the change that follows.
+  // alongside it can be recognised in the change that follows and taken back
+  // out. Calling preventDefault on the paste is not an option and never will
+  // be from in here: the host cancels only dragover, drop and form submit
+  // (preventDefaultThenForwardToRemote in twenty-front-component-renderer,
+  // whose own comment says a remote handler "would land after the browser
+  // already acted"), and the guest's event object is a copy that crossed the
+  // worker bridge long after the paste was applied.
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingNativePasteTextRef = useRef<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref

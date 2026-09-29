@@ -18,6 +18,11 @@ type HostCommunicationApi = {
   uploadFileByHandle?: UploadFileByHandleFunction;
 };
 
+// Held in a constant rather than written inline: the translation extractor
+// treats a literal after `reason:` as a user-facing message and would add this
+// discriminant to the catalogs.
+const UPLOAD_FAILED_REASON = 'upload-failed';
+
 const readHostCommunicationApi = (): HostCommunicationApi | undefined => {
   const api = (globalThis as Record<string, unknown>)[
     FRONT_COMPONENT_HOST_COMMUNICATION_API_KEY
@@ -39,7 +44,7 @@ export const uploadFileByHandle = async (
     readHostCommunicationApi()?.uploadFileByHandle;
 
   if (typeof uploadFileByHandleFunction !== 'function') {
-    return { status: 'failed', reason: 'upload-failed' };
+    return { status: 'failed', reason: UPLOAD_FAILED_REASON };
   }
 
   return uploadFileByHandleFunction(handle, params);
