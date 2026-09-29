@@ -146,6 +146,14 @@ export type UploadFileFunction = (
   params: UploadFileParams,
 ) => Promise<UploadFileResult>;
 
+// A file the user just pasted or dropped stays on the host; `handle` names it
+// there. A handle is single use and expires, so it can only ever upload what
+// the user just handed to this component.
+export type UploadFileByHandleFunction = (
+  handle: string,
+  params: UploadFileParams,
+) => Promise<UploadFileResult>;
+
 export type OpenCommandConfirmationModalHostFunction = (
   params: Parameters<OpenCommandConfirmationModalFunction>[0],
 ) => Promise<void>;
@@ -176,6 +184,7 @@ export type FrontComponentHostCommunicationApiStore = {
   updateProgress?: UpdateProgressFunction;
   copyToClipboard?: CopyToClipboardFunction;
   uploadFile?: UploadFileFunction;
+  uploadFileByHandle?: UploadFileByHandleFunction;
   storageSet?: StorageSetFunction;
   storageDelete?: StorageDeleteFunction;
   storageClear?: StorageClearFunction;

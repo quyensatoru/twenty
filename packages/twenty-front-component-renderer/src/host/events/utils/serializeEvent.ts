@@ -5,6 +5,7 @@ import { MAX_SERIALIZED_EVENT_TEXT_LENGTH } from '@/host/events/constants/MaxSer
 import { applyFirstChangedTouchCoordinates } from '@/host/events/utils/applyFirstChangedTouchCoordinates';
 import { applyPasteClipboardText } from '@/host/events/utils/applyPasteClipboardText';
 import { serializeFileList } from '@/host/events/utils/serializeFileList';
+import { serializeTransferredFileList } from '@/host/events/utils/serializeTransferredFileList';
 import { type SerializedEventData } from '@/types/SerializedEventData';
 
 export const serializeEvent = (event: unknown): SerializedEventData => {
@@ -179,6 +180,14 @@ export const serializeEvent = (event: unknown): SerializedEventData => {
     if (isDefined(files)) {
       serialized.files = files;
     }
+  }
+
+  const transferredFiles = serializeTransferredFileList(
+    domEvent,
+    serialized.type,
+  );
+  if (isDefined(transferredFiles)) {
+    serialized.files = transferredFiles;
   }
 
   return serialized;

@@ -10,6 +10,7 @@ export { openSidePanelPage } from './functions/openSidePanelPage';
 export { unmountFrontComponent } from './functions/unmountFrontComponent';
 export { updateProgress } from './functions/updateProgress';
 export { uploadFile } from './functions/uploadFile';
+export { uploadFileByHandle } from './functions/uploadFileByHandle';
 export { useColorScheme } from './hooks/useColorScheme';
 export { useFrontComponentExecutionContext } from './hooks/useFrontComponentExecutionContext';
 export { useFrontComponentId } from './hooks/useFrontComponentId';
@@ -52,6 +53,7 @@ export type {
   UnmountFrontComponentFunction,
   UpdateProgressFunction,
   UploadedFrontComponentFile,
+  UploadFileByHandleFunction,
   UploadFileFailureReason,
   UploadFileFunction,
   UploadFileParams,

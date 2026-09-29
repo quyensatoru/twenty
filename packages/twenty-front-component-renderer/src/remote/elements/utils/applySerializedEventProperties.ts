@@ -1,4 +1,5 @@
 import { applySerializedEventClipboardData } from '@/remote/elements/utils/applySerializedEventClipboardData';
+import { applySerializedEventTransferredFiles } from '@/remote/elements/utils/applySerializedEventTransferredFiles';
 import { type SerializedEventData } from '@/types/SerializedEventData';
 
 const SERIALIZED_EVENT_PROPERTY_KEYS = [
@@ -52,4 +53,5 @@ export const applySerializedEventProperties = (
   }
 
   applySerializedEventClipboardData(event, eventData);
+  applySerializedEventTransferredFiles(event, eventData);
 };

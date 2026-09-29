@@ -19,6 +19,10 @@ export const hostApiMocks = {
     status: 'failed',
     reason: 'upload-failed',
   }),
+  uploadFileByHandle: fn().mockResolvedValue({
+    status: 'failed',
+    reason: 'upload-failed',
+  }),
   storageSet: fn().mockResolvedValue(undefined),
   storageDelete: fn().mockResolvedValue(undefined),
   storageClear: fn().mockResolvedValue(undefined),
@@ -53,6 +57,7 @@ export const resetFrontComponentStoryMocks = () => {
   hostApiMocks.openCommandConfirmationModal.mockClear();
   hostApiMocks.copyToClipboard.mockClear();
   hostApiMocks.uploadFile.mockClear();
+  hostApiMocks.uploadFileByHandle.mockClear();
   hostApiMocks.storageSet.mockClear();
   hostApiMocks.storageDelete.mockClear();
   hostApiMocks.storageClear.mockClear();

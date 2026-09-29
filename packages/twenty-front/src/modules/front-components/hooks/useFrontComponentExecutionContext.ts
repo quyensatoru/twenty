@@ -12,6 +12,7 @@ import {
   clearFrontComponentStorage,
   deleteFrontComponentStorageItem,
   setFrontComponentStorageItem,
+  takeTransferredFile,
   type FrontComponentExecutionContext,
   type FrontComponentHostCommunicationApi,
 } from 'twenty-front-component-renderer';
@@ -547,6 +548,28 @@ export const useFrontComponentExecutionContext = ({
       }
     };
 
+  const hostUploadFileByHandle: FrontComponentHostCommunicationApi['uploadFileByHandle'] =
+    async (handle, params) => {
+      // Taking the handle consumes it, so a pasted or dropped file can be
+      // uploaded once and only by the component the user handed it to. The
+      // file itself then goes through hostUploadFile, keeping one upload path
+      // and one FILES-field check.
+      const transferredFile = isNonEmptyString(handle)
+        ? takeTransferredFile(handle)
+        : undefined;
+
+      if (!isDefined(transferredFile)) {
+        return { status: 'failed', reason: 'invalid-params' };
+      }
+
+      return hostUploadFile(transferredFile, {
+        ...params,
+        fileName: isNonEmptyString(params?.fileName)
+          ? params.fileName
+          : transferredFile.name,
+      });
+    };
+
   const currentUserId = currentUser?.id;
 
   const storageNamespace = isDefined(currentUserId)
@@ -612,6 +635,7 @@ export const useFrontComponentExecutionContext = ({
       updateProgress,
       copyToClipboard,
       uploadFile: hostUploadFile,
+      uploadFileByHandle: hostUploadFileByHandle,
       storageSet,
       storageDelete,
       storageClear,
