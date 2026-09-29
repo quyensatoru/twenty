@@ -122,6 +122,9 @@ export const ISSUE_CHILDREN_FIELD_UID = '42e7d2a1-6fae-4108-b18b-55b1a67734c6';
 export const ISSUE_ISSUE_COMMENTS_FIELD_UID =
   'ded94e18-47ed-4805-afeb-dadb6cce328a';
 export const ISSUE_WORKLOGS_FIELD_UID = '2e5f8197-da23-4336-84d7-495101b0ceba';
+// Never existed in the fork: a brand new identifier, not a copied standard one.
+export const ISSUE_ATTACHMENTS_FIELD_UID =
+  '43fa7568-bd3f-4434-9fee-6c6bf75dc489';
 
 export const ISSUE_MERCHANT_OBJECT_UID =
   'a469cd28-a0f7-4132-8f5d-d89fa044f516';
@@ -372,6 +375,8 @@ export const ROADMAP_DATA_LOGIC_FUNCTION_UID =
   'd895c4b7-2567-4aae-8c5f-6c2e49af2795';
 export const ISSUE_DETAIL_LOGIC_FUNCTION_UID =
   '5a41d77d-9e42-4c1a-90a8-ae13d8cf8830';
+export const ATTACHMENT_FIELD_LOGIC_FUNCTION_UID =
+  'd5919fad-33cb-48fb-a020-1598a212988b';
 export const CREATE_ISSUE_LOGIC_FUNCTION_UID =
   '4732fbf1-c5f2-4cff-ac8b-9f17801fcf41';
 export const UPDATE_ISSUE_LOGIC_FUNCTION_UID =

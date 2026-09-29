@@ -257,13 +257,68 @@ Ba giới hạn của sandbox mà thanh công cụ phải sống chung, đã ki�
   lastModified}`, và trường `files` chỉ được đọc từ `event.target.files` của một `<input
   type="file">` — không từ `dataTransfer` (thả) cũng không từ `clipboardData` (dán). Đọc clipboard
   cũng bị chặn hẳn (`installClipboardPolyfill` chỉ polyfill `writeText`). Nghĩa là `uploadFile` của
-  SDK **không thể** nhận tệp người dùng chọn; nó chỉ dùng được cho Blob do chính sandbox tạo ra
-  (ví dụ MediaRecorder).
+  SDK **không thể** nhận tệp người dùng chọn; nó chỉ dùng được cho Blob do chính sandbox tạo ra —
+  kể cả Blob sinh ra từ `fetch`, xem mục 5.7.1.
 - **Dán TEXT thì được.** Sự kiện `paste` mang `clipboardText`, nên dán một URL sẽ tự thành markdown:
-  `![tên](url)` nếu là ảnh, `[tên](url)` nếu không. Thả tệp chỉ hiện một snackbar nói rõ là không
-  được, kèm hướng dẫn dán URL.
+  `![tên](url)` nếu là ảnh, `[tên](url)` nếu không. Dán hoặc thả **tệp** chỉ hiện một snackbar nói
+  rõ là không được, kèm hướng dẫn dùng field **Attachments** (mục 5.7.1).
 
 **Board**, **Backlog**, **Roadmap**, **Description** và **Activity** là năm front component của app.
+
+#### 5.7.1 Ảnh và tệp đính kèm — cái gì chạy, cái gì không
+
+Bảng này là toàn bộ sự thật; đã kiểm chứng trên trình duyệt kèm đối chiếu SQL.
+
+| Người dùng làm gì | Kết quả |
+| --- | --- |
+| Chọn tệp ở field **Attachments** (tab Issue, widget `FIELDS`) | **Chạy.** Tệp được lưu trong Twenty và gắn vào bản ghi issue |
+| Dán một **URL ảnh** vào ô soạn markdown | **Chạy.** Ảnh được tải về, upload vào Twenty, markdown trỏ tới URL của Twenty chứ không hotlink |
+| Dán một URL không phải ảnh | Thành `[tên](url)`, không upload gì — đúng ý |
+| **Dán một tệp** từ máy (Ctrl+V sau khi copy ảnh) | **Không thể.** Snackbar chỉ sang field Attachments |
+| **Thả một tệp** vào ô soạn | **Không thể.** Snackbar chỉ sang field Attachments |
+
+**Vì sao tệp cục bộ phải đi qua field Attachments.** `issue.attachments` là field `FILES`, do host
+render trong widget `FIELDS`. Người dùng bấm vào ô đó thì **trình duyệt** mở hộp thoại chọn tệp và
+**host** upload — không có byte nào đi qua sandbox. Đây là đường duy nhất cho tệp trên máy người
+dùng, vì lý do đã nói ở mục 5.7: `paste` và `drop` không mang byte sang được, và không có bản vá nào
+ở phía app sửa được điều đó. (Field `FILES` **khác** widget `FILES` — mục 5.12 vẫn đúng: đừng khai
+widget đó.)
+
+**Dán URL ảnh thì upload thật.** Sandbox có `fetch`, `Blob` và `File`, nên
+`src/front-components/utils/upload-image-from-url.util.ts` tải URL về thành Blob rồi gọi `uploadFile`
+của SDK với `fieldMetadataId` của chính field `attachments`. Markdown chèn vào dùng **URL trả về**,
+nên ảnh nằm trong storage của Twenty.
+
+`fieldMetadataId` là id per-workspace, không nhét cứng vào bundle được (chỉ universalIdentifier là
+cố định), nên nó được phân giải lúc chạy qua route `POST /s/task-manager/attachment-field`. Route
+đọc metadata bằng token của **application**, nên người dùng ở Mức B (mục 4.1) vẫn dán ảnh được.
+
+Bốn đường hỏng, mỗi đường một snackbar riêng, và **URL gốc luôn được giữ lại** trong markdown chứ
+không bao giờ mất cái người dùng vừa dán:
+
+| Hỏng ở đâu | Snackbar |
+| --- | --- |
+| Chưa sync field `attachments` | "The Attachments field is missing…" |
+| `fetch` bị chặn (host từ xa không gửi CORS) | "That address could not be read from here…" |
+| URL trả về không phải ảnh | "That address did not return an image…" |
+| Server từ chối tệp | "The image could not be stored in Twenty…" |
+
+Hai giới hạn còn lại phải nói rõ với khách:
+
+- **CORS.** Sandbox chạy trong iframe `sandbox="allow-scripts"` với `srcdoc`, nên origin của nó là
+  `null`. `fetch` tới host khác chỉ chạy khi host đó trả `Access-Control-Allow-Origin: *`. Ảnh trên
+  CDN công khai thường có; ảnh sau một trang đăng nhập thì không.
+- **URL ký có hạn.** `completeFileUpload` trả về `<SERVER_URL>/file/files-field/<id>?token=<jwt>` với
+  hạn `FILE_TOKEN_EXPIRES_IN` (mặc định `1d`). Markdown giữ nguyên URL đó, nên **sau khi token hết
+  hạn ảnh trong markdown không hiện nữa** — tệp vẫn còn nguyên trong Twenty và vẫn xem được qua field
+  Attachments. Muốn ảnh sống lâu thì tăng `FILE_TOKEN_EXPIRES_IN`.
+
+URL vốn đã nằm trên origin của API thì **không** upload lại: request tới origin đó đi qua host fetch
+bridge, mà bridge serialize body bằng `response.text()` (`serializeResponseToHostFetchResult`), tức
+là ảnh sẽ hỏng. Gặp URL như vậy app để nguyên, không báo lỗi. "Origin của API" ở đây là
+`TWENTY_API_URL` mà host tiêm vào sandbox, tức `REACT_APP_SERVER_BASE_URL` — trên máy dev không đặt
+`window._env_` thì biến này rơi về `window.location.origin` (cổng của front), không phải cổng của
+server; trên production hai cái trùng nhau.
 
 ### 5.8 Kéo thả viết tay
 
@@ -322,7 +377,8 @@ hợp lệ — vế nghịch nằm bên app còn `relationTargetFieldMetadataId`
 một nhánh vào field MORPH của standard object, nên không dựng lại được.
 
 Hệ quả: **đừng khai widget `FILES`, `TIMELINE`, `NOTES` hay `TASKS` trong page layout của bất kỳ
-object nào app này sở hữu.** Khai rồi thì người dùng thấy
+object nào app này sở hữu.** Điều này **không** liên quan tới field kiểu `FILES` — `issue.attachments`
+là field, do widget `FIELDS` render, không đi qua `attachment` hay nhánh morph nào (mục 5.7.1). Khai rồi thì người dùng thấy
 `Invalid filter : timelineActivity object doesn't have any "targetIssueId" field` thay vì nội dung.
 `src/page-layouts/issue-record.page-layout.ts` vì thế chỉ có hai tab: **Issue** (bảng field + mô tả)
 và **Activity** (bình luận + worklog).
@@ -364,7 +420,11 @@ Danh sách kiểm bằng tay, theo thứ tự:
    thanh xám rỗng; bấm **Edit** → sửa markdown → **Save** thì nội dung render lại có định dạng.
    Trong Activity, chuyển qua lại giữa **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải
    trông như control của Twenty, không phải control mặc định của trình duyệt. Thử **Preview** trên ô
-   soạn bình luận và dán một URL ảnh — nó phải tự thành `![…](…)`.
+   soạn bình luận và dán một URL ảnh công khai — markdown phải tự thành `![…](…)` và URL trong đó
+   phải đổi thành `<SERVER_URL>/file/files-field/…` sau một hai giây (ảnh đã vào storage của Twenty).
+   Ở bảng **Fields**, bấm field **Attachments** → hộp thoại chọn tệp của trình duyệt mở ra → chọn một
+   ảnh → nó hiện thành chip trên field. Thử **thả** một tệp vào ô soạn: phải ra snackbar chỉ sang
+   field Attachments, không được im lặng. Xem mục 5.7.1.
 8. **Backlog** → tạo sprint, kéo issue vào, bấm **Bắt đầu sprint** rồi **Kết thúc sprint**.
 9. Đăng nhập bằng một member **không** có `appAccess` trên app đó → Board hiện rỗng, không lỗi.
 10. Mở issue → tab **Activity** → viết một bình luận và log 30 phút. Bình luận hiện tên đúng, và

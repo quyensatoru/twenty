@@ -1,10 +1,12 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
 
+import { ISSUE_ATTACHMENTS_MAX_VALUES } from '../constants/issue-attachments';
 import { ISSUE_LABEL_OPTIONS } from '../constants/issue-label-options';
 import { ISSUE_PRIORITY_OPTIONS } from '../constants/issue-priority-options';
 import { ISSUE_RESOLUTION_OPTIONS } from '../constants/issue-resolution-options';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
+  ISSUE_ATTACHMENTS_FIELD_UID,
   ISSUE_DESCRIPTION_FIELD_UID,
   ISSUE_DUE_DATE_FIELD_UID,
   ISSUE_KEY_FIELD_UID,
@@ -147,6 +149,22 @@ export default defineObject({
       description: 'Total time logged in minutes',
       icon: 'IconClockPlay',
       isNullable: true,
+    },
+    // The only way a file from a user's disk can reach this workspace. The
+    // host renders this field inside the FIELDS widget with its own native
+    // picker, so the browser holds the file and the host uploads it — none of
+    // it crosses the front component sandbox, which cannot receive file bytes
+    // at all. It doubles as the upload target the markdown composer names when
+    // it stores a pasted image URL.
+    {
+      universalIdentifier: ISSUE_ATTACHMENTS_FIELD_UID,
+      type: FieldType.FILES,
+      name: 'attachments',
+      label: 'Attachments',
+      description: 'Files attached to this issue',
+      icon: 'IconPaperclip',
+      isNullable: true,
+      universalSettings: { maxNumberOfValues: ISSUE_ATTACHMENTS_MAX_VALUES },
     },
   ],
 });

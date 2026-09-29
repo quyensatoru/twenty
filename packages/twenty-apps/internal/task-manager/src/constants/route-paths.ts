@@ -29,3 +29,5 @@ export const DELETE_WORKLOG_ROUTE_PATH = '/task-manager/delete-worklog';
 
 export const LIST_MEMBERS_ROUTE_PATH = '/task-manager/list-members';
 export const SEARCH_MERCHANTS_ROUTE_PATH = '/task-manager/search-merchants';
+
+export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
