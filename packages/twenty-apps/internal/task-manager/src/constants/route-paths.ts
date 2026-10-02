@@ -1,6 +1,3 @@
-export const BOARD_DATA_ROUTE_PATH = '/task-manager/board-data';
-export const BACKLOG_DATA_ROUTE_PATH = '/task-manager/backlog-data';
-export const ROADMAP_DATA_ROUTE_PATH = '/task-manager/roadmap-data';
 export const ISSUE_DETAIL_ROUTE_PATH = '/task-manager/issue-detail';
 
 export const CREATE_ISSUE_ROUTE_PATH = '/task-manager/create-issue';
@@ -26,8 +23,20 @@ export const DELETE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/delete-issue-comme
 export const CREATE_WORKLOG_ROUTE_PATH = '/task-manager/create-worklog';
 export const UPDATE_WORKLOG_ROUTE_PATH = '/task-manager/update-worklog';
 export const DELETE_WORKLOG_ROUTE_PATH = '/task-manager/delete-worklog';
+export const SYNC_APP_SCOPE_MIRROR_ROUTE_PATH =
+  '/task-manager/sync-app-scope-mirror';
+export const CREATE_PROJECT_BOARD_VIEW_ROUTE_PATH =
+  '/task-manager/create-project-board-view';
 
 export const LIST_MEMBERS_ROUTE_PATH = '/task-manager/list-members';
 export const SEARCH_MERCHANTS_ROUTE_PATH = '/task-manager/search-merchants';
+export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
+
+export const MERCHANT_CUSTOM_SETTINGS_ROUTE_PATH =
+  '/task-manager/merchant-custom-settings';
+export const UPDATE_MERCHANT_CUSTOM_SETTINGS_ROUTE_PATH =
+  '/task-manager/update-merchant-custom-settings';
+export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_ROUTE_PATH =
+  '/task-manager/run-merchant-custom-setting-tool';

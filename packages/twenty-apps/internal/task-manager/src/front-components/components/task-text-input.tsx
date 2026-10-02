@@ -9,10 +9,12 @@ type TaskTextInputProps = {
   onChange: (value: string) => void;
   ariaLabel: string;
   placeholder?: string;
-  type?: 'text' | 'number' | 'datetime-local';
+  type?: 'text' | 'number' | 'date' | 'datetime-local';
   prefixIcon?: ReactNode;
   suffix?: ReactNode;
   onEnter?: () => void;
+  onBlur?: () => void;
+  shouldAutoFocus?: boolean;
   width?: number | string;
   height?: number;
 };
@@ -26,6 +28,8 @@ export const TaskTextInput = ({
   prefixIcon,
   suffix,
   onEnter,
+  onBlur,
+  shouldAutoFocus = false,
   width = '100%',
   height = 32,
 }: TaskTextInputProps) => {
@@ -51,8 +55,12 @@ export const TaskTextInput = ({
         type={type}
         value={fieldValue}
         placeholder={placeholder}
+        autoFocus={shouldAutoFocus}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => {
+          setIsFocused(false);
+          onBlur?.();
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             onEnter?.();
