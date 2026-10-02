@@ -13,7 +13,9 @@ import {
 } from '../constants/universal-identifiers';
 
 // Every event another app posts is kept, matched or not: an UNMATCHED row is
-// how the team finds out the sender uses a domain the sync never created.
+// how the team finds out the sender uses a domain the sync never created, and
+// the distinct names in here are the catalogue the studio offers when someone
+// binds an automation to an event.
 export default defineObject({
   universalIdentifier: MERCHANT_EVENT_OBJECT_UID,
   nameSingular: 'merchantEvent',
@@ -31,7 +33,8 @@ export default defineObject({
       type: FieldType.TEXT,
       name: 'name',
       label: 'Event',
-      description: 'event_name as sent',
+      description:
+        'event_name, normalized: trimmed, lowercased, spaces as underscores. The raw spelling is kept in Properties when it differed.',
       icon: 'IconBroadcast',
     },
     {

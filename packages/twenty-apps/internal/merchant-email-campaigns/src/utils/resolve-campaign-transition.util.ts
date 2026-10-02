@@ -1,6 +1,7 @@
 import { type CampaignAction } from '../types/campaign-action';
 import { type CampaignRow } from '../types/campaign-row';
 import { type CampaignTransition } from '../types/campaign-transition';
+import { resolveCampaignEventName } from './resolve-campaign-event-name.util';
 
 // Every status change that can put mail in flight goes through here, so the
 // rules live in one tested place instead of in the UI.
@@ -17,15 +18,13 @@ export const resolveCampaignTransition = ({
   const isAutomation = campaign.campaignType === 'AUTOMATION';
   const fail = (error: string): CampaignTransition => ({ ok: false, error });
 
+  // An automation with no event name can never fire, so it is refused here
+  // rather than sitting ACTIVE and silent.
   const readinessError = !campaign.templateId
     ? 'Pick a template first.'
-    : isAutomation && !campaign.trigger
-      ? 'Pick a trigger first.'
-      : isAutomation &&
-          campaign.trigger === 'CUSTOM_EVENT' &&
-          !campaign.eventName?.trim()
-        ? 'Enter the event name the other app sends.'
-        : null;
+    : isAutomation && resolveCampaignEventName(campaign) === null
+      ? 'Pick or type the event this automation answers.'
+      : null;
 
   switch (action) {
     case 'ACTIVATE':

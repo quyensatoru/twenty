@@ -14,7 +14,7 @@ const automation = {
   campaignType: 'AUTOMATION' as const,
   status: 'DRAFT' as const,
   templateId: 't',
-  trigger: 'UNINSTALLED' as const,
+  eventName: 'merchant.uninstalled',
 };
 
 describe('resolveCampaignTransition', () => {
@@ -86,26 +86,30 @@ describe('resolveCampaignTransition', () => {
     ).toEqual({ ok: true, nextStatus: 'ACTIVE', startsBroadcast: false });
   });
 
-  it('requires a trigger to activate', () => {
+  it('refuses to activate an automation bound to no event', () => {
     expect(
       resolveCampaignTransition({
-        campaign: { ...automation, trigger: null },
+        campaign: { ...automation, eventName: '  ', trigger: null },
         action: 'ACTIVATE',
         now,
       }).ok,
     ).toBe(false);
   });
 
-  it('requires an event name for a custom-event automation', () => {
-    const custom = { ...automation, trigger: 'CUSTOM_EVENT' as const };
-
-    expect(
-      resolveCampaignTransition({ campaign: custom, action: 'ACTIVATE', now })
-        .ok,
-    ).toBe(false);
+  it('activates an automation bound to an event name of its own', () => {
     expect(
       resolveCampaignTransition({
-        campaign: { ...custom, eventName: 'trial_ending' },
+        campaign: { ...automation, eventName: 'trial_ending' },
+        action: 'ACTIVATE',
+        now,
+      }).ok,
+    ).toBe(true);
+  });
+
+  it('still activates a campaign left on the legacy trigger column', () => {
+    expect(
+      resolveCampaignTransition({
+        campaign: { ...automation, eventName: '', trigger: 'INSTALLED' },
         action: 'ACTIVATE',
         now,
       }).ok,

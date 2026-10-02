@@ -1,35 +1,35 @@
 import { describe, expect, it } from 'vitest';
 
-import { detectMerchantTriggers } from '../detect-merchant-triggers.util';
+import { detectMerchantEventNames } from '../detect-merchant-event-names.util';
 
-describe('detectMerchantTriggers', () => {
+describe('detectMerchantEventNames', () => {
   it('treats a created installed row as an install', () => {
-    expect(detectMerchantTriggers({ after: { id: 'm', using: true } })).toEqual(
-      ['INSTALLED'],
-    );
     expect(
-      detectMerchantTriggers({ after: { id: 'm', using: false } }),
+      detectMerchantEventNames({ after: { id: 'm', using: true } }),
+    ).toEqual(['merchant.installed']);
+    expect(
+      detectMerchantEventNames({ after: { id: 'm', using: false } }),
     ).toEqual([]);
   });
 
   it('detects uninstall and reinstall', () => {
     expect(
-      detectMerchantTriggers({
+      detectMerchantEventNames({
         before: { id: 'm', using: true },
         after: { id: 'm', using: false },
       }),
-    ).toEqual(['UNINSTALLED']);
+    ).toEqual(['merchant.uninstalled']);
     expect(
-      detectMerchantTriggers({
+      detectMerchantEventNames({
         before: { id: 'm', using: false },
         after: { id: 'm', using: true },
       }),
-    ).toEqual(['INSTALLED']);
+    ).toEqual(['merchant.installed']);
   });
 
   it('does not treat a first plan fill as a change', () => {
     expect(
-      detectMerchantTriggers({
+      detectMerchantEventNames({
         before: { id: 'm', shopifyPlan: null, pricingPlan: '' },
         after: { id: 'm', shopifyPlan: 'BASIC', pricingPlan: 'FREE' },
       }),
@@ -38,10 +38,13 @@ describe('detectMerchantTriggers', () => {
 
   it('detects plan changes', () => {
     expect(
-      detectMerchantTriggers({
+      detectMerchantEventNames({
         before: { id: 'm', shopifyPlan: 'BASIC', pricingPlan: 'FREE' },
         after: { id: 'm', shopifyPlan: 'PLUS', pricingPlan: 'SS_GROWTH' },
       }),
-    ).toEqual(['SHOPIFY_PLAN_CHANGED', 'PRICING_PLAN_CHANGED']);
+    ).toEqual([
+      'merchant.shopify_plan_changed',
+      'merchant.pricing_plan_changed',
+    ]);
   });
 });

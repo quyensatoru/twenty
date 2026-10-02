@@ -6,3 +6,4 @@ export const LIST_APPS_ROUTE_PATH = '/email-campaigns/apps';
 export const CAMPAIGN_STATS_ROUTE_PATH = '/email-campaigns/stats';
 export const INGEST_EVENT_ROUTE_PATH = '/email-campaigns/events';
 export const INTEGRATION_INFO_ROUTE_PATH = '/email-campaigns/integration-info';
+export const LIST_EVENT_NAMES_ROUTE_PATH = '/email-campaigns/event-names';

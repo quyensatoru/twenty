@@ -6,30 +6,34 @@ import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
 
 import { ON_MERCHANT_UPDATED_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type MerchantRow } from '../types/merchant-row';
-import { detectMerchantTriggers } from '../utils/detect-merchant-triggers.util';
-import { scheduleAutomationEmails } from './utils/schedule-automation-emails.util';
+import { detectMerchantEventNames } from '../utils/detect-merchant-event-names.util';
+import { scheduleEventEmails } from './utils/schedule-event-emails.util';
 import { createAppClient } from './utils/create-app-client.util';
 
 const handler = async (
   event: DatabaseEventPayload<ObjectRecordUpdateEvent<MerchantRow>>,
 ) => {
   const merchant = { ...event.properties.after, id: event.recordId };
-
-  return scheduleAutomationEmails({
-    client: createAppClient(),
-    merchant,
-    triggers: detectMerchantTriggers({
-      before: event.properties.before,
-      after: merchant,
-    }),
+  const eventNames = detectMerchantEventNames({
+    before: event.properties.before,
+    after: merchant,
   });
+
+  return {
+    eventNames,
+    queued: await scheduleEventEmails({
+      client: createAppClient(),
+      eventNames,
+      merchants: [merchant],
+    }),
+  };
 };
 
 export default defineLogicFunction({
   universalIdentifier: ON_MERCHANT_UPDATED_LOGIC_FUNCTION_UID,
   name: 'queue-emails-on-merchant-updated',
   description:
-    'Queues uninstall, reinstall and plan-change automations when a merchant row changes.',
+    'Queues the automations bound to merchant.uninstalled, merchant.installed and the plan-change events when a merchant row changes.',
   timeoutSeconds: 60,
   databaseEventTriggerSettings: {
     eventName: 'merchant.updated',

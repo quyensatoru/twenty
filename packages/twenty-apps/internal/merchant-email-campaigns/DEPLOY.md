@@ -72,6 +72,9 @@ yarn test
 yarn lint
 ```
 
+**Đổi dữ liệu kèm theo:** một số bản cần backfill dữ liệu đã có sau khi `apply`. Xem
+`MIGRATION.md` trước khi deploy bản mới; hiện đang có phần "event cố định → event động".
+
 **Lần deploy sau:** lặp lại `plan` rồi `apply`. `apply` mặc định **xoá** entity không còn trong
 source. Nếu có ai đó tạo tay object/field trong namespace của app, thêm `--no-delete`. Lệnh sẽ hỏi
 xác nhận trước khi xoá; `--force` bỏ qua hỏi — chỉ dùng trong CI khi đã đọc kỹ output của `plan`.

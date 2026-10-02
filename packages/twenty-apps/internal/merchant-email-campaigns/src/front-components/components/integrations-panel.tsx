@@ -6,9 +6,11 @@ import {
 } from 'twenty-sdk/front-component';
 
 import { PROVIDER_LABELS } from '../../constants/provider-labels';
+import { type EventNameSuggestion } from '../../types/event-name-suggestion';
 import { type IntegrationInfo } from '../../types/integration-info';
 import { buildEventSenderSnippet } from '../../utils/build-event-sender-snippet.util';
 import { fetchIntegrationInfo } from '../utils/fetch-integration-info.util';
+import { listEventNames } from '../utils/list-event-names.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { StudioBadge } from './studio-badge';
 import { StudioButton } from './studio-button';
@@ -29,6 +31,7 @@ const codeStyle = {
 
 export const IntegrationsPanel = () => {
   const [info, setInfo] = useState<IntegrationInfo | null>(null);
+  const [eventNames, setEventNames] = useState<EventNameSuggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,9 +43,15 @@ export const IntegrationsPanel = () => {
       setError(null);
     } catch (loadError) {
       setError(readErrorText(loadError));
-    } finally {
-      setIsLoading(false);
     }
+
+    try {
+      setEventNames(await listEventNames());
+    } catch {
+      setEventNames([]);
+    }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -84,6 +93,14 @@ export const IntegrationsPanel = () => {
   }
 
   const snippet = buildEventSenderSnippet(info.eventsUrl);
+  // An automation bound to a name nothing ever posts is the one failure this
+  // design can hide: it stays ACTIVE and simply never fires.
+  const unheardEventNames = eventNames.filter(
+    (eventName) =>
+      !eventName.isBuiltIn &&
+      eventName.automationCount > 0 &&
+      eventName.receivedCount === 0,
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -124,7 +141,7 @@ export const IntegrationsPanel = () => {
       >
         <span style={{ color: STUDIO_TOKENS.textSecondary, fontSize: 13 }}>
           {t(
-            'Other apps post merchant events here in the same format as Brevo\'s POST /v3/events. Each event is matched to a merchant by DOMAIN (or email), updates the merchant\'s email, and sends every active automation whose trigger is "Custom event" with the same event name.',
+            'Other apps post merchant events here in the same format as Brevo\'s POST /v3/events. Each event is matched to a merchant by DOMAIN (or email), updates the merchant\'s email, and sends every active automation bound to that event name. The name is free: an event nobody listens to yet is still logged, and the studio offers it next time.',
           )}
         </span>
         <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
@@ -154,6 +171,39 @@ export const IntegrationsPanel = () => {
           </StudioButton>
         </div>
       </StudioPanel>
+
+      {unheardEventNames.length === 0 ? null : (
+        <StudioPanel title={t('Automations waiting on an event never received')}>
+          <span style={{ color: STUDIO_TOKENS.orange, fontSize: 13 }}>
+            {t(
+              'These names are spelled in an automation but no app has ever posted them. Either the sender is not live yet, or the name is a typo and that automation will never fire.',
+            )}
+          </span>
+          {unheardEventNames.map((eventName) => (
+            <div
+              key={eventName.name}
+              style={{
+                alignItems: 'center',
+                borderTop: `1px solid ${STUDIO_TOKENS.border}`,
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'space-between',
+                padding: '8px 0',
+              }}
+            >
+              <code style={{ ...codeStyle, padding: '2px 6px' }}>
+                {eventName.name}
+              </code>
+              <StudioBadge
+                label={t('{count} automations', {
+                  count: eventName.automationCount,
+                })}
+                tone="orange"
+              />
+            </div>
+          ))}
+        </StudioPanel>
+      )}
 
       <StudioPanel
         title={t('Recent events')}

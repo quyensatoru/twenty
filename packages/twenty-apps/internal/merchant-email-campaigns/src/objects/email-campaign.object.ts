@@ -31,7 +31,7 @@ export default defineObject({
   labelSingular: 'Email campaign',
   labelPlural: 'Email campaigns',
   description:
-    'An automation fired by merchant status changes, or a one-off broadcast to a merchant segment',
+    'An automation bound to an event name, or a one-off broadcast to a merchant segment',
   icon: 'IconSpeakerphone',
   isSearchable: true,
   labelIdentifierFieldMetadataUniversalIdentifier:
@@ -68,8 +68,9 @@ export default defineObject({
       universalIdentifier: EMAIL_CAMPAIGN_TRIGGER_FIELD_UID,
       type: FieldType.SELECT,
       name: 'trigger',
-      label: 'Trigger',
-      description: 'Merchant event that sends an automation',
+      label: 'Trigger (legacy)',
+      description:
+        'Superseded by Event name, which is what routing reads. Still written so a rollback keeps the built-in automations working.',
       icon: 'IconBolt',
       isNullable: true,
       options: [...MERCHANT_TRIGGER_OPTIONS],
@@ -80,7 +81,7 @@ export default defineObject({
       name: 'eventName',
       label: 'Event name',
       description:
-        'For the Custom event trigger: the event_name other apps post, e.g. trial_ending',
+        'The event this automation answers: merchant.installed, merchant.uninstalled, merchant.shopify_plan_changed, merchant.pricing_plan_changed, or any event_name another app posts, e.g. trial_ending',
       icon: 'IconBroadcast',
     },
     {

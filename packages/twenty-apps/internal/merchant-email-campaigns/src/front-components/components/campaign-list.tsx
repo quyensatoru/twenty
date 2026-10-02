@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 
 import { EMPTY_AUDIENCE_FILTER } from '../../constants/empty-audience-filter';
-import { MERCHANT_TRIGGER_OPTIONS } from '../../constants/merchant-trigger-options';
+import { BUILT_IN_EVENT_NAMES } from '../../constants/built-in-event-names';
 import { type CampaignRow } from '../../types/campaign-row';
 import { type CampaignType } from '../../types/campaign-type';
 import { type TemplateRow } from '../../types/template-row';
+import { resolveCampaignEventName } from '../../utils/resolve-campaign-event-name.util';
 import { createCampaign } from '../utils/create-campaign.util';
 import { deleteCampaign } from '../utils/delete-campaign.util';
 import { readErrorText } from '../utils/read-error-text.util';
@@ -27,19 +28,19 @@ const describeCampaign = (campaign: CampaignRow, templates: TemplateRow[]) => {
     'no template';
 
   if (campaign.campaignType === 'AUTOMATION') {
-    const triggerLabel =
-      MERCHANT_TRIGGER_OPTIONS.find(
-        (option) => option.value === campaign.trigger,
-      )?.label ?? 'No trigger';
-    const translatedTrigger = t(triggerLabel);
+    const eventName = resolveCampaignEventName(campaign);
+    const builtIn = BUILT_IN_EVENT_NAMES.find(
+      (candidate) => candidate.name === eventName,
+    );
+    const eventLabel =
+      eventName === null
+        ? t('No event yet')
+        : builtIn === undefined
+          ? `"${eventName}"`
+          : t(builtIn.label);
     const delay = campaign.delayMinutes ?? 0;
 
-    const eventLabel =
-      campaign.trigger === 'CUSTOM_EVENT' && campaign.eventName
-        ? ` "${campaign.eventName}"`
-        : '';
-
-    return `${translatedTrigger}${eventLabel}${delay > 0 ? ` + ${t('{delay} min', { delay })}` : ''} · ${templateName}`;
+    return `${eventLabel}${delay > 0 ? ` + ${t('{delay} min', { delay })}` : ''} · ${templateName}`;
   }
 
   return campaign.scheduledAt
@@ -63,6 +64,7 @@ export const CampaignList = ({
         name: type === 'AUTOMATION' ? t('New automation') : t('New broadcast'),
         campaignType: type,
         trigger: type === 'AUTOMATION' ? 'INSTALLED' : null,
+        eventName: type === 'AUTOMATION' ? 'merchant.installed' : '',
         audienceFilter: {
           ...EMPTY_AUDIENCE_FILTER,
           installStatus: type === 'AUTOMATION' ? 'ANY' : 'INSTALLED',

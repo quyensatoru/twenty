@@ -8,7 +8,8 @@ Không sửa dòng nào trong `twenty-front` / `twenty-server` / `twenty-shared`
 
 | Nhu cầu                                                     | Cách đáp ứng                                                                   |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Gửi mail khi merchant cài app, gỡ app, đổi Shopify plan/app plan | Campaign loại **Automation**, chọn trigger + delay (phút)                   |
+| Gửi mail khi merchant cài app, gỡ app, đổi Shopify plan/app plan | Campaign loại **Automation**, chọn event `merchant.*` + delay (phút)       |
+| Gửi mail theo event tự đặt tên của app khác                 | Cùng loại **Automation**, gõ/chọn tên event; không có danh sách event cố định |
 | Gửi một lần cho một nhóm merchant                           | Campaign loại **Broadcast**, gửi ngay hoặc hẹn giờ                             |
 | Lọc audience theo app, trạng thái install, plan, quốc gia   | Bộ lọc audience trong Email Studio, nút **Estimate audience** đếm trước        |
 | Soạn email không cần biết HTML                              | Editor dạng block (heading, text, button, image, divider, spacer) + preview   |
@@ -28,7 +29,7 @@ Templates / Integrations), `Campaigns`, `Templates`, `Send log`, `Event log`.
 emailTemplate                 emailCampaign                          emailSend
   name, subject, previewText    name, campaignType, status             name (= địa chỉ nhận)
   design (RAW_JSON: blocks) <── template                               status, trigger, subject
-                                trigger, delayMinutes                  providerMessageId, errorMessage
+                                eventName, delayMinutes                providerMessageId, errorMessage
                                 audienceFilter (RAW_JSON)              sentAt
                                 fromEmail, replyTo                     campaign ──> emailCampaign
                                 sendOncePerMerchant                    merchant ──> merchant
@@ -36,7 +37,7 @@ emailTemplate                 emailCampaign                          emailSend
                                 lastError
 
 merchantEvent                 (log mọi event app khác gửi sang, kể cả không khớp merchant)
-  name (= event_name), email, domain, properties (RAW_JSON), occurredAt
+  name (= event_name đã chuẩn hoá), email, domain, properties (RAW_JSON), occurredAt
   status MATCHED | UNMATCHED, campaignsQueued, merchant ──> merchant
 
 merchant (đã có) + email (EMAILS), contactName, emailUnsubscribed, emailUnsubscribedAt
@@ -61,10 +62,10 @@ Những quyết định cần nhớ trước khi sửa:
    dòng `SENT` của (campaign, merchant) ngay trước khi gửi, cộng thêm `Idempotency-Key` của
    Resend. Job id chỉ gom sự kiện trùng trong cùng một phút: nếu dùng id cố định thì lần đầu
    FAILED sẽ chặn luôn mọi lần thử lại.
-5. **Automation kiểm lại lúc gửi.** Trigger chỉ xếp job (có delay). Job đọc lại campaign và
+5. **Automation kiểm lại lúc gửi.** Event chỉ xếp job (có delay). Job đọc lại campaign và
    merchant rồi mới gửi, nên win-back 3 ngày sau uninstall sẽ tự bỏ qua merchant đã cài lại, và
    campaign bị Pause trong lúc chờ sẽ không gửi.
-6. **Trigger không bắn khi sync điền dữ liệu lần đầu.** Plan đi từ rỗng sang có giá trị không
+6. **Event `merchant.*` không bắn khi sync điền dữ liệu lần đầu.** Plan đi từ rỗng sang có giá trị không
    tính là "đổi plan", và `using = null` được coi là đang cài (giống bd-prospects).
 7. **Broadcast chạy theo lô 100** (giới hạn batch của Resend), mỗi lô là một job tự xếp lô kế
    tiếp. Pause/Cancel chỉ đổi status, lô kế tiếp tự dừng. Một lô mà **tất cả** đều FAILED (key
@@ -117,15 +118,52 @@ thành chữ trơn). Icon và `Tag` tĩnh vẫn lấy từ twenty-ui.
 sandbox đồng bộ `value` lên phần tử thật sau mỗi render, và nếu đẩy mỗi phím thì gõ nhanh sẽ mất
 ký tự.
 
-## Trigger
+## Event
 
-| Trigger                | Điều kiện trên dòng merchant                              |
-| ---------------------- | --------------------------------------------------------- |
-| `INSTALLED`            | Dòng mới tạo với `using` khác `false`, hoặc `using` false → true |
-| `UNINSTALLED`          | `using` true/null → false                                  |
-| `SHOPIFY_PLAN_CHANGED` | `shopifyPlan` đổi từ một giá trị có sẵn                    |
-| `PRICING_PLAN_CHANGED` | `pricingPlan` đổi từ một giá trị có sẵn                    |
-| `CUSTOM_EVENT`         | App khác POST event có `event_name` trùng `eventName` của campaign |
+Không còn danh sách event cố định. Mỗi automation khai báo **một tên event** ở field `eventName`,
+và bất cứ thứ gì phát ra đúng tên đó đều gửi automation ấy. Tên event là dữ liệu, không phải enum
+biên dịch sẵn.
+
+**Chuẩn hoá tên** (`normalize-event-name.util.ts`) áp cho cả hai phía trước khi so: cắt khoảng
+trắng đầu/cuối, hạ chữ thường, mọi cụm khoảng trắng thành `_`, gộp `__` và bỏ `_` ở hai đầu. Nhờ
+vậy `Trial Ending` bên studio và `trial_ending` bên app gửi là cùng một event. So khớp luôn là
+`eq`/`in`, không bao giờ `ilike`: tên event là input của người dùng, `%` sẽ khớp tất cả.
+
+**Bốn event app tự phát** (prefix `merchant.` được giữ riêng để app khác POST `installed` không
+vô tình bắn automation cài đặt):
+
+| Event                             | Điều kiện trên dòng merchant                                     |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `merchant.installed`              | Dòng mới tạo với `using` khác `false`, hoặc `using` false → true |
+| `merchant.uninstalled`            | `using` true/null → false                                         |
+| `merchant.shopify_plan_changed`   | `shopifyPlan` đổi từ một giá trị có sẵn                           |
+| `merchant.pricing_plan_changed`   | `pricingPlan` đổi từ một giá trị có sẵn                           |
+
+Mọi tên khác đến từ events API. Một event chưa ai nghe vẫn được ghi vào `merchantEvent` với
+`campaignsQueued = 0`, và lần sau studio sẽ gợi ý chính tên đó.
+
+**Nhiều automation cùng một event**: tất cả đều gửi, mỗi cái vẫn qua audience filter và send-once
+của riêng nó. **Automation không có event**: không Activate được (`resolveCampaignTransition` từ
+chối), nên nó không thể nằm im ở trạng thái ACTIVE mà chẳng bao giờ bắn.
+
+**Gõ sai tên thì thấy ngay** — đây là chỗ duy nhất thiết kế này có thể hỏng trong im lặng:
+
+- Ô nhập event trong studio gợi ý sẵn các tên đã từng nhận (`/email-campaigns/event-names` đọc
+  500 dòng `merchantEvent` gần nhất + event các campaign đang dùng + bốn event dựng sẵn).
+- Gõ một tên chưa từng nhận thì dòng trạng thái chuyển cam: *Never received. Did you mean
+  "trial_ending"?* — gợi ý gần nhất tính bằng khoảng cách sửa (`find-closest-event-name.util.ts`),
+  kèm nút áp dụng.
+- Tên chưa từng nhận nhưng có automation khác cũng dùng → báo là bên gửi chưa chạy, không phải lỗi
+  chính tả.
+- Tab **Integrations** có mục **Automations waiting on an event never received**: liệt kê mọi tên
+  đang có automation trỏ tới mà chưa app nào POST bao giờ. Đây là lưới an toàn cho cả lỗi chính tả
+  của studio lẫn của bên gửi.
+
+**Field `trigger` (select cũ)** vẫn còn trên object và vẫn được studio ghi kèm (`INSTALLED`,
+`UNINSTALLED`, `SHOPIFY_PLAN_CHANGED`, `PRICING_PLAN_CHANGED`, hoặc `CUSTOM_EVENT`), chỉ là không
+còn dùng để định tuyến và đã ẩn khỏi view mặc định. Giữ lại để rollback về bản trước vẫn chạy, và
+để campaign cũ chưa backfill vẫn định tuyến được (`resolveCampaignEventName` đọc `eventName`
+trước, không có thì suy ra từ `trigger`). Xem `MIGRATION.md`.
 
 ## Nhận event từ app khác (Brevo-compatible)
 
@@ -155,10 +193,12 @@ Khi nhận một event:
    domain thì theo email. Có `APP` thì chỉ lấy dòng merchant của app đó.
 2. `email_id` khác email đang lưu thì **ghi đè** `merchant.email` (bên gửi là nguồn chuẩn của
    địa chỉ). `FIRSTNAME` chỉ điền khi `contactName` đang trống.
-3. Mỗi automation ACTIVE có trigger `Custom event (API)` và `eventName` trùng sẽ xếp **một**
-   email cho shop (dòng merchant đầu tiên qua được audience filter, tránh gửi mỗi app một bản).
-   Delay, send-once, audience và unsubscribe áp dụng như automation thường.
-4. Ghi một dòng `merchantEvent`; không khớp merchant nào thì `UNMATCHED` để team biết sync thiếu.
+3. Mỗi automation ACTIVE có `eventName` trùng (sau chuẩn hoá) sẽ xếp **một** email cho shop (dòng
+   merchant đầu tiên qua được audience filter, tránh gửi mỗi app một bản). Nhiều automation cùng
+   tên thì tất cả đều xếp. Delay, send-once, audience và unsubscribe áp dụng như automation thường.
+4. Ghi một dòng `merchantEvent` với tên đã chuẩn hoá (tên gốc giữ ở `properties.event_name_as_sent`
+   nếu khác); không khớp merchant nào thì `UNMATCHED` để team biết sync thiếu. `campaignsQueued = 0`
+   nghĩa là chưa automation nào nghe event này.
 
 Trong template, mọi `contact_properties` và `event_properties` dùng được qua `{{event.<key>}}`,
 ví dụ `{{event.days_left}}`, `{{event.DOMAIN}}`. Giá trị lồng nhau được đổi thành JSON.

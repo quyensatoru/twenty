@@ -7,6 +7,8 @@ export type CampaignRow = {
   name?: string | null;
   campaignType?: CampaignType | null;
   status?: CampaignStatus | null;
+  // Legacy: routing reads `eventName`. Kept written so a rollback to the
+  // release before dynamic events still finds the four built-in automations.
   trigger?: MerchantTrigger | null;
   eventName?: string | null;
   delayMinutes?: number | null;

@@ -1,25 +1,29 @@
 import { useEffect, useState } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 
-import { MERCHANT_TRIGGER_OPTIONS } from '../../constants/merchant-trigger-options';
 import { SEND_STATUS_LABELS } from '../../constants/send-status-labels';
 import { LAUNCH_CAMPAIGN_ROUTE_PATH } from '../../constants/route-paths';
 import { type AudienceFilter } from '../../types/audience-filter';
 import { type CampaignActionButton } from '../../types/campaign-action-button';
 import { type CampaignRow } from '../../types/campaign-row';
 import { type EmailSendStatus } from '../../types/email-send-status';
-import { type MerchantTrigger } from '../../types/merchant-trigger';
+import { type EventNameSuggestion } from '../../types/event-name-suggestion';
 import { type TemplateRow } from '../../types/template-row';
+import { legacyTriggerForEventName } from '../../utils/legacy-trigger-for-event-name.util';
+import { normalizeEventName } from '../../utils/normalize-event-name.util';
 import { parseAudienceFilter } from '../../utils/parse-audience-filter.util';
+import { resolveCampaignEventName } from '../../utils/resolve-campaign-event-name.util';
 import { countCampaignSends } from '../utils/count-campaign-sends.util';
 import { fromDatetimeLocalValue } from '../utils/from-datetime-local-value.util';
 import { getCampaignActions } from '../utils/get-campaign-actions.util';
+import { listEventNames } from '../utils/list-event-names.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { toDatetimeLocalValue } from '../utils/to-datetime-local-value.util';
 import { updateCampaignDraft } from '../utils/update-campaign-draft.util';
 import { AudienceFilterEditor } from './audience-filter-editor';
 import { CampaignStatusBadge } from './campaign-status-badge';
+import { EventNameField } from './event-name-field';
 import { StudioButton } from './studio-button';
 import { StudioCheckbox } from './studio-checkbox';
 import { StudioField } from './studio-field';
@@ -48,10 +52,13 @@ export const CampaignEditor = ({
   onOpenTemplate,
 }: CampaignEditorProps) => {
   const [name, setName] = useState(campaign.name ?? '');
-  const [trigger, setTrigger] = useState<MerchantTrigger>(
-    campaign.trigger ?? 'INSTALLED',
+  const [eventName, setEventName] = useState(
+    resolveCampaignEventName(campaign) ?? '',
   );
-  const [eventName, setEventName] = useState(campaign.eventName ?? '');
+  const [eventSuggestions, setEventSuggestions] = useState<
+    EventNameSuggestion[]
+  >([]);
+  const [isLoadingEventNames, setIsLoadingEventNames] = useState(false);
   const [delayMinutes, setDelayMinutes] = useState(
     String(campaign.delayMinutes ?? 0),
   );
@@ -90,6 +97,26 @@ export const CampaignEditor = ({
     void refreshStats();
   }, [campaign.id, campaign.status]);
 
+  useEffect(() => {
+    if (campaign.campaignType !== 'AUTOMATION') {
+      return;
+    }
+
+    const loadEventNames = async () => {
+      setIsLoadingEventNames(true);
+
+      try {
+        setEventSuggestions(await listEventNames());
+      } catch {
+        setEventSuggestions([]);
+      } finally {
+        setIsLoadingEventNames(false);
+      }
+    };
+
+    void loadEventNames();
+  }, [campaign.campaignType]);
+
   const markDirty =
     <TValue,>(setter: (value: TValue) => void) =>
     (value: TValue) => {
@@ -100,9 +127,10 @@ export const CampaignEditor = ({
   const saveDraft = async () => {
     await updateCampaignDraft(campaign.id, {
       name: name.trim() || t('Untitled campaign'),
-      trigger: isAutomation ? trigger : null,
-      eventName:
-        isAutomation && trigger === 'CUSTOM_EVENT' ? eventName.trim() : '',
+      // The legacy select is kept in step with the event name so a rollback
+      // to the release before dynamic events still routes this campaign.
+      trigger: isAutomation ? legacyTriggerForEventName(eventName) : null,
+      eventName: isAutomation ? (normalizeEventName(eventName) ?? '') : '',
       delayMinutes: Math.max(0, Math.round(Number(delayMinutes) || 0)),
       audienceFilter,
       templateId: templateId === '' ? null : templateId,
@@ -287,27 +315,12 @@ export const CampaignEditor = ({
           </StudioField>
           {isAutomation ? (
             <>
-              <StudioField label={t('Send when')}>
-                <StudioSelect
-                  value={trigger}
-                  options={MERCHANT_TRIGGER_OPTIONS}
-                  onChange={markDirty(setTrigger)}
-                />
-              </StudioField>
-              {trigger === 'CUSTOM_EVENT' ? (
-                <StudioField
-                  label={t('Event name')}
-                  hint={t(
-                    'The event_name other apps post to the events API (Integrations tab). Its properties are available in the template as {{event.<key>}}.',
-                  )}
-                >
-                  <StudioTextInput
-                    value={eventName}
-                    placeholder="trial_ending"
-                    onChange={markDirty(setEventName)}
-                  />
-                </StudioField>
-              ) : null}
+              <EventNameField
+                value={eventName}
+                suggestions={eventSuggestions}
+                isLoadingSuggestions={isLoadingEventNames}
+                onChange={markDirty(setEventName)}
+              />
               <StudioField
                 label={t('Delay (minutes)')}
                 hint={t(

@@ -2,6 +2,7 @@ import { defineView, ViewType } from 'twenty-sdk/define';
 
 import {
   ALL_CAMPAIGNS_VIEW_UID,
+  EMAIL_CAMPAIGN_EVENT_NAME_FIELD_UID,
   EMAIL_CAMPAIGN_LAST_ERROR_FIELD_UID,
   EMAIL_CAMPAIGN_NAME_FIELD_UID,
   EMAIL_CAMPAIGN_OBJECT_UID,
@@ -43,37 +44,46 @@ export default defineView({
       size: 130,
     },
     {
-      universalIdentifier: '27cdbfdd-a0b5-4f6a-ac6e-594ebc31bd89',
-      fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_TRIGGER_FIELD_UID,
+      universalIdentifier: '86d4d79b-9549-4a7a-86c0-b6c653211ee4',
+      fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_EVENT_NAME_FIELD_UID,
       position: 3,
       isVisible: true,
+      size: 220,
+    },
+    // Hidden, not removed: the column still holds the routing key of every
+    // campaign created before events became data.
+    {
+      universalIdentifier: '27cdbfdd-a0b5-4f6a-ac6e-594ebc31bd89',
+      fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_TRIGGER_FIELD_UID,
+      position: 4,
+      isVisible: false,
       size: 170,
     },
     {
       universalIdentifier: '0f17ec47-8281-4173-a5aa-cb47219c2315',
       fieldMetadataUniversalIdentifier: TEMPLATE_ON_CAMPAIGN_FIELD_UID,
-      position: 4,
+      position: 5,
       isVisible: true,
       size: 200,
     },
     {
       universalIdentifier: '931c7002-b31f-4844-807f-091026163ab0',
       fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_SCHEDULED_AT_FIELD_UID,
-      position: 5,
+      position: 6,
       isVisible: true,
       size: 170,
     },
     {
       universalIdentifier: 'b8ecc59c-d125-4049-87d0-c52a5fad9f58',
       fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_STARTED_AT_FIELD_UID,
-      position: 6,
+      position: 7,
       isVisible: true,
       size: 170,
     },
     {
       universalIdentifier: '2a7f314e-5df4-4075-83e4-ccf6c087f022',
       fieldMetadataUniversalIdentifier: EMAIL_CAMPAIGN_LAST_ERROR_FIELD_UID,
-      position: 7,
+      position: 8,
       isVisible: true,
       size: 220,
     },
