@@ -13,6 +13,10 @@ export const fromFlatCommandMenuItemToCommandMenuItemDto = (
 
   return {
     id: effectiveFlatCommandMenuItem.id,
+    // Not cosmetic: getWidgetHeaderCommandMenuItems resolves a widget's
+    // headerCommandMenuItemUniversalIdentifiers against this field, so dropping
+    // it silently leaves every app-declared widget header action unrendered.
+    universalIdentifier: effectiveFlatCommandMenuItem.universalIdentifier,
     workflowVersionId:
       effectiveFlatCommandMenuItem.workflowVersionId ?? undefined,
     coreWorkflowVersionId:

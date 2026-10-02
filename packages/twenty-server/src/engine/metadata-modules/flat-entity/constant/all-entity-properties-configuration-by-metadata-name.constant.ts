@@ -1390,7 +1390,9 @@ export const ALL_ENTITY_PROPERTIES_CONFIGURATION_BY_METADATA_NAME = {
       universalProperty: undefined,
     },
     viewId: {
-      toCompare: false,
+      // Compared like folderId above: without this, retargeting a VIEW entry
+      // never reaches the update action and the change is silently dropped.
+      toCompare: true,
       toStringify: false,
       universalProperty: 'viewUniversalIdentifier',
     },
@@ -1405,12 +1407,17 @@ export const ALL_ENTITY_PROPERTIES_CONFIGURATION_BY_METADATA_NAME = {
       universalProperty: undefined,
     },
     targetObjectMetadataId: {
-      toCompare: false,
+      // Compared like folderId above: without this, switching an entry to or
+      // from OBJECT type never carries its target into the update action, so
+      // validation fails on the merged entity and the sync is rejected.
+      toCompare: true,
       toStringify: false,
       universalProperty: 'targetObjectMetadataUniversalIdentifier',
     },
     pageLayoutId: {
-      toCompare: false,
+      // Compared like folderId above: without this, switching an entry away
+      // from PAGE_LAYOUT leaves a stale pageLayoutId the update never clears.
+      toCompare: true,
       toStringify: false,
       universalProperty: 'pageLayoutUniversalIdentifier',
     },
