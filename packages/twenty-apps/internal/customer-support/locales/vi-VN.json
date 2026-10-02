@@ -1,0 +1,34 @@
+{
+  "Custom Settings": "Cài đặt tùy chỉnh",
+  "Customer Support runtime": "Quyền chạy của Hỗ trợ khách hàng",
+  "Merchants": "Merchant",
+  "Name": "Tên",
+  "fieldMetadata.description": {
+    "Custom feature settings for this merchant, shape varies by app": "Cài đặt tính năng tùy chỉnh cho merchant này, hình dạng tùy theo từng app",
+    "Merchant name": "Tên merchant",
+    "Merchant's app": "App của merchant",
+    "Merchants using this app": "Merchant đang dùng app này"
+  },
+  "fieldMetadata.label": {
+    "App": "Ứng dụng",
+    "Custom Settings": "Cài đặt tùy chỉnh",
+    "Merchants": "Merchant",
+    "Name": "Tên"
+  },
+  "navigationMenuItem.name": {
+    "Customer Support": "Hỗ trợ khách hàng",
+    "Merchants": "Merchant"
+  },
+  "objectMetadata.description": {
+    "A merchant": "Một merchant"
+  },
+  "objectMetadata.labelPlural": {
+    "Merchants": "Merchant"
+  },
+  "objectMetadata.labelSingular": {
+    "Merchant": "Merchant"
+  },
+  "view.name": {
+    "Merchants": "Merchant"
+  }
+}

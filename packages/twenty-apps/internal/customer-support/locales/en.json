@@ -1,0 +1,34 @@
+{
+  "Custom Settings": "Custom Settings",
+  "Customer Support runtime": "Customer Support runtime",
+  "Merchants": "Merchants",
+  "Name": "Name",
+  "fieldMetadata.description": {
+    "Custom feature settings for this merchant, shape varies by app": "Custom feature settings for this merchant, shape varies by app",
+    "Merchant name": "Merchant name",
+    "Merchant's app": "Merchant's app",
+    "Merchants using this app": "Merchants using this app"
+  },
+  "fieldMetadata.label": {
+    "App": "App",
+    "Custom Settings": "Custom Settings",
+    "Merchants": "Merchants",
+    "Name": "Name"
+  },
+  "navigationMenuItem.name": {
+    "Customer Support": "Customer Support",
+    "Merchants": "Merchants"
+  },
+  "objectMetadata.description": {
+    "A merchant": "A merchant"
+  },
+  "objectMetadata.labelPlural": {
+    "Merchants": "Merchants"
+  },
+  "objectMetadata.labelSingular": {
+    "Merchant": "Merchant"
+  },
+  "view.name": {
+    "Merchants": "Merchants"
+  }
+}
