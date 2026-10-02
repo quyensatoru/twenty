@@ -4,6 +4,7 @@ import { DELETE_ISSUE_COMMENT_ROUTE_PATH } from '../constants/route-paths';
 import { DELETE_ISSUE_COMMENT_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { canActOnIssueComment } from '../utils/can-act-on-issue-comment.util';
 import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
+import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -16,6 +17,18 @@ const handler = async (event: RoutePayload<DeleteIssueCommentBody>) =>
       event.body?.issueCommentId,
       'issueCommentId',
     );
+
+    // Authorship alone is not enough: it outlives the grant that made the
+    // comment possible, and it says nothing about soft-delete permission. The
+    // fork had the ORM predicate underneath this check; here there is nothing
+    // underneath it.
+    await assertRecordInScope({
+      client,
+      scope,
+      objectNameSingular: 'issueComment',
+      recordId: issueCommentId,
+      operation: 'softDelete',
+    });
 
     const authorId = await fetchRecordColumn(
       client,

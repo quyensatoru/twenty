@@ -31,6 +31,13 @@ export const THEME_COLOR_NAMES = [
 
 export type ThemeColorName = (typeof THEME_COLOR_NAMES)[number];
 
+// Colours stored on a record — an issue status, say — arrive as plain strings
+// from the API, so they have to be checked against the palette before they can
+// be built into a CSS variable name.
+export const isThemeColorName = (value: unknown): value is ThemeColorName =>
+  typeof value === 'string' &&
+  THEME_COLOR_NAMES.includes(value as ThemeColorName);
+
 // The same hash twenty-ui's stringToThemeColor uses, so a member's avatar here
 // is the colour the rest of Twenty gives them. An app cannot import it: the
 // twenty-ui entry that exports it pulls in the theme provider, which the

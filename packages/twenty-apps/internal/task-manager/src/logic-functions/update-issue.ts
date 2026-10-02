@@ -7,6 +7,7 @@ import { buildIssueKey, hasIssueKey } from '../utils/build-issue-key.util';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { assertRelationTargetAppScope } from './app-scope/assert-relation-target-app-scope.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
@@ -43,6 +44,14 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
         scope,
         objectNameSingular: 'issue',
         foreignKeyValue: projectId,
+      });
+
+      // Moving an issue between projects can move it between apps, and the
+      // row-level predicate reads the mirror, not the project chain.
+      data.appId = await resolveEffectiveAppId({
+        client,
+        objectNameSingular: 'issue',
+        immediateForeignKeyValue: projectId,
       });
     }
 

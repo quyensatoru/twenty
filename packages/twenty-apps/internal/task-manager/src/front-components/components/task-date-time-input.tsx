@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { IconCalendar } from 'twenty-ui/icon';
 
-import { getTaskControlStyle } from './task-control-styles';
-import { TASK_TOKENS } from './task-tokens';
+import { getTaskControlStyle, TASK_BARE_FIELD_STYLE } from './task-control-styles';
 
 type TaskDateTimeInputProps = {
   // 'YYYY-MM-DDTHH:mm' in local time, the datetime-local wire format.
@@ -12,21 +10,17 @@ type TaskDateTimeInputProps = {
   width?: number | string;
 };
 
-const formatDisplayValue = (value: string): string => {
-  const parsed = new Date(value);
-
-  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleString();
-};
-
-// Twenty has no `datetime-local` anywhere in its own UI — its date fields are a
-// text field plus its own picker — so a raw one is the single most obviously
-// "not Twenty" control on the page.
+// The native control, shown as itself.
 //
-// The real input is kept for correct parsing and for the browser's picker, but
-// laid over the control at opacity 0; what the user sees is this component's
-// own icon and locale-formatted text. Hiding the native glyph properly would
-// need `::-webkit-calendar-picker-indicator`, and an app cannot ship a
-// stylesheet, so covering it is the only route that stays inline.
+// It used to be covered by this component's own icon and locale-formatted text,
+// with the real input laid over at opacity 0 — closer to Twenty's look, but it
+// could not be opened: Chrome opens a datetime-local picker only from the
+// calendar glyph, and the glyph was invisible. Reaching it any other way needs
+// what an app cannot have — `::-webkit-calendar-picker-indicator` wants a
+// stylesheet, and `showPicker()` is a DOM method the sandbox does not forward.
+//
+// So the browser's own glyph is left visible and the frame around it is the
+// only thing this component styles.
 export const TaskDateTimeInput = ({
   value,
   onChange,
@@ -41,26 +35,11 @@ export const TaskDateTimeInput = ({
         ...getTaskControlStyle(isFocused),
         alignItems: 'center',
         display: 'flex',
-        gap: 6,
         height: 32,
         padding: '0 8px',
-        position: 'relative',
         width,
       }}
     >
-      <IconCalendar size={14} color={TASK_TOKENS.textTertiary} />
-      <span
-        style={{
-          color: TASK_TOKENS.textPrimary,
-          fontFamily: TASK_TOKENS.fontFamily,
-          fontSize: 13,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {formatDisplayValue(value)}
-      </span>
       <input
         aria-label={ariaLabel}
         type="datetime-local"
@@ -68,17 +47,7 @@ export const TaskDateTimeInput = ({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         onChange={(event) => onChange(event.target.value)}
-        style={{
-          border: 'none',
-          cursor: 'pointer',
-          height: '100%',
-          left: 0,
-          opacity: 0,
-          padding: 0,
-          position: 'absolute',
-          top: 0,
-          width: '100%',
-        }}
+        style={{ ...TASK_BARE_FIELD_STYLE, height: '100%' }}
       />
     </div>
   );

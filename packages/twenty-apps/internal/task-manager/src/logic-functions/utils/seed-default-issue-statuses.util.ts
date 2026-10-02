@@ -3,10 +3,8 @@ import { type ApiClient } from '../../types/api-client';
 import { type Connection } from '../../types/connection';
 
 // Idempotent: a project that already has statuses is left alone, so a retried
-// create never doubles them. The fork paired this with a per-project Kanban
-// view whose groups it kept in sync; an app cannot create views at runtime, so
-// the shipped `By Status` Kanban groups on the status relation instead and
-// picks up new statuses on its own (see src/views/issues-by-status.view.ts).
+// create never doubles them. The per-project Kanban built by the
+// project.created trigger takes one column per status below.
 export const seedDefaultIssueStatuses = async ({
   client,
   projectId,

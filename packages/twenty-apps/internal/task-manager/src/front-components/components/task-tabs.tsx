@@ -8,8 +8,9 @@ type TaskTabsProps<TTab extends string> = {
   onChange: (value: TTab) => void;
 };
 
-// Styled after twenty-ui's TabButton: the active tab is marked by a 1px
-// underline in the accent colour, the rest are tertiary text.
+// The active tab is the accent colour and carries a 2px underline of its own
+// over the strip's divider; the rest are tertiary text. Inactive tabs reserve
+// the same 2px so switching tabs never moves the strip by a pixel.
 export const TaskTabs = <TTab extends string>({
   value,
   tabs,
@@ -42,25 +43,40 @@ export const TaskTabs = <TTab extends string>({
               alignItems: 'center',
               background: 'transparent',
               border: 'none',
-              borderBottom: `1px solid ${isActive ? TASK_TOKENS.accent : 'transparent'}`,
-              color:
-                isActive || hoveredTab === tab.value
+              borderBottom: `2px solid ${isActive ? TASK_TOKENS.accent : 'transparent'}`,
+              color: isActive
+                ? TASK_TOKENS.accent
+                : hoveredTab === tab.value
                   ? TASK_TOKENS.textPrimary
                   : TASK_TOKENS.textTertiary,
               cursor: 'pointer',
               display: 'inline-flex',
               fontFamily: TASK_TOKENS.fontFamily,
               fontSize: 13,
-              fontWeight: 500,
+              fontWeight: isActive ? 600 : 500,
               gap: 6,
-              height: 32,
+              height: 34,
               marginBottom: -1,
               padding: '0 8px',
             }}
           >
             {tab.label}
             {tab.count === undefined ? null : (
-              <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}>
+              <span
+                style={{
+                  background: TASK_TOKENS.backgroundTertiary,
+                  borderRadius: TASK_TOKENS.radiusSmall,
+                  color: TASK_TOKENS.textTertiary,
+                  fontSize: 11,
+                  lineHeight: '16px',
+                  // Held open for two digits: a counter growing from 9 to 10
+                  // would otherwise widen its tab and push the next one along
+                  // every time somebody comments.
+                  minWidth: 16,
+                  padding: '0 4px',
+                  textAlign: 'center',
+                }}
+              >
                 {tab.count}
               </span>
             )}

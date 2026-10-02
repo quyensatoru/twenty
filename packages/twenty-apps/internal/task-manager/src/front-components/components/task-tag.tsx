@@ -15,17 +15,20 @@ export const TaskTag = ({ children, color }: TaskTagProps) => {
       style={{
         alignItems: 'center',
         background: tone.background,
-        borderRadius: TASK_TOKENS.radiusSmall,
+        borderRadius: TASK_TOKENS.radiusExtraSmall,
         color: tone.text,
         display: 'inline-flex',
         flexShrink: 0,
         fontFamily: TASK_TOKENS.fontFamily,
-        fontSize: 11,
-        fontWeight: 500,
-        lineHeight: '16px',
+        // The host's own Tag: a 20px pill, 13px regular text, 8px of inset.
+        // 11px semibold in a 6px pill read as a different control entirely.
+        boxSizing: 'border-box',
+        fontSize: 13,
+        fontWeight: 400,
+        height: 20,
         maxWidth: 160,
         overflow: 'hidden',
-        padding: '1px 6px',
+        padding: '0 8px',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
       }}

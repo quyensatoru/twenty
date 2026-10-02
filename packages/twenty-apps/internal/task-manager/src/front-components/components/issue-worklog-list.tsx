@@ -1,23 +1,36 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import { IconClock, IconPencil, IconTrash } from 'twenty-ui/icon';
 
 import { formatMinutes, parseMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, type WorklogRow } from '../hooks/use-issue-detail';
+import { buildIssueWorklogUrl } from '../utils/build-record-url.util';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
+import { TaskCopyLinkButton } from './task-copy-link-button';
 import { TaskDateTimeInput } from './task-date-time-input';
+import {
+  FEED_BODY_INDENT,
+  FEED_INLINE_INSET,
+  TaskFeedItem,
+} from './task-feed-item';
 import { TaskIconButton } from './task-icon-button';
-import { TaskMarkdownEditor } from './task-markdown-editor';
-import { TaskMarkdownView } from './task-markdown-view';
+import {
+  BLOCK_HANDLE_GUTTER,
+  TaskRichTextEditor,
+} from './task-rich-text-editor';
+import { TaskSortToggle } from './task-sort-toggle';
 import { TaskTextInput } from './task-text-input';
 import { TASK_TOKENS } from './task-tokens';
 
 type IssueWorklogListProps = {
+  issueId: string;
+  baseUrl: string | undefined;
   worklogs: WorklogRow[];
   membersById: Map<string, MemberRow>;
   currentMemberId: string | null;
+  highlightedWorklogId: string | null;
   totalMinutes: number | null | undefined;
   isBusy: boolean;
   onCreate: (input: {
@@ -29,8 +42,8 @@ type IssueWorklogListProps = {
   onDelete: (worklogId: string) => void;
 };
 
-const formatDate = (value: string | null | undefined): string =>
-  typeof value === 'string' ? new Date(value).toLocaleString() : '';
+const NOTE_MIN_HEIGHT = 40;
+const ROW_INLINE_PADDING = 10;
 
 // datetime-local wants 'YYYY-MM-DDTHH:mm' in local time, which toISOString
 // does not give — it is always UTC.
@@ -42,10 +55,19 @@ const toDateTimeLocalValue = (date: Date): string => {
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
+const readWorklogTimestamp = (worklog: WorklogRow): number => {
+  const parsed = new Date(worklog.startedAt ?? '').getTime();
+
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
 export const IssueWorklogList = ({
+  issueId,
+  baseUrl,
   worklogs,
   membersById,
   currentMemberId,
+  highlightedWorklogId,
   totalMinutes,
   isBusy,
   onCreate,
@@ -54,10 +76,26 @@ export const IssueWorklogList = ({
 }: IssueWorklogListProps) => {
   const [timeSpent, setTimeSpent] = useState('');
   const [description, setDescription] = useState('');
-  const [descriptionKey, setDescriptionKey] = useState(0);
   const [startedAt, setStartedAt] = useState(toDateTimeLocalValue(new Date()));
   const [editingWorklogId, setEditingWorklogId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
+  const [isNewestFirst, setIsNewestFirst] = useState(true);
+
+  const currentMemberName = readMemberName(
+    membersById,
+    currentMemberId,
+    t('You'),
+  );
+
+  const sortedWorklogs = useMemo(
+    () =>
+      [...worklogs].sort((left, right) =>
+        isNewestFirst
+          ? readWorklogTimestamp(right) - readWorklogTimestamp(left)
+          : readWorklogTimestamp(left) - readWorklogTimestamp(right),
+      ),
+    [worklogs, isNewestFirst],
+  );
 
   const parsedMinutes = parseMinutes(timeSpent);
 
@@ -73,114 +111,205 @@ export const IssueWorklogList = ({
     });
     setTimeSpent('');
     setDescription('');
-    setDescriptionKey((current) => current + 1);
   };
 
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <header style={{ alignItems: 'baseline', display: 'flex', gap: 8 }}>
-        <span
+    <section
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        padding: `0 ${FEED_INLINE_INSET}px`,
+      }}
+    >
+      {/* Stacked, not side by side: this composer is a form, and a duration
+          field, a date field, a note and a button pushed into the column left
+          of an avatar leave each of them too narrow to read. The avatar goes on
+          top, as the byline of what is about to be logged. */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          padding: `0 ${ROW_INLINE_PADDING}px 8px`,
+        }}
+      >
+        <TaskAvatar
+          name={currentMemberName}
+          avatarUrl={
+            currentMemberId === null
+              ? null
+              : membersById.get(currentMemberId)?.avatarUrl
+          }
+          size={24}
+        />
+        <div
           style={{
-            color: TASK_TOKENS.textTertiary,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 12,
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            gap: 8,
+            minWidth: 0,
+            paddingLeft: FEED_BODY_INDENT,
           }}
         >
-          {t('Time spent')}: {formatMinutes(totalMinutes)}
-        </span>
-      </header>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <TaskTextInput
+              ariaLabel={t('Time spent')}
+              value={timeSpent}
+              onChange={setTimeSpent}
+              placeholder={t('e.g. 90 or 1h30m')}
+              width={150}
+              prefixIcon={
+                <IconClock size={14} color={TASK_TOKENS.textTertiary} />
+              }
+            />
+            <TaskDateTimeInput
+              ariaLabel={t('Started at')}
+              value={startedAt}
+              onChange={setStartedAt}
+            />
+          </div>
+          <TaskRichTextEditor
+            value={description}
+            onChange={setDescription}
+            placeholder={t('Write what you worked on…')}
+            minHeight={NOTE_MIN_HEIGHT}
+          />
+          <div style={{ display: 'flex' }}>
+            <TaskButton
+              variant="primary"
+              isDisabled={isBusy || parsedMinutes === null || parsedMinutes <= 0}
+              onClick={submit}
+            >
+              {t('Log time')}
+            </TaskButton>
+          </div>
+        </div>
+      </div>
 
-      {worklogs.length === 0 && (
+      {worklogs.length === 0 ? (
         <span
           style={{
             color: TASK_TOKENS.textTertiary,
             fontFamily: TASK_TOKENS.fontFamily,
             fontSize: 12,
+            padding: `0 ${ROW_INLINE_PADDING}px`,
           }}
         >
           {t('No time logged yet.')}
         </span>
+      ) : (
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: `0 ${ROW_INLINE_PADDING}px`,
+          }}
+        >
+          <span
+            style={{
+              color: TASK_TOKENS.textTertiary,
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 12,
+            }}
+          >
+            {t('Time spent')}: {formatMinutes(totalMinutes)}
+          </span>
+          <TaskSortToggle
+            isNewestFirst={isNewestFirst}
+            onChange={setIsNewestFirst}
+          />
+        </div>
       )}
 
-      {worklogs.map((worklog) => {
+      {sortedWorklogs.map((worklog) => {
         const isOwn =
           currentMemberId !== null && worklog.memberId === currentMemberId;
         const isEditing = editingWorklogId === worklog.id;
+        const member =
+          typeof worklog.memberId === 'string'
+            ? membersById.get(worklog.memberId)
+            : undefined;
+        const memberName = readMemberName(
+          membersById,
+          worklog.memberId,
+          t('Unknown'),
+        );
 
         return (
-          <article
+          <TaskFeedItem
             key={worklog.id}
-            style={{
-              borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
-              display: 'flex',
-              flexDirection: 'column',
-              fontFamily: TASK_TOKENS.fontFamily,
-              gap: 4,
-              padding: '6px 0',
-            }}
-          >
-            <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+            anchorId={`worklog-${worklog.id}`}
+            isHighlighted={worklog.id === highlightedWorklogId}
+            authorName={memberName}
+            authorEmail={member?.userEmail}
+            avatarUrl={member?.avatarUrl}
+            timestamp={worklog.startedAt}
+            meta={
               <span
                 style={{
-                  color: TASK_TOKENS.textPrimary,
+                  color: TASK_TOKENS.textSecondary,
                   flexShrink: 0,
                   fontSize: 12,
-                  fontWeight: 600,
-                  minWidth: 56,
                 }}
               >
-                {formatMinutes(worklog.timeSpentMinutes)}
+                {t('logged')} {formatMinutes(worklog.timeSpentMinutes)}
               </span>
-              <TaskAvatar
-                name={readMemberName(membersById, worklog.memberId, t('Unknown'))}
-                avatarUrl={
-                  typeof worklog.memberId === 'string'
-                    ? membersById.get(worklog.memberId)?.avatarUrl
-                    : null
-                }
-                size={20}
-              />
-              <span
-                style={{ color: TASK_TOKENS.textTertiary, flex: 1, fontSize: 11 }}
-              >
-                {readMemberName(membersById, worklog.memberId, t('Unknown'))}
-              </span>
-              <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 11 }}>
-                {formatDate(worklog.startedAt)}
-              </span>
-              {isOwn && !isEditing && (
+            }
+            actions={
+              isEditing ? undefined : (
                 <>
-                  <TaskIconButton
-                    label={t('Edit')}
-                    isDisabled={isBusy}
-                    onClick={() => {
-                      setEditingWorklogId(worklog.id);
-                      setEditDraft(worklog.description ?? '');
-                    }}
-                  >
-                    <IconPencil size={14} />
-                  </TaskIconButton>
-                  <TaskIconButton
-                    label={t('Delete')}
-                    isDanger
-                    isDisabled={isBusy}
-                    onClick={() => onDelete(worklog.id)}
-                  >
-                    <IconTrash size={14} />
-                  </TaskIconButton>
+                  <TaskCopyLinkButton
+                    url={buildIssueWorklogUrl({
+                      baseUrl,
+                      issueId,
+                      worklogId: worklog.id,
+                    })}
+                    label={t('Copy link to worklog')}
+                  />
+                  {isOwn && (
+                    <>
+                      <TaskIconButton
+                        label={t('Edit')}
+                        isDisabled={isBusy}
+                        onClick={() => {
+                          setEditingWorklogId(worklog.id);
+                          setEditDraft(worklog.description ?? '');
+                        }}
+                      >
+                        <IconPencil size={14} />
+                      </TaskIconButton>
+                      <TaskIconButton
+                        label={t('Delete')}
+                        isDanger
+                        isDisabled={isBusy}
+                        onClick={() => onDelete(worklog.id)}
+                      >
+                        <IconTrash size={14} />
+                      </TaskIconButton>
+                    </>
+                  )}
                 </>
-              )}
-            </div>
-
+              )
+            }
+          >
             {isEditing ? (
-              <>
-                <TaskMarkdownEditor
-                  ariaLabel={t('Edit worklog description')}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <TaskRichTextEditor
                   value={editDraft}
                   onChange={setEditDraft}
-                  rows={3}
+                  minHeight={NOTE_MIN_HEIGHT}
+                  shouldInsetBlockHandles
                 />
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 6,
+                    paddingLeft: BLOCK_HANDLE_GUTTER,
+                  }}
+                >
                   <TaskButton
                     variant="primary"
                     size="small"
@@ -199,46 +328,16 @@ export const IssueWorklogList = ({
                     {t('Cancel')}
                   </TaskButton>
                 </div>
-              </>
+              </div>
             ) : (
-              <TaskMarkdownView markdown={worklog.description ?? ''} />
+              <TaskRichTextEditor
+                value={worklog.description ?? ''}
+                isReadOnly
+              />
             )}
-          </article>
+          </TaskFeedItem>
         );
       })}
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        <TaskTextInput
-          ariaLabel={t('Time spent')}
-          value={timeSpent}
-          onChange={setTimeSpent}
-          placeholder={t('e.g. 90 or 1h30m')}
-          width={150}
-          prefixIcon={<IconClock size={14} color={TASK_TOKENS.textTertiary} />}
-        />
-        <TaskDateTimeInput
-          ariaLabel={t('Started at')}
-          value={startedAt}
-          onChange={setStartedAt}
-        />
-      </div>
-      <TaskMarkdownEditor
-        key={descriptionKey}
-        ariaLabel={t('What you worked on')}
-        value={description}
-        onChange={setDescription}
-        placeholder={t('Write what you worked on, in markdown…')}
-        rows={3}
-      />
-      <div>
-        <TaskButton
-          variant="primary"
-          isDisabled={isBusy || parsedMinutes === null || parsedMinutes <= 0}
-          onClick={submit}
-        >
-          {t('Log time')}
-        </TaskButton>
-      </div>
     </section>
   );
 };

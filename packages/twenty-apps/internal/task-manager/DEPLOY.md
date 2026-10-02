@@ -4,8 +4,8 @@ App này không nằm trong build của server. Nó được đẩy lên một T
 `twenty`, từ một máy có source của app (máy dev hoặc runner CI). Server production không cần
 checkout repo.
 
-App sở hữu 11 object: `app`, `appAccess`, `merchant`, `project`, `sprint`, `epic`, `issueStatus`,
-`issue`, `issueMerchant`, `issueComment`, `worklog`. Không có app `bss-core` riêng — `app`,
+App sở hữu 12 object: `app`, `appAccess`, `merchant`, `project`, `sprint`, `epic`, `issueStatus`,
+`issue`, `issueMerchant`, `issueComment`, `worklog`, `issueHistory`. Không có app `bss-core` riêng — `app`,
 `appAccess` và `merchant` thuộc về app này.
 
 **Nếu đang chuyển production từ nhánh fork sang `apps/zero-core`, đừng đọc file này trước.** Đọc
@@ -18,7 +18,7 @@ này). File này chỉ mô tả cài mới lên một workspace chưa có dữ l
 | --- | --- |
 | `LOGIC_FUNCTION_TYPE=LOCAL` trong env của server **và** worker | Mặc định biến này chỉ là `LOCAL` khi `NODE_ENV=development`; ngoài ra là `DISABLED` (`config-variables.ts`). Để `DISABLED` thì **mọi route của app đều không chạy**: board, backlog, roadmap trống trơn, không tạo được issue, không kết sprint. App này là route-only, nên đây là điều kiện cứng chứ không phải tuỳ chọn. |
 | Server ở phiên bản `>= 2.43.0` | `package.json` pin `twenty-sdk` 2.43.0. CLI chỉ cảnh báo khi lệch **major**, nên 2.43 với server 2.44+ chạy bình thường. |
-| Object `workspaceMember` là standard object của upstream | App khai báo 8 quan hệ ngược lên nó (`ledProjects`, `assignedIssues`, `reportedIssues`, `assignedEpics`, `ownedSprints`, `issueComments`, `worklogs`, `appAccesses`) bằng universalIdentifier chuẩn `20202020-3319-4234-a34c-82d5c0e881a6`. |
+| Object `workspaceMember` là standard object của upstream | App khai báo 9 quan hệ ngược lên nó (`ledProjects`, `assignedIssues`, `reportedIssues`, `assignedEpics`, `ownedSprints`, `issueComments`, `worklogs`, `issueHistories`, `appAccesses`) bằng universalIdentifier chuẩn `20202020-3319-4234-a34c-82d5c0e881a6`. |
 
 Không cần worker: app không có cron và không có job. Không cần feature flag nào.
 
@@ -89,43 +89,84 @@ Việc phải làm thay vào đó là **tạo dữ liệu `app` và `appAccess`*
 
 ## 4. Việc phải làm tay sau khi cài
 
-### 4.1 Gỡ quyền trực tiếp khỏi role Member — **bắt buộc**
+### 4.1 Gán role **Task Manager member** — **bắt buộc**
 
-App-scope được thực thi trong route (`src/logic-functions/app-scope/`), không phải trong ORM như bản
-fork. Nghĩa là **một request GraphQL thẳng tới `issues` vẫn trả về mọi issue của workspace** nếu role
-còn quyền. Chưa làm bước này thì app-scope **chưa có hiệu lực**.
-
-Settings → Roles → role **Member** (và mọi role không phải admin) → với từng object dưới đây:
+App-scope được thực thi bằng **row-level permission predicate** của core, không phải trong route.
+App khai một role tên **Task Manager member** (`src/roles/app-scoped-member.role.ts`) mang mười
+predicate, mỗi object một cái:
 
 ```
-Project, Issue, Issue Status, Issue Comment, Issue Merchant,
-Epic, Sprint, Worklog, Merchant, App, App Access
+project, merchant, issue, sprint, epic, issueStatus, issueComment, worklog, issueMerchant,
+issueHistory
 ```
 
-Có hai mức, chọn một. Khác nhau ở chỗ widget do host render (ở app này chỉ còn `FIELDS`) **đọc và
-ghi bằng token của chính người đang xem**, nên nó tắt ngóm nếu role mất quyền đọc.
+`merchant` là cái vào sau cùng, và nó từng là một lỗ thật: `APP_SCOPE_PATH_BY_OBJECT` coi merchant
+là app-scope root nên **route** nào cũng từ chối merchant ngoài phạm vi, nhưng không có predicate
+thì **bảng record, picker và GraphQL gọi thẳng vẫn trả về mọi merchant trong workspace**. Hai
+đường thực thi, chỉ một đường được bịt. `src/roles/__tests__/app-scoped-member.role.test.ts` giờ
+bắt buộc mọi object có scope path phải có predicate, nên kiểu lỗ này không lặp lại im lặng được.
 
-| | Mức A — khoá ghi | Mức B — khoá cả đọc |
-| --- | --- | --- |
-| `canUpdateObjectRecords` | tắt | tắt |
-| `canReadObjectRecords` | **giữ** | tắt |
-| Ghi đi qua route, app-scope ghi có hiệu lực | có | có |
-| App-scope **đọc** có hiệu lực | **không** — member gọi thẳng API đọc được mọi dòng | có |
-| Trang chi tiết issue — bảng **Fields** (widget host) | chạy | **không mở được** |
-| Widget **Description** (front component) | chạy | chạy |
-| Board / Backlog / Roadmap / tab Activity | chạy | chạy |
+Object `merchant` và field `merchant.app` đều thuộc customer-support; predicate gọi chúng bằng
+universalIdentifier và validate trên toàn đồ thị workspace, nên role của app này scope được object
+của app khác — cùng kiểu tham chiếu chéo mà `merchant.issues` vẫn đang dùng.
 
-**Mức A là mặc định nên dùng.** Nó giữ trọn vẹn tính toàn vẹn dữ liệu — cấp `issueKey`, tính lại
-thời gian, seed trạng thái, kiểm tra app-scope khi ghi — và vẫn xem được bảng field của host. Cái
-mất là phạm vi **đọc**: đây là khác biệt lớn nhất so với bản fork và phải nói rõ với khách hàng.
+**Hệ quả khi bật:** member giữ role này trước đây thấy toàn bộ merchant, giờ chỉ còn merchant của
+app họ có grant. Merchant **không gán app** biến mất khỏi tầm nhìn của họ (predicate sinh
+`"appId" IN (...)`, NULL không khớp). Đếm trước khi deploy:
 
-**Mức B** dành cho workspace bắt buộc phải giấu dữ liệu giữa các app. Lúc đó member chỉ làm việc qua
-Board / Backlog / Roadmap; trang chi tiết issue thành màn của admin. Tab **Activity** (bình luận và
-worklog) là front component gọi route nên **vẫn chạy ở cả hai mức** — đó là lý do nó không phải
-widget RECORD_TABLE.
+```sql
+SELECT count(*) FROM <workspace_schema>._merchant
+WHERE "appId" IS NULL AND "deletedAt" IS NULL;
+```
 
-Role `Task Manager runtime` mà app tạo ra là role của chính app (route chạy bằng token application),
-đừng gán cho người.
+Admin không bị ảnh hưởng. Và lưu ý role này áp cho **mọi** màn hình merchant, kể cả view
+`Merchants` của customer-support lẫn các field mà merchant-email-campaigns sở hữu.
+
+Role vẫn **không** cho member sửa merchant từ UI (không có objectPermission row cho merchant) —
+giữ nguyên như trước. Sửa Custom Settings thì đi qua route của app và được gác bằng grant `write`
+trên app, không dính tới quyền object này.
+
+Mỗi predicate so field `app` trên chính bản ghi với field `scopedAppIds` trên bản ghi
+workspaceMember của **người đang gọi**, và được biên dịch thành `"appId" IN (...)` ngay trong
+repository của ORM. Nghĩa là nó có hiệu lực ở **mọi** đường: bảng record, Kanban, GraphQL gọi
+thẳng, và cả lúc ghi.
+
+Settings → Roles → **Task Manager member** → thêm từng member. Thao tác này **thay** role `Member`,
+nên role đã được dựng theo hình dáng của `Member` (đọc mọi object, không ghi gì) cộng quyền ghi và
+xoá mềm trên chín object trên.
+
+Ba điều phải biết:
+
+- Member chưa có `scopedAppIds` thì **không thấy gì cả**, không phải thấy tất. Engine biến một
+  predicate không giải được thành bộ lọc không khớp dòng nào.
+- `scopedAppIds` là bản sao của các dòng `appAccess`, do trigger `appAccess.*` ghi. Sửa grant là
+  nó tự chạy; không phải chạy tay gì thêm.
+- Không tạo được bản ghi mà chính mình sẽ không nhìn thấy. Bảng record của Twenty tạo dòng rỗng
+  trước nên **view phải có sẵn filter App**, giá trị filter được gieo vào dòng mới. Board từng
+  project do trigger `project.created` dựng đã mang đủ hai filter `Project` và `App`.
+
+Giữ role `Task Manager runtime` cho app, đừng gán cho người.
+
+### 4.1.1 Cái bẫy: danh sách rỗng nghĩa là KHÔNG LỌC
+
+Predicate row-level của core **fail-open** chứ không fail-closed khi danh sách id rỗng, và đây là
+hành vi đã kiểm chứng trên server thật, không phải suy đoán:
+
+1. `scopedAppIds` rỗng → bộ lọc quan hệ nhận danh sách id rỗng.
+2. `turnRecordFilterIntoGqlOperationFilter` gặp `if (recordIds.length === 0) return;` nên không sinh
+   điều kiện nào.
+3. Filter thành `{}` → `resolveRowLevelPermissionRecordFilter` trả `null` → policy `open`.
+4. Người vừa bị thu hồi hết quyền **thấy toàn bộ workspace**, và sửa được.
+
+Id sai định dạng cũng rơi vào đúng hố đó: `isValidUuid` của core đòi uuid version 1-5 variant 8-b,
+id nào trượt thì bị loại âm thầm, loại hết thì lại thành danh sách rỗng.
+
+Vì vậy `sync-member-scoped-app-ids.util.ts` **không bao giờ ghi mảng rỗng**. Không còn grant thì nó
+ghi một uuid hợp lệ mà không app nào có (`ffffffff-ffff-4fff-8fff-ffffffffffff`), để bộ lọc vẫn
+được sinh ra và không khớp dòng nào.
+
+Đừng bỏ sentinel đó đi, và nếu sau này thêm predicate bound vào field khác của member thì áp dụng
+cùng quy tắc: **giá trị rỗng phải được thay bằng một giá trị không khớp, không phải để rỗng.**
 
 ### 4.2 Kiểm tra lại quyền admin
 
@@ -136,15 +177,17 @@ danh sách này trước khi golive.
 
 Liệt kê đầy đủ, để không ai bất ngờ sau golive.
 
-### 5.1 App-scope chuyển từ ORM sang route
+### 5.1 App-scope: ORM của fork → predicate của core
 
 | | Fork | App |
 | --- | --- | --- |
-| Đọc | `applyAppScopeFilter` chèn subquery vào **mọi** query, kể cả GraphQL trực tiếp | Route tự lọc: `listVisibleProjectIds` gom tập project nhìn thấy được rồi lọc `projectId IN (...)`. GraphQL trực tiếp **không** bị lọc |
-| Ghi | `validateAppScopeForRecords` + pre-query hook trên mọi mutation | `assertAppScopeWriteAccess` trong từng route. Mutation GraphQL trực tiếp **không** bị chặn |
-| Nguồn quyền | cache Redis `appScopeGrants`, invalidate bằng post-hook trên `appAccess` | đọc `appAccess` mỗi request. Không cache, nên đổi quyền có hiệu lực ngay, đổi lại là chậm hơn một chút mỗi request |
+| Đọc | `applyAppScopeFilter` chèn subquery vào mọi query | predicate row-level, áp trong `workspace-repository` nên phủ mọi đường đọc |
+| Ghi | `validateAppScopeForRecords` + pre-query hook | predicate được kiểm lại khi ghi (`validate-rls-predicates-for-records`), cộng guard trong các route còn lại |
+| Nguồn quyền | cache Redis `appScopeGrants` | `workspaceMember.scopedAppIds`, bản sao của `appAccess` do trigger giữ đồng bộ |
+| Đường đi tới app | chuỗi `issue → project → app` trong SQL | field `app` phi chuẩn hoá trên từng object, vì predicate chỉ so field nằm trên chính bản ghi |
 
-Hệ quả trực tiếp: **bước 4.1 là bắt buộc**, không phải khuyến nghị.
+Phần phi chuẩn hoá do route ghi ngay trong lệnh tạo, và trigger `issue.created` vá cho những dòng
+sinh ra ngoài route. `sync-app-scope-mirror` là route sửa chữa khi cần dựng lại toàn bộ.
 
 ### 5.2 Quy tắc bypass đổi
 
@@ -175,36 +218,38 @@ Hệ quả: quá 5 request tạo issue **cùng một project** va nhau thì requ
 (`Could not allocate a unique issue key after 5 attempts`) thay vì tạo trùng key. Ngoài ra
 `nextIssueNumber` có thể nhảy số khi có va chạm — số thứ tự issue không còn liên tục tuyệt đối.
 
-### 5.4 Kanban per-project biến mất
+### 5.4 Kanban per-project — giữ nguyên, dựng bằng trigger, không có view all
 
-Fork tạo **một view Kanban cho mỗi project** (kèm filter cố định theo project) trong post-hook của
-`project.createOne`, và đồng bộ ViewGroup mỗi khi tạo/xoá `issueStatus`. App không tạo view lúc
-runtime được.
+Fork tạo một view Kanban cho mỗi project trong post-hook của `project.createOne`. App làm đúng như
+vậy: trigger `project.created` gọi `createProjectBoardView`, dựng view KANBAN lọc theo
+`Project` và `App`, kèm một cột cho mỗi status của project đó.
 
-Thay bằng: một view Kanban duy nhất **By Status** (`src/views/issues-by-status.view.ts`, giữ nguyên
-universalIdentifier `29063dae-…` của fork) nhóm theo quan hệ `status`, không có view group tĩnh —
-nên status mới tự thành cột, không cần đồng bộ. Lọc theo project thì dùng màn **Board** của app, có
-sẵn ô chọn project.
+View được tạo **không mang applicationId**, nên nó thuộc application `Custom` của workspace và
+`twenty apply` không xoá nó. Muốn dựng lại cho project cũ thì gọi route
+`/task-manager/create-project-board-view`.
 
-Các view Kanban per-project đã tồn tại trên production vẫn còn nguyên sau khi re-parent; chúng chỉ
-không được đồng bộ ViewGroup nữa. Xem `MIGRATION.md`.
+**Không có view Kanban dùng chung.** Mục Board trên menu là navigation item kiểu OBJECT trỏ vào
+object `issue`, nên mỗi member mở board của project mình đã vào lần trước. View all (không lọc
+project/app) đã bị xoá vì tạo issue từ đó thiếu cả `app` lẫn `project` và bị row-level predicate
+từ chối. Muốn tạo issue thì mở board của đúng project: filter của view gieo sẵn cả hai giá trị
+cho card mới.
 
-### 5.5 Seed trạng thái mặc định và các default khác chỉ chạy qua route
+### 5.5 Các default chạy bằng database event trigger
 
-Fork chạy các việc này trong query hook, nên **mọi** đường tạo bản ghi đều được hưởng. App chỉ chạy
-chúng trong route:
+Fork chạy chúng trong query hook nên mọi đường tạo đều được hưởng. App làm lại bằng trigger, nên
+cũng vậy — kể cả khi bản ghi được tạo từ bảng record của Twenty:
 
-| Hành vi | Chỉ có khi gọi qua |
+| Hành vi | Trigger |
 | --- | --- |
-| Seed 5 trạng thái mặc định (Backlog / Todo / In Progress / In Review / Done) | route `create-project` |
-| Sinh `project.key` từ tên | route `create-project` |
-| Sinh `issue.issueKey` | route `create-issue`, `update-issue` — trên UI là ô **Issue mới** ở đầu màn Board |
-| Gán `issue.reporter` mặc định là người tạo | route `create-issue` |
-| Gán `worklog.member` mặc định là người ghi | route `create-worklog` |
-| Tính lại `issue.timeSpentMinutes` / `remainingEstimateMinutes` | route `create-worklog`, `update-worklog`, `delete-worklog` |
+| Cấp `issueKey`, điền mirror `app`, gán reporter | `issue.created` |
+| Tính lại `timeSpentMinutes` / `remainingEstimateMinutes` | `worklog.*` |
+| Sinh `project.key`, seed 5 status, dựng board của project | `project.created` |
+| Đồng bộ `workspaceMember.scopedAppIds` | `appAccess.*` |
+| Ghi entry `created` vào `issueHistory` | `issue.created` |
+| Ghi entry `status-changed` vào `issueHistory` khi status đổi | `issue.updated` |
 
-Tạo project thẳng từ bảng record (Task Manager → Projects → thêm dòng) sẽ ra một project **không có
-trạng thái nào và không có key**. Đây là lý do thứ hai để làm bước 4.1.
+Mỗi trigger đều bỏ qua phần việc đã có sẵn giá trị, nên bản ghi tạo qua route không bị xử lý hai
+lần.
 
 ### 5.6 `completeSprint` đổi từ GraphQL mutation sang route
 
@@ -379,12 +424,22 @@ là ảnh sẽ hỏng. Gặp URL như vậy app để nguyên, không báo lỗi
 `window._env_` thì biến này rơi về `window.location.origin` (cổng của front), không phải cổng của
 server; trên production hai cái trùng nhau.
 
-### 5.8 Kéo thả viết tay
+### 5.8 Board, Backlog và Roadmap đã bị gỡ
 
-Board và Backlog kéo thả bằng HTML5 drag-and-drop gốc (`draggable` + `onDragStart`/`onDragOver`/
-`onDrop`), browser tự hit-test. `@hello-pangea/dnd` không dùng được vì nó hit-test bằng
-`document.elementFromPoint` mà sandbox không có `document`. Hành vi người dùng thấy là như nhau:
-kéo giữa các cột, kéo giữa các sprint, thả vào đúng vị trí trong danh sách.
+Ba màn này từng là front component tự vẽ, tồn tại vì một lý do duy nhất: app-scope nằm trong route
+nên UI của Twenty không lọc được. Từ khi app-scope là predicate của core thì lý do đó mất, và
+Kanban của core làm tốt hơn phần lớn những gì chúng làm: filter, sort, đổi layout, sửa field tại
+chỗ, kéo thả, tạo bản ghi.
+
+Cái mất, cần nói rõ với khách:
+
+- **Backlog** nhóm theo sprint và nút hoàn tất sprint. Route `complete-sprint` vẫn còn và vẫn đúng,
+  nhưng không còn màn nào gọi nó.
+- **Roadmap** theo epic.
+- Ô soạn issue có sẵn project và sprint. Thay bằng nút tạo trên board từng project, filter của view
+  gieo sẵn project và app cho card mới.
+
+Vẫn là front component: **Description** và **Activity** trên trang chi tiết issue.
 
 ### 5.9 CSS chỉ có inline
 
@@ -449,7 +504,143 @@ Dữ liệu cũ không mất, chỉ mất liên kết, và các cặp id đã đ
 Các view `INDEX` ("All Issues", "All Projects"…) mà engine tự tạo cho object standard không tái sử
 dụng được: manifest của app luôn tạo view **bổ sung**. App ship view riêng tên "Issues",
 "Projects", "Sprints"… Tuỳ biến người dùng lưu trên view INDEX cũ (cột hiện/ẩn, sort) không theo
-sang view mới. View Kanban **By Status** thì giữ nguyên identifier của fork nên không mất.
+sang view mới. Riêng object `issue`, ngoài INDEX của engine chỉ còn các board từng project do
+trigger dựng (mục 5.4) — không có Kanban dùng chung.
+
+### 5.14 Custom Settings của merchant
+
+Fork dựng cái này bằng cách vá `FieldDisplay.tsx`: ô `merchant.customSettings` (RAW_JSON) bị thay
+bằng một button, bấm vào mở modal form. App **không có hook nào vào phần hiển thị của một field** —
+`FieldDisplay` là một chuỗi switch đóng trong core — nên hình dạng đổi:
+
+| Fork | App |
+|---|---|
+| button nằm trong ô field | widget `Custom Settings` riêng trên trang record merchant |
+| modal giữa màn hình | popover do host vẽ (`<twenty-overlay>`), neo vào nút `Custom settings` |
+| đọc `app.fieldSchema` bằng token người dùng | đọc qua route `merchant-custom-settings` của app này |
+
+Cấu trúc dialog (`merchant-custom-settings-dialog.tsx`) y hệt fork: hai tab **Settings** / **Tools**,
+tab bar chỉ hiện khi schema có cả hai loại; tab Settings mang form + Cancel/Save, tab Tools mang
+danh sách `MerchantCustomSettingToolCard` (title + status tag bên trái, nút **Run** cùng hàng bên
+phải, field hiện sẵn ngay dưới, last-run bên dưới field) + nút Close. Mỗi tool Run độc lập với
+Settings và với các tool khác — không có Save chung.
+
+**Bẫy:** `<twenty-overlay>` tự định vị lại mỗi khi phần tử nó bọc đổi chiều cao
+(`ResizeObserver` trong `TwentyOverlayRenderer`), và khi chiều cao vượt mép viewport nó **lật**
+giữa mở-xuống và mở-lên. Settings (3-4 field) và Tools (nhiều tool, field lồng nhau) cao khác hẳn
+nhau, nên chuyển tab = cả dialog nhảy vị trí. Sửa bằng cách khoá vùng nội dung ở `height` **cố
+định** (không phải `maxHeight`) — `CONTENT_HEIGHT` trong `merchant-custom-settings-dialog.tsx` —
+cuộn bên trong khi tràn, nên tổng chiều cao dialog không đổi dù đang ở tab nào. Đánh đổi: tab
+Settings có khoảng trống dưới field cuối nếu Tools cao hơn.
+
+`TaskSelect` (chỉ mình file này dùng) đổi từ render listbox **in-flow** (đẩy nội dung bên dưới
+xuống — lý do cũ: tránh bị `overflow:hidden` của widget FIELDS cắt, xem comment cũ trong file)
+sang **popover nổi** qua `<twenty-overlay>` riêng của nó, lồng bên trong overlay của dialog. Đúng
+bên trong một dialog vốn đã nổi thì nổi thêm lần nữa không có gì lạ; lý do tránh floating cũ chỉ
+áp dụng khi `TaskSelect` còn được dùng trực tiếp trong widget page-layout, hiện không còn chỗ nào
+dùng kiểu đó.
+
+Vì sao phần này nằm ở Task Manager chứ không phải Customer Support — app sở hữu object `merchant`:
+schema nằm trên `app.fieldSchema`, và `app` là gốc app-scope của app này. Role runtime của
+Customer Support không đọc được object `app`, còn mọi grant per-app (`appAccess`) thì ở đây. Hai
+route mới đi qua đúng `runScopedRoute` + `assertRecordInScope` như mọi route khác:
+
+- `POST /task-manager/merchant-custom-settings` — trả schema + values + `canUpdate`. Không có grant
+  `read` trên app của merchant thì `PERMISSION_DENIED`.
+- `POST /task-manager/update-merchant-custom-settings` — cần grant `write`. Schema được **đọc lại ở
+  server**, không tin payload: key nào app không khai thì không ghi. Key nào không nằm trong schema
+  mà đang có sẵn trên record thì giữ nguyên.
+
+Role runtime của app vì vậy được mở `canUpdateObjectRecords` trên `merchant` (trước là read-only).
+Xoá thì vẫn không.
+
+**Widget gắn vào tab của app khác.** Trang record merchant là "Default Merchant Layout" do
+application **Standard** sở hữu — nó có sẵn trong workspace, không app nào khai. App này gắn thêm
+một `pageLayoutWidget` standalone vào tab Home của trang đó
+(`src/page-layout-widgets/merchant-custom-settings.page-layout-widget.ts`), không khai lại cả trang
+layout. UID của tab là literal `c578b3a9-a013-560e-99d8-957d8e338f65`; nó là v5 theo namespace
+Standard nên giống nhau ở mọi workspace, nhưng **không được tính lại trong code front component** —
+module uuid bị stub trong bundle, kết quả ra giá trị rác.
+
+**Bẫy quen thuộc:** chỉ cần một lần kéo thả trong Edit Layout là vị trí widget bị ghim vào override
+của người dùng, và manifest hết tác dụng với riêng người đó. Widget "biến mất" sau khi sửa
+`index` thường là cái này, không phải cache.
+
+`fieldSchema` nhận cả hai hình dạng: mảng entry kiểu fork
+(`[{key,label,type,options,default,required}]`) và map `{"plan": {"type": "string"}}` mà dữ liệu
+seed đang mang. Kiểu field: TEXT, NUMBER, DATE, BOOLEAN, SELECT, ARRAY, RICH_TEXT, FILE.
+
+**TOOL là một loại entry RIÊNG, không phải field.** `normalizeCustomSettingSchema` trả
+`{fields, tools}` và mọi thứ ghi xuống record chỉ duyệt `fields`. Đây không phải chuyện gọn gàng:
+giá trị lưu dưới key của một TOOL là envelope `{runId, requestedAt, requestedBy, status, params,
+result}` do app phía webhook cập nhật. Đọc TOOL như một field thì nó hiện ra thành ô text chứa
+`[object Object]`, và lần Save kế tiếp ghi đè envelope bằng đúng chuỗi đó — mất lịch sử chạy.
+Route update cũng duyệt `fields` nên payload cố tình gửi `{"importCustomerPhone": "wiped!"}` cũng
+không đụng được vào envelope.
+
+**Run ghi nửa `REQUESTED`, nửa `PROCESSING/DONE/FAILED` là việc của app bên ngoài.** Route
+`run-merchant-custom-setting-tool`:
+
+- gác bằng `assertRecordInScope(operation: 'write')`, đọc lại schema ở server (không tin payload —
+  `toolKey` lạ hoặc field ngoài khai báo của tool bị từ chối với `Unknown tool` / `Missing required
+  fields`)
+- dựng envelope `{runId: crypto.randomUUID(), requestedAt, requestedBy, status: 'REQUESTED', params}`
+  — `requestedBy` lấy email của caller qua `resolveCallerEmail` (một query `workspaceMembers` bằng
+  token của application, caller không có workspace member — API key, application — thì bỏ qua field
+  này)
+- ghi đè **đúng một key** của `customSettings`, giữ nguyên mọi key khác — kể cả envelope của tool
+  khác đang chạy dở
+
+Không có đường nào trong app này nhận lại `PROCESSING/DONE/FAILED`. App đứng sau webhook (Shopify
+app của bạn) đọc `runId` để dedupe, làm việc, rồi tự ghi `customSettings` của đúng merchant đó bằng
+tín thực của chính nó — y hệt cách tôi test thủ công bằng `curl PATCH /rest/merchants/:id` ở bước
+build tính năng này. Request đó không đi qua role `Task Manager member`/`Task Manager runtime`, nên
+phải có quyền ghi `merchant` theo cách riêng của nó (API key với `canBypassAppScope`, hoặc bất cứ
+credential nào bạn đã cấp cho tích hợp Shopify). Nếu webhook của bạn không echo lại được, tag sẽ
+đứng yên ở `REQUESTED` mãi — không phải lỗi của route này.
+
+**FILE: kéo-thả, dán, hoặc chọn bằng hộp thoại OS — cả ba đều cho handle thật.** Trước đây
+`<input type="file">` trong front component chỉ gửi sang guest metadata (`name`, `size`, `type`,
+`lastModified`) khi người dùng chọn file qua `change` — `handle` để gọi `uploadFileByHandle` chỉ
+được cấp cho `paste` và `drop` (`serializeTransferredFileList`, bảng `EVENT_TYPE_TO_TRANSFER_KEY`
+chỉ có hai key đó). Đã vá thêm nhánh `change` đọc `event.target.files` trong
+`twenty-front-component-renderer` (`resolveFileListLike`, cùng file) — tái dùng nguyên
+`stashTransferredFile`, không thêm cơ chế mới. Hai file đổi, có test:
+`serializeTransferredFileList.ts` + `serializeTransferredFileList.test.ts` +
+`serializeEvent.test.ts` (test end-to-end xác nhận handle từ DOM event thật tới
+`takeTransferredFile`). Không cần sửa gì ở `applySerializedEventTransferredFiles.ts` (phần guest):
+`applySerializedEventTargetProperties` đã gán `element.files = eventData.files` cho **mọi** loại
+sự kiện từ trước, nhánh `paste`/`drop` riêng chỉ vì hai loại đó cần dựng thêm
+`event.clipboardData`/`event.dataTransfer`.
+
+`merchant-custom-setting-file-input.tsx` giờ là một `<label>` bọc `<input type="file" hidden>`:
+bấm vào mở đúng hộp thoại OS, không cần gọi method `.click()` qua remote-dom — bảng `properties`
+của `HtmlInputElement` trong `remote-elements.ts` (generated) có `methods: Record<string, never>`,
+nghĩa là `.click()` **không** được forward, nên phải dùng hành vi native "label kích hoạt control
+nó bọc", không JS. Xác nhận bằng Playwright thật (`browser_click` + nhận diện `[File chooser]`),
+không phải suy đoán.
+
+Ai muốn hộp thoại chọn file kiểu khác vẫn có đường riêng: field `merchant.customSettingFiles` được
+host vẽ bằng picker của chính nó trong widget Fields.
+
+Upload phải nhắm vào một field FILES có thật — không có kho vô danh — nên app khai
+`merchant.customSettingFiles` (`src/fields/custom-setting-files-on-merchant.field.ts`) làm **thư
+mục**, còn `customSettings[key]` giữ **tham chiếu** `{fileId, label, extension, url}`. Giá trị của
+chính field đó không bao giờ được ghi; nó hiện ra như một dòng rỗng trong widget Fields của
+merchant, ẩn đi được bằng chính widget đó.
+
+`fieldMetadataId` là metadata theo từng workspace nên không nhúng vào bundle được: route
+`merchant-custom-settings` resolve nó bằng token của application, và **chỉ resolve khi schema thật
+sự có FILE** — mọi trang merchant đều gọi route này, thêm một round trip metadata cho schema không
+có FILE là phí.
+
+⚠️ **URL lưu trong `customSettings` có hạn.** Nó là link ký sẵn, token `exp` cách `iat` đúng 24 giờ.
+Phần bền là `fileId`; app nào tiêu thụ file (webhook của tool chẳng hạn) phải tải sớm, hoặc tự ký
+lại URL từ `fileId`, chứ đừng cất URL đó đi dùng sau. Bản fork cũng mang đúng tính chất này.
+
+Và lưu ý: trong schema production hiện tại, FILE **chỉ xuất hiện bên trong TOOL**. Tool chưa chạy
+được từ UI, nên đường FILE chỉ với tới được qua một field FILE ở cấp cao nhất — tới khi nút Run có
+mặt.
 
 ## 6. Kiểm tra sau deploy
 
@@ -502,6 +693,6 @@ Danh sách kiểm bằng tay, theo thứ tự:
 yarn twenty app:uninstall --remote prod
 ```
 
-**Xoá luôn 11 object và toàn bộ dữ liệu** — project, issue, comment, worklog, sprint, epic, cả
+**Xoá luôn 12 object và toàn bộ dữ liệu** — project, issue, comment, worklog, sprint, epic, cả
 `merchant` và `app`. Với production đang chạy thì đây là lệnh huỷ dữ liệu, không phải lệnh gỡ cài
 đặt. `merchant-email-campaigns` cũng hỏng theo vì field của nó nằm trên `merchant`. Export trước.

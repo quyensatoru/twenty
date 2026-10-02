@@ -26,6 +26,26 @@ export const ISSUE_SELECTION = {
   updatedAt: true,
 } as const;
 
+// Cross-project search renders a row, not a card, so it deliberately leaves
+// out the RICH_TEXT description: pulling it for fifty rows costs more than
+// everything else the result carries.
+export const ISSUE_SEARCH_SELECTION = {
+  id: true,
+  title: true,
+  issueKey: true,
+  issueType: true,
+  priority: true,
+  storyPoints: true,
+  dueDate: true,
+  labels: true,
+  statusId: true,
+  projectId: true,
+  sprintId: true,
+  assigneeId: true,
+  reporterId: true,
+  updatedAt: true,
+} as const;
+
 export const ISSUE_STATUS_SELECTION = {
   id: true,
   name: true,
@@ -86,6 +106,25 @@ export const WORKLOG_SELECTION = {
   issueId: true,
   memberId: true,
   createdAt: true,
+} as const;
+
+export const ISSUE_HISTORY_SELECTION = {
+  id: true,
+  issueId: true,
+  action: true,
+  fromStatusId: true,
+  toStatusId: true,
+  authorId: true,
+  createdAt: true,
+} as const;
+
+// The junction rows only: the board needs the issue -> merchant edges, and
+// the merchant records behind them are fetched once by id rather than per
+// issue.
+export const ISSUE_MERCHANT_SELECTION = {
+  id: true,
+  issueId: true,
+  merchantId: true,
 } as const;
 
 export const MERCHANT_SELECTION = {

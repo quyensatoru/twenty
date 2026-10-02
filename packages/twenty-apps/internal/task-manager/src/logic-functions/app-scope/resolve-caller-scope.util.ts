@@ -8,6 +8,8 @@ import { buildGrantsByAppId } from '../../utils/build-grants-by-app-id.util';
 
 type AppAccessNode = { appId?: string | null; permissions?: string[] | null };
 
+const APP_ACCESS_PAGE_SIZE = 200;
+
 // Reconstructs, per request, what the fork kept in the `appScopeGrants`
 // workspace cache: who the caller is, which apps they hold which permissions
 // on, and whether they bypass app-scope entirely.
@@ -40,28 +42,67 @@ export const resolveCallerScope = async (
   }
 
   const permissionFlags = currentUser?.currentUserWorkspace?.permissionFlags;
-  const canBypassAppScope =
-    Array.isArray(permissionFlags) &&
-    permissionFlags.some((flag) =>
-      BYPASS_PERMISSION_FLAGS.includes(flag as (typeof BYPASS_PERMISSION_FLAGS)[number]),
-    );
-
-  const result = await client.query({
-    appAccesses: {
-      __args: { filter: { memberId: { eq: workspaceMemberId } }, first: 200 },
-      edges: { node: { id: true, appId: true, permissions: true } },
-    },
-  });
-
-  const connection = result?.appAccesses as
-    | Connection<AppAccessNode>
-    | undefined;
-
+  const callerPermissionFlags: string[] = Array.isArray(permissionFlags)
+    ? permissionFlags
+    : [];
+  const canBypassAppScope = callerPermissionFlags.some((flag) =>
+    BYPASS_PERMISSION_FLAGS.includes(
+      flag as (typeof BYPASS_PERMISSION_FLAGS)[number],
+    ),
+  );
   return {
     workspaceMemberId,
     grantsByAppId: buildGrantsByAppId(
-      (connection?.edges ?? []).map((edge) => edge.node),
+      await listMemberAppAccessRows({ client, workspaceMemberId }),
     ),
     canBypassAppScope,
   };
+};
+
+// Paged rather than capped: a member whose grants fall off the end of a single
+// page would silently lose the apps that were cut, which reads as a revoked
+// grant and has no symptom to chase.
+const listMemberAppAccessRows = async ({
+  client,
+  workspaceMemberId,
+}: {
+  client: ApiClient;
+  workspaceMemberId: string;
+}): Promise<AppAccessNode[]> => {
+  const rows: AppAccessNode[] = [];
+  let after: string | undefined;
+
+  for (;;) {
+    const result = await client.query({
+      appAccesses: {
+        __args: {
+          filter: { memberId: { eq: workspaceMemberId } },
+          first: APP_ACCESS_PAGE_SIZE,
+          ...(after === undefined ? {} : { after }),
+        },
+        edges: { cursor: true, node: { id: true, appId: true, permissions: true } },
+      },
+    });
+
+    const connection = result?.appAccesses as
+      | (Connection<AppAccessNode> & {
+          edges?: { cursor?: string; node: AppAccessNode }[];
+        })
+      | undefined;
+    const edges = connection?.edges ?? [];
+
+    for (const edge of edges) {
+      rows.push(edge.node);
+    }
+
+    if (edges.length < APP_ACCESS_PAGE_SIZE) {
+      return rows;
+    }
+
+    after = edges[edges.length - 1]?.cursor;
+
+    if (after === undefined) {
+      return rows;
+    }
+  }
 };

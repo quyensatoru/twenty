@@ -2,14 +2,21 @@
 // fallbacks only matter when a page renders outside a Twenty host.
 export const TASK_TOKENS = {
   fontFamily: 'var(--t-font-family, Inter, sans-serif)',
+  // The host's own scale, read rather than reproduced: it is expressed in rem
+  // against a 13px root, so any literal px or rem written here lands somewhere
+  // else. 0.92rem is what `sm` resolves to today.
+  fontSizeSmall: 'var(--t-font-size-sm, 0.92rem)',
   textPrimary: 'var(--t-font-color-primary, #333333)',
   textSecondary: 'var(--t-font-color-secondary, #666666)',
   textTertiary: 'var(--t-font-color-tertiary, #999999)',
+  textLight: 'var(--t-font-color-light, #b3b3b3)',
   textDanger: 'var(--t-font-color-danger, #d92d20)',
   background: 'var(--t-background-primary, #ffffff)',
   backgroundSecondary: 'var(--t-background-secondary, #fcfcfc)',
   backgroundTertiary: 'var(--t-background-tertiary, #f1f1f1)',
   backgroundHover: 'var(--t-background-transparent-light, rgba(0,0,0,0.04))',
+  backgroundTransparentLight:
+    'var(--t-background-transparent-light, rgba(0,0,0,0.04))',
   backgroundTransparentLighter:
     'var(--t-background-transparent-lighter, rgba(0,0,0,0.02))',
   border: 'var(--t-border-color-medium, #ebebeb)',
@@ -20,8 +27,15 @@ export const TASK_TOKENS = {
   accentHover: 'var(--t-accent-accent10, #1450c7)',
   red: 'var(--t-color-red, #dc2626)',
   radius: 'var(--t-border-radius-md, 8px)',
-  radiusSmall: 'var(--t-border-radius-sm, 4px)',
+  radiusSmall: 'var(--t-border-radius-sm, 8px)',
+  // 4px. `sm` is 8 here, which is the dropdown card's radius, not a chip's.
+  radiusExtraSmall: 'var(--t-border-radius-xs, 4px)',
   shadowStrong: 'var(--t-box-shadow-strong, 0 2px 8px rgba(0,0,0,0.16))',
+  shadowLight: 'var(--t-box-shadow-light, 0 2px 4px rgba(0,0,0,0.04))',
+  // The checkbox the host draws inside a multi-select: a bordered square that
+  // fills with the accent and shows a white tick when it is on.
+  borderInverted: 'var(--t-border-color-inverted, #333333)',
+  textInverted: 'var(--t-font-color-inverted, #ffffff)',
 } as const;
 
 // Maps the option colours the objects declare onto readable foreground and

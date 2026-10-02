@@ -4,6 +4,7 @@ import { EPIC_SELECTION } from '../constants/record-selections';
 import { UPDATE_EPIC_ROUTE_PATH } from '../constants/route-paths';
 import { UPDATE_EPIC_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { assertRelationTargetAppScope } from './app-scope/assert-relation-target-app-scope.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
@@ -37,6 +38,14 @@ const handler = async (event: RoutePayload<UpdateEpicBody>) =>
         scope,
         objectNameSingular: 'epic',
         foreignKeyValue: projectId,
+      });
+
+      // Reparenting can move the record between apps, and the predicate
+      // reads the mirror, not the chain.
+      data.appId = await resolveEffectiveAppId({
+        client,
+        objectNameSingular: 'epic',
+        immediateForeignKeyValue: projectId,
       });
     }
 

@@ -1,6 +1,11 @@
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { t, useRecordId } from 'twenty-sdk/front-component';
+import {
+  getApplicationVariable,
+  t,
+  useFrontComponentExecutionContext,
+  useRecordId,
+} from 'twenty-sdk/front-component';
 
 import {
   CREATE_ISSUE_COMMENT_ROUTE_PATH,
@@ -10,17 +15,52 @@ import {
   UPDATE_ISSUE_COMMENT_ROUTE_PATH,
   UPDATE_WORKLOG_ROUTE_PATH,
 } from '../constants/route-paths';
+import { RECORD_PAGE_BASE_URL_VARIABLE } from '../constants/application-variables';
 import { ISSUE_ACTIVITY_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
+import { parseActivityAnchor } from './utils/parse-activity-anchor.util';
 import { IssueCommentList } from './components/issue-comment-list';
+import { IssueHistoryList } from './components/issue-history-list';
 import { IssueWorklogList } from './components/issue-worklog-list';
 import { TaskMessage } from './components/task-message';
+import { TaskSkeletonBlock } from './components/task-skeleton-block';
+import { TaskStatusLine } from './components/task-status-line';
 import { TaskTabs } from './components/task-tabs';
-import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
 import { type MemberRow, useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
+
+// Roughly what the loaded panel puts in the same places, so the fetch landing
+// swaps content rather than resizing the column.
+const TAB_BAR_HEIGHT = 34;
+const COMPOSER_SKELETON_HEIGHT = 40;
+const CARD_SKELETON_HEIGHT = 64;
+
+// The panel scrolls inside a fixed grid row, so the scroll container is this
+// element and everything pinned inside it pins against this box. The top
+// padding lives on the sticky header, so nothing shows above the header as
+// the list slides under it.
+//
+// No side padding of its own: the widget card already insets its content by
+// --widget-card-padding-inline, and a second inset here is what put this
+// panel's left edge 16px inside the description panel's above it.
+const ActivityFrame = ({ children }: { children: ReactNode }) => (
+  <main
+    style={{
+      background: TASK_TOKENS.background,
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: TASK_TOKENS.fontFamily,
+      height: '100%',
+      overflowY: 'auto',
+      paddingBottom: 16,
+      width: '100%',
+    }}
+  >
+    {children}
+  </main>
+);
 
 // Comments and worklogs of the issue this record page is showing. Deliberately
 // NOT a RECORD_TABLE widget: a host widget reads and writes with the viewer's
@@ -30,19 +70,44 @@ import { readErrorText } from './utils/read-error-text.util';
 // rule applied, neither of which a direct record write would trigger.
 const IssueActivity = () => {
   const issueId = useRecordId();
+  // Pinned to the published SDK, whose context type predates this field. The
+  // host sends it (useFrontComponentExecutionContext in twenty-front); drop the
+  // cast once the app moves to an SDK that declares `locationHash`.
+  const locationHash = useFrontComponentExecutionContext(
+    (context) => (context as { locationHash?: string }).locationHash ?? '',
+  );
+  const anchor = parseActivityAnchor(locationHash);
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   // The fork put comments and worklogs behind two tabs rather than stacking
-  // them; keeping that split is what makes the panel read the same.
-  const [activityTab, setActivityTab] = useState<'comments' | 'worklogs'>(
-    'comments',
-  );
+  // them; keeping that split is what makes the panel read the same. History
+  // joins them as the third tab: the triggers write it, nobody edits it.
+  //
+  // A deep link decides the opening tab, so a link to a worklog does not land
+  // on the comments it is not about. It is the INITIAL value only: the reader
+  // keeps whatever they switch to afterwards, and the hash does not change
+  // under them while they read.
+  const [activityTab, setActivityTab] = useState<
+    'comments' | 'worklogs' | 'history'
+  >(anchor?.kind === 'worklog' ? 'worklogs' : 'comments');
 
   const membersById = useMemo(
     () => new Map<string, MemberRow>(data.members.map((m) => [m.id, m])),
     [data.members],
   );
+
+  const statusNameById = useMemo(() => {
+    const names = new Map<string, string>();
+
+    for (const status of data.issueStatuses) {
+      if (typeof status.name === 'string') {
+        names.set(status.id, status.name);
+      }
+    }
+
+    return names;
+  }, [data.issueStatuses]);
 
   const run = async (action: () => Promise<unknown>) => {
     setIsBusy(true);
@@ -62,85 +127,94 @@ const IssueActivity = () => {
     return <TaskMessage text={t('No issue selected.')} />;
   }
 
-  if (isLoading) {
-    return <TaskMessage text={t('Loading…')} />;
-  }
-
-  if (loadError !== null) {
-    return <TaskMessage text={loadError} tone="danger" />;
+  if (isLoading && data.issue === null) {
+    return (
+      <ActivityFrame>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            paddingTop: 4,
+          }}
+        >
+          <TaskSkeletonBlock height={TAB_BAR_HEIGHT} width={200} />
+          <TaskSkeletonBlock height={COMPOSER_SKELETON_HEIGHT} />
+          <TaskSkeletonBlock height={CARD_SKELETON_HEIGHT} />
+          <TaskSkeletonBlock height={CARD_SKELETON_HEIGHT} />
+        </div>
+      </ActivityFrame>
+    );
   }
 
   if (data.issue === null) {
-    return <TaskMessage text={t('This issue is not available to you.')} />;
+    return (
+      <TaskMessage
+        text={loadError ?? t('This issue is not available to you.')}
+        tone={loadError === null ? 'neutral' : 'danger'}
+      />
+    );
   }
 
   return (
-    <main
-      style={{
-        background: TASK_TOKENS.background,
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: TASK_TOKENS.fontFamily,
-        gap: 20,
-        height: '100%',
-        overflowY: 'auto',
-        padding: 16,
-        width: '100%',
-      }}
-    >
-      {actionError !== null && (
-        <span style={{ color: TASK_TOKENS.textDanger, fontSize: 12 }}>
-          {actionError}
-        </span>
-      )}
+    <ActivityFrame>
+      {/* Pinned, so the tabs and whatever went wrong stay reachable however
+          far down a long thread the reader is, and so a message appearing
+          never pushes the list they are reading. */}
+      <div
+        style={{
+          background: TASK_TOKENS.background,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          paddingBottom: 16,
+          paddingTop: 4,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+        }}
+      >
+        <TaskTabs
+          value={activityTab}
+          onChange={setActivityTab}
+          tabs={[
+            {
+              value: 'comments',
+              label: t('Comments'),
+              count: data.issueComments.length,
+            },
+            {
+              value: 'worklogs',
+              label: t('Worklogs'),
+              count: data.worklogs.length,
+            },
+            {
+              value: 'history',
+              label: t('History'),
+            },
+          ]}
+        />
 
-      {data.merchants.length > 0 && (
-        <section style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          <span
-            style={{
-              color: TASK_TOKENS.textTertiary,
-              fontSize: 12,
-              marginRight: 4,
-            }}
-          >
-            {t('Merchants')}
-          </span>
-          {data.merchants.map((merchant) => (
-            <TaskTag key={merchant.id} color="blue">
-              {merchant.name ?? merchant.id}
-            </TaskTag>
-          ))}
-        </section>
-      )}
-
-      <TaskTabs
-        value={activityTab}
-        onChange={setActivityTab}
-        tabs={[
-          {
-            value: 'comments',
-            label: t('Comments'),
-            count: data.issueComments.length,
-          },
-          {
-            value: 'worklogs',
-            label: t('Worklogs'),
-            count: data.worklogs.length,
-          },
-        ]}
-      />
+        <TaskStatusLine text={actionError ?? loadError} tone="danger" />
+      </div>
 
       {activityTab === 'comments' ? (
       <IssueCommentList
+        issueId={issueId}
+        baseUrl={getApplicationVariable(RECORD_PAGE_BASE_URL_VARIABLE)}
         comments={data.issueComments}
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}
+        highlightedCommentId={anchor?.kind === 'comment' ? anchor.id : null}
         isBusy={isBusy}
-        onCreate={(markdown) =>
+        onCreate={(input) =>
           void run(() =>
             postAppRoute(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
               issueId,
-              bodyV2: buildRichTextValue(markdown),
+              bodyV2: buildRichTextValue(input.markdown),
+              ...(input.parentCommentId === undefined
+                ? {}
+                : { parentCommentId: input.parentCommentId }),
             }),
           )
         }
@@ -160,11 +234,14 @@ const IssueActivity = () => {
           )
         }
       />
-      ) : (
+      ) : activityTab === 'worklogs' ? (
       <IssueWorklogList
+        issueId={issueId}
+        baseUrl={getApplicationVariable(RECORD_PAGE_BASE_URL_VARIABLE)}
         worklogs={data.worklogs}
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}
+        highlightedWorklogId={anchor?.kind === 'worklog' ? anchor.id : null}
         totalMinutes={data.issue.timeSpentMinutes}
         isBusy={isBusy}
         onCreate={(input) =>
@@ -193,8 +270,14 @@ const IssueActivity = () => {
           )
         }
       />
+      ) : (
+      <IssueHistoryList
+        histories={data.issueHistories}
+        membersById={membersById}
+        statusNameById={statusNameById}
+      />
       )}
-    </main>
+    </ActivityFrame>
   );
 };
 
@@ -202,6 +285,6 @@ export default defineFrontComponent({
   universalIdentifier: ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
   name: 'issue-activity',
   description:
-    "Comments and worklogs of an issue, written through the app's scoped routes.",
+    "Comments, worklogs and system history of an issue, written through the app's scoped routes.",
   component: IssueActivity,
 });

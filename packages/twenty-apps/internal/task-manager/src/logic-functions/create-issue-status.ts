@@ -5,6 +5,7 @@ import { CREATE_ISSUE_STATUS_ROUTE_PATH } from '../constants/route-paths';
 import { CREATE_ISSUE_STATUS_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -30,6 +31,15 @@ const handler = async (event: RoutePayload<CreateIssueStatusBody>) =>
       foreignKeyValue: projectId,
     });
 
+    // Written in the same mutation that creates the row: a row-level
+    // predicate reads this mirror, so a row that lands without it is
+    // invisible to every scoped member until a backfill runs.
+    const appId = await resolveEffectiveAppId({
+      client,
+      objectNameSingular: 'issueStatus',
+      immediateForeignKeyValue: projectId,
+    });
+
     const existing = await client.query({
       issueStatuses: {
         __args: { filter: { projectId: { eq: projectId } }, first: 200 },
@@ -51,6 +61,7 @@ const handler = async (event: RoutePayload<CreateIssueStatusBody>) =>
           data: {
             projectId,
             name,
+            appId,
             position: nextPosition + 1,
             ...(event.body?.color === undefined
               ? {}

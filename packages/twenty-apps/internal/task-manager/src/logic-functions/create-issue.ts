@@ -5,6 +5,7 @@ import { CREATE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
 import { CREATE_ISSUE_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
 import { assertRelationTargetAppScope } from './app-scope/assert-relation-target-app-scope.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.util';
 import { createIssueWithReservedKey } from './utils/create-issue-with-reserved-key.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
@@ -47,6 +48,15 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
     if (data.reporterId === undefined && scope.workspaceMemberId !== null) {
       data.reporterId = scope.workspaceMemberId;
     }
+
+    // The app-scope mirror has to be set in the same write that creates the
+    // row: a row-level predicate reads `issue.app`, so an issue that lands
+    // without it is invisible to every scoped member until a backfill runs.
+    data.appId = await resolveEffectiveAppId({
+      client,
+      objectNameSingular: 'issue',
+      immediateForeignKeyValue: projectId,
+    });
 
     const issue = await createIssueWithReservedKey({
       client,

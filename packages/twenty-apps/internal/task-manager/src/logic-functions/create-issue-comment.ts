@@ -4,6 +4,7 @@ import { ISSUE_COMMENT_SELECTION } from '../constants/record-selections';
 import { CREATE_ISSUE_COMMENT_ROUTE_PATH } from '../constants/route-paths';
 import { CREATE_ISSUE_COMMENT_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -26,11 +27,21 @@ const handler = async (event: RoutePayload<CreateIssueCommentBody>) =>
       foreignKeyValue: issueId,
     });
 
+    // Written in the same mutation that creates the row: a row-level
+    // predicate reads this mirror, so a row that lands without it is
+    // invisible to every scoped member until a backfill runs.
+    const appId = await resolveEffectiveAppId({
+      client,
+      objectNameSingular: 'issueComment',
+      immediateForeignKeyValue: issueId,
+    });
+
     const result = await client.mutation({
       createIssueComment: {
         __args: {
           data: {
             issueId,
+            appId,
             ...(event.body?.bodyV2 === undefined
               ? {}
               : { bodyV2: event.body.bodyV2 }),

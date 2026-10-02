@@ -4,6 +4,7 @@ import { WORKLOG_SELECTION } from '../constants/record-selections';
 import { CREATE_WORKLOG_ROUTE_PATH } from '../constants/route-paths';
 import { CREATE_WORKLOG_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { recomputeIssueTimeTracking } from './utils/recompute-issue-time-tracking.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -26,6 +27,15 @@ const handler = async (event: RoutePayload<CreateWorklogBody>) =>
       scope,
       objectNameSingular: 'worklog',
       foreignKeyValue: issueId,
+    });
+
+    // Written in the same mutation that creates the row: a row-level
+    // predicate reads this mirror, so a row that lands without it is
+    // invisible to every scoped member until a backfill runs.
+    data.appId = await resolveEffectiveAppId({
+      client,
+      objectNameSingular: 'worklog',
+      immediateForeignKeyValue: issueId,
     });
 
     if (data.memberId === undefined && scope.workspaceMemberId !== null) {

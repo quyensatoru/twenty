@@ -6,6 +6,8 @@ import { UPDATE_ISSUE_COMMENT_LOGIC_FUNCTION_UID } from '../constants/universal-
 import { canActOnIssueComment } from '../utils/can-act-on-issue-comment.util';
 import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
+import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -25,12 +27,30 @@ const handler = async (event: RoutePayload<UpdateIssueCommentBody>) =>
     );
     const data = event.body?.data ?? {};
 
+    // Authorship outlives the grant that made the comment possible, so the
+    // comment the caller is editing has to be in scope on its own.
+    await assertRecordInScope({
+      client,
+      scope,
+      objectNameSingular: 'issueComment',
+      recordId: issueCommentId,
+      operation: 'write',
+    });
+
     if (typeof data.issueId === 'string') {
       await assertAppScopeWriteAccess({
         client,
         scope,
         objectNameSingular: 'issueComment',
         foreignKeyValue: data.issueId,
+      });
+
+      // Reparenting can move the record between apps, and the predicate
+      // reads the mirror, not the chain.
+      data.appId = await resolveEffectiveAppId({
+        client,
+        objectNameSingular: 'issueComment',
+        immediateForeignKeyValue: data.issueId,
       });
     }
 

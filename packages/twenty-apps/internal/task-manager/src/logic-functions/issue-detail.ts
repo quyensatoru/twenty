@@ -1,10 +1,13 @@
 import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 
 import {
+  EPIC_SELECTION,
   ISSUE_COMMENT_SELECTION,
+  ISSUE_HISTORY_SELECTION,
   ISSUE_SELECTION,
   ISSUE_STATUS_SELECTION,
   MERCHANT_SELECTION,
+  SPRINT_SELECTION,
   WORKLOG_SELECTION,
 } from '../constants/record-selections';
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
@@ -81,6 +84,43 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
           : Promise.resolve([]),
       ]);
 
+    // Options for the relation pickers the app draws itself, narrowed to the
+    // issue's own project. The host's FIELDS widget cannot narrow them: it
+    // queries the target object with the viewer's token, so the row-level
+    // predicate trims them to the caller's apps and no further, and an app has
+    // no way to declare a filter on a relation field.
+    const [sprints, epics] =
+      typeof issue.projectId === 'string'
+        ? await Promise.all([
+            listScopedRecords({
+              client,
+              pluralName: 'sprints',
+              filter: { projectId: { eq: issue.projectId } },
+              selection: SPRINT_SELECTION,
+              orderBy: [{ position: 'AscNullsLast' }],
+            }),
+            listScopedRecords({
+              client,
+              pluralName: 'epics',
+              filter: { projectId: { eq: issue.projectId } },
+              selection: EPIC_SELECTION,
+              orderBy: [{ position: 'AscNullsLast' }],
+            }),
+          ])
+        : [[], []];
+
+    // Oldest first: the feed reads top-down, creation then each change.
+    const issueHistories = await listScopedRecords<{
+      id: string;
+      authorId?: string | null;
+    }>({
+      client,
+      pluralName: 'issueHistories',
+      filter: { issueId: { eq: issueId } },
+      selection: ISSUE_HISTORY_SELECTION,
+      orderBy: [{ createdAt: 'AscNullsLast' }],
+    });
+
     const merchantIds = issueMerchantLinks.map((link) => link.merchantId);
     const merchants =
       merchantIds.length === 0
@@ -93,13 +133,15 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
           });
 
     // Names for every member the panel has to label: comment authors, worklog
-    // owners, and the issue's own assignee and reporter. Resolved here so the
-    // front component needs one round trip, not one per row.
+    // owners, history actors, and the issue's own assignee and reporter.
+    // Resolved here so the front component needs one round trip, not one per
+    // row.
     const memberIds = [
       ...new Set(
         [
           ...issueComments.map((comment) => comment.authorId),
           ...worklogs.map((worklog) => worklog.memberId),
+          ...issueHistories.map((history) => history.authorId),
           issue.assigneeId,
           issue.reporterId,
         ].filter((memberId): memberId is string => typeof memberId === 'string'),
@@ -117,6 +159,9 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
               id: true,
               name: { firstName: true, lastName: true },
               avatarUrl: true,
+              // What the feed's author hover card shows under the name: two
+              // people with the same first name are the same 24px circle.
+              userEmail: true,
             },
           });
 
@@ -124,8 +169,11 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
       issue,
       issueComments,
       worklogs,
+      issueHistories,
       merchants,
       issueStatuses,
+      sprints,
+      epics,
       members,
       // Who is asking. The panel decides which edit and delete controls to
       // offer from this; the routes re-check the same rule themselves, so a
@@ -138,7 +186,7 @@ export default defineLogicFunction({
   universalIdentifier: ISSUE_DETAIL_LOGIC_FUNCTION_UID,
   name: 'issue-detail',
   description:
-    'Route: one issue with its comments, worklogs, merchant links and project statuses.',
+    'Route: one issue with its comments, worklogs, history, merchant links and project statuses.',
   timeoutSeconds: 60,
   httpRouteTriggerSettings: {
     path: ISSUE_DETAIL_ROUTE_PATH,

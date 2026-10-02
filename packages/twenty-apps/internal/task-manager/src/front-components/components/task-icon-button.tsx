@@ -8,6 +8,10 @@ type TaskIconButtonProps = {
   children: ReactNode;
   isDisabled?: boolean;
   isDanger?: boolean;
+  // The host's inline-cell edit button is `elevated`: a white 24px button with
+  // a border and a small shadow, so it reads as sitting over the value rather
+  // than beside it. Its other icon buttons stay flat.
+  isElevated?: boolean;
 };
 
 // Styled after twenty-ui's LightIconButton.
@@ -17,6 +21,7 @@ export const TaskIconButton = ({
   children,
   isDisabled = false,
   isDanger = false,
+  isElevated = false,
 }: TaskIconButtonProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -31,10 +36,16 @@ export const TaskIconButton = ({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         alignItems: 'center',
-        background:
-          isHovered && !isDisabled ? TASK_TOKENS.backgroundHover : 'transparent',
-        border: 'none',
-        borderRadius: TASK_TOKENS.radiusSmall,
+        background: isElevated
+          ? TASK_TOKENS.background
+          : isHovered && !isDisabled
+            ? TASK_TOKENS.backgroundHover
+            : 'transparent',
+        border: isElevated ? `1px solid ${TASK_TOKENS.borderLight}` : 'none',
+        borderRadius: isElevated
+          ? TASK_TOKENS.radius
+          : TASK_TOKENS.radiusSmall,
+        boxShadow: isElevated ? TASK_TOKENS.shadowLight : 'none',
         color: isDanger ? TASK_TOKENS.red : TASK_TOKENS.textTertiary,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         display: 'inline-flex',

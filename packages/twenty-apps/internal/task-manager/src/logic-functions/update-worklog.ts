@@ -4,6 +4,7 @@ import { WORKLOG_SELECTION } from '../constants/record-selections';
 import { UPDATE_WORKLOG_ROUTE_PATH } from '../constants/route-paths';
 import { UPDATE_WORKLOG_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { recomputeIssueTimeTracking } from './utils/recompute-issue-time-tracking.util';
@@ -37,6 +38,14 @@ const handler = async (event: RoutePayload<UpdateWorklogBody>) =>
         scope,
         objectNameSingular: 'worklog',
         foreignKeyValue: data.issueId,
+      });
+
+      // Reparenting can move the record between apps, and the predicate
+      // reads the mirror, not the chain.
+      data.appId = await resolveEffectiveAppId({
+        client,
+        objectNameSingular: 'worklog',
+        immediateForeignKeyValue: data.issueId,
       });
     }
 
