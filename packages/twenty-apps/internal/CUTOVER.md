@@ -49,12 +49,26 @@ không cần sửa.
 
 ## Thứ tự cài đặt
 
-`merchant-email-campaigns` đang chạy production và có field riêng trên `merchant`. App `task-manager`
-sở hữu chính object `merchant`. Vì vậy:
+`merchant-email-campaigns` đang chạy production và có field riêng trên `merchant`. Object `merchant`
+đổi chủ **hai lần**: fork → `task-manager` (cutover này), rồi `task-manager` → `customer-support`
+(một migration riêng, xem `customer-support/MIGRATION.md`) — vì vậy:
 
-1. `task-manager` cài trước (sở hữu `app`, `appAccess`, `merchant`, và các object task).
-2. `shift-management` độc lập, cài lúc nào cũng được.
-3. `merchant-email-campaigns` cài lại sau cùng để field của nó gắn đúng vào `merchant` đã đổi chủ.
+1. `task-manager` cài trước (sở hữu `app`, `appAccess`, `merchant`, và các object task, ngay sau
+   Bước 5 của chính file này).
+2. **`customer-support` chạy ngay sau đó**, trước khi đụng tới `merchant-email-campaigns` —
+   `customer-support/MIGRATION.md` dời `merchant` từ `task-manager` sang app này (object + 2 field
+   + view + nav item + 8 UID dẫn xuất, không đổi tên bảng). Có script SQL + rewrite riêng của nó,
+   không dùng script 2b ở trên (namespace nguồn là Task Manager, không phải twenty-standard).
+   `twenty plan` của `task-manager` sau bước này phải ra **0 to destroy** (không phải tạo field
+   `merchant` nữa, vì nó đã re-parent trước khi `task-manager` kịp tạo).
+3. `shift-management` độc lập, cài lúc nào cũng được — trước, giữa, hay sau hai bước trên đều
+   không ảnh hưởng.
+4. `merchant-email-campaigns` cài lại/áp dụng sau cùng để field của nó gắn đúng vào `_merchant` —
+   lúc này đã thuộc `customer-support`, không còn thuộc `task-manager` nữa.
+
+Chi tiết từng bước 2 nằm trong `customer-support/MIGRATION.md`, mục "Thứ tự chạy". File đó đã được
+diễn tập trọn vẹn trên DB dev (2026-09-29): `cache:flush` sau MỖI đợt SQL là bắt buộc, bỏ sẽ làm
+`task-manager` báo nhầm `drops the table` dù re-parent đã xong.
 
 ## Quy trình
 
@@ -206,7 +220,36 @@ chạy tiếp.
 cd packages/twenty-apps/internal/task-manager
 yarn install && yarn twenty plan --remote prod     # phải ra UPDATE/no-op, KHÔNG được có CREATE object
 yarn twenty apply --remote prod
+```
 
+**Chèn ngay bước dời `merchant` sang customer-support ở đây** — trước khi đụng tới
+merchant-email-campaigns. Đây là một migration riêng, SQL + rewrite UID của chính nó (không dùng
+lại script 2b ở trên), chạy trên server **đã** là `apps/zero-core` (khác với Bước 1–3, chạy trên
+server fork). Toàn bộ quy trình + đối chiếu nằm ở `customer-support/MIGRATION.md`, mục "Thứ tự
+chạy":
+
+```bash
+cd ../customer-support
+node scripts/run-sql.mjs scripts/01-create-application.sql
+node scripts/run-sql.mjs scripts/02-reparent-merchant.sql
+node scripts/03-rewrite-derived-identifiers.mjs --dry-run
+node scripts/03-rewrite-derived-identifiers.mjs --apply
+node scripts/run-sql.mjs scripts/04-reparent-merchant-presentation.sql
+
+# cache:flush bắt buộc sau MỖI đợt SQL ở trên, không chỉ một lần cuối — xem
+# customer-support/MIGRATION.md để biết vì sao bỏ qua làm plan báo nhầm
+# "drops the table" dù re-parent đã xong.
+cd ../../../twenty-server && node dist/command/command.js cache:flush && cd -
+
+cd ../twenty-apps/internal/task-manager
+yarn twenty plan --remote prod        # phải ra 0 to destroy
+cd ../customer-support
+yarn install && yarn twenty apply --remote prod
+```
+
+Rồi mới tiếp tục hai app còn lại:
+
+```bash
 cd ../shift-management
 yarn install && yarn twenty plan --remote prod
 yarn twenty apply --remote prod
