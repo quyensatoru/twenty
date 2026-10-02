@@ -1,5 +1,11 @@
 export { FrontComponentRenderer } from '@/host/components/FrontComponentRenderer';
 export { FrontComponentInputFocusContext } from '@/host/caret/contexts/FrontComponentInputFocusContext';
+export type {
+  FrontComponentHostImplementationPropsByTag,
+  FrontComponentHostImplementations,
+  FrontComponentHostImplementationTag,
+} from '@/host/component-implementations/types/FrontComponentHostImplementations';
+export type { FrontComponentRichTextEditorImplementationProps } from '@/host/component-implementations/types/FrontComponentRichTextEditorImplementationProps';
 export { type SetEditableFocused } from '@/host/caret/types/SetEditableFocused';
 export { componentRegistry } from '@/host/generated/host-component-registry';
 export { takeTransferredFile } from '@/host/events/utils/transferredFileStash';
@@ -159,4 +165,5 @@ export type { GeometryUpdateBatch } from '@/types/GeometryUpdateBatch';
 export type { HostToWorkerRenderContext } from '@/types/HostToWorkerRenderContext';
 export type { SdkClientUrls } from '@/types/SdkClientUrls';
 export type { PropertySchema } from '@/types/PropertySchema';
+export type { FrontComponentUploadResolution } from '@/types/FrontComponentUploadResolution';
 export type { WorkerExports } from '@/types/WorkerExports';

@@ -1,3 +1,5 @@
+import { FrontComponentHostImplementationsContext } from '@/host/component-implementations/contexts/FrontComponentHostImplementationsContext';
+import { type FrontComponentHostImplementations } from '@/host/component-implementations/types/FrontComponentHostImplementations';
 import { ROOT_CONTAINER_STYLE } from '@/host/constants/RootContainerStyle';
 import { FrontComponentGeometryTrackerContext } from '@/host/geometry/contexts/FrontComponentGeometryTrackerContext';
 import { createGeometryTracker } from '@/host/geometry/utils/createGeometryTracker';
@@ -30,6 +32,11 @@ import { FrontComponentErrorBox } from '@/host/components/FrontComponentErrorBox
 const fallbackComponentRegistry =
   createFallbackComponentRegistry(componentRegistry);
 
+// Stable identity so an embedder that injects nothing does not remount every
+// host component on each render of the renderer.
+const EMPTY_HOST_COMPONENT_IMPLEMENTATIONS: FrontComponentHostImplementations =
+  {};
+
 type FrontComponentRendererProps = {
   componentUrl: string;
   applicationAccessToken?: string;
@@ -42,6 +49,7 @@ type FrontComponentRendererProps = {
   executionContext: FrontComponentExecutionContext;
   frontComponentHostCommunicationApi: FrontComponentHostCommunicationApi;
   mediaSessionHost?: FrontComponentMediaSessionHost;
+  hostComponentImplementations?: FrontComponentHostImplementations;
   onError: (error?: Error) => void;
   colorScheme: 'light' | 'dark';
   loadingFallback?: ReactNode;
@@ -59,6 +67,7 @@ export const FrontComponentRenderer = ({
   executionContext,
   frontComponentHostCommunicationApi,
   mediaSessionHost,
+  hostComponentImplementations,
   onError,
   colorScheme,
   loadingFallback,
@@ -144,10 +153,17 @@ export const FrontComponentRenderer = ({
               resetKeys={[componentUrl]}
               fallbackRender={() => null}
             >
-              <RemoteRootRenderer
-                receiver={receiver}
-                components={fallbackComponentRegistry}
-              />
+              <FrontComponentHostImplementationsContext.Provider
+                value={
+                  hostComponentImplementations ??
+                  EMPTY_HOST_COMPONENT_IMPLEMENTATIONS
+                }
+              >
+                <RemoteRootRenderer
+                  receiver={receiver}
+                  components={fallbackComponentRegistry}
+                />
+              </FrontComponentHostImplementationsContext.Provider>
             </ErrorBoundary>
           </ThemeProvider>
         )}

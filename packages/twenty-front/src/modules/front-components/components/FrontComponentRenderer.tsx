@@ -1,6 +1,7 @@
 import { FrontComponentApplicationTokenPairEffect } from '@/front-components/components/FrontComponentApplicationTokenPairEffect';
 import { FrontComponentLoadErrorToastEffect } from '@/front-components/components/FrontComponentLoadErrorToastEffect';
 import { FrontComponentRendererProvider } from '@/front-components/components/FrontComponentRendererProvider';
+import { FRONT_COMPONENT_HOST_COMPONENT_IMPLEMENTATIONS } from '@/front-components/host-components/constants/FrontComponentHostComponentImplementations';
 import { useFrontComponentExecutionContext } from '@/front-components/hooks/useFrontComponentExecutionContext';
 import { useOnApplicationSdkClientChecksumsUpdated } from '@/front-components/hooks/useOnApplicationSdkClientChecksumsUpdated';
 import { useOnFrontComponentUpdated } from '@/front-components/hooks/useOnFrontComponentUpdated';
@@ -258,6 +259,9 @@ const FrontComponentRendererContent = ({
               frontComponentHostCommunicationApi
             }
             mediaSessionHost={mediaSessionHost}
+            hostComponentImplementations={
+              FRONT_COMPONENT_HOST_COMPONENT_IMPLEMENTATIONS
+            }
             applicationVariables={initialApplicationVariables}
             storageNamespace={storageNamespace}
             onError={handleError}

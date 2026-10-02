@@ -120,6 +120,8 @@ import {
   HtmlMarkerElement,
   HtmlTitleElement,
   RemoteStyleElement,
+  TwentyRichTextEditorElement,
+  TwentyOverlayElement,
 } from './remote-elements';
 
 export const HtmlDiv = createRemoteComponent('html-div', HtmlDivElement, {
@@ -6053,4 +6055,24 @@ export const HtmlTitle = createRemoteComponent('html-title', HtmlTitleElement, {
 export const RemoteStyle = createRemoteComponent(
   'remote-style',
   RemoteStyleElement,
+);
+export const TwentyRichTextEditor = createRemoteComponent(
+  'twenty-rich-text-editor',
+  TwentyRichTextEditorElement,
+  {
+    eventProps: {
+      onChange: { event: 'change' },
+      onBlur: { event: 'blur' },
+      onUpload: { event: 'upload' },
+    },
+  },
+);
+export const TwentyOverlay = createRemoteComponent(
+  'twenty-overlay',
+  TwentyOverlayElement,
+  {
+    eventProps: {
+      onClose: { event: 'close' },
+    },
+  },
 );

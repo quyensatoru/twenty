@@ -14,14 +14,15 @@ import {
 import { type ComponentSchema, type PropertySchema } from './schemas';
 import { schemaTypeToConstructor } from './utils';
 
-const schemaTypeToTs = (type: PropertySchema['type']): string => type;
+const schemaTypeToTs = (schema: PropertySchema): string =>
+  schema.type === 'array' ? `(${schema.itemType})[]` : schema.type;
 
 const generatePropertyEntries = (
   properties: Record<string, PropertySchema>,
 ): string[] =>
   Object.entries(properties).map(([name, schema]) => {
     const optional = schema.optional ? '?' : '';
-    return `'${name}'${optional}: ${schemaTypeToTs(schema.type)}`;
+    return `'${name}'${optional}: ${schemaTypeToTs(schema)}`;
   });
 
 const writePropertyEntries = (

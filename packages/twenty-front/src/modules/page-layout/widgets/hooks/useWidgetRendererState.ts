@@ -16,7 +16,10 @@ import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/use
 import { useSetAtomComponentFamilyState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentFamilyState';
 import { type MouseEvent } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { WidgetType } from '~/generated-metadata/graphql';
+import {
+  PageLayoutTabLayoutMode,
+  WidgetType,
+} from '~/generated-metadata/graphql';
 
 export const useWidgetRendererState = (widget: PageLayoutWidget) => {
   const { deletePageLayoutWidget } = useDeletePageLayoutWidget();
@@ -44,7 +47,7 @@ export const useWidgetRendererState = (widget: PageLayoutWidget) => {
 
   const { isSideColumnContext } = useIsSideColumnContext();
 
-  const { presentation } = usePageLayoutContentContext();
+  const { presentation, layoutMode } = usePageLayoutContentContext();
 
   const { currentPageLayout } = useCurrentPageLayoutOrThrow();
 
@@ -56,8 +59,17 @@ export const useWidgetRendererState = (widget: PageLayoutWidget) => {
     widget.type === WidgetType.WORKFLOW ||
     widget.type === WidgetType.WORKFLOW_VERSION ||
     widget.type === WidgetType.WORKFLOW_RUN;
+  // A widget with a blank title names no section, so the bar kept for that
+  // name is an empty strip between it and the widget above — which is how two
+  // widgets meant to read as one list end up looking like two. Grid only: a
+  // record form's fields carry blank titles by design and keep their header.
+  // Edit mode keeps it too, since the grip and the remove control live there.
+  const hasBlankTitle = widget.title.trim() === '';
+
   const hideHeaderInViewMode =
-    isHeaderHiddenInViewMode && !isPageLayoutInEditMode;
+    (isHeaderHiddenInViewMode ||
+      (hasBlankTitle && layoutMode === PageLayoutTabLayoutMode.GRID)) &&
+    !isPageLayoutInEditMode;
 
   const hasHeaderAction = isDefined(getWidgetHeaderActionDefinition(widget));
 

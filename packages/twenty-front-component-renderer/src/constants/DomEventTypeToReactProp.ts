@@ -71,4 +71,6 @@ export const DOM_EVENT_TYPE_TO_REACT_PROP: Record<string, string> = {
   stalled: 'onStalled',
   suspend: 'onSuspend',
   emptied: 'onEmptied',
+  upload: 'onUpload',
+  close: 'onClose',
 };

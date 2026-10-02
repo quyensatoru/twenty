@@ -22,6 +22,7 @@ export { useToolCall } from './hooks/useToolCall';
 export { useSelectedRecordIds } from './hooks/useSelectedRecordIds';
 export { useSelectedObjectMetadata } from './hooks/useSelectedObjectMetadata';
 export { useTimelineActivityId } from './hooks/useTimelineActivityId';
+export { useLocationHash } from './hooks/useLocationHash';
 export { useUserId } from './hooks/useUserId';
 export { msg } from './translations/msg';
 export { t } from './translations/t';
@@ -29,6 +30,13 @@ export type {
   MessageDescriptor,
   TranslationValues,
 } from './translations/message';
+export type {
+  FrontComponentRichTextEditorAttributes,
+  FrontComponentRichTextEditorChangeEvent,
+  FrontComponentRichTextEditorUploadEvent,
+  FrontComponentRichTextEditorUploadResolution,
+  FrontComponentTransferredFile,
+} from './types/FrontComponentHostElements';
 export type { FrontComponentExecutionContext } from './types/FrontComponentExecutionContext';
 export type { FrontComponentSelectedObjectMetadata } from './types/FrontComponentSelectedObjectMetadata';
 export type { FrontComponentToolCall } from './types/FrontComponentToolCall';

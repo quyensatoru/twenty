@@ -8,6 +8,7 @@ import {
   type PageLayoutBreakpoint,
 } from '@/page-layout/constants/PageLayoutBreakpoints';
 import { PAGE_LAYOUT_GRID_ITEM_DRAGGING_Z_INDEX } from '@/page-layout/constants/PageLayoutGridItemDraggingZIndex';
+import { PAGE_LAYOUT_GRID_ITEM_HOVERED_Z_INDEX } from '@/page-layout/constants/PageLayoutGridItemHoveredZIndex';
 import { PAGE_LAYOUT_GRID_ITEM_Z_INDEX } from '@/page-layout/constants/PageLayoutGridItemZIndex';
 import { PAGE_LAYOUT_GRID_MARGIN } from '@/page-layout/constants/PageLayoutGridMargin';
 import { PAGE_LAYOUT_GRID_ROW_HEIGHT } from '@/page-layout/constants/PageLayoutGridRowHeight';
@@ -78,6 +79,10 @@ const StyledGridContainer = styled.div`
 
   .react-grid-item {
     z-index: ${PAGE_LAYOUT_GRID_ITEM_Z_INDEX};
+  }
+
+  .react-grid-item:hover {
+    z-index: ${PAGE_LAYOUT_GRID_ITEM_HOVERED_Z_INDEX};
   }
 
   .react-grid-item.react-draggable-dragging {

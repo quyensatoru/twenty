@@ -4,6 +4,8 @@ import {
 } from '@remote-dom/react/host';
 import { createHtmlHostWrapper } from '@/host/elements/utils/createHtmlHostWrapper';
 import { RemoteStyleRenderer } from '@/host/components/RemoteStyleRenderer';
+import { TwentyRichTextEditorRenderer } from '@/host/components/TwentyRichTextEditorRenderer';
+import { TwentyOverlayRenderer } from '@/host/components/TwentyOverlayRenderer';
 type ComponentRegistryValue =
   | ReturnType<typeof createRemoteComponentRenderer>
   | typeof RemoteFragmentRenderer;
@@ -249,5 +251,10 @@ export const componentRegistry: Map<string, ComponentRegistryValue> = new Map([
   ],
   ['html-title', createRemoteComponentRenderer(createHtmlHostWrapper('title'))],
   ['remote-style', createRemoteComponentRenderer(RemoteStyleRenderer)],
+  [
+    'twenty-rich-text-editor',
+    createRemoteComponentRenderer(TwentyRichTextEditorRenderer),
+  ],
+  ['twenty-overlay', createRemoteComponentRenderer(TwentyOverlayRenderer)],
   ['remote-fragment', RemoteFragmentRenderer],
 ]);

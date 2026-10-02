@@ -1,3 +1,4 @@
+import { PageLayoutLocationHashScrollEffect } from '@/page-layout/components/PageLayoutLocationHashScrollEffect';
 import { PageLayoutTabsRenderer } from '@/page-layout/components/PageLayoutTabsRenderer';
 import { pageLayoutIsInitializedComponentState } from '@/page-layout/states/pageLayoutIsInitializedComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
@@ -11,5 +12,10 @@ export const PageLayoutRendererContent = () => {
     return null;
   }
 
-  return <PageLayoutTabsRenderer />;
+  return (
+    <>
+      <PageLayoutLocationHashScrollEffect />
+      <PageLayoutTabsRenderer />
+    </>
+  );
 };

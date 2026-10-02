@@ -2687,6 +2687,56 @@ export const RemoteStyleElement = createRemoteElement<
     styleKey: { type: String },
   },
 });
+
+export type TwentyRichTextEditorProperties = {
+  value?: string;
+  placeholder?: string;
+  isReadOnly?: boolean;
+  resolvedUploads?: { handle: string; url: string | null }[];
+};
+
+export const TwentyRichTextEditorElement = createRemoteElement<
+  TwentyRichTextEditorProperties,
+  Record<string, never>,
+  Record<string, never>,
+  {
+    change(event: RemoteEvent<SerializedEventData>): void;
+    blur(event: RemoteEvent<SerializedEventData>): void;
+    upload(event: RemoteEvent<SerializedEventData>): void;
+  }
+>({
+  properties: {
+    value: { type: String },
+    placeholder: { type: String },
+    isReadOnly: { type: Boolean },
+    resolvedUploads: { type: Array },
+  },
+  events: {
+    change: createSerializedEventConfig('change'),
+    blur: createSerializedEventConfig('blur'),
+    upload: createSerializedEventConfig('upload'),
+  },
+});
+
+export type TwentyOverlayProperties = {
+  offsetX?: number;
+  offsetY?: number;
+};
+
+export const TwentyOverlayElement = createRemoteElement<
+  TwentyOverlayProperties,
+  Record<string, never>,
+  Record<string, never>,
+  { close(event: RemoteEvent<SerializedEventData>): void }
+>({
+  properties: {
+    offsetX: { type: Number },
+    offsetY: { type: Number },
+  },
+  events: {
+    close: createSerializedEventConfig('close'),
+  },
+});
 customElements.define('html-div', HtmlDivElement);
 customElements.define('html-span', HtmlSpanElement);
 customElements.define('html-section', HtmlSectionElement);
@@ -2807,6 +2857,8 @@ customElements.define('html-foreignobject', HtmlForeignObjectElement);
 customElements.define('html-marker', HtmlMarkerElement);
 customElements.define('html-title', HtmlTitleElement);
 customElements.define('remote-style', RemoteStyleElement);
+customElements.define('twenty-rich-text-editor', TwentyRichTextEditorElement);
+customElements.define('twenty-overlay', TwentyOverlayElement);
 customElements.define('remote-root', RemoteRootElement);
 customElements.define('remote-fragment', RemoteFragmentElement);
 export { RemoteRootElement, RemoteFragmentElement };
@@ -2932,6 +2984,8 @@ declare global {
     'html-marker': InstanceType<typeof HtmlMarkerElement>;
     'html-title': InstanceType<typeof HtmlTitleElement>;
     'remote-style': InstanceType<typeof RemoteStyleElement>;
+    'twenty-rich-text-editor': InstanceType<typeof TwentyRichTextEditorElement>;
+    'twenty-overlay': InstanceType<typeof TwentyOverlayElement>;
     'remote-root': InstanceType<typeof RemoteRootElement>;
     'remote-fragment': InstanceType<typeof RemoteFragmentElement>;
   }

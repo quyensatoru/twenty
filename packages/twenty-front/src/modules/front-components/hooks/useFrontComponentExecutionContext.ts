@@ -7,6 +7,7 @@ import { type FrontComponentToolCall } from 'twenty-sdk/front-component';
 import { useLingui } from '@lingui/react/macro';
 import { isNonEmptyString } from '@sniptt/guards';
 import { useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   buildFrontComponentStorageNamespace,
   clearFrontComponentStorage,
@@ -141,6 +142,7 @@ export const useFrontComponentExecutionContext = ({
   storageNamespace?: string;
 } => {
   const currentUser = useAtomStateValue(currentUserState);
+  const location = useLocation();
   const navigateApp = useNavigateApp();
   const store = useStore();
   const { requestApplicationAccessTokenRefresh } =
@@ -444,6 +446,11 @@ export const useFrontComponentExecutionContext = ({
     timelineActivityId: timelineActivityId ?? null,
     toolCall,
     colorScheme,
+    // Without the leading '#', so a guest compares it against its own
+    // identifiers rather than reproducing the separator. A front component has
+    // no `location` of its own — its worker runs on an opaque origin — so a
+    // deep link into something it renders can only arrive this way.
+    locationHash: decodeURIComponent(location.hash.replace(/^#/, '')),
     // i18n.locale is a Lingui string; the host is always configured with the
     // APP_LOCALES set, so it is a valid AppLocale.
     locale: i18n.locale as AppLocale,

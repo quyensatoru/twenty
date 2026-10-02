@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { ALLOWED_HTML_ELEMENTS } from '../../src/constants/AllowedHtmlElements';
 import { COMMON_HTML_EVENTS } from '../../src/constants/CommonHtmlEvents';
 import { HTML_COMMON_PROPERTIES } from '../../src/constants/HtmlCommonProperties';
+import { UTILITY_COMPONENT_ELEMENTS } from '../../src/constants/UtilityComponentElements';
 
 import {
   type ComponentSchema,
@@ -15,6 +16,7 @@ import {
   generateRemoteElements,
   HtmlElementConfigArrayZ,
   OUTPUT_FILES,
+  UtilityComponentElementConfigArrayZ,
 } from './generators';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -49,19 +51,27 @@ const getHtmlElementSchemas = (): ComponentSchema[] => {
   }));
 };
 
-const getUtilityComponentSchemas = (): ComponentSchema[] => [
-  {
-    name: 'RemoteStyle',
-    customElementName: 'remote-style',
-    properties: {
-      cssText: { type: 'string', optional: true },
-      styleKey: { type: 'string', optional: true },
-    },
-    events: [],
-    customHostRenderer: 'RemoteStyleRenderer',
-    customHostRendererPath: '@/host/components/RemoteStyleRenderer',
-  },
-];
+const getUtilityComponentSchemas = (): ComponentSchema[] => {
+  const result = UtilityComponentElementConfigArrayZ.safeParse(
+    UTILITY_COMPONENT_ELEMENTS,
+  );
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
+      .join('\n');
+    throw new Error(`Invalid utility component configuration:\n${details}`);
+  }
+
+  return result.data.map((element) => ({
+    name: element.name,
+    customElementName: element.tag,
+    properties: element.properties,
+    events: element.events,
+    customHostRenderer: element.hostRendererName,
+    customHostRendererPath: element.hostRendererPath,
+  }));
+};
 
 const writeGeneratedFile = (
   dir: string,

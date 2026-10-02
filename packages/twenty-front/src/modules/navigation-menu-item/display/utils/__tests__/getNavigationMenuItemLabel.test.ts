@@ -56,6 +56,19 @@ describe('getNavigationMenuItemLabel', () => {
       );
     });
 
+    it('should return the item name when the entry has one', () => {
+      const item = {
+        ...baseItem,
+        type: NavigationMenuItemType.OBJECT,
+        targetObjectMetadataId: 'obj-1',
+        name: 'Board',
+      };
+
+      expect(getNavigationMenuItemLabel(item, objectMetadataItems, views)).toBe(
+        'Board',
+      );
+    });
+
     it('should return empty string when object is not found', () => {
       const item = {
         ...baseItem,
