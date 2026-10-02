@@ -1,5 +1,6 @@
 import { MAX_SERIALIZED_EVENT_TEXT_LENGTH } from '@/host/events/constants/MaxSerializedEventTextLength';
 
+import { takeTransferredFile } from '../transferredFileStash';
 import { serializeEvent } from '../serializeEvent';
 
 describe('serializeEvent', () => {
@@ -210,5 +211,20 @@ describe('serializeEvent', () => {
     expect(result.files).toEqual([
       { name: 'a.png', size: 1, type: 'image/png', lastModified: 1 },
     ]);
+  });
+
+  it('should carry a spendable handle for a real file picked through an <input type="file">', () => {
+    const file = new File(['bytes'], 'picked.csv', { type: 'text/csv' });
+
+    const buildFileList = (files: File[]) =>
+      Object.assign([...files], { length: files.length });
+
+    const result = serializeEvent({
+      type: 'change',
+      target: { files: buildFileList([file]) },
+    });
+
+    expect(result.files).toHaveLength(1);
+    expect(takeTransferredFile(result.files?.[0].handle ?? '')).toBe(file);
   });
 });

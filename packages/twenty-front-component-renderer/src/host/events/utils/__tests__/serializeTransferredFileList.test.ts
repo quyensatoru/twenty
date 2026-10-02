@@ -46,6 +46,24 @@ describe('serializeTransferredFileList', () => {
     expect(takeTransferredFile(serialized?.[0].handle ?? '')).toBe(file);
   });
 
+  it('should read a picked file from a real <input type="file">', () => {
+    const file = new File(['bytes'], 'picked.csv', { type: 'text/csv' });
+
+    const serialized = serializeTransferredFileList(
+      { target: { files: buildFileList([file]) } },
+      'change',
+    );
+
+    expect(serialized).toHaveLength(1);
+    expect(takeTransferredFile(serialized?.[0].handle ?? '')).toBe(file);
+  });
+
+  it('should ignore a change event with no file input target', () => {
+    expect(
+      serializeTransferredFileList({ target: { value: 'hello' } }, 'change'),
+    ).toBeUndefined();
+  });
+
   it('should never stash anything that is not a host File', () => {
     expect(
       serializeTransferredFileList(
