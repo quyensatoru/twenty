@@ -22,6 +22,38 @@ tài liệu nếu phát hiện lệch.
 
 ---
 
+## Bản chạy bằng script (diễn tập trọn vẹn trên bản sao production, 2026-10-02)
+
+Mục 2 bên dưới **không** chạy được nguyên văn trên production: diễn tập trên bản sao DB thật
+gặp sáu chỗ hỏng mà fixture 30 dòng không có. Chạy theo thứ tự này thay cho mục 2:
+
+```bash
+# server fork đã dừng (pm2 stop), dump + thử restore xong (mục 2.1)
+bash packages/twenty-apps/internal/cutover-pre-deploy.sh <database> <log_dir>   # 2.1-2.6
+# build apps/zero-core, .env trỏ đúng database
+bash packages/twenty-apps/internal/cutover-post-deploy.sh <log_dir> upgrade     # 2.7 + 2.9
+# lần lượt trong task-manager, customer-support, shift-management (không --force):
+yarn twenty apply --remote <remote>
+bash packages/twenty-apps/internal/cutover-post-deploy.sh <log_dir> attachments # file đính kèm
+```
+
+| Chỗ hỏng khi chạy mục 2 nguyên văn | Xử lý trong script |
+| --- | --- |
+| `upgrade` dừng: `Step "2.42.0_RestoreForkNavigationMenuItemsCommand_…" not found`. Fork có 17 upgrade command riêng; zero-core có 3 instance command 2.42.0 nằm sau con trỏ nên bị bỏ qua lặng lẽ | `cutover-reconcile-upgrade-history.mjs`: chuyển 17 dòng sang `core."_cutoverForkUpgradeMigration"`, chạy 3 command qua runner của server |
+| `upgrade` ghi theo cache Redis cũ (metadata trước re-parent) | `cache:flush` **trước** `upgrade`, không chỉ sau |
+| Regex Bước 3b chỉ bắt 9 nhánh morph; sót 20 nhánh (issueMerchant, issueStatus, shift*, specialDay) và 29 vế ngược (`issue.attachments` chặn field FILES cùng tên) | `cutover-drop-orphan-standard-relations.sql`: mọi quan hệ Standard trỏ vào object đã đổi chủ, cả hai vế, sao lưu liên kết vào `_cutover_link_*` |
+| Task-manager không còn khai `merchant` nên phải dời merchant sang customer-support **trước** khi apply task-manager (mục 2.8/2.9 ghi ngược) | `cutover-post-deploy.sh upgrade` chạy SQL customer-support ngay sau `upgrade` |
+| Script 02 kéo cả view người dùng tạo (Kanban, bộ lọc merchant… thuộc "Custom") sang app, `apply` xoá chúng | `cutover-custom-view-ownership.sql`: chụp trước re-parent, trả về Custom sau 2.9 |
+| Unique index `issueMerchant(merchantId, issueId)` của app không bỏ qua dòng xoá mềm; prod có 18 dòng trong thùng rác trùng cặp | `task-manager/scripts/03b-dedupe-soft-deleted-issue-merchants.sql`, sao lưu vào `_cutover_removed_issueMerchant` |
+
+Thêm: `task-manager/scripts/05-restore-issue-attachments.sql` đưa file đính kèm của issue và comment
+vào `issue.attachments` (giới hạn field nâng lên 60 vì một issue có 49 file). Kết quả diễn tập: 3 app
+apply lần đầu đều `0 to destroy`, `plan` sau đó `No changes`, số dòng khớp (trừ 18 dòng trùng ở trên).
+
+Build app (`twenty apply`/`plan`) cần ~1.5GB RAM; trên VPS 4GB phải dừng server đang chạy trước.
+
+---
+
 ## 0. Việc phải xác minh LẠI trước khi chạy thật (phát hiện lúc soạn file này)
 
 Đừng bỏ qua mục này — hai điểm dưới đây là tài liệu đang dở dang tại thời điểm viết file, không
