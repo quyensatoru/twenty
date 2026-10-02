@@ -13,7 +13,10 @@ export const preventDefaultForDragAndDropEvents = (event: unknown): void => {
 
   const domEvent = event as Record<string, unknown>;
 
-  if (!isString(domEvent.type) || !DRAG_AND_DROP_EVENT_TYPES.has(domEvent.type)) {
+  if (
+    !isString(domEvent.type) ||
+    !DRAG_AND_DROP_EVENT_TYPES.has(domEvent.type)
+  ) {
     return;
   }
 

@@ -9,7 +9,9 @@ import { type SerializedFileData } from '@/types/SerializedFileData';
 // through uploadFileByHandle to have the host upload the file it kept.
 const buildFileListLike = (
   files: SerializedFileData[],
-): SerializedFileData[] & { item: (index: number) => SerializedFileData | null } =>
+): SerializedFileData[] & {
+  item: (index: number) => SerializedFileData | null;
+} =>
   Object.assign([...files], {
     item: (index: number) => files[index] ?? null,
   });
