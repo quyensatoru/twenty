@@ -4,7 +4,7 @@
 #
 #   bash cutover-post-deploy.sh <log_dir> upgrade      # before any `twenty apply`
 #   (apply task-manager, then customer-support and shift-management)
-#   bash cutover-post-deploy.sh <log_dir> attachments  # after task-manager apply
+#   bash cutover-post-deploy.sh <log_dir> attachments  # after all applies: files, history, app scope
 #
 # Order found rehearsing on a copy of production: merchant has to move to
 # customer-support BEFORE task-manager is applied, because task-manager no
@@ -74,8 +74,13 @@ case "$PHASE" in
     for schema in "${SCHEMAS[@]}"; do
       psql_run --single-transaction -v schema="$schema" < "$INTERNAL_DIRECTORY/task-manager/scripts/05-restore-issue-attachments.sql" > "$LOG_DIR/2.8-attachments-$schema.log" 2>&1
       grep -A2 -E 'fork_files_missing|issues_over_field_limit' "$LOG_DIR/2.8-attachments-$schema.log"
+      psql_run --single-transaction -v schema="$schema" < "$INTERNAL_DIRECTORY/task-manager/scripts/06-restore-issue-history.sql" > "$LOG_DIR/2.8-history-$schema.log" 2>&1
+      tail -5 "$LOG_DIR/2.8-history-$schema.log"
+      psql_run --single-transaction -v schema="$schema" < "$INTERNAL_DIRECTORY/task-manager/scripts/07-backfill-app-scope-mirror.sql" > "$LOG_DIR/2.8-app-scope-$schema.log" 2>&1
+      tail -8 "$LOG_DIR/2.8-app-scope-$schema.log"
     done
     flush_cache
+    echo "Then: POST /s/task-manager/sync-app-scope-mirror with body {\"only\":\"members\"}"
     ;;
   *)
     echo "Unknown phase: $PHASE" >&2
