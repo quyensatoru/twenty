@@ -3,8 +3,11 @@ import { type FrontComponentHostImplementations } from '@/host/component-impleme
 import { ROOT_CONTAINER_STYLE } from '@/host/constants/RootContainerStyle';
 import { FrontComponentGeometryTrackerContext } from '@/host/geometry/contexts/FrontComponentGeometryTrackerContext';
 import { createGeometryTracker } from '@/host/geometry/utils/createGeometryTracker';
+import { FrontComponentHostFocusControllerContext } from '@/host/focus/contexts/FrontComponentHostFocusControllerContext';
+import { createHostFocusController } from '@/host/focus/utils/createHostFocusController';
 import { FrontComponentConfirmationModalResultEffect } from '@/host/effect-components/FrontComponentConfirmationModalResultEffect';
 import { FrontComponentErrorEffect } from '@/host/effect-components/FrontComponentErrorEffect';
+import { FrontComponentFocusTrackerEffect } from '@/host/effect-components/FrontComponentFocusTrackerEffect';
 import { FrontComponentGeometryTrackerEffect } from '@/host/effect-components/FrontComponentGeometryTrackerEffect';
 import { FrontComponentInitializeHostCommunicationApiEffect } from '@/host/effect-components/FrontComponentInitializeHostCommunicationApiEffect';
 import { FrontComponentMediaSessionEffect } from '@/host/effect-components/FrontComponentMediaSessionEffect';
@@ -78,6 +81,10 @@ export const FrontComponentRenderer = ({
   const [isExecutionContextInitialized, setIsExecutionContextInitialized] =
     useState(false);
   const [geometryTracker] = useState(() => createGeometryTracker());
+  const [hostFocusController] = useState(() =>
+    createHostFocusController({ geometryTracker }),
+  );
+  const [initialExecutionContext] = useState(executionContext);
 
   const isReady = isDefined(receiver) && isExecutionContextInitialized;
 
@@ -93,7 +100,9 @@ export const FrontComponentRenderer = ({
           sharedDependenciesUrl={sharedDependenciesUrl}
           applicationVariables={applicationVariables}
           storageNamespace={storageNamespace}
+          initialExecutionContext={initialExecutionContext}
           geometryTracker={geometryTracker}
+          hostFocusController={hostFocusController}
           mediaSessionHost={mediaSessionHost}
           setReceiver={setReceiver}
           setThread={setThread}
@@ -119,6 +128,10 @@ export const FrontComponentRenderer = ({
               thread={thread}
             />
             <FrontComponentGeometryTrackerEffect
+              thread={thread}
+              geometryTracker={geometryTracker}
+            />
+            <FrontComponentFocusTrackerEffect
               thread={thread}
               geometryTracker={geometryTracker}
             />
@@ -153,17 +166,21 @@ export const FrontComponentRenderer = ({
               resetKeys={[componentUrl]}
               fallbackRender={() => null}
             >
-              <FrontComponentHostImplementationsContext.Provider
-                value={
-                  hostComponentImplementations ??
-                  EMPTY_HOST_COMPONENT_IMPLEMENTATIONS
-                }
+              <FrontComponentHostFocusControllerContext.Provider
+                value={hostFocusController}
               >
-                <RemoteRootRenderer
-                  receiver={receiver}
-                  components={fallbackComponentRegistry}
-                />
-              </FrontComponentHostImplementationsContext.Provider>
+                <FrontComponentHostImplementationsContext.Provider
+                  value={
+                    hostComponentImplementations ??
+                    EMPTY_HOST_COMPONENT_IMPLEMENTATIONS
+                  }
+                >
+                  <RemoteRootRenderer
+                    receiver={receiver}
+                    components={fallbackComponentRegistry}
+                  />
+                </FrontComponentHostImplementationsContext.Provider>
+              </FrontComponentHostFocusControllerContext.Provider>
             </ErrorBoundary>
           </ThemeProvider>
         )}

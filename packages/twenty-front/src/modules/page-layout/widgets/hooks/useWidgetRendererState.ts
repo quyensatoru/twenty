@@ -58,7 +58,8 @@ export const useWidgetRendererState = (widget: PageLayoutWidget) => {
     widget.type === WidgetType.MESSAGE_CAMPAIGN_DETAILS ||
     widget.type === WidgetType.WORKFLOW ||
     widget.type === WidgetType.WORKFLOW_VERSION ||
-    widget.type === WidgetType.WORKFLOW_RUN;
+    widget.type === WidgetType.WORKFLOW_RUN ||
+    widget.type === WidgetType.CHAT;
   // A widget with a blank title names no section, so the bar kept for that
   // name is an empty strip between it and the widget above — which is how two
   // widgets meant to read as one list end up looking like two. Grid only: a

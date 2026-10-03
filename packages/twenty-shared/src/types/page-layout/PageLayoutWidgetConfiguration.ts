@@ -102,8 +102,7 @@ export type FieldConfiguration = {
   fieldMetadataId: string;
   fieldDisplayMode: 'CARD' | 'EDITOR' | 'FIELD' | 'VIEW' | 'TABLE';
   viewId?: string;
-  // One-to-many relation field on the relation target object, to list records
-  // two relation hops away (e.g. Company -> People -> Owned opportunities)
+  // One-to-many relation field on the target object, for records two hops away (e.g. Company -> People -> Owned opportunities).
   nestedRelationFieldMetadataId?: string | null;
   isUIEditable?: boolean;
 };
@@ -199,6 +198,14 @@ export type WorkflowRunConfiguration = {
   configurationType: 'WORKFLOW_RUN';
 };
 
+export type ChatThreadsConfiguration = {
+  configurationType: 'CHAT_THREADS';
+};
+
+export type ChatConfiguration = {
+  configurationType: 'CHAT';
+};
+
 export type PageLayoutWidgetConfiguration =
   | AggregateChartConfiguration
   | PieChartConfiguration
@@ -226,4 +233,6 @@ export type PageLayoutWidgetConfiguration =
   | MessageCampaignBodyConfiguration
   | MessageCampaignDetailsConfiguration
   | CallRecordingSummaryConfiguration
-  | CallRecordingTranscriptConfiguration;
+  | CallRecordingTranscriptConfiguration
+  | ChatThreadsConfiguration
+  | ChatConfiguration;

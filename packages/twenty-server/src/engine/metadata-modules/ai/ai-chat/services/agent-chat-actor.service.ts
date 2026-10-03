@@ -72,15 +72,25 @@ export class AgentChatActorService {
         AiExceptionCode.MESSAGE_NOT_FOUND,
       );
     }
-    // Only pre-attribution messages inherit the original participant. Never use
-    // a worker's caller or the participant whose preceding turn drained the queue.
-    const userWorkspaceId =
-      message.senderUserWorkspaceId ??
-      (
-        await this.threads.findOneOrFail(workspaceId, {
-          where: { id: threadId },
+    // only pre-attribution messages inherit the thread's member; never the worker's caller or the participant whose turn drained the queue
+    let userWorkspaceId = message.senderUserWorkspaceId;
+    if (!isDefined(userWorkspaceId)) {
+      const thread = await this.threads.findOneOrFail(workspaceId, {
+        where: { id: threadId },
+      });
+      if (!isDefined(thread.workspaceMemberId)) {
+        throw new AiException(
+          'Message has no sender or workspace member owner',
+          AiExceptionCode.RUN_AS_WORKSPACE_MEMBER_NOT_FOUND,
+        );
+      }
+      userWorkspaceId = (
+        await this.userAuthContextService.resolveWorkspaceMember({
+          workspaceId,
+          workspaceMemberId: thread.workspaceMemberId,
         })
       ).userWorkspaceId;
+    }
     const sender: AgentChatSender = {
       userWorkspaceId,
       applicationId: message.senderApplicationId ?? null,
@@ -105,12 +115,12 @@ export class AgentChatActorService {
       this.chatService.getWritableThread({
         workspaceId,
         threadId,
-        userWorkspaceId: sender.userWorkspaceId,
+        workspaceMemberId: authContext.workspaceMemberId,
       }),
     );
-    if (isDefined(thread.archivedAt)) {
+    if (isDefined(thread.deletedAt)) {
       throw new AiException(
-        'Thread is archived',
+        'Thread is deleted',
         AiExceptionCode.THREAD_NOT_FOUND,
       );
     }
@@ -146,7 +156,8 @@ export class AgentChatActorService {
     return { authContext, rolePermissionConfig, roleId };
   }
 
-  async authorizeQuestionAnswer({
+  // resolved from the application context of the turn that made the call
+  async authorizeToolCallResolution({
     workspaceId,
     threadId,
     messageId,
@@ -155,20 +166,20 @@ export class AgentChatActorService {
     threadId: string;
     messageId: string;
   }): Promise<void> {
-    const question = await this.messages.findOne(workspaceId, {
+    const toolCallMessage = await this.messages.findOne(workspaceId, {
       where: { id: messageId, threadId, role: AgentMessageRole.ASSISTANT },
       select: ['turnId'],
     });
-    if (!isDefined(question?.turnId)) {
+    if (!isDefined(toolCallMessage?.turnId)) {
       throw new AiException(
-        'Question turn not found',
+        'Tool call turn not found',
         AiExceptionCode.MESSAGE_NOT_FOUND,
       );
     }
     const { sender } = await this.resolveMessage({
       workspaceId,
       threadId,
-      turnId: question.turnId,
+      turnId: toolCallMessage.turnId,
     });
     const request = workspaceAuthContextStorage.getStore();
     if (
@@ -178,8 +189,8 @@ export class AgentChatActorService {
       (request.application?.id ?? null) !== sender.applicationId
     ) {
       throw new AiException(
-        'Answer requires the original application context',
-        AiExceptionCode.INVALID_QUESTION_ANSWER,
+        'Resolving this tool call requires the original application context',
+        AiExceptionCode.TOOL_CALL_RESOLUTION_FORBIDDEN,
       );
     }
   }
