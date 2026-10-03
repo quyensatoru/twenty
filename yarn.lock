@@ -4603,7 +4603,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@blocknote/core@npm:0.51.4":
+"@blocknote/core@npm:0.51.4, @blocknote/core@npm:^0.51.4":
   version: 0.51.4
   resolution: "@blocknote/core@npm:0.51.4"
   dependencies:
@@ -24877,10 +24877,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"adm-zip@npm:0.6.0":
-  version: 0.6.0
-  resolution: "adm-zip@npm:0.6.0"
-  checksum: 10c0/440f37590c62255226f1db4cb1a5a618879347f5106ad5b9a24c67c20f9a54bd5b4efcd2b35af858e39c7885d05f4bd35f4c2f42378c98d13f779be380bc9ae4
+"adm-zip@npm:0.6.1":
+  version: 0.6.1
+  resolution: "adm-zip@npm:0.6.1"
+  checksum: 10c0/78233c6fbfd418dd605ef3c4c6a656406a49f81f716f2850d565f5e55915f18b99f4fdaf15436d77c73536da0915eeca33adab8055872a983b0ac7d07664cd25
   languageName: node
   linkType: hard
 
@@ -50688,6 +50688,7 @@ __metadata:
     "@aws-sdk/lib-storage": "npm:3.1001.0"
     "@aws-sdk/s3-request-presigner": "npm:3.1001.0"
     "@azure/msal-node": "npm:^5.2.3"
+    "@blocknote/core": "npm:^0.51.4"
     "@blocknote/server-util": "npm:^0.51.4"
     "@clickhouse/client": "npm:^1.18.1"
     "@e2b/code-interpreter": "npm:^2.6.0"
@@ -50832,6 +50833,7 @@ __metadata:
     lodash.snakecase: "npm:4.1.1"
     lodash.uniq: "npm:^4.5.0"
     lodash.uniqby: "npm:^4.7.0"
+    marked: "npm:^17.0.1"
     microdiff: "npm:1.4.0"
     mrmime: "npm:^2.0.1"
     ms: "npm:2.1.3"
