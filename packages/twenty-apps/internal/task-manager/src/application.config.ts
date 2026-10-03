@@ -15,7 +15,7 @@ export default defineApplication({
       universalIdentifier: RECORD_PAGE_BASE_URL_VARIABLE_UID,
       label: 'Front end base URL',
       description:
-        'Origin this workspace is browsed at, with no trailing slash — https://crm.example.com. The copy-link buttons prefix it to the record path. Left empty they copy the path alone, because a front component runs in a sandboxed worker with an opaque origin and has no way to discover it.',
+        'Origin this workspace is browsed at, with no trailing slash — https://crm.example.com. The copy-link buttons prefix it to the record path. Left empty they use the API server origin, which is right whenever the server also serves the front end; set it when the front end lives on another origin.',
       value: '',
     },
   },

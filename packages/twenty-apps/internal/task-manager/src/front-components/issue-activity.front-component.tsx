@@ -1,7 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
-  getApplicationVariable,
   t,
   useFrontComponentExecutionContext,
   useRecordId,
@@ -15,10 +14,10 @@ import {
   UPDATE_ISSUE_COMMENT_ROUTE_PATH,
   UPDATE_WORKLOG_ROUTE_PATH,
 } from '../constants/route-paths';
-import { RECORD_PAGE_BASE_URL_VARIABLE } from '../constants/application-variables';
 import { ISSUE_ACTIVITY_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 import { parseActivityAnchor } from './utils/parse-activity-anchor.util';
+import { readRecordPageBaseUrl } from './utils/read-record-page-base-url.util';
 import { IssueCommentList } from './components/issue-comment-list';
 import { IssueHistoryList } from './components/issue-history-list';
 import { IssueWorklogList } from './components/issue-worklog-list';
@@ -201,7 +200,7 @@ const IssueActivity = () => {
       {activityTab === 'comments' ? (
       <IssueCommentList
         issueId={issueId}
-        baseUrl={getApplicationVariable(RECORD_PAGE_BASE_URL_VARIABLE)}
+        baseUrl={readRecordPageBaseUrl()}
         comments={data.issueComments}
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}
@@ -237,7 +236,7 @@ const IssueActivity = () => {
       ) : activityTab === 'worklogs' ? (
       <IssueWorklogList
         issueId={issueId}
-        baseUrl={getApplicationVariable(RECORD_PAGE_BASE_URL_VARIABLE)}
+        baseUrl={readRecordPageBaseUrl()}
         worklogs={data.worklogs}
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}

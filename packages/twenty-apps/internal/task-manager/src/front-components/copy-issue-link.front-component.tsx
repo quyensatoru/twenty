@@ -3,15 +3,14 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   copyToClipboard,
   enqueueSnackbar,
-  getApplicationVariable,
   t,
   unmountFrontComponent,
   useRecordId,
 } from 'twenty-sdk/front-component';
 
-import { RECORD_PAGE_BASE_URL_VARIABLE } from '../constants/application-variables';
 import { COPY_ISSUE_LINK_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRecordUrl } from './utils/build-record-url.util';
+import { readRecordPageBaseUrl } from './utils/read-record-page-base-url.util';
 
 // Headless: it draws nothing, copies the issue's URL and takes itself off.
 //
@@ -52,7 +51,7 @@ const CopyIssueLink = () => {
 
         await copyToClipboard(
           buildRecordUrl({
-            baseUrl: getApplicationVariable(RECORD_PAGE_BASE_URL_VARIABLE),
+            baseUrl: readRecordPageBaseUrl(),
             objectNameSingular: 'issue',
             recordId: issueId,
           }),
