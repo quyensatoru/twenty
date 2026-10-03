@@ -7,8 +7,34 @@ import {
   type IssueStatusRow,
   type SprintRow,
 } from '../../types/task-manager-rows';
+import {
+  resolveSignedMarkdown,
+  stripFileTokens,
+} from '../../utils/resolve-signed-markdown.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
+
+type RichTextValue = { blocknote?: string | null; markdown?: string | null };
+
+// The markdown the panels render, with live file URLs. When a refetch brings
+// back the same body with only new tokens, the string already on screen is
+// kept, so the host editor sees no change and does not reload the images.
+const toDisplayedRichText = <TValue extends RichTextValue>(
+  next: TValue | null | undefined,
+  previous: RichTextValue | null | undefined,
+): TValue | null | undefined => {
+  if (next === null || next === undefined) {
+    return next;
+  }
+
+  const markdown = resolveSignedMarkdown(next);
+  const previousMarkdown = previous?.markdown;
+  const isUnchanged =
+    typeof previousMarkdown === 'string' &&
+    stripFileTokens(previousMarkdown) === stripFileTokens(markdown);
+
+  return { ...next, markdown: isUnchanged ? previousMarkdown : markdown };
+};
 
 export type IssueCommentRow = {
   id: string;
@@ -86,9 +112,28 @@ export const useIssueDetail = (issueId: string | null) => {
         { issueId },
       );
 
-      setData({
-        issue: result.issue ?? null,
-        issueComments: result.issueComments ?? [],
+      setData((previous) => ({
+        issue:
+          result.issue === null || result.issue === undefined
+            ? null
+            : {
+                ...result.issue,
+                description: toDisplayedRichText(
+                  result.issue.description,
+                  previous.issue?.id === result.issue.id
+                    ? previous.issue.description
+                    : null,
+                ),
+              },
+        issueComments: (result.issueComments ?? []).map((comment) => ({
+          ...comment,
+          bodyV2: toDisplayedRichText(
+            comment.bodyV2,
+            previous.issueComments.find(
+              (previousComment) => previousComment.id === comment.id,
+            )?.bodyV2,
+          ),
+        })),
         worklogs: result.worklogs ?? [],
         issueHistories: result.issueHistories ?? [],
         merchants: result.merchants ?? [],
@@ -97,7 +142,7 @@ export const useIssueDetail = (issueId: string | null) => {
         epics: result.epics ?? [],
         members: result.members ?? [],
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
-      });
+      }));
       setLoadError(null);
     } catch (error) {
       setLoadError(readErrorText(error));
