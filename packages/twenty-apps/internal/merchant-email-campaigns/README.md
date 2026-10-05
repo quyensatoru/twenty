@@ -129,7 +129,7 @@ trắng đầu/cuối, hạ chữ thường, mọi cụm khoảng trắng thành
 vậy `Trial Ending` bên studio và `trial_ending` bên app gửi là cùng một event. So khớp luôn là
 `eq`/`in`, không bao giờ `ilike`: tên event là input của người dùng, `%` sẽ khớp tất cả.
 
-**Bốn event app tự phát** (prefix `merchant.` được giữ riêng để app khác POST `installed` không
+**Bảy event app tự phát** (prefix `merchant.` được giữ riêng để app khác POST `installed` không
 vô tình bắn automation cài đặt):
 
 | Event                             | Điều kiện trên dòng merchant                                     |
@@ -138,6 +138,15 @@ vô tình bắn automation cài đặt):
 | `merchant.uninstalled`            | `using` true/null → false                                         |
 | `merchant.shopify_plan_changed`   | `shopifyPlan` đổi từ một giá trị có sẵn                           |
 | `merchant.pricing_plan_changed`   | `pricingPlan` đổi từ một giá trị có sẵn                           |
+| `merchant.unsubscribed`           | `emailUnsubscribed` thành `true` (cả lần đầu, vì đây là hành động chủ động) |
+| `merchant.contact_changed`        | `contactName` đổi từ một giá trị có sẵn                           |
+| `merchant.email_changed`          | Email chính đổi sang địa chỉ khác (so không phân biệt hoa thường) |
+
+Mọi event `merchant.*` (trừ `unsubscribed`) đều kèm properties cũ/mới dùng được trong
+template: `{{event.oldShopifyPlan}}` / `{{event.newShopifyPlan}}`,
+`{{event.oldPricingPlan}}` / `{{event.newPricingPlan}}`,
+`{{event.oldContactName}}` / `{{event.newContactName}}`,
+`{{event.oldEmail}}` / `{{event.newEmail}}`.
 
 Mọi tên khác đến từ events API. Một event chưa ai nghe vẫn được ghi vào `merchantEvent` với
 `campaignsQueued = 0`, và lần sau studio sẽ gợi ý chính tên đó.

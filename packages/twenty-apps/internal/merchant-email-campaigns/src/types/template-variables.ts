@@ -4,6 +4,7 @@ export type TemplateVariables = {
   contactName: string;
   email: string;
   appName: string;
+  installStatus: string;
   shopifyPlan: string;
   pricingPlan: string;
   country: string;

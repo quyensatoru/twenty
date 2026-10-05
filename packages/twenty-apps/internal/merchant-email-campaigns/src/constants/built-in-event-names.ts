@@ -26,6 +26,24 @@ export const BUILT_IN_EVENT_NAMES = [
     label: 'Pricing plan changed',
     legacyTrigger: 'PRICING_PLAN_CHANGED',
   },
+  // No legacy equivalent: the legacy select predates them, and
+  // legacyTriggerForEventName falls back to CUSTOM_EVENT for these, which is
+  // exactly how a rollback release routes them (by eventName).
+  {
+    name: 'merchant.unsubscribed',
+    label: 'Merchant unsubscribed',
+    legacyTrigger: 'CUSTOM_EVENT',
+  },
+  {
+    name: 'merchant.contact_changed',
+    label: 'Contact changed',
+    legacyTrigger: 'CUSTOM_EVENT',
+  },
+  {
+    name: 'merchant.email_changed',
+    label: 'Email changed',
+    legacyTrigger: 'CUSTOM_EVENT',
+  },
 ] as const satisfies readonly {
   name: string;
   label: string;

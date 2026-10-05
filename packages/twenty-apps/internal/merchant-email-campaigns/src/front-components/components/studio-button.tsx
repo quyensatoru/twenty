@@ -66,7 +66,7 @@ export const StudioButton = ({
         background:
           isHovered && !isDisabled ? style.hoverBackground : style.background,
         border: `1px solid ${style.border}`,
-        borderRadius: STUDIO_TOKENS.radiusSmall,
+        borderRadius: STUDIO_TOKENS.radius,
         boxSizing: 'border-box',
         color: style.color,
         cursor: isDisabled ? 'not-allowed' : 'pointer',

@@ -255,15 +255,41 @@ export const IntegrationsPanel = () => {
               >
                 {event.merchantName || event.domain || '—'} ·{' '}
                 {event.email || t('no email')}
+                  {event.status === 'MATCHED' &&
+                  event.campaignsQueued > 0 ? null : (
+                    <span
+                      style={{
+                        color: STUDIO_TOKENS.textDanger,
+                        display: 'block',
+                        fontSize: 11,
+                      }}
+                    >
+                      {event.status !== 'MATCHED'
+                        ? t(
+                            'No merchant matched this domain/email — check the sync.',
+                          )
+                        : t(
+                            'Matched, but no automation listens to this event.',
+                          )}
+                    </span>
+                  )}
               </span>
-              <StudioBadge
-                label={
-                  event.status === 'MATCHED'
-                    ? t('{count} queued', { count: event.campaignsQueued })
-                    : t('No merchant')
-                }
-                tone={event.status === 'MATCHED' ? 'green' : 'orange'}
-              />
+                <StudioBadge
+                  label={
+                    event.status !== 'MATCHED'
+                      ? t('No merchant')
+                      : event.campaignsQueued > 0
+                        ? t('{count} queued', {
+                            count: event.campaignsQueued,
+                          })
+                        : t('No automation')
+                  }
+                  tone={
+                    event.status === 'MATCHED' && event.campaignsQueued > 0
+                      ? 'green'
+                      : 'orange'
+                  }
+                />
               <span style={{ color: STUDIO_TOKENS.textTertiary, fontSize: 12 }}>
                 {event.occurredAt
                   ? new Date(event.occurredAt).toLocaleString()

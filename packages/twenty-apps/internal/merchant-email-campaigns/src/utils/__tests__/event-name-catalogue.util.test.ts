@@ -5,7 +5,7 @@ import { findClosestEventName } from '../find-closest-event-name.util';
 import { legacyTriggerForEventName } from '../legacy-trigger-for-event-name.util';
 
 describe('buildEventNameSuggestions', () => {
-  it('always offers the four the app raises itself', () => {
+  it('always offers the events the app raises itself', () => {
     expect(
       buildEventNameSuggestions({ receivedEvents: [], campaigns: [] }).map(
         (suggestion) => suggestion.name,
@@ -15,6 +15,9 @@ describe('buildEventNameSuggestions', () => {
       'merchant.uninstalled',
       'merchant.shopify_plan_changed',
       'merchant.pricing_plan_changed',
+      'merchant.unsubscribed',
+      'merchant.contact_changed',
+      'merchant.email_changed',
     ]);
   });
 

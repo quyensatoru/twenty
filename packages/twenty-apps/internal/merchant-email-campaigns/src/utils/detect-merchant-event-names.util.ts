@@ -44,5 +44,29 @@ export const detectMerchantEventNames = ({
     eventNames.push('merchant.pricing_plan_changed');
   }
 
+  // Opt-out is a deliberate human act, never a backfill: even a first-time
+  // true must notify, so unlike plans there is no blank-before guard.
+  if (before.emailUnsubscribed !== true && after.emailUnsubscribed === true) {
+    eventNames.push('merchant.unsubscribed');
+  }
+
+  const beforeEmail = before.email?.primaryEmail?.trim() ?? '';
+  const afterEmail = after.email?.primaryEmail?.trim() ?? '';
+
+  if (
+    beforeEmail !== '' &&
+    afterEmail !== '' &&
+    beforeEmail.toLowerCase() !== afterEmail.toLowerCase()
+  ) {
+    eventNames.push('merchant.email_changed');
+  }
+
+  if (
+    !isBlank(before.contactName) &&
+    before.contactName?.trim() !== after.contactName?.trim()
+  ) {
+    eventNames.push('merchant.contact_changed');
+  }
+
   return eventNames;
 };

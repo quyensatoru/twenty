@@ -8,6 +8,14 @@ import { readErrorMessage } from '../utils/read-error-message.util';
 import { createAppClient } from './utils/create-app-client.util';
 
 const STATUSES: EmailSendStatus[] = ['SENT', 'FAILED', 'SKIPPED'];
+const RECENT_FAILURES_LIMIT = 8;
+
+type FailedSendNode = {
+  name?: string | null;
+  errorMessage?: string | null;
+  sentAt?: string | null;
+  createdAt?: string | null;
+};
 
 // Counted with the application token: sends hang off merchants, which are
 // app-scoped, so the member's own token would only count the apps they hold
@@ -21,30 +29,65 @@ const handler = async (event: RoutePayload<{ campaignId?: string }>) => {
     }
 
     const client = createAppClient();
-    const entries = await Promise.all(
-      STATUSES.map(async (status) => {
-        const { emailSends } = await executeWithRetry<{
-          emailSends?: { totalCount?: number };
-        }>(() =>
+    const [entries, failures] = await Promise.all([
+      Promise.all(
+        STATUSES.map(async (status) => {
+          const { emailSends } = await executeWithRetry<{
+            emailSends?: { totalCount?: number };
+          }>(() =>
+            client.query({
+              emailSends: {
+                __args: {
+                  filter: {
+                    campaignId: { eq: campaignId },
+                    status: { eq: status },
+                  },
+                  first: 1,
+                },
+                totalCount: true,
+              },
+            }),
+          );
+
+          return [status, emailSends?.totalCount ?? 0] as const;
+        }),
+      ),
+      // Newest failures first, so BD sees what to fix without opening the
+      // Send log: recipient, provider error and when it happened.
+      executeWithRetry<{ emailSends?: { edges?: { node: FailedSendNode }[] } }>(
+        () =>
           client.query({
             emailSends: {
               __args: {
                 filter: {
                   campaignId: { eq: campaignId },
-                  status: { eq: status },
+                  status: { eq: 'FAILED' },
                 },
-                first: 1,
+                first: RECENT_FAILURES_LIMIT,
+                orderBy: [{ createdAt: 'DescNullsLast' }],
               },
-              totalCount: true,
+              edges: {
+                node: {
+                  name: true,
+                  errorMessage: true,
+                  sentAt: true,
+                  createdAt: true,
+                },
+              },
             },
           }),
-        );
+      ).then(({ emailSends }) => (emailSends?.edges ?? []).map(({ node }) => ({
+        to: node.name ?? '',
+        error: node.errorMessage ?? '',
+        at: node.sentAt ?? node.createdAt ?? null,
+      }))),
+    ]);
 
-        return [status, emailSends?.totalCount ?? 0] as const;
-      }),
-    );
-
-    return { success: true, counts: Object.fromEntries(entries) };
+    return {
+      success: true,
+      counts: Object.fromEntries(entries),
+      recentFailures: failures,
+    };
   } catch (error) {
     return { success: false, error: readErrorMessage(error) };
   }

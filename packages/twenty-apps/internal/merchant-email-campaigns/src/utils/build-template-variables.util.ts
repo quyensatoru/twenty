@@ -1,5 +1,6 @@
 import { type MerchantRow } from '../types/merchant-row';
 import { type TemplateVariables } from '../types/template-variables';
+import { isMerchantInstalled } from './is-merchant-installed.util';
 
 export const buildTemplateVariables = ({
   merchant,
@@ -21,6 +22,7 @@ export const buildTemplateVariables = ({
     contactName: merchant.contactName?.trim() ?? '',
     email: merchant.email?.primaryEmail?.trim() ?? '',
     appName,
+    installStatus: isMerchantInstalled(merchant) ? 'installed' : 'uninstalled',
     shopifyPlan: merchant.shopifyPlan ?? '',
     pricingPlan: merchant.pricingPlan ?? '',
     country: merchant.country ?? '',

@@ -47,4 +47,46 @@ describe('detectMerchantEventNames', () => {
       'merchant.pricing_plan_changed',
     ]);
   });
+
+  it('detects opt-out even on first set', () => {
+    expect(
+      detectMerchantEventNames({
+        before: { id: 'm', emailUnsubscribed: null },
+        after: { id: 'm', emailUnsubscribed: true },
+      }),
+    ).toEqual(['merchant.unsubscribed']);
+    expect(
+      detectMerchantEventNames({
+        before: { id: 'm', emailUnsubscribed: true },
+        after: { id: 'm', emailUnsubscribed: true },
+      }),
+    ).toEqual([]);
+  });
+
+  it('detects contact and email changes, ignoring first fills', () => {
+    expect(
+      detectMerchantEventNames({
+        before: {
+          id: 'm',
+          contactName: 'Old Owner',
+          email: { primaryEmail: 'old@shop.com' },
+        },
+        after: {
+          id: 'm',
+          contactName: 'New Owner',
+          email: { primaryEmail: 'new@shop.com' },
+        },
+      }),
+    ).toEqual(['merchant.email_changed', 'merchant.contact_changed']);
+    expect(
+      detectMerchantEventNames({
+        before: { id: 'm', contactName: null, email: null },
+        after: {
+          id: 'm',
+          contactName: 'New Owner',
+          email: { primaryEmail: 'new@shop.com' },
+        },
+      }),
+    ).toEqual([]);
+  });
 });

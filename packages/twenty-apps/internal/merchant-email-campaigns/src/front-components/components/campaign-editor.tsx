@@ -6,14 +6,16 @@ import { LAUNCH_CAMPAIGN_ROUTE_PATH } from '../../constants/route-paths';
 import { type AudienceFilter } from '../../types/audience-filter';
 import { type CampaignActionButton } from '../../types/campaign-action-button';
 import { type CampaignRow } from '../../types/campaign-row';
-import { type EmailSendStatus } from '../../types/email-send-status';
 import { type EventNameSuggestion } from '../../types/event-name-suggestion';
 import { type TemplateRow } from '../../types/template-row';
 import { legacyTriggerForEventName } from '../../utils/legacy-trigger-for-event-name.util';
 import { normalizeEventName } from '../../utils/normalize-event-name.util';
 import { parseAudienceFilter } from '../../utils/parse-audience-filter.util';
 import { resolveCampaignEventName } from '../../utils/resolve-campaign-event-name.util';
-import { countCampaignSends } from '../utils/count-campaign-sends.util';
+import {
+  countCampaignSends,
+  type CampaignSendStats,
+} from '../utils/count-campaign-sends.util';
 import { fromDatetimeLocalValue } from '../utils/from-datetime-local-value.util';
 import { getCampaignActions } from '../utils/get-campaign-actions.util';
 import { listEventNames } from '../utils/list-event-names.util';
@@ -78,9 +80,7 @@ export const CampaignEditor = ({
   const [isBusy, setIsBusy] = useState(false);
   const [pendingAction, setPendingAction] =
     useState<CampaignActionButton | null>(null);
-  const [stats, setStats] = useState<Record<EmailSendStatus, number> | null>(
-    null,
-  );
+  const [stats, setStats] = useState<CampaignSendStats | null>(null);
 
   const isAutomation = campaign.campaignType === 'AUTOMATION';
   const isLocked = LOCKED_STATUSES.has(campaign.status ?? 'DRAFT');
@@ -455,11 +455,69 @@ export const CampaignEditor = ({
                     fontWeight: 600,
                   }}
                 >
-                  {stats === null ? '–' : stats[status].toLocaleString()}
+                  {stats === null
+                    ? '–'
+                    : stats.counts[status].toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
+          {stats !== null && stats.recentFailures.length > 0 ? (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+            >
+              <span
+                style={{
+                  color: STUDIO_TOKENS.textDanger,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {t('Recent failures')}
+              </span>
+              {stats.recentFailures.map((failure, index) => (
+                <div
+                  key={`${failure.to}-${failure.at ?? index}`}
+                  style={{
+                    borderTop: `1px solid ${STUDIO_TOKENS.border}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    padding: '6px 0',
+                  }}
+                >
+                  <span
+                    style={{
+                      color: STUDIO_TOKENS.textPrimary,
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {failure.to || t('Unknown recipient')}
+                    {failure.at === null ? null : (
+                      <span
+                        style={{
+                          color: STUDIO_TOKENS.textTertiary,
+                          fontWeight: 400,
+                        }}
+                      >
+                        {' · '}
+                        {new Date(failure.at).toLocaleString()}
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    style={{
+                      color: STUDIO_TOKENS.textDanger,
+                      fontSize: 12,
+                    }}
+                  >
+                    {failure.error || t('Unknown error')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
           <span style={{ color: STUDIO_TOKENS.textTertiary, fontSize: 12 }}>
             {t(
               'Every message is logged under Email Marketing → Send log, and on the merchant record.',
