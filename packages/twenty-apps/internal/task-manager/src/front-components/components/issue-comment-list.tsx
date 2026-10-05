@@ -12,16 +12,14 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskCopyLinkButton } from './task-copy-link-button';
+import { TASK_COMPOSER_BOX_STYLE, TASK_EMPTY_FEED_STYLE } from './task-control-styles';
 import {
   FEED_BODY_INDENT,
   FEED_INLINE_INSET,
   TaskFeedItem,
 } from './task-feed-item';
 import { TaskIconButton } from './task-icon-button';
-import {
-  BLOCK_HANDLE_GUTTER,
-  TaskRichTextEditor,
-} from './task-rich-text-editor';
+import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSortToggle } from './task-sort-toggle';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -45,7 +43,7 @@ const COMPOSER_MIN_HEIGHT = 40;
 // A reply is indented under the comment it answers rather than threaded into a
 // tree: one level is what the data carries (parentCommentId) and what a panel
 // this narrow can show without the text column collapsing.
-const REPLY_INDENT = 34;
+const REPLY_INDENT = 36;
 const ROW_INLINE_PADDING = 10;
 
 const readCommentTimestamp = (comment: IssueCommentRow): number => {
@@ -232,20 +230,16 @@ export const IssueCommentList = ({
                 paddingTop: 6,
               }}
             >
-              <TaskRichTextEditor
-                value={replyDraft}
-                onChange={setReplyDraft}
-                placeholder={t('Write a reply…')}
-                minHeight={COMPOSER_MIN_HEIGHT}
-                shouldInsetBlockHandles
-              />
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 6,
-                  paddingLeft: BLOCK_HANDLE_GUTTER,
-                }}
-              >
+              <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+                <TaskRichTextEditor
+                  value={replyDraft}
+                  onChange={setReplyDraft}
+                  placeholder={t('Write a reply…')}
+                  minHeight={COMPOSER_MIN_HEIGHT}
+                  issueId={issueId}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
                 <TaskButton
                   variant="primary"
                   size="small"
@@ -267,18 +261,10 @@ export const IssueCommentList = ({
       >
         {isEditing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <TaskRichTextEditor
-              value={editDraft}
-              onChange={setEditDraft}
-              shouldInsetBlockHandles
-            />
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                paddingLeft: BLOCK_HANDLE_GUTTER,
-              }}
-            >
+            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+              <TaskRichTextEditor value={editDraft} onChange={setEditDraft} issueId={issueId} />
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
               <TaskButton
                 variant="primary"
                 size="small"
@@ -313,7 +299,7 @@ export const IssueCommentList = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
+        gap: 8,
         padding: `0 ${FEED_INLINE_INSET}px`,
       }}
     >
@@ -354,12 +340,15 @@ export const IssueCommentList = ({
             paddingLeft: FEED_BODY_INDENT,
           }}
         >
-          <TaskRichTextEditor
-            value={draft}
-            onChange={setDraft}
-            placeholder={t('Type a comment…')}
-            minHeight={COMPOSER_MIN_HEIGHT}
-          />
+          <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+            <TaskRichTextEditor
+              value={draft}
+              onChange={setDraft}
+              placeholder={t('Type a comment…')}
+              minHeight={COMPOSER_MIN_HEIGHT}
+              issueId={issueId}
+            />
+          </div>
           <div style={{ display: 'flex' }}>
             <TaskButton
               variant="primary"
@@ -373,16 +362,9 @@ export const IssueCommentList = ({
       </div>
 
       {comments.length === 0 ? (
-        <span
-          style={{
-            color: TASK_TOKENS.textTertiary,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 12,
-            padding: `0 ${ROW_INLINE_PADDING}px`,
-          }}
-        >
+        <div style={{ ...TASK_EMPTY_FEED_STYLE, margin: `0 ${ROW_INLINE_PADDING}px` }}>
           {t('No comments yet.')}
-        </span>
+        </div>
       ) : (
         <div
           style={{

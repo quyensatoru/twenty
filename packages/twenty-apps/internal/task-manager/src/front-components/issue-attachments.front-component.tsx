@@ -1,0 +1,66 @@
+import { defineFrontComponent } from 'twenty-sdk/define';
+import { t, useRecordId } from 'twenty-sdk/front-component';
+
+import { ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
+import { TASK_EMPTY_FEED_STYLE } from './components/task-control-styles';
+import { TaskAttachmentRow } from './components/task-attachment-row';
+import { TaskMessage } from './components/task-message';
+import { TASK_TOKENS } from './components/task-tokens';
+import { useIssueDetail } from './hooks/use-issue-detail';
+
+// The files filed against issue.attachments: uploads from the host picker and
+// pasted image URLs the composer stored. Read-only on purpose: the only path
+// that can carry file bytes is the host's own picker in the Details widget,
+// so this panel lists and links rather than offering an upload it cannot do.
+const IssueAttachments = () => {
+  const issueId = useRecordId();
+  const { data, isLoading, loadError } = useIssueDetail(issueId);
+
+  if (issueId === null) {
+    return <TaskMessage text={t('No issue selected.')} />;
+  }
+
+  if (isLoading && data.issue === null) {
+    return null;
+  }
+
+  if (data.issue === null) {
+    return (
+      <TaskMessage
+        text={loadError ?? t('This issue is not available to you.')}
+        tone={loadError === null ? 'neutral' : 'danger'}
+      />
+    );
+  }
+
+  return (
+    <section
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: TASK_TOKENS.fontFamily,
+        gap: 4,
+        height: '100%',
+        minHeight: 0,
+        overflowY: 'auto',
+        width: '100%',
+      }}
+    >
+      {data.attachments.length === 0 ? (
+        <div style={TASK_EMPTY_FEED_STYLE}>{t('No attachments yet.')}</div>
+      ) : (
+        data.attachments.map((row) => (
+          <TaskAttachmentRow key={row.fileId} row={row} />
+        ))
+      )}
+    </section>
+  );
+};
+
+export default defineFrontComponent({
+  universalIdentifier: ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID,
+  name: 'issue-attachments',
+  description:
+    "An issue's attached files, listed through the app's scoped routes.",
+  component: IssueAttachments,
+});

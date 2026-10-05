@@ -9,14 +9,18 @@ import {
   ISSUE_ACTIVITY_FRONT_COMPONENT_UID,
   ISSUE_FIELDS_FRONT_COMPONENT_UID,
   ISSUE_ACTIVITY_WIDGET_UID,
+  ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID,
   ISSUE_DESCRIPTION_FRONT_COMPONENT_UID,
   ISSUE_OBJECT_UID,
+  ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID,
   ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
   ISSUE_RECORD_PAGE_FIELDS_VIEW_UID,
   ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
   ISSUE_RECORD_PAGE_LAYOUT_UID,
   ISSUE_RECORD_PAGE_RELATIONS_WIDGET_UID,
+  ISSUE_RECORD_PAGE_SUBTASKS_WIDGET_UID,
+  ISSUE_SUBTASKS_FRONT_COMPONENT_UID,
 } from '../constants/universal-identifiers';
 
 // One GRID tab, laid out the way Jira lays an issue out: the description in the
@@ -33,12 +37,14 @@ import {
 // chip and its label on separate lines in every Details row.
 //
 // The declared rows are the READING order, not the desktop geometry. React
-// Grid Layout compacts vertically, so Fields rises to the top of its own
-// columns and Activity rises to just under the description. That ordering is
-// what survives the collapse: the grid switches to a single column whenever its
-// CONTAINER is under 768px, which the record side panel (320-600px) and the
-// pinned left panel (348px) always are, and there every widget keeps its row
-// and drops to full width — description first, exactly as asked.
+// Grid Layout compacts vertically, so everything in the side column rises to
+// the top of its own columns and Activity rises to just under the
+// description. That ordering is what survives the collapse: the grid switches
+// to a single column whenever its CONTAINER is under 768px, which the record
+// side panel (320-600px) and the pinned left panel (348px) always are, and
+// there every widget keeps its row and drops to full width — description
+// first, then Details, the field table, Subtasks, Attachments, and the feed,
+// exactly as asked.
 //
 // heightBehavior is not usable here: it only exists on a VERTICAL_LIST position
 // and normalizePageLayoutTabManifest rejects the manifest outright if a GRID
@@ -94,10 +100,10 @@ import {
 // The reference gives the description about a third of the reading column and
 // the feed the rest. Ten rows was a writing surface sized for the longest issue
 // anybody would write, which on the ordinary one is an empty box the height of
-// the Details panel beside it; seven is still four or five paragraphs before it
-// scrolls, and the rows it gives back go to the feed, where they are the
-// difference between seeing two comments and seeing five.
-const DESCRIPTION_ROW_SPAN = 7;
+// the Details panel beside it; nine still fits five or six paragraphs before it
+// scrolls, and every row it gives back to the feed below is one more comment
+// visible without scrolling a second box inside the page.
+const DESCRIPTION_ROW_SPAN = 9;
 // Six rows of 24px, their gaps and the error line, with room to spare. Every
 // row here is a fixed height whatever its data — the merchant chips are kept on
 // one line for exactly that reason — and a picker opens OVER the rows rather
@@ -105,15 +111,21 @@ const DESCRIPTION_ROW_SPAN = 7;
 // That is the whole point: a panel taller than its widget is answered with a
 // scrollbar, and there is no way to ask the host not to.
 const RELATIONS_ROW_SPAN = 4;
-// Sized for the panel EXPANDED, not collapsed. The fields widget scrolls inside
-// whatever row budget it is given, and at 13 rows opening "More" put a
-// scrollbar inside the right-hand column: 755px of slot against 940px of
-// content. Seventeen clears the full list with a row of headroom, and the
-// slack costs nothing while the panel is collapsed because the fields card
-// paints neither border nor background — the empty column below it is just
-// page.
-const FIELDS_ROW_SPAN = 17;
-const ACTIVITY_ROW_SPAN = 15;
+// Eight rows is the collapsed field table with headroom: nine visible fields
+// at the host's 32px pitch plus the More line. Opening More no longer clears
+// the full list the way seventeen rows did — the table scrolls inside its slot
+// instead — and that is the price of keeping Subtasks and Attachments glued
+// directly under it rather than a thousand pixels further down the page, where
+// nobody scrolls to.
+const FIELDS_ROW_SPAN = 8;
+// Three rows is a parent plus three or four children before the inner scroll
+// starts; two rows is two or three files.
+const SUBTASKS_ROW_SPAN = 3;
+const ATTACHMENTS_ROW_SPAN = 2;
+// Sized for the thread, not the box: seventeen rows is five or six comments
+// visible before the inner scroll starts, against three at fifteen, and the
+// feed is the panel people live in once the description is written.
+const ACTIVITY_ROW_SPAN = 17;
 
 const MAIN_COLUMN_SPAN = 8;
 const SIDE_COLUMN_SPAN = 4;
@@ -208,12 +220,56 @@ export default definePageLayout({
           },
         },
         {
+          universalIdentifier: ISSUE_RECORD_PAGE_SUBTASKS_WIDGET_UID,
+          title: 'Subtasks',
+          type: 'FRONT_COMPONENT',
+          position: {
+            layoutMode: PageLayoutTabLayoutMode.GRID,
+            row:
+              DESCRIPTION_ROW_SPAN + RELATIONS_ROW_SPAN + FIELDS_ROW_SPAN,
+            column: MAIN_COLUMN_SPAN,
+            rowSpan: SUBTASKS_ROW_SPAN,
+            columnSpan: SIDE_COLUMN_SPAN,
+          },
+          configuration: {
+            configurationType: 'FRONT_COMPONENT',
+            frontComponentUniversalIdentifier:
+              ISSUE_SUBTASKS_FRONT_COMPONENT_UID,
+          },
+        },
+        {
+          universalIdentifier: ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID,
+          title: 'Attachments',
+          type: 'FRONT_COMPONENT',
+          position: {
+            layoutMode: PageLayoutTabLayoutMode.GRID,
+            row:
+              DESCRIPTION_ROW_SPAN +
+              RELATIONS_ROW_SPAN +
+              FIELDS_ROW_SPAN +
+              SUBTASKS_ROW_SPAN,
+            column: MAIN_COLUMN_SPAN,
+            rowSpan: ATTACHMENTS_ROW_SPAN,
+            columnSpan: SIDE_COLUMN_SPAN,
+          },
+          configuration: {
+            configurationType: 'FRONT_COMPONENT',
+            frontComponentUniversalIdentifier:
+              ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID,
+          },
+        },
+        {
           universalIdentifier: ISSUE_ACTIVITY_WIDGET_UID,
           title: 'Activity',
           type: 'FRONT_COMPONENT',
           position: {
             layoutMode: PageLayoutTabLayoutMode.GRID,
-            row: DESCRIPTION_ROW_SPAN + RELATIONS_ROW_SPAN + FIELDS_ROW_SPAN,
+            row:
+              DESCRIPTION_ROW_SPAN +
+              RELATIONS_ROW_SPAN +
+              FIELDS_ROW_SPAN +
+              SUBTASKS_ROW_SPAN +
+              ATTACHMENTS_ROW_SPAN,
             column: 0,
             rowSpan: ACTIVITY_ROW_SPAN,
             columnSpan: MAIN_COLUMN_SPAN,

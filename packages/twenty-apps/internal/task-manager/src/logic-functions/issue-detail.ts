@@ -6,6 +6,7 @@ import {
   ISSUE_HISTORY_SELECTION,
   ISSUE_SELECTION,
   ISSUE_STATUS_SELECTION,
+  LINKED_ISSUE_SELECTION,
   MERCHANT_SELECTION,
   SPRINT_SELECTION,
   WORKLOG_SELECTION,
@@ -45,6 +46,7 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
           projectId?: string | null;
           assigneeId?: string | null;
           reporterId?: string | null;
+          parentId?: string | null;
         }>
       | undefined;
     const issue = issueConnection?.edges?.[0]?.node ?? null;
@@ -52,6 +54,9 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
     if (issue === null) {
       return { issue: null };
     }
+
+    const parentId =
+      typeof issue.parentId === 'string' ? issue.parentId : null;
 
     const [issueComments, worklogs, issueMerchantLinks, issueStatuses] =
       await Promise.all([
@@ -83,6 +88,27 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
             })
           : Promise.resolve([]),
       ]);
+
+    // The Subtasks widget: the parent row and the children rows, oldest first.
+    // Scoped like everything else on this page, so a linked issue outside the
+    // caller's apps simply does not come back.
+    const [parentIssue, childIssues] = await Promise.all([
+      parentId === null
+        ? Promise.resolve(null)
+        : listScopedRecords({
+            client,
+            pluralName: 'issues',
+            filter: { id: { eq: parentId } },
+            selection: LINKED_ISSUE_SELECTION,
+          }).then((rows) => rows[0] ?? null),
+      listScopedRecords<{ id: string; assigneeId?: string | null }>({
+        client,
+        pluralName: 'issues',
+        filter: { parentId: { eq: issueId } },
+        selection: LINKED_ISSUE_SELECTION,
+        orderBy: [{ createdAt: 'AscNullsLast' }],
+      }),
+    ]);
 
     // Options for the relation pickers the app draws itself, narrowed to the
     // issue's own project. The host's FIELDS widget cannot narrow them: it
@@ -133,15 +159,16 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
           });
 
     // Names for every member the panel has to label: comment authors, worklog
-    // owners, history actors, and the issue's own assignee and reporter.
-    // Resolved here so the front component needs one round trip, not one per
-    // row.
+    // owners, history actors, the issue's own assignee and reporter, and the
+    // owners of its child issues. Resolved here so the front component needs
+    // one round trip, not one per row.
     const memberIds = [
       ...new Set(
         [
           ...issueComments.map((comment) => comment.authorId),
           ...worklogs.map((worklog) => worklog.memberId),
           ...issueHistories.map((history) => history.authorId),
+          ...childIssues.map((child) => child.assigneeId),
           issue.assigneeId,
           issue.reporterId,
         ].filter((memberId): memberId is string => typeof memberId === 'string'),
@@ -175,6 +202,8 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
       sprints,
       epics,
       members,
+      parentIssue,
+      childIssues,
       // Who is asking. The panel decides which edit and delete controls to
       // offer from this; the routes re-check the same rule themselves, so a
       // wrong answer here can only hide a control, never authorise a write.
@@ -186,7 +215,7 @@ export default defineLogicFunction({
   universalIdentifier: ISSUE_DETAIL_LOGIC_FUNCTION_UID,
   name: 'issue-detail',
   description:
-    'Route: one issue with its comments, worklogs, history, merchant links and project statuses.',
+    'Route: one issue with its comments, worklogs, history, merchant links, parent and children, and project statuses.',
   timeoutSeconds: 60,
   httpRouteTriggerSettings: {
     path: ISSUE_DETAIL_ROUTE_PATH,

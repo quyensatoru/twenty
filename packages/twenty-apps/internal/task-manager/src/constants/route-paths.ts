@@ -1,4 +1,6 @@
 export const ISSUE_DETAIL_ROUTE_PATH = '/task-manager/issue-detail';
+export const APPEND_ISSUE_ATTACHMENT_ROUTE_PATH =
+  '/task-manager/append-issue-attachment';
 
 export const CREATE_ISSUE_ROUTE_PATH = '/task-manager/create-issue';
 export const UPDATE_ISSUE_ROUTE_PATH = '/task-manager/update-issue';

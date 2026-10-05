@@ -5,6 +5,7 @@ import {
   type RichTextUploadEvent,
   type RichTextUploadResolution,
 } from '../../types/front-component-host-elements';
+import { appendIssueAttachment } from '../utils/append-issue-attachment.util';
 import { readTransferredFiles } from '../utils/read-transferred-files.util';
 import {
   resolveRichTextUpload,
@@ -49,7 +50,7 @@ const readUploadNotice = (outcome: RichTextUploadOutcome): UploadNotice => {
   }
 };
 
-export const useRichTextUploads = () => {
+export const useRichTextUploads = (issueId?: string | null) => {
   const [resolvedUploads, setResolvedUploads] = useState<
     RichTextUploadResolution[]
   >([]);
@@ -64,6 +65,23 @@ export const useRichTextUploads = () => {
       ...current,
       { handle: answer.handle, url: answer.url },
     ]);
+
+    // Filed against the issue as well, so the Attachments widget lists what
+    // the prose embeds. The host upload only stores the bytes; without this
+    // the FILES field stays empty and the widget correctly shows nothing.
+    // Fire-and-forget on purpose: the editor already has its url, and a filing
+    // failure must not rewrite the answer the editor is waiting for.
+    if (
+      answer.outcome === 'stored' &&
+      typeof issueId === 'string' &&
+      typeof answer.fileId === 'string' &&
+      typeof answer.fileName === 'string'
+    ) {
+      void appendIssueAttachment(issueId, {
+        fileId: answer.fileId,
+        label: answer.fileName,
+      }).catch(() => {});
+    }
 
     void enqueueSnackbar(notice);
   };

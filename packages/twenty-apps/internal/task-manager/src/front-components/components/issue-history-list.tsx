@@ -3,6 +3,7 @@ import { t } from 'twenty-sdk/front-component';
 import { type IssueHistoryRow, type MemberRow } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { FEED_INLINE_INSET, TaskFeedItem } from './task-feed-item';
+import { TASK_EMPTY_FEED_STYLE } from './task-control-styles';
 import { TASK_TOKENS } from './task-tokens';
 
 // The same rhythm the other two tabs keep: a row already carries its own block
@@ -28,16 +29,14 @@ export const IssueHistoryList = ({
 }) => {
   if (histories.length === 0) {
     return (
-      <span
+      <div
         style={{
-          color: TASK_TOKENS.textTertiary,
-          fontFamily: TASK_TOKENS.fontFamily,
-          fontSize: 12,
-          padding: `${FEED_TOP_PADDING}px ${FEED_INLINE_INSET}px 0`,
+          ...TASK_EMPTY_FEED_STYLE,
+          margin: `${FEED_TOP_PADDING}px ${FEED_INLINE_INSET}px 0`,
         }}
       >
         {t('No history yet.')}
-      </span>
+      </div>
     );
   }
 

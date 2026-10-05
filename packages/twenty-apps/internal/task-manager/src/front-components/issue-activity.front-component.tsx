@@ -22,19 +22,12 @@ import { IssueCommentList } from './components/issue-comment-list';
 import { IssueHistoryList } from './components/issue-history-list';
 import { IssueWorklogList } from './components/issue-worklog-list';
 import { TaskMessage } from './components/task-message';
-import { TaskSkeletonBlock } from './components/task-skeleton-block';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTabs } from './components/task-tabs';
 import { TASK_TOKENS } from './components/task-tokens';
 import { type MemberRow, useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
-
-// Roughly what the loaded panel puts in the same places, so the fetch landing
-// swaps content rather than resizing the column.
-const TAB_BAR_HEIGHT = 34;
-const COMPOSER_SKELETON_HEIGHT = 40;
-const CARD_SKELETON_HEIGHT = 64;
 
 // The panel scrolls inside a fixed grid row, so the scroll container is this
 // element and everything pinned inside it pins against this box. The top
@@ -48,10 +41,12 @@ const ActivityFrame = ({ children }: { children: ReactNode }) => (
   <main
     style={{
       background: TASK_TOKENS.background,
+      boxSizing: 'border-box',
       display: 'flex',
       flexDirection: 'column',
       fontFamily: TASK_TOKENS.fontFamily,
       height: '100%',
+      minHeight: 0,
       overflowY: 'auto',
       paddingBottom: 16,
       width: '100%',
@@ -127,23 +122,7 @@ const IssueActivity = () => {
   }
 
   if (isLoading && data.issue === null) {
-    return (
-      <ActivityFrame>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            paddingTop: 4,
-          }}
-        >
-          <TaskSkeletonBlock height={TAB_BAR_HEIGHT} width={200} />
-          <TaskSkeletonBlock height={COMPOSER_SKELETON_HEIGHT} />
-          <TaskSkeletonBlock height={CARD_SKELETON_HEIGHT} />
-          <TaskSkeletonBlock height={CARD_SKELETON_HEIGHT} />
-        </div>
-      </ActivityFrame>
-    );
+    return null;
   }
 
   if (data.issue === null) {
@@ -166,7 +145,7 @@ const IssueActivity = () => {
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          paddingBottom: 16,
+          paddingBottom: 12,
           paddingTop: 4,
           position: 'sticky',
           top: 0,
@@ -242,6 +221,7 @@ const IssueActivity = () => {
         currentMemberId={data.currentWorkspaceMemberId}
         highlightedWorklogId={anchor?.kind === 'worklog' ? anchor.id : null}
         totalMinutes={data.issue.timeSpentMinutes}
+        originalEstimateMinutes={data.issue.originalEstimateMinutes}
         isBusy={isBusy}
         onCreate={(input) =>
           void run(() =>

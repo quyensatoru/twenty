@@ -1,32 +1,37 @@
-import { type ReactNode, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { enqueueSnackbar, t, useRecordId } from 'twenty-sdk/front-component';
-import { IconSettings } from 'twenty-ui/icon';
 
 import { MERCHANT_CUSTOM_SETTINGS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import {
+  type CustomSettingDraftValue,
   type CustomSettingFieldSchemaEntry,
   isCustomSettingFileValue,
 } from '../types/custom-setting-schema';
 import { formatCustomSettingFileName } from '../utils/build-custom-setting-file-value.util';
-import { formatCustomSettingValue } from '../utils/custom-setting-value.util';
-import { MerchantCustomSettingsDialog } from './components/merchant-custom-settings-dialog';
+import {
+  buildCustomSettingDraft,
+  formatCustomSettingValue,
+  mergeCustomSettingValues,
+} from '../utils/custom-setting-value.util';
+import { MerchantCustomSettingInput } from './components/merchant-custom-setting-input';
+import { MerchantCustomSettingToolCard } from './components/merchant-custom-setting-tool-card';
 import { TaskButton } from './components/task-button';
 import { TaskCheckbox } from './components/task-checkbox';
 import { TaskMessage } from './components/task-message';
-import { TaskSkeletonBlock } from './components/task-skeleton-block';
+import { TaskTabs } from './components/task-tabs';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useMerchantCustomSettings } from './hooks/use-merchant-custom-settings';
 
 // The same 90px label column RecordInlineCellContainer gives a field row, so
-// this widget and the host's FIELDS widget above it read as one column.
+// the read-only fallback and the host's FIELDS widget above it read as one.
 const LABEL_WIDTH = 90;
+const LABEL_COLUMN_WIDTH = 140;
 const ROW_MIN_HEIGHT = 24;
-const SKELETON_ROW_COUNT = 3;
-// Just under the button, which is 32 tall in a 16px-padded widget.
-const OVERLAY_OFFSET_Y = 36;
 
-const SettingsFrame = ({ children }: { children: ReactNode }) => (
+type CustomSettingsTab = 'settings' | 'tools';
+
+const SettingsFrame = ({ children }: { children: React.ReactNode }) => (
   <section
     style={{
       boxSizing: 'border-box',
@@ -34,7 +39,7 @@ const SettingsFrame = ({ children }: { children: ReactNode }) => (
       flexDirection: 'column',
       fontFamily: TASK_TOKENS.fontFamily,
       gap: 8,
-      padding: 16,
+      padding: 0,
       width: '100%',
     }}
   >
@@ -72,11 +77,9 @@ const SettingValue = ({
   );
 };
 
-// The fork put this behind a button inside the raw JSON cell, by patching
-// FieldDisplay. An app has no hook into a field's display, so the button gets
-// a widget of its own on the merchant record page and the dialog opens over
-// the page as a host-rendered overlay — one button, one dialog, Settings and
-// Tools as its two tabs, matching the fork's own modal shape.
+// Inline form, no dialog: Settings (plain fields) and Tools (TOOL entries) are
+// two tabs of the widget itself. A tab bar only renders when the schema
+// declares both kinds — a schema with one of them opens straight to it.
 const MerchantCustomSettings = () => {
   const merchantId = useRecordId();
   const {
@@ -89,98 +92,213 @@ const MerchantCustomSettings = () => {
     save,
     runTool,
   } = useMerchantCustomSettings(merchantId ?? null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const hasSettings = schema.fields.length > 0;
+  const hasTools = schema.tools.length > 0;
+  const showTabBar = hasSettings && hasTools;
+
+  const [activeTab, setActiveTab] = useState<CustomSettingsTab>('settings');
+  const currentTab: CustomSettingsTab = !hasSettings
+    ? 'tools'
+    : !hasTools
+      ? 'settings'
+      : activeTab;
+
+  const [draftValues, setDraftValues] = useState<
+    Record<string, CustomSettingDraftValue>
+  >({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Rebuilt when the record behind the widget changes or the first load
+  // lands. Deliberately not on every values change: a tool run folds its own
+  // key into values, and that must not wipe a settings draft mid-edit.
+  useEffect(() => {
+    if (!isLoading) {
+      setDraftValues(buildCustomSettingDraft(schema.fields, values));
+      setSaveError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchantId, isLoading]);
 
   if (isLoading) {
-    return (
-      <SettingsFrame>
-        {Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-          <TaskSkeletonBlock key={index} height={ROW_MIN_HEIGHT} />
-        ))}
-      </SettingsFrame>
-    );
+    return null;
   }
 
   if (loadError !== null) {
     return <TaskMessage text={loadError} tone="danger" />;
   }
 
-  if (schema.fields.length === 0 && schema.tools.length === 0) {
+  if (!hasSettings && !hasTools) {
     return (
       <TaskMessage text={t('This merchant app declares no custom settings.')} />
     );
   }
 
-  return (
-    <SettingsFrame>
-      {schema.fields.map((entry) => (
-        <div
-          key={entry.key}
-          style={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 4,
-            minHeight: ROW_MIN_HEIGHT,
-          }}
-        >
-          <span
+  if (!canUpdate) {
+    return (
+      <SettingsFrame>
+        {schema.fields.map((entry) => (
+          <div
+            key={entry.key}
             style={{
-              color: TASK_TOKENS.textTertiary,
-              flexShrink: 0,
-              fontSize: TASK_TOKENS.fontSizeSmall,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              width: LABEL_WIDTH,
+              alignItems: 'center',
+              display: 'flex',
+              gap: 4,
+              minHeight: ROW_MIN_HEIGHT,
             }}
           >
-            {entry.label}
-          </span>
-          <SettingValue entry={entry} storedValue={values[entry.key]} />
-        </div>
-      ))}
+            <span
+              style={{
+                color: TASK_TOKENS.textTertiary,
+                flexShrink: 0,
+                fontSize: TASK_TOKENS.fontSizeSmall,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                width: LABEL_WIDTH,
+              }}
+            >
+              {entry.label}
+            </span>
+            <SettingValue entry={entry} storedValue={values[entry.key]} />
+          </div>
+        ))}
+      </SettingsFrame>
+    );
+  }
 
-      {canUpdate ? (
-        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          {/* The overlay anchors to its PARENT element, so it hangs off this
-              wrapper rather than off the whole row. */}
-          <span style={{ display: 'inline-flex', position: 'relative' }}>
-            <TaskButton onClick={() => setIsDialogOpen(!isDialogOpen)}>
-              <IconSettings size={14} />
-              {t('Custom settings')}
-            </TaskButton>
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveError(null);
 
-            {isDialogOpen && (
-              <twenty-overlay
-                offsetY={OVERLAY_OFFSET_Y}
-                onClose={() => setIsDialogOpen(false)}
-              >
-                <MerchantCustomSettingsDialog
-                  schema={schema}
-                  values={values}
-                  uploadFieldMetadataId={uploadFieldMetadataId}
-                  onClose={() => setIsDialogOpen(false)}
-                  onSaveSettings={async (nextValues) => {
-                    await save(nextValues);
-                    setIsDialogOpen(false);
-                    await enqueueSnackbar({
-                      message: t('Custom settings saved'),
-                      variant: 'success',
-                    });
-                  }}
-                  onRunTool={async (toolKey, params) => {
-                    await runTool(toolKey, params);
-                    await enqueueSnackbar({
-                      message: t('Tool started'),
-                      variant: 'success',
-                    });
-                  }}
-                />
-              </twenty-overlay>
-            )}
-          </span>
-        </div>
+    try {
+      const savedValues = await save(
+        mergeCustomSettingValues({
+          entries: schema.fields,
+          storedValues: values,
+          draftValues,
+        }),
+      );
+
+      setDraftValues(buildCustomSettingDraft(schema.fields, savedValues));
+      await enqueueSnackbar({
+        message: t('Custom settings saved'),
+        variant: 'success',
+      });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <SettingsFrame>
+      {showTabBar ? (
+        <TaskTabs
+          value={currentTab}
+          tabs={[
+            { value: 'settings', label: t('Settings') },
+            { value: 'tools', label: t('Tools') },
+          ]}
+          onChange={setActiveTab}
+        />
       ) : null}
+
+      {currentTab === 'settings' ? (
+        <>
+          {saveError === null ? null : (
+            <span style={{ color: TASK_TOKENS.textDanger, fontSize: 12 }}>
+              {saveError}
+            </span>
+          )}
+
+          <div
+            style={{
+              columnGap: 16,
+              display: 'grid',
+              gridTemplateColumns: `minmax(100px, ${LABEL_COLUMN_WIDTH}px) 1fr`,
+              rowGap: 12,
+            }}
+          >
+            {schema.fields.map((entry) => (
+              <Fragment key={entry.key}>
+                <span
+                  style={{
+                    alignItems: 'center',
+                    color: TASK_TOKENS.textSecondary,
+                    display: 'flex',
+                    fontSize: 13,
+                    minHeight: 32,
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {entry.label}
+                  {entry.required === true ? (
+                    <span style={{ color: TASK_TOKENS.textDanger }}>
+                      &nbsp;*
+                    </span>
+                  ) : null}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <MerchantCustomSettingInput
+                    entry={entry}
+                    uploadFieldMetadataId={uploadFieldMetadataId}
+                    value={
+                      draftValues[entry.key] ??
+                      formatCustomSettingValue(entry, undefined)
+                    }
+                    onChange={(value) =>
+                      setDraftValues((current) => ({
+                        ...current,
+                        [entry.key]: value,
+                      }))
+                    }
+                  />
+                </div>
+              </Fragment>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <TaskButton
+              variant="primary"
+              onClick={handleSave}
+              isDisabled={isSaving}
+            >
+              {isSaving ? t('Saving...') : t('Save')}
+            </TaskButton>
+          </div>
+        </>
+      ) : (
+        schema.tools.map((tool, toolIndex) => (
+          <Fragment key={tool.key}>
+          {toolIndex > 0 ? (
+            <div
+              style={{
+                background: TASK_TOKENS.borderLight,
+                height: 1,
+                margin: '8px 0',
+                width: '100%',
+              }}
+            />
+          ) : null}
+            <MerchantCustomSettingToolCard
+              tool={tool}
+              values={values}
+              uploadFieldMetadataId={uploadFieldMetadataId}
+              onRun={async (params) => {
+                await runTool(tool.key, params);
+                await enqueueSnackbar({
+                  message: t('Tool started'),
+                  variant: 'success',
+                });
+              }}
+            />
+          </Fragment>
+        ))
+      )}
     </SettingsFrame>
   );
 };

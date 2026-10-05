@@ -50,4 +50,10 @@ export type IssueRow = {
   timeSpentMinutes?: number | null;
   originalEstimateMinutes?: number | null;
   remainingEstimateMinutes?: number | null;
+  attachments?: readonly {
+    fileId?: string | null;
+    label?: string | null;
+    extension?: string | null;
+    url?: string | null;
+  }[] | null;
 };

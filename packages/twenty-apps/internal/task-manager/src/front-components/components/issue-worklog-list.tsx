@@ -9,6 +9,7 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskCopyLinkButton } from './task-copy-link-button';
+import { TASK_COMPOSER_BOX_STYLE, TASK_EMPTY_FEED_STYLE } from './task-control-styles';
 import { TaskDateTimeInput } from './task-date-time-input';
 import {
   FEED_BODY_INDENT,
@@ -16,10 +17,7 @@ import {
   TaskFeedItem,
 } from './task-feed-item';
 import { TaskIconButton } from './task-icon-button';
-import {
-  BLOCK_HANDLE_GUTTER,
-  TaskRichTextEditor,
-} from './task-rich-text-editor';
+import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSortToggle } from './task-sort-toggle';
 import { TaskTextInput } from './task-text-input';
 import { TASK_TOKENS } from './task-tokens';
@@ -32,6 +30,7 @@ type IssueWorklogListProps = {
   currentMemberId: string | null;
   highlightedWorklogId: string | null;
   totalMinutes: number | null | undefined;
+  originalEstimateMinutes: number | null | undefined;
   isBusy: boolean;
   onCreate: (input: {
     timeSpentMinutes: number;
@@ -61,6 +60,91 @@ const readWorklogTimestamp = (worklog: WorklogRow): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+// Logged time against the original estimate, so the tab says how the issue
+// stands rather than just listing entries. Without an estimate it falls back
+// to the plain total.
+const WorklogSummary = ({
+  totalMinutes,
+  originalEstimateMinutes,
+  isNewestFirst,
+  onSortChange,
+}: {
+  totalMinutes: number | null | undefined;
+  originalEstimateMinutes: number | null | undefined;
+  isNewestFirst: boolean;
+  onSortChange: (isNewestFirst: boolean) => void;
+}) => {
+  const estimate =
+    typeof originalEstimateMinutes === 'number' &&
+    originalEstimateMinutes > 0
+      ? originalEstimateMinutes
+      : null;
+  const logged = totalMinutes ?? 0;
+  const percent =
+    estimate === null || logged <= 0
+      ? 0
+      : Math.min(100, (logged / estimate) * 100);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        padding: `0 ${ROW_INLINE_PADDING}px`,
+      }}
+    >
+      <div
+        style={{
+          alignItems: 'center',
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span
+          style={{
+            color: TASK_TOKENS.textTertiary,
+            fontFamily: TASK_TOKENS.fontFamily,
+            fontSize: 12,
+          }}
+        >
+          {t('Time spent')}: {formatMinutes(totalMinutes)}
+          {estimate === null ? '' : ` / ${formatMinutes(estimate)}`}
+        </span>
+        <TaskSortToggle
+          isNewestFirst={isNewestFirst}
+          onChange={onSortChange}
+        />
+      </div>
+      {estimate !== null && (
+        <div
+          role="progressbar"
+          aria-valuenow={Math.round(percent)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          style={{
+            background: TASK_TOKENS.backgroundTertiary,
+            borderRadius: TASK_TOKENS.radiusExtraSmall,
+            height: 4,
+            overflow: 'hidden',
+            width: '100%',
+          }}
+        >
+          <div
+            style={{
+              background:
+                logged > estimate ? TASK_TOKENS.red : TASK_TOKENS.accent,
+              borderRadius: TASK_TOKENS.radiusExtraSmall,
+              height: '100%',
+              width: `${percent}%`,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const IssueWorklogList = ({
   issueId,
   baseUrl,
@@ -69,6 +153,7 @@ export const IssueWorklogList = ({
   currentMemberId,
   highlightedWorklogId,
   totalMinutes,
+  originalEstimateMinutes,
   isBusy,
   onCreate,
   onUpdateDescription,
@@ -118,7 +203,7 @@ export const IssueWorklogList = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
+        gap: 8,
         padding: `0 ${FEED_INLINE_INSET}px`,
       }}
     >
@@ -170,12 +255,15 @@ export const IssueWorklogList = ({
               onChange={setStartedAt}
             />
           </div>
-          <TaskRichTextEditor
-            value={description}
-            onChange={setDescription}
-            placeholder={t('Write what you worked on…')}
-            minHeight={NOTE_MIN_HEIGHT}
-          />
+          <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+            <TaskRichTextEditor
+              value={description}
+              onChange={setDescription}
+              placeholder={t('Write what you worked on…')}
+              minHeight={NOTE_MIN_HEIGHT}
+              issueId={issueId}
+            />
+          </div>
           <div style={{ display: 'flex' }}>
             <TaskButton
               variant="primary"
@@ -189,39 +277,18 @@ export const IssueWorklogList = ({
       </div>
 
       {worklogs.length === 0 ? (
-        <span
-          style={{
-            color: TASK_TOKENS.textTertiary,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 12,
-            padding: `0 ${ROW_INLINE_PADDING}px`,
-          }}
+        <div
+          style={{ ...TASK_EMPTY_FEED_STYLE, margin: `0 ${ROW_INLINE_PADDING}px` }}
         >
           {t('No time logged yet.')}
-        </span>
-      ) : (
-        <div
-          style={{
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: `0 ${ROW_INLINE_PADDING}px`,
-          }}
-        >
-          <span
-            style={{
-              color: TASK_TOKENS.textTertiary,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 12,
-            }}
-          >
-            {t('Time spent')}: {formatMinutes(totalMinutes)}
-          </span>
-          <TaskSortToggle
-            isNewestFirst={isNewestFirst}
-            onChange={setIsNewestFirst}
-          />
         </div>
+      ) : (
+        <WorklogSummary
+          totalMinutes={totalMinutes}
+          originalEstimateMinutes={originalEstimateMinutes}
+          isNewestFirst={isNewestFirst}
+          onSortChange={setIsNewestFirst}
+        />
       )}
 
       {sortedWorklogs.map((worklog) => {
@@ -297,19 +364,15 @@ export const IssueWorklogList = ({
           >
             {isEditing ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <TaskRichTextEditor
-                  value={editDraft}
-                  onChange={setEditDraft}
-                  minHeight={NOTE_MIN_HEIGHT}
-                  shouldInsetBlockHandles
-                />
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 6,
-                    paddingLeft: BLOCK_HANDLE_GUTTER,
-                  }}
-                >
+                <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+                  <TaskRichTextEditor
+                    value={editDraft}
+                    onChange={setEditDraft}
+                    minHeight={NOTE_MIN_HEIGHT}
+                    issueId={issueId}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
                   <TaskButton
                     variant="primary"
                     size="small"

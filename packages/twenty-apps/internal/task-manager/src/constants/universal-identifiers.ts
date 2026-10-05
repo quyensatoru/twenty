@@ -421,6 +421,7 @@ export const ISSUE_RECORD_PAGE_FIELDS_VIEW_UID =
   'b3e9f1d4-7c58-4a0e-9f21-5d8c6a41b703';
 export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
+  '21f425f4-489a-4920-a42a-64085f6fafb5';
 export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =
   '2a707f35-232e-431c-9468-58913cbbcf67';
 // Comments and worklogs are a front component, not a RECORD_TABLE widget: a
@@ -438,10 +439,23 @@ export const ISSUE_ACTIVITY_FRONT_COMPONENT_UID =
 // timelineActivity.targetIssueId), so declaring them renders an invalid-filter
 // error. See DEPLOY.md 5.13.
 
+// Subtasks and attachments are app-drawn lists for the same reason comments
+// and worklogs are: a host widget reads with the viewer's own token, so it
+// goes blank once the Member role loses direct access to these objects.
+export const ISSUE_SUBTASKS_FRONT_COMPONENT_UID =
+  '2cc11a3b-8db9-4d44-9e7d-27b1d9503028';
+export const ISSUE_RECORD_PAGE_SUBTASKS_WIDGET_UID =
+  'f313cec7-4761-4900-9e12-e6ba95c20490';
+export const ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID =
+  '2314a9e1-b681-4675-9da5-65f4dbc529c4';
+export const ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID =
+  'bad7290f-5886-45cd-92d7-c1eba03fca22';
 
 // Logic functions.
 export const ISSUE_DETAIL_LOGIC_FUNCTION_UID =
   '5a41d77d-9e42-4c1a-90a8-ae13d8cf8830';
+export const APPEND_ISSUE_ATTACHMENT_LOGIC_FUNCTION_UID =
+  'be5c54c6-00f0-4ddc-a93b-abde2fdf28bb';
 export const ATTACHMENT_FIELD_LOGIC_FUNCTION_UID =
   'd5919fad-33cb-48fb-a020-1598a212988b';
 export const CREATE_ISSUE_LOGIC_FUNCTION_UID =

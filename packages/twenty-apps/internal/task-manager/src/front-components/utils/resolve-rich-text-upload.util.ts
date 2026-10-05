@@ -16,6 +16,10 @@ export type RichTextUploadAnswer = {
   handle: string;
   url: string | null;
   outcome: RichTextUploadOutcome;
+  // Carried for the Attachments filing below: the editor only needs the url,
+  // but the stored file also belongs on the issue's FILES field.
+  fileId?: string;
+  fileName?: string;
 };
 
 // The editor runs on the host and has no credentials of its own: it hands over
@@ -38,5 +42,11 @@ export const resolveRichTextUpload = async (
     return { handle, url: null, outcome: result.failure };
   }
 
-  return { handle, url: result.url, outcome: 'stored' };
+  return {
+    handle,
+    url: result.url,
+    outcome: 'stored',
+    fileId: result.fileId,
+    fileName: result.name,
+  };
 };

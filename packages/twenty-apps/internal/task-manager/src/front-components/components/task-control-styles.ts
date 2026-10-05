@@ -20,6 +20,29 @@ export const getTaskControlStyle = (isFocused: boolean) =>
     width: '100%',
   }) as const;
 
+// A bordered box for composers, so the one control that takes input reads as
+// an input and the rows below it read as content. Rows carry no border of
+// their own — only a hover tint — which is what tells the two apart. No
+// padding of its own: the editor already spaces its text, and a second inset
+// reads as a box inside a box.
+export const TASK_COMPOSER_BOX_STYLE = {
+  background: TASK_TOKENS.background,
+  border: `1px solid ${TASK_TOKENS.border}`,
+  borderRadius: TASK_TOKENS.radius,
+} as const;
+
+// A dashed placeholder for an empty feed, so "nothing here yet" reads as a
+// state rather than as a missing list.
+export const TASK_EMPTY_FEED_STYLE = {
+  border: `1px dashed ${TASK_TOKENS.borderStrong}`,
+  borderRadius: TASK_TOKENS.radius,
+  color: TASK_TOKENS.textTertiary,
+  fontFamily: TASK_TOKENS.fontFamily,
+  fontSize: 12,
+  padding: 16,
+  textAlign: 'center',
+} as const;
+
 // The borderless field that sits inside a control wrapper already carrying the
 // border, background and focus ring.
 export const TASK_BARE_FIELD_STYLE = {

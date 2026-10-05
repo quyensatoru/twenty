@@ -1,10 +1,4 @@
-import {
-  type CSSProperties,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   enqueueSnackbar,
@@ -12,12 +6,15 @@ import {
   useRecordId,
 } from 'twenty-sdk/front-component';
 
+import { ISSUE_LABEL_OPTIONS } from '../constants/issue-label-options';
+import { ISSUE_PRIORITY_OPTIONS } from '../constants/issue-priority-options';
 import { UPDATE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DESCRIPTION_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 import { TaskMessage } from './components/task-message';
 import { TaskRichTextEditor } from './components/task-rich-text-editor';
-import { TaskSkeletonBlock } from './components/task-skeleton-block';
+import { TaskStatusLine } from './components/task-status-line';
+import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
@@ -27,8 +24,7 @@ import { readErrorText } from './utils/read-error-text.util';
 // pause of a sentence already has the text on the server.
 const SAVE_DEBOUNCE_MS = 700;
 
-// One frame for the loading state and the loaded state, so the fetch landing
-// does not move anything: the skeleton stands in the same boxes.
+// One frame for the loaded state.
 const DescriptionFrame = ({ children }: { children: ReactNode }) => (
   <section
     style={{
@@ -45,49 +41,32 @@ const DescriptionFrame = ({ children }: { children: ReactNode }) => (
   </section>
 );
 
-// React's CSSProperties has no room for custom properties, and the two below
-// are the whole point of this style object.
-type SurfaceStyle = CSSProperties & Record<`--${string}`, string>;
+// The scroll box both modes share: long prose scrolls inside the widget's
+// fixed row budget instead of pushing the status line out of it.
+const DescriptionBody = ({ children }: { children: ReactNode }) => (
+  <div
+    style={{
+      boxSizing: 'border-box',
+      display: 'flex',
+      flex: 1,
+      minHeight: 0,
+      overflowY: 'auto',
+      width: '100%',
+    }}
+  >
+    {children}
+  </div>
+);
 
-// The prose gets a surface of its own, tinted rather than bordered, so the
-// block handles have somewhere to be that is visibly NOT the description.
+// Read-first, like Jira and Linear: the description sits on the page as plain
+// prose with no box of its own, and a click turns it into a focused editing
+// surface with an accent ring. Markdown is the storage format, never the
+// reading format, and saving stays on the debounce plus the blur flush below,
+// which also returns the panel to its reading state.
 //
-// They cannot be outside the widget's own frame. That frame is
-// StyledWidgetContentFrame, drawn by the host around every front component; an
-// app cannot remove its border (it reads --t-border-color-medium off its own
-// ancestors, not off anything this component sets) and the 47px BlockNote
-// needs to the left of a line would land on the navigation drawer, since the
-// description widget starts at column 0 of the page. So the box the handles sit
-// outside of is this one, inside that frame.
-//
-// A tint rather than a border because a second bordered rectangle 48px inside
-// the first reads as a mistake, while a filled block reads as content.
-//
-// The editor is host-rendered but it is a DOM descendant of this element, so
-// the theme variables its own container reads resolve from here: the medium
-// border is blanked, the primary background redirected at the tint. The app can
-// reach the host element no other way, and if the variable names ever move the
-// editor simply keeps its own frame.
-const DescriptionSurface = ({ children }: { children?: ReactNode }) => {
-  const surfaceStyle: SurfaceStyle = {
-    '--t-background-primary':
-      'var(--t-background-transparent-light, rgba(0,0,0,0.04))',
-    '--t-border-color-medium': 'transparent',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flex: 1,
-    minHeight: 0,
-    width: '100%',
-  };
-
-  return <div style={surfaceStyle}>{children}</div>;
-};
-
-// Markdown is the storage format, never the reading format: the rendering is
-// always on screen under the source box, so nobody has to read `## Kế hoạch`
-// to find out what an issue is about, and a pasted picture is visible in the
-// place the text puts it. Saving stays on the debounce plus the blur flush
-// below.
+// Entering edit mode mounts the editor, so the click that opens it cannot also
+// place the caret: positioning the cursor takes a second click. Autofocus is
+// not forwardable from the sandbox, so there is no way around that ordering.
 //
 // The host's FIELD_RICH_TEXT widget cannot render this field. Its card is hard
 // wired to a field literally named `bodyV2` (FieldRichTextCard reads
@@ -102,6 +81,10 @@ const IssueDescription = () => {
   const issueId = useRecordId();
   const { data, isLoading, loadError } = useIssueDetail(issueId);
   const [draft, setDraft] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingMarkdownRef = useRef<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
@@ -122,6 +105,9 @@ const IssueDescription = () => {
     cancelScheduledSave();
     pendingMarkdownRef.current = null;
     setDraft(null);
+    setIsEditing(false);
+    setIsSaving(false);
+    setSaveError(null);
   }, [issueId]);
 
   // A pending debounce must not outlive the panel, or it writes after the user
@@ -138,14 +124,17 @@ const IssueDescription = () => {
         issueId,
         data: { description: buildRichTextValue(markdown) },
       });
+      setSaveError(null);
     } catch (error) {
-      // Reported through the host's own toast rather than a line in the panel:
-      // a save that fails must still be visible now that the panel is the
-      // editor and nothing else, and a failure is the only thing here worth
+      // Reported through the host's own toast as well as the status line: a
+      // save that fails must still be visible after the panel has returned to
+      // its reading state, and a failure is the only thing here worth
       // interrupting anyone for. The draft is left untouched, so the text the
       // save failed on is still in the box and the next keystroke retries it.
+      const message = readErrorText(error);
+      setSaveError(message);
       await enqueueSnackbar({
-        message: readErrorText(error),
+        message,
         variant: 'error',
       });
     }
@@ -164,13 +153,23 @@ const IssueDescription = () => {
     }
 
     pendingMarkdownRef.current = null;
-    saveChainRef.current = saveChainRef.current.then(() => persist(markdown));
+    saveChainRef.current = saveChainRef.current
+      .then(() => persist(markdown))
+      .then(() => {
+        // Cleared only when nothing newer is waiting: a keystroke that landed
+        // mid-write schedules its own debounce, which owns the line now.
+        if (pendingMarkdownRef.current === null) {
+          setIsSaving(false);
+        }
+      });
 
     return saveChainRef.current;
   };
 
   const handleDraftChange = (nextMarkdown: string) => {
     setDraft(nextMarkdown);
+    setIsSaving(true);
+    setSaveError(null);
     pendingMarkdownRef.current = nextMarkdown;
     cancelScheduledSave();
     debounceHandleRef.current = setTimeout(() => {
@@ -184,13 +183,7 @@ const IssueDescription = () => {
   }
 
   if (isLoading && data.issue === null) {
-    return (
-      <DescriptionFrame>
-        <DescriptionSurface>
-          <TaskSkeletonBlock height="100%" shouldGrow />
-        </DescriptionSurface>
-      </DescriptionFrame>
-    );
+    return null;
   }
 
   if (data.issue === null) {
@@ -202,20 +195,158 @@ const IssueDescription = () => {
     );
   }
 
+  // The draft is never cleared except when the record changes: the detail
+  // route is not refetched after a save, so the stored value stays stale and
+  // falling back to it would visibly unwrite what was just saved.
+  const currentMarkdown = draft ?? storedMarkdown;
+  const isEmpty = currentMarkdown.trim() === '';
+
+  // The Jira top line, so the page carries the issue's state above its prose
+  // instead of leaving that to the Details column alone. Everything here is
+  // read-only: the pickers live in Details, and duplicating them would offer
+  // the same field twice with two different option scopes.
+  const status = data.issueStatuses.find(
+    (candidate) => candidate.id === data.issue?.statusId,
+  );
+  const priorityOption = ISSUE_PRIORITY_OPTIONS.find(
+    (candidate) => candidate.value === data.issue?.priority,
+  );
+  const labelRows = (data.issue?.labels ?? []).map((value) => ({
+    value,
+    option: ISSUE_LABEL_OPTIONS.find((candidate) => candidate.value === value),
+  }));
+
   return (
     <DescriptionFrame>
+      <div
+        style={{
+          alignItems: 'center',
+          display: 'flex',
+          flexShrink: 0,
+          flexWrap: 'wrap',
+          fontFamily: TASK_TOKENS.fontFamily,
+          gap: 8,
+          paddingBottom: 8,
+          width: '100%',
+        }}
+      >
+        {typeof data.issue?.issueKey === 'string' && (
+          <span
+            style={{
+              color: TASK_TOKENS.textSecondary,
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            {data.issue.issueKey}
+          </span>
+        )}
+        {typeof status?.name === 'string' && (
+          <TaskTag color={status.color}>{status.name}</TaskTag>
+        )}
+        {priorityOption !== undefined && (
+          <TaskTag color={priorityOption.color}>
+            {priorityOption.label}
+          </TaskTag>
+        )}
+      </div>
+      {labelRows.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: 4,
+            paddingBottom: 8,
+            width: '100%',
+          }}
+        >
+          {labelRows.map(({ value, option }) => (
+            <TaskTag key={value} color={option?.color ?? 'gray'}>
+              {option?.label ?? value}
+            </TaskTag>
+          ))}
+        </div>
+      )}
       {/* Host-rendered: the worker has no Selection, Range or contentEditable,
           so the editor itself runs on the host side and this component only
           passes the markdown down and takes the edited markdown back. */}
-      <DescriptionSurface>
-        <TaskRichTextEditor
-          value={draft ?? storedMarkdown}
-          onChange={handleDraftChange}
-          onBlur={() => void flushSave()}
-          placeholder={t('Describe the issue…')}
-          shouldFillHeight
+      <DescriptionBody>
+        {isEditing ? (
+          <div
+            style={{
+              background: TASK_TOKENS.background,
+              border: `1px solid ${TASK_TOKENS.accent}`,
+              borderRadius: TASK_TOKENS.radius,
+              boxShadow: `0 0 0 3px ${TASK_TOKENS.accentSoft}`,
+              boxSizing: 'border-box',
+              display: 'flex',
+              flex: 1,
+              minHeight: 0,
+              width: '100%',
+            }}
+          >
+            <TaskRichTextEditor
+              value={currentMarkdown}
+              onChange={handleDraftChange}
+              onBlur={() => {
+                void flushSave();
+                setIsEditing(false);
+              }}
+              placeholder={t('Describe the issue…')}
+              shouldFillHeight
+              issueId={issueId}
+            />
+          </div>
+        ) : (
+          <div
+            role="button"
+            tabIndex={0}
+            title={t('Edit')}
+            onClick={() => setIsEditing(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                setIsEditing(true);
+              }
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+              background: isHovered
+                ? TASK_TOKENS.backgroundHover
+                : 'transparent',
+              borderRadius: TASK_TOKENS.radius,
+              boxSizing: 'border-box',
+              cursor: 'text',
+              flex: 1,
+              minHeight: 0,
+              width: '100%',
+            }}
+          >
+            {isEmpty ? (
+              <span
+                style={{
+                  color: TASK_TOKENS.textTertiary,
+                  fontFamily: TASK_TOKENS.fontFamily,
+                  fontSize: 13,
+                }}
+              >
+                {t('Describe the issue…')}
+              </span>
+            ) : (
+              <TaskRichTextEditor value={currentMarkdown} isReadOnly />
+            )}
+          </div>
+        )}
+      </DescriptionBody>
+      {/* Always in the layout: a line appearing only on failure would push the
+          prose, and autosave with no feedback reads as broken. */}
+      <div style={{ paddingTop: 8 }}>
+        <TaskStatusLine
+          text={saveError ?? (isSaving ? t('Saving...') : null)}
+          tone={saveError === null ? 'muted' : 'danger'}
         />
-      </DescriptionSurface>
+      </div>
     </DescriptionFrame>
   );
 };

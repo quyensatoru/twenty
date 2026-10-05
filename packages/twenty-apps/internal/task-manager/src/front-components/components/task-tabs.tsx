@@ -8,9 +8,9 @@ type TaskTabsProps<TTab extends string> = {
   onChange: (value: TTab) => void;
 };
 
-// The active tab is the accent colour and carries a 2px underline of its own
-// over the strip's divider; the rest are tertiary text. Inactive tabs reserve
-// the same 2px so switching tabs never moves the strip by a pixel.
+// A Linear-style segmented control: the strip itself is inset, the active tab
+// is a raised card on it and the rest are plain text. No underline to reserve,
+// so switching tabs never moves anything by a pixel.
 export const TaskTabs = <TTab extends string>({
   value,
   tabs,
@@ -22,9 +22,13 @@ export const TaskTabs = <TTab extends string>({
     <div
       role="tablist"
       style={{
-        borderBottom: `1px solid ${TASK_TOKENS.border}`,
-        display: 'flex',
-        gap: 4,
+        alignSelf: 'flex-start',
+        background: TASK_TOKENS.backgroundTertiary,
+        borderRadius: TASK_TOKENS.radius,
+        display: 'inline-flex',
+        gap: 2,
+        maxWidth: '100%',
+        padding: 4,
       }}
     >
       {tabs.map((tab) => {
@@ -41,11 +45,12 @@ export const TaskTabs = <TTab extends string>({
             onClick={() => onChange(tab.value)}
             style={{
               alignItems: 'center',
-              background: 'transparent',
+              background: isActive ? TASK_TOKENS.background : 'transparent',
               border: 'none',
-              borderBottom: `2px solid ${isActive ? TASK_TOKENS.accent : 'transparent'}`,
+              borderRadius: TASK_TOKENS.radiusSmall,
+              boxShadow: isActive ? TASK_TOKENS.shadowLight : 'none',
               color: isActive
-                ? TASK_TOKENS.accent
+                ? TASK_TOKENS.textPrimary
                 : hoveredTab === tab.value
                   ? TASK_TOKENS.textPrimary
                   : TASK_TOKENS.textTertiary,
@@ -55,18 +60,23 @@ export const TaskTabs = <TTab extends string>({
               fontSize: 13,
               fontWeight: isActive ? 600 : 500,
               gap: 6,
-              height: 34,
-              marginBottom: -1,
-              padding: '0 8px',
+              height: 28,
+              padding: '0 12px',
+              whiteSpace: 'nowrap',
             }}
           >
             {tab.label}
             {tab.count === undefined ? null : (
               <span
                 style={{
-                  background: TASK_TOKENS.backgroundTertiary,
+                  background: isActive
+                    ? TASK_TOKENS.backgroundTertiary
+                    : 'transparent',
                   borderRadius: TASK_TOKENS.radiusSmall,
-                  color: TASK_TOKENS.textTertiary,
+                  color:
+                    isActive || hoveredTab === tab.value
+                      ? TASK_TOKENS.textSecondary
+                      : TASK_TOKENS.textTertiary,
                   fontSize: 11,
                   lineHeight: '16px',
                   // Held open for two digits: a counter growing from 9 to 10

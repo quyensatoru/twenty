@@ -7,7 +7,7 @@ import { TaskMemberHoverCard } from './task-member-hover-card';
 import { TASK_TOKENS } from './task-tokens';
 
 const AVATAR_SIZE = 24;
-const AVATAR_GAP = 10;
+const AVATAR_GAP = 12;
 
 // Where a feed row's text column starts, measured from the row's own left edge.
 // Exported so the composers can indent to the same line: a composer that starts
@@ -88,10 +88,10 @@ export const TaskFeedItem = ({
         fontFamily: TASK_TOKENS.fontFamily,
         gap: AVATAR_GAP,
         minWidth: 0,
-        // The rows used to butt straight against each other and against the
-        // panel edge: a comment is a block of prose, and prose needs a margin
-        // to read as its own block rather than as more of the one above.
-        padding: '8px 10px',
+        // A comment is a block of prose, and prose needs a margin to read as
+        // its own block rather than as more of the one above. Twelve pixels
+        // all round is the same rhythm the Details groups keep.
+        padding: '12px',
       }}
     >
       <TaskMemberHoverCard
@@ -168,7 +168,7 @@ export const TaskFeedItem = ({
           title={formatDateTimeLabel(timestamp)}
           style={{
             color: TASK_TOKENS.textTertiary,
-            fontSize: 11,
+            fontSize: 12,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',

@@ -22,7 +22,7 @@ export type UploadImageFromTransferredFileFailure =
   | 'upload-failed';
 
 export type UploadImageFromTransferredFileResult =
-  | { status: 'uploaded'; url: string; name: string }
+  | { status: 'uploaded'; url: string; name: string; fileId: string }
   | { status: 'failed'; failure: UploadImageFromTransferredFileFailure };
 
 export const isTransferredImageFile = (file: TransferredFile): boolean =>
@@ -53,5 +53,10 @@ export const uploadImageFromTransferredFile = async (
     return { status: 'failed', failure: 'upload-failed' };
   }
 
-  return { status: 'uploaded', url: result.file.url, name: file.name };
+  return {
+    status: 'uploaded',
+    url: result.file.url,
+    name: file.name,
+    fileId: result.file.fileId,
+  };
 };

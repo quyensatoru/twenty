@@ -23,12 +23,15 @@ describe('resolveRichTextUpload', () => {
       status: 'uploaded',
       url: 'https://files.test/screenshot.png',
       name: 'screenshot.png',
+      fileId: 'file-1',
     });
 
     expect(await resolveRichTextUpload(buildImageFile('handle-1'))).toEqual({
       handle: 'handle-1',
       url: 'https://files.test/screenshot.png',
       outcome: 'stored',
+      fileId: 'file-1',
+      fileName: 'screenshot.png',
     });
   });
 

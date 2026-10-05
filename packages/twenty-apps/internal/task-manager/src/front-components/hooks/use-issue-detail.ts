@@ -12,6 +12,10 @@ import {
   stripFileTokens,
 } from '../../utils/resolve-signed-markdown.util';
 import { postAppRoute } from '../utils/post-app-route.util';
+import {
+  type IssueAttachmentRow,
+  readIssueAttachments,
+} from '../utils/read-issue-attachments.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
 type RichTextValue = { blocknote?: string | null; markdown?: string | null };
@@ -68,6 +72,47 @@ export type MemberRow = {
   userEmail?: string | null;
 };
 
+export type LinkedIssueRow = {
+  id: string;
+  title?: string | null;
+  issueKey?: string | null;
+  statusId?: string | null;
+  assigneeId?: string | null;
+};
+
+// A linked row the route could not shape into an id is not a row at all:
+// the Subtasks widget keys everything off it.
+const readLinkedIssue = (value: unknown): LinkedIssueRow | null => {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+
+  const { id, title, issueKey, statusId, assigneeId } =
+    value as Record<string, unknown>;
+
+  if (typeof id !== 'string') {
+    return null;
+  }
+
+  return {
+    id,
+    title: typeof title === 'string' ? title : null,
+    issueKey: typeof issueKey === 'string' ? issueKey : null,
+    statusId: typeof statusId === 'string' ? statusId : null,
+    assigneeId: typeof assigneeId === 'string' ? assigneeId : null,
+  };
+};
+
+const readLinkedIssues = (value: unknown): LinkedIssueRow[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(readLinkedIssue)
+    .filter((row): row is LinkedIssueRow => row !== null);
+};
+
 type IssueDetail = {
   issue: IssueRow | null;
   issueComments: IssueCommentRow[];
@@ -78,6 +123,9 @@ type IssueDetail = {
   sprints: SprintRow[];
   epics: EpicRow[];
   members: MemberRow[];
+  parentIssue: LinkedIssueRow | null;
+  childIssues: LinkedIssueRow[];
+  attachments: IssueAttachmentRow[];
   currentWorkspaceMemberId: string | null;
 };
 
@@ -91,6 +139,9 @@ const EMPTY_DETAIL: IssueDetail = {
   sprints: [],
   epics: [],
   members: [],
+  parentIssue: null,
+  childIssues: [],
+  attachments: [],
   currentWorkspaceMemberId: null,
 };
 
@@ -141,6 +192,9 @@ export const useIssueDetail = (issueId: string | null) => {
         sprints: result.sprints ?? [],
         epics: result.epics ?? [],
         members: result.members ?? [],
+        parentIssue: readLinkedIssue(result.parentIssue),
+        childIssues: readLinkedIssues(result.childIssues),
+        attachments: readIssueAttachments(result.issue?.attachments),
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
       }));
       setLoadError(null);

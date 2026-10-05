@@ -22,6 +22,9 @@ export const ISSUE_SELECTION = {
   parentId: true,
   assigneeId: true,
   reporterId: true,
+  // FILES is composite, like RICH_TEXT above: FileObject carries fileId, label,
+  // extension and url.
+  attachments: { fileId: true, label: true, extension: true, url: true },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -44,6 +47,17 @@ export const ISSUE_SEARCH_SELECTION = {
   assigneeId: true,
   reporterId: true,
   updatedAt: true,
+} as const;
+
+// One row of the Subtasks widget: key, title, state and owner, nothing more.
+// The status name and the member behind an assigneeId come from the lists the
+// issue-detail route already returns, so this selection stays narrow.
+export const LINKED_ISSUE_SELECTION = {
+  id: true,
+  title: true,
+  issueKey: true,
+  statusId: true,
+  assigneeId: true,
 } as const;
 
 export const ISSUE_STATUS_SELECTION = {

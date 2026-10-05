@@ -268,6 +268,13 @@ Là một RECORD_PAGE layout **một tab duy nhất**, tab đó ở chế độ 
   viết tay của fork;
 - **Activity** (bình luận + worklog, cũng là front component) nằm **dưới** Description, không còn
   là một tab riêng;
+- panel Details (front component) nằm trên, bảng field (`FIELDS` của host) dính ngay dưới nó —
+  hai khối này là một danh sách liền, không chen widget nào vào giữa;
+- **Subtasks** (issue cha + issue con, bấm mở side panel) và **Attachments** (tên file + copy
+  link) là hai widget riêng nằm ngay dưới bảng field ở cột phải. Bảng field chỉ giữ 8 dòng —
+  vừa bảng thu gọn — nên hai widget này ghé sát lên thay vì tít dưới trang; mở **More** thì bảng
+  cuộn trong ô của nó. Ảnh dán vào description/comment được file tự động vào `issue.attachments`
+  (route `append-issue-attachment`) nên cũng hiện ở đây;
 - không có tab Files và Timeline — xem mục 5.12.
 
 **Lưới của host: 12 cột, mỗi dòng cao đúng 55px cộng 8px khe** (`PAGE_LAYOUT_CONFIG` và
@@ -284,12 +291,12 @@ Hai hệ quả phải biết trước khi sửa `issue-record.page-layout.ts`:
   trọn bề ngang. Vì vậy `row` khai trong source là **thứ tự đọc** (Description → Details →
   Activity), còn hình dạng hai cột trên màn rộng do React Grid Layout nén dọc tạo ra.
 
-**Description không có nút Edit và không có nút Save.** Nội dung hiện ở dạng **đã render**; ô soạn
-markdown nằm ngay dưới nó và lớp render cho con trỏ đi xuyên qua (`pointer-events: none`), nên bấm
-vào chính đoạn văn là bấm vào textarea: con trỏ nhảy đúng chỗ vừa bấm. Rời ô (blur) thì quay lại
-bản render. Lưu vẫn là autosave: debounce 700ms cộng một lần flush khi blur. Không gọi `.focus()`
-được từ trong sandbox — `autofocus` không nằm trong danh sách property mà renderer đẩy sang remote
-element — nên lớp phủ trong suốt là cách duy nhất để một cú bấm vừa vào chữ vừa vào ô soạn.
+**Description đọc-trước, bấm-để-sửa.** Nội dung hiện ở dạng **đã render**, trực tiếp trên
+nền trang, không hộp không viền; bấm (hoặc Enter) vào đoạn văn thì hiện khung soạn có viền accent
+kèm trạng thái `Saving...`, rời ô (blur) thì tự lưu và quay về bản đọc. Lưu vẫn là autosave:
+debounce 700ms cộng một lần flush khi blur. Vào chế độ sửa là mount lại editor nên cú bấm mở khung
+không đặt được con trỏ — đặt con trỏ tốn thêm một cú bấm nữa; sandbox không forward autofocus nên
+không có đường nào tránh được thứ tự đó.
 
 **Bảng field bật/tắt và sắp xếp lại được — bằng công cụ của chính Twenty, không phải đồ tự viết.**
 Widget `FIELDS` đọc danh sách field từ một **view kiểu `FIELDS_WIDGET`**; app ship sẵn view đó ở
@@ -665,16 +672,15 @@ Danh sách kiểm bằng tay, theo thứ tự:
 6. **Board** → kéo một thẻ sang cột khác, reload, thẻ vẫn ở cột mới. Gõ vào ô **tìm kiếm** thì
    danh sách lọc theo key/tiêu đề ngay; menu **Fields** bật tắt được chip trên thẻ. Bấm vào một thẻ
    thì mở **side panel** chi tiết, board vẫn ở phía sau.
-7. Mở issue → chỉ có **một** tab **Issue**, xếp hai cột: **Description** trên bên trái (kèm chip mã
-   task `TM-…`), **Details** bên phải, **Activity** dưới Description. Không có tab Files/Timeline —
-   xem mục 5.12. Description phải hiện nội dung **đã render**, không phải markdown thô và không
-   phải một thanh xám rỗng; bấm thẳng vào đoạn văn → ô soạn markdown mở ra ngay tại chỗ vừa bấm,
-   sửa xong bấm ra ngoài thì nội dung render lại có định dạng (không có nút Edit, không có nút
-   Save). Thu hẹp cửa sổ dưới 768px → ba khối xếp một cột theo thứ tự Description → Details →
-   Activity.
-   Trong Activity, ô soạn bình luận phải nằm **trên** danh sách bình luận và mỗi bình luận có avatar
-   tác giả. Chuyển qua lại giữa **Comments** và **Worklogs**; ô soạn, nút và ô chọn ngày phải
-   trông như control của Twenty, không phải control mặc định của trình duyệt. Thử **Preview** trên ô
+7. Mở issue → chỉ có **một** tab **Issue**, xếp hai cột: **Description** trên bên trái (văn bản
+    đọc trực tiếp, bấm vào mới hiện khung soạn có viền accent, rời ô thì tự lưu và về bản đọc),
+    **Details** bên phải, **Activity** dưới Description. Không có tab Files/Timeline —
+    xem mục 5.12. Thu hẹp cửa sổ dưới 768px → ba khối xếp một cột theo thứ tự Description → Details →
+    Activity.
+    Trong Activity, tab **Comments** / **Worklogs** / **History** là segmented control, ô soạn bình
+    luận phải nằm **trên** danh sách bình luận và mỗi bình luận có avatar
+    tác giả. Ô soạn, nút và ô chọn ngày phải
+    trông như control của Twenty, không phải control mặc định của trình duyệt. Thử **Preview** trên ô
    soạn bình luận và dán một URL ảnh công khai — markdown phải tự thành `![…](…)` và URL trong đó
    phải đổi thành `<SERVER_URL>/file/files-field/…` sau một hai giây (ảnh đã vào storage của Twenty).
    Ở bảng **Fields**, bấm field **Attachments** → hộp thoại chọn tệp của trình duyệt mở ra → chọn một

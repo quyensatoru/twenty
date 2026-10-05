@@ -24,7 +24,6 @@ import {
   type TaskRelationOption,
   TaskRelationSelect,
 } from './components/task-relation-select';
-import { TaskSkeletonBlock } from './components/task-skeleton-block';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
@@ -34,7 +33,6 @@ import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
 import { readMemberName } from './utils/read-member-name.util';
 
-const SKELETON_ROW_HEIGHT = 32;
 // Which field has its card open, if any. One at a time: a field that owns its
 // own flag leaves the previous card on screen, and two cards over each other
 // are both unreachable.
@@ -141,13 +139,7 @@ const IssueFields = () => {
   }
 
   if (isLoading && data.issue === null) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <TaskSkeletonBlock height={SKELETON_ROW_HEIGHT} />
-        <TaskSkeletonBlock height={SKELETON_ROW_HEIGHT} />
-        <TaskSkeletonBlock height={SKELETON_ROW_HEIGHT} />
-      </div>
-    );
+    return null;
   }
 
   if (data.issue === null) {
@@ -265,13 +257,18 @@ const IssueFields = () => {
   return (
     <section
       style={{
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: TASK_TOKENS.fontFamily,
         // 24px row plus this is the 32px pitch the host's own field list runs
         // at; at 4 the app panel stepped 28 and the two columns drifted apart
-        // row by row.
+        // row by row. Nothing here may grow the panel: it fills its widget
+        // exactly, and anything taller is answered with a scrollbar.
         gap: 8,
+        height: '100%',
+        minHeight: 0,
+        overflowY: 'auto',
         width: '100%',
       }}
     >
