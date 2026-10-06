@@ -7,6 +7,7 @@ import { type CampaignRow } from '../types/campaign-row';
 import { type TemplateRow } from '../types/template-row';
 import { CampaignEditor } from './components/campaign-editor';
 import { CampaignList } from './components/campaign-list';
+import { EmailGuidePanel } from './components/email-guide-panel';
 import { IntegrationsPanel } from './components/integrations-panel';
 import { StudioButton } from './components/studio-button';
 import { StudioSegmentedControl } from './components/studio-segmented-control';
@@ -18,7 +19,7 @@ import { listCampaigns } from './utils/list-campaigns.util';
 import { listTemplates } from './utils/list-templates.util';
 import { readErrorText } from './utils/read-error-text.util';
 
-type StudioSection = 'campaigns' | 'templates' | 'integrations';
+type StudioSection = 'campaigns' | 'templates' | 'integrations' | 'guide';
 
 type StudioScreen =
   | { kind: 'list' }
@@ -150,6 +151,15 @@ const EmailStudio = () => {
       return <IntegrationsPanel />;
     }
 
+    if (section === 'guide') {
+      return (
+        <EmailGuidePanel
+          onGoToTemplates={() => openSection('templates')}
+          onGoToCampaigns={() => openSection('campaigns')}
+        />
+      );
+    }
+
     return section === 'campaigns' ? (
       <CampaignList
         campaigns={campaigns}
@@ -208,6 +218,7 @@ const EmailStudio = () => {
             { value: 'campaigns', label: 'Campaigns' },
             { value: 'templates', label: 'Templates' },
             { value: 'integrations', label: 'Integrations' },
+            { value: 'guide', label: 'Guide' },
           ]}
           onChange={openSection}
         />
