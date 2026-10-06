@@ -134,6 +134,7 @@ const enrichOne = async ({
     results: allResults,
     domain,
     shopName: prospect.shopName,
+    email: prospect.email?.primaryEmail,
   });
 
   if (pages.length === 0) {

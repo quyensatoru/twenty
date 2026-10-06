@@ -89,4 +89,33 @@ describe('scoreLinkedinCandidates', () => {
       }),
     ).toEqual([]);
   });
+
+  it('matches the email-domain brand when the shop domain is a platform subdomain', () => {
+    const results = [
+      {
+        title: 'Christina Cosmetics | LinkedIn',
+        url: 'https://www.linkedin.com/company/christina-cosmetics',
+        description: 'Official page, christinacosmetics.pl',
+      },
+    ];
+
+    expect(
+      scoreLinkedinCandidates({
+        domain: '005j8d-xi.myshopify.com',
+        shopName: '005j8d xi',
+        results,
+      }),
+    ).toEqual([]);
+
+    const scored = scoreLinkedinCandidates({
+      domain: '005j8d-xi.myshopify.com',
+      shopName: '005j8d xi',
+      email: 'contact@christinacosmetics.pl',
+      results,
+    });
+
+    expect(scored.map((page) => page.url)).toEqual([
+      'https://www.linkedin.com/company/christina-cosmetics',
+    ]);
+  });
 });

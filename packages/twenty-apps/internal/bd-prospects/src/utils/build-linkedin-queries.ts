@@ -20,7 +20,7 @@ const rootBrand = (domain: string): string => {
 export const brandSpaced = (domain: string): string =>
   rootBrand(domain).replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
 
-const domainOfEmail = (email: string): string | undefined => {
+export const domainOfEmail = (email: string): string | undefined => {
   const at = email.lastIndexOf('@');
 
   if (at < 0) {

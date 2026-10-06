@@ -1,5 +1,5 @@
 import { type WebSearchResult } from './serper-search';
-import { brandSpaced } from './build-linkedin-queries';
+import { brandSpaced, domainOfEmail } from './build-linkedin-queries';
 
 export type ScoredLinkedinPage = {
   url: string;
@@ -79,17 +79,32 @@ export const scoreLinkedinCandidates = ({
   results,
   domain,
   shopName,
+  email,
 }: {
   results: WebSearchResult[];
   domain: string;
   shopName?: string | null;
+  email?: string | null;
 }): ScoredLinkedinPage[] => {
+  const emailDomain =
+    typeof email === 'string' ? domainOfEmail(email) : undefined;
+  const emailBrand =
+    typeof emailDomain === 'string' && emailDomain !== domain.toLowerCase()
+      ? brandSpaced(emailDomain)
+      : undefined;
   const names = [
     typeof shopName === 'string' && shopName.trim().length > 0
       ? shopName.trim()
       : undefined,
     brandSpaced(domain),
-  ].filter((name): name is string => typeof name === 'string');
+    // Shops on a platform subdomain (xxx.myshopify.com) often trade under
+    // the email/web domain, which is also searched, so it must score too.
+    typeof emailBrand === 'string' && emailBrand.length > 0
+      ? emailBrand
+      : undefined,
+  ].filter(
+    (name): name is string => typeof name === 'string' && name.length > 0,
+  );
 
   const seen = new Set<string>();
   const scored: ScoredLinkedinPage[] = [];
@@ -118,9 +133,12 @@ export const scoreLinkedinCandidates = ({
 
     // Official-page signal visible without opening LinkedIn, which blocks
     // scraping: the snippet pointing back at the shop's own domain.
+    const descriptionLower = description.toLowerCase();
     const domainSignal =
-      domain.length > 0 &&
-      description.toLowerCase().includes(domain.toLowerCase())
+      (domain.length > 0 &&
+        descriptionLower.includes(domain.toLowerCase())) ||
+      (typeof emailDomain === 'string' &&
+        descriptionLower.includes(emailDomain.toLowerCase()))
         ? 1
         : 0;
 
