@@ -4,6 +4,7 @@ export const APPEND_ISSUE_ATTACHMENT_ROUTE_PATH =
 
 export const CREATE_ISSUE_ROUTE_PATH = '/task-manager/create-issue';
 export const UPDATE_ISSUE_ROUTE_PATH = '/task-manager/update-issue';
+export const DELETE_ISSUE_ROUTE_PATH = '/task-manager/delete-issue';
 
 export const CREATE_PROJECT_ROUTE_PATH = '/task-manager/create-project';
 export const UPDATE_PROJECT_ROUTE_PATH = '/task-manager/update-project';
@@ -33,6 +34,8 @@ export const CREATE_PROJECT_BOARD_VIEW_ROUTE_PATH =
 export const LIST_MEMBERS_ROUTE_PATH = '/task-manager/list-members';
 export const SEARCH_MERCHANTS_ROUTE_PATH = '/task-manager/search-merchants';
 export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
+
+export const TASK_BOARD_ROUTE_PATH = '/task-manager/task-board';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
 

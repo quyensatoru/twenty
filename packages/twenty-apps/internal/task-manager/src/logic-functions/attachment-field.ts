@@ -70,7 +70,7 @@ export default defineLogicFunction({
   universalIdentifier: ATTACHMENT_FIELD_LOGIC_FUNCTION_UID,
   name: 'attachment-field',
   description:
-    "Route: the workspace-local fieldMetadataId of issue.attachments, the markdown composer's upload target.",
+    "Route: the workspace-local fieldMetadataId of issue.files, the markdown composer's upload target.",
   timeoutSeconds: 30,
   httpRouteTriggerSettings: {
     path: ATTACHMENT_FIELD_ROUTE_PATH,

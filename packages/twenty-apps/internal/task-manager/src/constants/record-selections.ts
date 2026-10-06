@@ -24,7 +24,7 @@ export const ISSUE_SELECTION = {
   reporterId: true,
   // FILES is composite, like RICH_TEXT above: FileObject carries fileId, label,
   // extension and url.
-  attachments: { fileId: true, label: true, extension: true, url: true },
+  files: { fileId: true, label: true, extension: true, url: true },
   createdAt: true,
   updatedAt: true,
 } as const;

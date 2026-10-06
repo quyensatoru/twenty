@@ -159,7 +159,7 @@ export default defineObject({
     {
       universalIdentifier: ISSUE_ATTACHMENTS_FIELD_UID,
       type: FieldType.FILES,
-      name: 'attachments',
+      name: 'files',
       label: 'Attachments',
       description: 'Files attached to this issue',
       icon: 'IconPaperclip',

@@ -194,7 +194,7 @@ export const useIssueDetail = (issueId: string | null) => {
         members: result.members ?? [],
         parentIssue: readLinkedIssue(result.parentIssue),
         childIssues: readLinkedIssues(result.childIssues),
-        attachments: readIssueAttachments(result.issue?.attachments),
+        attachments: readIssueAttachments(result.issue?.files),
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
       }));
       setLoadError(null);

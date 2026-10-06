@@ -462,6 +462,8 @@ export const CREATE_ISSUE_LOGIC_FUNCTION_UID =
   '4732fbf1-c5f2-4cff-ac8b-9f17801fcf41';
 export const UPDATE_ISSUE_LOGIC_FUNCTION_UID =
   '6fda3246-d62e-4cb0-a6b0-bc484ba02082';
+export const DELETE_ISSUE_LOGIC_FUNCTION_UID =
+  '67e3e78f-c925-49a5-b85d-806332d2b373';
 export const CREATE_PROJECT_LOGIC_FUNCTION_UID =
   '5dd6f1d7-ddb4-4c8b-b8bd-9a849c09966d';
 export const UPDATE_PROJECT_LOGIC_FUNCTION_UID =
@@ -591,3 +593,18 @@ export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_LOGIC_FUNCTION_UID =
 // computing it there yields a value that resolves to nothing.
 export const STANDARD_MERCHANT_RECORD_PAGE_HOME_TAB_UID =
   'c578b3a9-a013-560e-99d8-957d8e338f65';
+
+// Jira-style board: one STANDALONE page rendering every status of the selected
+// project as a column, with the issue detail as a drawer inside the same front
+// component. Brand new identifiers — nothing to re-parent from the fork.
+export const TASK_BOARD_PAGE_LAYOUT_UID =
+  '72a89b44-988c-4a24-8fe1-fa064f8759df';
+export const TASK_BOARD_PAGE_LAYOUT_TAB_UID =
+  '1cf0cdee-a83e-4464-98c4-f9b7c317ea9b';
+export const TASK_BOARD_PAGE_LAYOUT_WIDGET_UID =
+  'aefec7ef-ac21-43c1-a428-0406572a0f65';
+export const TASK_BOARD_FRONT_COMPONENT_UID =
+  '215ad369-c35b-4d52-aa81-e5eddd68dd57';
+export const TASK_BOARD_NAV_ITEM_UID = '8bf079a3-6d31-49d5-8e27-6880ecda4fae';
+export const TASK_BOARD_LOGIC_FUNCTION_UID =
+  '8ea7f77e-e6cd-4580-8bdc-8ac58ffc9e56';

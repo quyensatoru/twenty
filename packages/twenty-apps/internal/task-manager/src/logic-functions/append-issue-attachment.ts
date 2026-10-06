@@ -35,7 +35,7 @@ const handler = async (event: RoutePayload<AppendIssueAttachmentBody>) =>
       issues: {
         __args: { filter: { id: { eq: issueId } }, first: 1 },
         edges: {
-          node: { id: true, attachments: { fileId: true, label: true } },
+          node: { id: true, files: { fileId: true, label: true } },
         },
       },
     });
@@ -43,7 +43,7 @@ const handler = async (event: RoutePayload<AppendIssueAttachmentBody>) =>
     const issueConnection = issueResult?.issues as
       | Connection<{
           id: string;
-          attachments?: { fileId?: string | null; label?: string | null }[] | null;
+          files?: { fileId?: string | null; label?: string | null }[] | null;
         }>
       | undefined;
     const issue = issueConnection?.edges?.[0]?.node ?? null;
@@ -52,9 +52,7 @@ const handler = async (event: RoutePayload<AppendIssueAttachmentBody>) =>
       throw new Error('Issue not found.');
     }
 
-    const current = Array.isArray(issue.attachments)
-      ? issue.attachments
-      : [];
+    const current = Array.isArray(issue.files) ? issue.files : [];
 
     // Filing is idempotent: a retried upload lands on the fileId already
     // being there instead of duplicating the row.
@@ -64,7 +62,7 @@ const handler = async (event: RoutePayload<AppendIssueAttachmentBody>) =>
       return { issue, appended: false };
     }
 
-    const attachments = [
+    const files = [
       ...current
         .filter(
           (entry): entry is { fileId: string; label?: string | null } =>
@@ -76,7 +74,7 @@ const handler = async (event: RoutePayload<AppendIssueAttachmentBody>) =>
 
     const result = await client.mutation({
       updateIssue: {
-        __args: { id: issueId, data: { attachments } },
+        __args: { id: issueId, data: { files } },
         id: true,
       },
     });
