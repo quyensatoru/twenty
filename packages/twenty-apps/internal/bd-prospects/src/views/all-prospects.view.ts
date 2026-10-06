@@ -9,8 +9,12 @@ import { SELLABLE_APPS } from '../constants/registered-apps';
 import { HIGH_VALUE_SHOPIFY_PLANS } from '../constants/shopify-plans';
 import {
   ALL_PROSPECTS_VIEW_UID,
+  CRISP_CHAT_ALL_VIEW_FIELD_UID,
+  CRISP_EMAIL_ALL_VIEW_FIELD_UID,
   LINKEDIN_VIEW_FIELD_UID,
   MERCHANTS_ON_PROSPECT_FIELD_UID,
+  PROSPECT_CRISP_CHAT_FIELD_UID,
+  PROSPECT_CRISP_EMAIL_FIELD_UID,
   PROSPECT_LINKEDIN_FIELD_UID,
   UPSELL_DEALS_ON_PROSPECT_FIELD_UID,
   OWNER_ON_PROSPECT_FIELD_UID,
@@ -109,9 +113,23 @@ export default defineView({
       size: 150,
     },
     {
+      universalIdentifier: CRISP_CHAT_ALL_VIEW_FIELD_UID,
+      fieldMetadataUniversalIdentifier: PROSPECT_CRISP_CHAT_FIELD_UID,
+      position: AFTER_STAGE_COLUMNS + 2,
+      isVisible: true,
+      size: 220,
+    },
+    {
+      universalIdentifier: CRISP_EMAIL_ALL_VIEW_FIELD_UID,
+      fieldMetadataUniversalIdentifier: PROSPECT_CRISP_EMAIL_FIELD_UID,
+      position: AFTER_STAGE_COLUMNS + 3,
+      isVisible: true,
+      size: 200,
+    },
+    {
       universalIdentifier: '814f2ed0-e39a-4e03-b33c-4e7f4e70a1c7',
       fieldMetadataUniversalIdentifier: MERCHANTS_ON_PROSPECT_FIELD_UID,
-      position: AFTER_STAGE_COLUMNS + 2,
+      position: AFTER_STAGE_COLUMNS + 4,
       // Hidden: merchant records are labelled by the same domain, so the column
       // repeated the Domain column. Still reachable from the record page.
       isVisible: false,

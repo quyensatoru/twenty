@@ -28,6 +28,12 @@ export type ProspectRow = {
   ourApps: string[] | null;
   otherApps: string[] | null;
   email?: { primaryEmail: string | null } | null;
+  crispChat?: {
+    primaryLinkUrl: string | null;
+    primaryLinkLabel: string | null;
+  } | null;
+  crispEmail?: { primaryEmail: string | null } | null;
+  crispCheckedAt?: string | null;
   // Set the first time the merchant sync touches a prospect. Distinguishes a
   // shop whose merchant rows have all gone from one that only ever came from a
   // CSV and never had any.

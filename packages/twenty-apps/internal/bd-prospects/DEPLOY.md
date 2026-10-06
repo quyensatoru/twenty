@@ -28,7 +28,7 @@ Nghĩa là:
 | Restart process | Metadata áp dụng nóng |
 | Downtime | Không có |
 
-Ngoại lệ duy nhất: 9 logic function. Code của chúng được `apply` upload lên cho server lưu và chạy,
+Ngoại lệ duy nhất: 12 logic function. Code của chúng được `apply` upload lên cho server lưu và chạy,
 nhưng vẫn trong cùng lệnh đó, không phải bước riêng.
 
 Khác hẳn với `shopify-app-loyalty-api` / `shopify-app-loyalty-cms`, nơi deploy đúng nghĩa là build
@@ -65,7 +65,7 @@ Ra `200` là chạy được từ máy bạn. Treo hoặc lỗi kết nối ngh�
 - 2 object `prospect`, `upsellDeal` kèm toàn bộ field
 - 4 view, 2 page layout, 4 navigation menu item
 - 3 role: `BD`, `BD Manager`, `BD Prospects runtime`
-- 9 logic function
+- 12 logic function
 - Options của field select: đúng 2 giá trị `BLOY` và `MIDA`, vì chúng nằm trong
   `src/constants/registered-apps.ts`
 - 2 field quan hệ mọc thêm trên object core: `merchant` được thêm `prospect`, `app` được thêm
@@ -187,7 +187,7 @@ lỗi (thường do rate limit), chạy lại sau một phút — không phải 
 `completed: true` là xong. Còn số dư thì **chạy lại đúng lệnh đó**, hàm idempotent nên lần sau làm
 tiếp phần còn thiếu. Lặp tới khi `completed: true`.
 
-Vì sao có thể còn dư: server giới hạn **500 request mỗi phút cho cả app**, tính chung cả 9 function
+Vì sao có thể còn dư: server giới hạn **500 request mỗi phút cho cả app**, tính chung cho mọi function
 (`APPLICATION_API_RATE_LIMITING_LIMIT`, key theo `universalIdentifier` của app). Hàm sync tự giữ
 nhịp dưới mức đó và tự dừng ở giây thứ 480 để báo cáo phần còn lại, thay vì bị timeout ở giây 600 mà
 không báo gì.
@@ -217,6 +217,20 @@ Manifest không làm thay được bốn việc này. Bỏ bước 1 thì coi nh
    có grant thì cột trống, không phải lỗi.
 4. **Tuỳ chọn**: Settings → Roles → BD → `Upsell deal` → Record Visibility Policy, đặt
    `owner = current member` nếu muốn mỗi BD chỉ thấy deal của mình.
+5. **Crisp sync (để 2 cột Crisp Chat / Email PIC có dữ liệu).** Settings → Apps → BD Prospects →
+   Variables, điền `CRISP_API_IDENTIFIER`, `CRISP_API_KEY` (lấy ở Crisp Settings → Workspace
+   settings → Integrations → API) và `CRISP_WEBSITE_ID` (trong URL Crisp dashboard). Xong chạy
+   backfill lần đầu, lặp tới khi `completed: true`:
+
+```bash
+yarn twenty dev:function:exec -n sync-crisp-conversations -r prod -p '{"limit":200}'
+```
+
+Kiểm tra một shop cụ thể:
+
+```bash
+yarn twenty dev:function:exec -n sync-crisp-conversations-manual -r prod -p '{"prospectId":"<id>"}'
+```
 
 ### Bước 6 — Kiểm tra
 
@@ -237,6 +251,10 @@ yarn twenty dev:function:logs -n sync-prospects-from-merchants -r prod
 | Function | Kích hoạt bởi |
 |----------|---------------|
 | `sync-prospects-from-merchants` | Cron `0 3 * * *` |
+| `enrich-prospect-linkedin` | Cron `*/30 * * * *` |
+| `enrich-prospect-linkedin-manual` | Route `POST /bd-prospects/enrich-prospect-linkedin-manual` |
+| `sync-crisp-conversations` | Cron `0 2 * * *` |
+| `sync-crisp-conversations-manual` | Route `POST /bd-prospects/sync-crisp-manual` |
 | `refresh-prospect-on-merchant-created` | `merchant.created` |
 | `refresh-prospect-on-merchant-updated` | `merchant.updated` |
 | `refresh-prospect-on-merchant-deleted` | `merchant.deleted` |

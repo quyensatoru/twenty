@@ -7,6 +7,9 @@ import {
 } from '../constants/registered-apps';
 import { SHOPIFY_PLAN_OPTIONS } from '../constants/shopify-plans';
 import {
+  PROSPECT_CRISP_CHAT_FIELD_UID,
+  PROSPECT_CRISP_CHECKED_AT_FIELD_UID,
+  PROSPECT_CRISP_EMAIL_FIELD_UID,
   PROSPECT_OTHER_APPS_FIELD_UID,
   PROSPECT_OUR_APPS_FIELD_UID,
   PROSPECT_EMAIL_FIELD_UID,
@@ -80,6 +83,36 @@ export default defineObject({
       label: 'LinkedIn checked at',
       description:
         'When the enrichment batch last searched for this shop, hit or miss. Drives the incremental re-check.',
+      icon: 'IconClock',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: PROSPECT_CRISP_CHAT_FIELD_UID,
+      type: FieldType.LINKS,
+      name: 'crispChat',
+      label: 'Crisp Chat',
+      description:
+        'Link opening this shop’s conversation in the Crisp inbox, found by the daily Crisp sync. Empty when the shop never chatted.',
+      icon: 'IconMessage',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: PROSPECT_CRISP_EMAIL_FIELD_UID,
+      type: FieldType.EMAILS,
+      name: 'crispEmail',
+      label: 'Email PIC',
+      description:
+        'Visitor email attached to the Crisp conversation above, used by BD for outreach. Empty when Crisp has no email for this shop.',
+      icon: 'IconMail',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: PROSPECT_CRISP_CHECKED_AT_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'crispCheckedAt',
+      label: 'Crisp checked at',
+      description:
+        'When the Crisp sync last searched for this shop, hit or miss. Drives the incremental daily re-check.',
       icon: 'IconClock',
       isNullable: true,
     },

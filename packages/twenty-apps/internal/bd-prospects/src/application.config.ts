@@ -1,11 +1,23 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
+  CRISP_API_IDENTIFIER_VARIABLE,
+  CRISP_API_KEY_VARIABLE,
+  CRISP_ENABLED_VARIABLE,
+  CRISP_WEBSITE_ID_BLOY_VARIABLE,
+  CRISP_WEBSITE_ID_MIDA_VARIABLE,
+  CRISP_WEBSITE_ID_VARIABLE,
   ENRICH_ENABLED_VARIABLE,
   ENRICH_HOUR_VARIABLE,
   SERPER_API_KEY_VARIABLE,
 } from './constants/application-variable-names';
 import {
+  CRISP_API_IDENTIFIER_VARIABLE_UID,
+  CRISP_API_KEY_VARIABLE_UID,
+  CRISP_ENABLED_VARIABLE_UID,
+  CRISP_WEBSITE_ID_BLOY_VARIABLE_UID,
+  CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
+  CRISP_WEBSITE_ID_VARIABLE_UID,
   ENRICH_ENABLED_VARIABLE_UID,
   ENRICH_HOUR_VARIABLE_UID,
   SERPER_API_KEY_VARIABLE_UID,
@@ -41,6 +53,44 @@ export default defineApplication({
       type: FieldType.NUMBER,
       isSecret: false,
       value: 4,
+    },
+    [CRISP_API_IDENTIFIER_VARIABLE]: {
+      universalIdentifier: CRISP_API_IDENTIFIER_VARIABLE_UID,
+      description:
+        'Crisp REST API identifier from Settings > Workspace settings > Integrations > API, used by the Crisp sync batch.',
+      isSecret: true,
+    },
+    [CRISP_API_KEY_VARIABLE]: {
+      universalIdentifier: CRISP_API_KEY_VARIABLE_UID,
+      description:
+        'Crisp REST API key paired with the identifier above, used by the Crisp sync batch.',
+      isSecret: true,
+    },
+    [CRISP_WEBSITE_ID_VARIABLE]: {
+      universalIdentifier: CRISP_WEBSITE_ID_VARIABLE_UID,
+      description:
+        'Fallback Crisp website ID, used for shops with no app yet. Shops running BLOY or MIDA are searched in their own inbox first.',
+      isSecret: false,
+    },
+    [CRISP_WEBSITE_ID_BLOY_VARIABLE]: {
+      universalIdentifier: CRISP_WEBSITE_ID_BLOY_VARIABLE_UID,
+      description:
+        'Crisp website ID of the BLOY inbox, found in the Crisp dashboard URL.',
+      isSecret: false,
+    },
+    [CRISP_WEBSITE_ID_MIDA_VARIABLE]: {
+      universalIdentifier: CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
+      description:
+        'Crisp website ID of the MIDA inbox, found in the Crisp dashboard URL.',
+      isSecret: false,
+    },
+    [CRISP_ENABLED_VARIABLE]: {
+      universalIdentifier: CRISP_ENABLED_VARIABLE_UID,
+      description:
+        'Whether the Crisp sync runs. Turn off without touching its schedule.',
+      type: FieldType.BOOLEAN,
+      isSecret: false,
+      value: true,
     },
   },
 });

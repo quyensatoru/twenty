@@ -3,7 +3,11 @@ import { defineView, ViewFilterOperand, ViewType } from 'twenty-sdk/define';
 import { SELLABLE_APPS } from '../constants/registered-apps';
 import { HIGH_VALUE_SHOPIFY_PLANS } from '../constants/shopify-plans';
 import {
+  CRISP_CHAT_NO_DEAL_VIEW_FIELD_UID,
+  CRISP_EMAIL_NO_DEAL_VIEW_FIELD_UID,
   OWNER_ON_PROSPECT_FIELD_UID,
+  PROSPECT_CRISP_CHAT_FIELD_UID,
+  PROSPECT_CRISP_EMAIL_FIELD_UID,
   PROSPECT_OTHER_APPS_FIELD_UID,
   PROSPECT_OUR_APPS_FIELD_UID,
   PROSPECT_DOMAIN_FIELD_UID,
@@ -75,6 +79,20 @@ export default defineView({
       position: 7,
       isVisible: true,
       size: 150,
+    },
+    {
+      universalIdentifier: CRISP_CHAT_NO_DEAL_VIEW_FIELD_UID,
+      fieldMetadataUniversalIdentifier: PROSPECT_CRISP_CHAT_FIELD_UID,
+      position: 8,
+      isVisible: true,
+      size: 220,
+    },
+    {
+      universalIdentifier: CRISP_EMAIL_NO_DEAL_VIEW_FIELD_UID,
+      fieldMetadataUniversalIdentifier: PROSPECT_CRISP_EMAIL_FIELD_UID,
+      position: 9,
+      isVisible: true,
+      size: 200,
     },
   ],
   filters: [

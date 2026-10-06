@@ -42,6 +42,23 @@ export const PROSPECT_LINKEDIN_CHECKED_AT_FIELD_UID =
 export const LINKEDIN_VIEW_FIELD_UID =
   '568e0144-e158-426d-bd3f-7dd6c7ff159d';
 
+// Crisp enrichment: the BD-readable columns plus the timestamp the daily
+// cron uses to pick stale prospects.
+export const PROSPECT_CRISP_CHAT_FIELD_UID =
+  'd67893e8-1a2c-4294-af0d-4aa50c340683';
+export const PROSPECT_CRISP_EMAIL_FIELD_UID =
+  '5388cb32-b2a0-43bc-9cc7-c145cb39f3ff';
+export const PROSPECT_CRISP_CHECKED_AT_FIELD_UID =
+  '1e19812e-5200-49ff-8e7b-c53abd5282a4';
+export const CRISP_CHAT_ALL_VIEW_FIELD_UID =
+  '199036a9-05d2-457e-bd56-2cc6546b3ab5';
+export const CRISP_EMAIL_ALL_VIEW_FIELD_UID =
+  '68c578b6-600e-47fa-a219-cadec2e730ac';
+export const CRISP_CHAT_NO_DEAL_VIEW_FIELD_UID =
+  '6c094a49-9f8b-44f7-b99b-3eaf58de45d0';
+export const CRISP_EMAIL_NO_DEAL_VIEW_FIELD_UID =
+  'a71ea47f-ac48-493f-9421-ce7ca1bd8fca';
+
 // Secret backing the enrichment search. Never change after the first sync.
 export const SERPER_API_KEY_VARIABLE_UID =
   '7b0685f1-1801-4bae-b72f-3311f91c7324';
@@ -55,6 +72,26 @@ export const ENRICH_PROSPECT_LINKEDIN_LOGIC_FUNCTION_UID =
   '161191b3-f31f-450d-80e9-5d630605cc58';
 export const ENRICH_PROSPECT_LINKEDIN_MANUAL_LOGIC_FUNCTION_UID =
   '12ab90d1-0f54-4a8d-a2d7-d29dad4ae3c5';
+
+// Crisp API credentials, editable from Settings without touching the schedule.
+export const CRISP_API_IDENTIFIER_VARIABLE_UID =
+  'b9d92914-0bb2-456a-9f2c-478fe5b583f2';
+export const CRISP_API_KEY_VARIABLE_UID =
+  '6087f604-27eb-4055-8aeb-30f86f8ca091';
+export const CRISP_WEBSITE_ID_VARIABLE_UID =
+  '76fcb5cd-bdfe-438b-b1c9-f4e84b899bb8';
+// One Crisp website per app we sell: the API key is shared, but each app has
+// its own inbox. Never change after the first sync.
+export const CRISP_WEBSITE_ID_BLOY_VARIABLE_UID =
+  '6e7bb040-ac82-4705-ad4d-e7ff37095e05';
+export const CRISP_WEBSITE_ID_MIDA_VARIABLE_UID =
+  '02a02f7a-b67b-4db5-871a-85db0d3e1580';
+export const CRISP_ENABLED_VARIABLE_UID =
+  '2ae5ab52-55ff-4b49-8e67-f1e656204ec9';
+export const SYNC_CRISP_LOGIC_FUNCTION_UID =
+  '70bc6ee8-8b30-436f-8663-7039b36b1409';
+export const SYNC_CRISP_MANUAL_LOGIC_FUNCTION_UID =
+  '38be7bbc-7195-4680-bc96-55c9ecfca47e';
 
 export const UPSELL_DEAL_NAME_FIELD_UID =
   'e75871fb-83ab-4d0e-ad99-ede911e8adec';
