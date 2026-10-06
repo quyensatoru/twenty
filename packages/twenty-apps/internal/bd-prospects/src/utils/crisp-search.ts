@@ -1,15 +1,11 @@
 import { brandSpaced, domainOfEmail } from './build-linkedin-queries';
 import { delay } from './rate-limiter';
+import { type CrispWorkspace } from './read-crisp-settings';
 
 const CRISP_API_BASE_URL = 'https://api.crisp.chat/v1';
 const CONVERSATIONS_PER_REQUEST = 20;
 const RATE_LIMIT_ATTEMPTS = 3;
 const RATE_LIMIT_DELAY_MS = 5_000;
-
-export type CrispCredentials = {
-  identifier: string;
-  key: string;
-};
 
 export type CrispConversation = {
   sessionId: string;
@@ -116,20 +112,18 @@ const toConversation = (raw: CrispConversationResponse): CrispConversation | und
 };
 
 export const searchCrispConversations = async ({
-  credentials,
-  websiteId,
+  workspace,
   domain,
 }: {
-  credentials: CrispCredentials;
-  websiteId: string;
+  workspace: CrispWorkspace;
   domain: string;
 }): Promise<CrispConversation[]> => {
   const url =
-    `${CRISP_API_BASE_URL}/website/${websiteId}/conversations/1` +
+    `${CRISP_API_BASE_URL}/website/${workspace.websiteId}/conversations/1` +
     `?search_query=${encodeURIComponent(domain)}` +
     `&search_type=text&per_page=${CONVERSATIONS_PER_REQUEST}`;
   const authorization = `Basic ${Buffer.from(
-    `${credentials.identifier}:${credentials.key}`,
+    `${workspace.identifier}:${workspace.key}`,
   ).toString('base64')}`;
 
   for (let attempt = 0; ; attempt += 1) {
@@ -170,20 +164,17 @@ export const searchCrispConversations = async ({
 };
 
 export const resolveCrispMatch = async ({
-  credentials,
-  websiteIds,
+  workspaces,
   domain,
   shopName,
 }: {
-  credentials: CrispCredentials;
-  websiteIds: string[];
+  workspaces: CrispWorkspace[];
   domain: string;
   shopName?: string | null;
 }): Promise<CrispMatch | undefined> => {
-  for (const websiteId of websiteIds) {
+  for (const workspace of workspaces) {
     const conversations = await searchCrispConversations({
-      credentials,
-      websiteId,
+      workspace,
       domain,
     });
     const picked = pickCrispConversation({ conversations, domain, shopName });
@@ -194,7 +185,7 @@ export const resolveCrispMatch = async ({
         email: picked.email,
         nickname: picked.nickname,
         url: buildCrispConversationUrl({
-          websiteId,
+          websiteId: workspace.websiteId,
           sessionId: picked.sessionId,
         }),
       };

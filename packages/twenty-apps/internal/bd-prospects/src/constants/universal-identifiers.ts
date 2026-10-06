@@ -86,6 +86,16 @@ export const CRISP_WEBSITE_ID_BLOY_VARIABLE_UID =
   '6e7bb040-ac82-4705-ad4d-e7ff37095e05';
 export const CRISP_WEBSITE_ID_MIDA_VARIABLE_UID =
   '02a02f7a-b67b-4db5-871a-85db0d3e1580';
+// One Crisp workspace per app we sell: identifier, key and website travel
+// together. Never change after the first sync.
+export const CRISP_API_IDENTIFIER_BLOY_VARIABLE_UID =
+  '2969c5cb-a1a5-402b-8790-33aa3c91ed71';
+export const CRISP_API_KEY_BLOY_VARIABLE_UID =
+  '080d2ef5-85a6-4f7d-b25d-d3f0986d5fdd';
+export const CRISP_API_IDENTIFIER_MIDA_VARIABLE_UID =
+  'a6b54aa2-2f66-4f51-a3dd-1b0bbb05d899';
+export const CRISP_API_KEY_MIDA_VARIABLE_UID =
+  '414c0617-c06f-42ef-8141-59b85141d22b';
 export const CRISP_ENABLED_VARIABLE_UID =
   '2ae5ab52-55ff-4b49-8e67-f1e656204ec9';
 export const SYNC_CRISP_LOGIC_FUNCTION_UID =

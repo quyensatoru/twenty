@@ -217,10 +217,13 @@ Manifest không làm thay được bốn việc này. Bỏ bước 1 thì coi nh
    có grant thì cột trống, không phải lỗi.
 4. **Tuỳ chọn**: Settings → Roles → BD → `Upsell deal` → Record Visibility Policy, đặt
    `owner = current member` nếu muốn mỗi BD chỉ thấy deal của mình.
-5. **Crisp sync (để 2 cột Crisp Chat / Email PIC có dữ liệu).** Settings → Apps → BD Prospects →
-   Variables, điền `CRISP_API_IDENTIFIER`, `CRISP_API_KEY` (lấy ở Crisp Settings → Workspace
-   settings → Integrations → API) và `CRISP_WEBSITE_ID` (trong URL Crisp dashboard). Xong chạy
-   backfill lần đầu, lặp tới khi `completed: true`:
+5. **Crisp sync (để 2 cột Crisp Chat / Email PIC có dữ liệu).** Mỗi app một Crisp workspace
+   riêng: Settings → Apps → BD Prospects → Variables, điền một bộ ba cho mỗi app
+   (`CRISP_API_IDENTIFIER_BLOY`, `CRISP_API_KEY_BLOY`, `CRISP_WEBSITE_ID_BLOY`, tương tự cho
+   `MIDA`; lấy ở Crisp Settings → Workspace settings → Integrations → API của từng workspace,
+   website ID trong URL dashboard). Bộ ba `CRISP_API_IDENTIFIER` / `CRISP_API_KEY` /
+   `CRISP_WEBSITE_ID` không hậu tố là fallback cho shop chưa có app. Xong chạy backfill lần đầu,
+   lặp tới khi `completed: true`:
 
 ```bash
 yarn twenty dev:function:exec -n sync-crisp-conversations -r prod -p '{"limit":200}'

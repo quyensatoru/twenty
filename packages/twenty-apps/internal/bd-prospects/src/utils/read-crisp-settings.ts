@@ -6,53 +6,88 @@ import {
 } from '../constants/application-variable-names';
 import { SELLABLE_APPS } from '../constants/registered-apps';
 
-export type CrispSettings = {
-  enabled: boolean;
-  websiteId: string;
-  websiteIdsByAppKey: Record<string, string>;
-};
-
-export type CrispCredentials = {
+export type CrispWorkspace = {
   identifier: string;
   key: string;
+  websiteId: string;
 };
 
-// One variable per app by convention, so a new app only needs its own
-// declared variable (e.g. CRISP_WEBSITE_ID_EU for key EU) and no logic change:
-// the sync below already iterates every sellable app.
-const websiteIdVariableForAppKey = (appKey: string): string =>
-  `CRISP_WEBSITE_ID_${appKey}`;
+export type CrispSettings = {
+  enabled: boolean;
+  fallbackWorkspace: CrispWorkspace;
+  workspacesByAppKey: Record<string, CrispWorkspace>;
+};
+
+// One Crisp workspace per app, each with its own credentials, all following
+// the same naming convention: CRISP_API_IDENTIFIER_<KEY>,
+// CRISP_API_KEY_<KEY>, CRISP_WEBSITE_ID_<KEY>. A new app only needs its three
+// declared variables and no logic change.
+const workspaceVariable = (
+  kind: 'CRISP_API_IDENTIFIER' | 'CRISP_API_KEY' | 'CRISP_WEBSITE_ID',
+  appKey: string,
+): string => `${kind}_${appKey}`;
+
+const readWorkspace = ({
+  env,
+  identifierVariable,
+  keyVariable,
+  websiteIdVariable,
+}: {
+  env: Record<string, string | undefined>;
+  identifierVariable: string;
+  keyVariable: string;
+  websiteIdVariable: string;
+}): CrispWorkspace => ({
+  identifier: (env[identifierVariable] ?? '').trim(),
+  key: (env[keyVariable] ?? '').trim(),
+  websiteId: (env[websiteIdVariable] ?? '').trim(),
+});
+
+const isCompleteWorkspace = (workspace: CrispWorkspace): boolean =>
+  workspace.identifier.length > 0 &&
+  workspace.key.length > 0 &&
+  workspace.websiteId.length > 0;
+
 export const readCrispSettings = (
   env: Record<string, string | undefined> = process.env,
 ): CrispSettings => {
   const enabled = (env[CRISP_ENABLED_VARIABLE] ?? 'true').trim() !== 'false';
-  const websiteId = (env[CRISP_WEBSITE_ID_VARIABLE] ?? '').trim();
-  const websiteIdsByAppKey: Record<string, string> = {};
+  const fallbackWorkspace = readWorkspace({
+    env,
+    identifierVariable: CRISP_API_IDENTIFIER_VARIABLE,
+    keyVariable: CRISP_API_KEY_VARIABLE,
+    websiteIdVariable: CRISP_WEBSITE_ID_VARIABLE,
+  });
+  const workspacesByAppKey: Record<string, CrispWorkspace> = {};
 
   for (const app of SELLABLE_APPS) {
-    const appWebsiteId = (
-      env[websiteIdVariableForAppKey(app.key)] ?? ''
-    ).trim();
+    const workspace = readWorkspace({
+      env,
+      identifierVariable: workspaceVariable('CRISP_API_IDENTIFIER', app.key),
+      keyVariable: workspaceVariable('CRISP_API_KEY', app.key),
+      websiteIdVariable: workspaceVariable('CRISP_WEBSITE_ID', app.key),
+    });
 
-    if (appWebsiteId.length > 0) {
-      websiteIdsByAppKey[app.key] = appWebsiteId;
+    if (isCompleteWorkspace(workspace)) {
+      workspacesByAppKey[app.key] = workspace;
     }
   }
 
-  return { enabled, websiteId, websiteIdsByAppKey };
+  return { enabled, fallbackWorkspace, workspacesByAppKey };
 };
 
-// One API key, one inbox per app: a shop may have chatted in any of them, so
-// every configured website is tried. The shop's own apps go first, then the
-// remaining inboxes, then the fallback, so the common single-app case costs a
-// single Crisp call and a cross-app chat is still found.
-export const resolveCrispWebsiteIds = ({
+// Each app lives in its own Crisp workspace with its own credentials. A shop
+// may have chatted in any of them, so every complete workspace is tried: the
+// shop's own apps first, then the remaining workspaces, then the fallback, so
+// the common single-app case costs a single Crisp call and a cross-app chat
+// is still found.
+export const resolveCrispWorkspaces = ({
   ourApps,
   settings,
 }: {
   ourApps?: string[] | null;
   settings: CrispSettings;
-}): string[] => {
+}): CrispWorkspace[] => {
   const normalizedApps = new Set(
     (ourApps ?? [])
       .filter((app): app is string => typeof app === 'string')
@@ -67,41 +102,25 @@ export const resolveCrispWebsiteIds = ({
       (key) => !normalizedApps.has(key),
     ),
   ];
-  const websiteIds: string[] = [];
+  const workspaces: CrispWorkspace[] = [];
+  const seenWebsiteIds = new Set<string>();
+
+  const pushWorkspace = (workspace: CrispWorkspace | undefined): void => {
+    if (
+      workspace !== undefined &&
+      isCompleteWorkspace(workspace) &&
+      !seenWebsiteIds.has(workspace.websiteId)
+    ) {
+      seenWebsiteIds.add(workspace.websiteId);
+      workspaces.push(workspace);
+    }
+  };
 
   for (const key of orderedKeys) {
-    const websiteId = settings.websiteIdsByAppKey[key];
-
-    if (
-      typeof websiteId === 'string' &&
-      websiteId.length > 0 &&
-      !websiteIds.includes(websiteId)
-    ) {
-      websiteIds.push(websiteId);
-    }
+    pushWorkspace(settings.workspacesByAppKey[key]);
   }
 
-  if (
-    settings.websiteId.length > 0 &&
-    !websiteIds.includes(settings.websiteId)
-  ) {
-    websiteIds.push(settings.websiteId);
-  }
+  pushWorkspace(settings.fallbackWorkspace);
 
-  return websiteIds;
-};
-
-export const readCrispCredentials = (
-  env: Record<string, string | undefined> = process.env,
-): CrispCredentials => {
-  const identifier = (env[CRISP_API_IDENTIFIER_VARIABLE] ?? '').trim();
-  const key = (env[CRISP_API_KEY_VARIABLE] ?? '').trim();
-
-  if (identifier.length === 0 || key.length === 0) {
-    throw new Error(
-      'Crisp credentials are not set. Add CRISP_API_IDENTIFIER and CRISP_API_KEY under Settings > Apps > BD Prospects > Variables.',
-    );
-  }
-
-  return { identifier, key };
+  return workspaces;
 };

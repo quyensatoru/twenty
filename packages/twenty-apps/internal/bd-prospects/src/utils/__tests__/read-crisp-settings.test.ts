@@ -1,109 +1,118 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  readCrispCredentials,
   readCrispSettings,
-  resolveCrispWebsiteIds,
+  resolveCrispWorkspaces,
 } from '../read-crisp-settings';
 
 describe('readCrispSettings', () => {
-  it('defaults to enabled with no websites', () => {
+  it('defaults to enabled with an empty fallback workspace', () => {
     expect(readCrispSettings({})).toEqual({
       enabled: true,
-      websiteId: '',
-      websiteIdsByAppKey: {},
+      fallbackWorkspace: { identifier: '', key: '', websiteId: '' },
+      workspacesByAppKey: {},
     });
   });
 
-  it('reads an explicit off switch and every website id', () => {
+  it('reads an explicit off switch, the fallback and every app workspace', () => {
     expect(
       readCrispSettings({
         CRISP_ENABLED: 'false',
-        CRISP_WEBSITE_ID: ' fallback ',
+        CRISP_API_IDENTIFIER: ' fallback-id ',
+        CRISP_API_KEY: 'fallback-key',
+        CRISP_WEBSITE_ID: 'fallback-site',
+        CRISP_API_IDENTIFIER_BLOY: 'bloy-id',
+        CRISP_API_KEY_BLOY: 'bloy-key',
         CRISP_WEBSITE_ID_BLOY: 'bloy-site',
+        CRISP_API_IDENTIFIER_MIDA: 'mida-id',
+        CRISP_API_KEY_MIDA: 'mida-key',
         CRISP_WEBSITE_ID_MIDA: 'mida-site',
       }),
     ).toEqual({
       enabled: false,
-      websiteId: 'fallback',
-      websiteIdsByAppKey: { BLOY: 'bloy-site', MIDA: 'mida-site' },
+      fallbackWorkspace: {
+        identifier: 'fallback-id',
+        key: 'fallback-key',
+        websiteId: 'fallback-site',
+      },
+      workspacesByAppKey: {
+        BLOY: {
+          identifier: 'bloy-id',
+          key: 'bloy-key',
+          websiteId: 'bloy-site',
+        },
+        MIDA: {
+          identifier: 'mida-id',
+          key: 'mida-key',
+          websiteId: 'mida-site',
+        },
+      },
     });
   });
 
-  it('drops blank per-app websites', () => {
+  it('drops incomplete app workspaces', () => {
     expect(
-      readCrispSettings({ CRISP_WEBSITE_ID_BLOY: '  ' }),
-    ).toEqual({
-      enabled: true,
-      websiteId: '',
-      websiteIdsByAppKey: {},
-    });
+      readCrispSettings({
+        CRISP_API_IDENTIFIER_BLOY: 'bloy-id',
+        CRISP_WEBSITE_ID_BLOY: 'bloy-site',
+      }),
+    ).toMatchObject({ workspacesByAppKey: {} });
   });
 });
 
-describe('resolveCrispWebsiteIds', () => {
+describe('resolveCrispWorkspaces', () => {
   const settings = {
     enabled: true,
-    websiteId: 'fallback',
-    websiteIdsByAppKey: { BLOY: 'bloy-site', MIDA: 'mida-site' },
+    fallbackWorkspace: {
+      identifier: 'fallback-id',
+      key: 'fallback-key',
+      websiteId: 'fallback-site',
+    },
+    workspacesByAppKey: {
+      BLOY: { identifier: 'bloy-id', key: 'bloy-key', websiteId: 'bloy-site' },
+      MIDA: { identifier: 'mida-id', key: 'mida-key', websiteId: 'mida-site' },
+    },
   };
 
-  it('tries the shop’s own apps first', () => {
+  it('tries the shop’s own workspace first', () => {
     expect(
-      resolveCrispWebsiteIds({ ourApps: ['MIDA'], settings }),
-    ).toEqual(['mida-site', 'bloy-site', 'fallback']);
+      resolveCrispWorkspaces({ ourApps: ['MIDA'], settings }).map(
+        (workspace) => workspace.websiteId,
+      ),
+    ).toEqual(['mida-site', 'bloy-site', 'fallback-site']);
   });
 
-  it('falls back to every inbox for shops with no app', () => {
-    expect(resolveCrispWebsiteIds({ settings })).toEqual([
-      'bloy-site',
-      'mida-site',
-      'fallback',
-    ]);
+  it('covers every workspace for shops with no app', () => {
     expect(
-      resolveCrispWebsiteIds({ ourApps: [], settings }),
-    ).toEqual(['bloy-site', 'mida-site', 'fallback']);
+      resolveCrispWorkspaces({ settings }).map(
+        (workspace) => workspace.websiteId,
+      ),
+    ).toEqual(['bloy-site', 'mida-site', 'fallback-site']);
   });
 
-  it('dedupes repeated website ids and ignores unknown apps', () => {
-    expect(
-      resolveCrispWebsiteIds({
-        ourApps: ['MIDA', 'mida', 'UNKNOWN_APP'],
-        settings: {
-          enabled: true,
-          websiteId: 'mida-site',
-          websiteIdsByAppKey: { BLOY: 'bloy-site', MIDA: 'mida-site' },
-        },
-      }),
-    ).toEqual(['mida-site', 'bloy-site']);
+  it('carries each workspace’s own credentials', () => {
+    const [first] = resolveCrispWorkspaces({
+      ourApps: ['BLOY'],
+      settings,
+    });
+
+    expect(first).toEqual({
+      identifier: 'bloy-id',
+      key: 'bloy-key',
+      websiteId: 'bloy-site',
+    });
   });
 
   it('resolves to nothing when unconfigured', () => {
     expect(
-      resolveCrispWebsiteIds({
+      resolveCrispWorkspaces({
         ourApps: ['BLOY'],
-        settings: { enabled: true, websiteId: '', websiteIdsByAppKey: {} },
+        settings: {
+          enabled: true,
+          fallbackWorkspace: { identifier: '', key: '', websiteId: '' },
+          workspacesByAppKey: {},
+        },
       }),
     ).toEqual([]);
-  });
-});
-
-describe('readCrispCredentials', () => {
-  it('reads the identifier and key pair', () => {
-    expect(
-      readCrispCredentials({
-        CRISP_API_IDENTIFIER: 'id-1',
-        CRISP_API_KEY: ' key-1 ',
-      }),
-    ).toEqual({ identifier: 'id-1', key: 'key-1' });
-  });
-
-  it('fails fast with a Settings pointer when incomplete', () => {
-    expect(() =>
-      readCrispCredentials({ CRISP_API_IDENTIFIER: 'id-1' }),
-    ).toThrow(/Settings > Apps > BD Prospects/);
-    expect(() => readCrispCredentials({})).toThrow(
-      /CRISP_API_IDENTIFIER/,
-    );
   });
 });

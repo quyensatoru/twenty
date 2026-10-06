@@ -115,8 +115,11 @@ describe('searchCrispConversations', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const found = await searchCrispConversations({
-      credentials: { identifier: 'id-1', key: 'key-1' },
-      websiteId: 'website-1',
+      workspace: {
+        identifier: 'id-1',
+        key: 'key-1',
+        websiteId: 'website-1',
+      },
       domain: 'shopabc.com',
     });
 
@@ -145,8 +148,7 @@ describe('searchCrispConversations', () => {
 
     await expect(
       searchCrispConversations({
-        credentials: { identifier: 'bad', key: 'bad' },
-        websiteId: 'website-1',
+        workspace: { identifier: 'bad', key: 'bad', websiteId: 'website-1' },
         domain: 'shopabc.com',
       }),
     ).rejects.toThrow(/HTTP 401/);
@@ -173,8 +175,9 @@ describe('resolveCrispMatch', () => {
 
     await expect(
       resolveCrispMatch({
-        credentials: { identifier: 'id-1', key: 'key-1' },
-        websiteIds: ['website-1'],
+        workspaces: [
+          { identifier: 'id-1', key: 'key-1', websiteId: 'website-1' },
+        ],
         domain: 'shopabc.com',
       }),
     ).resolves.toEqual({
@@ -209,8 +212,10 @@ describe('resolveCrispMatch', () => {
 
     await expect(
       resolveCrispMatch({
-        credentials: { identifier: 'id-1', key: 'key-1' },
-        websiteIds: ['website-bloy', 'website-mida'],
+        workspaces: [
+          { identifier: 'id-1', key: 'key-1', websiteId: 'website-bloy' },
+          { identifier: 'id-2', key: 'key-2', websiteId: 'website-mida' },
+        ],
         domain: 'shopabc.com',
       }),
     ).resolves.toMatchObject({
@@ -232,8 +237,10 @@ describe('resolveCrispMatch', () => {
 
     await expect(
       resolveCrispMatch({
-        credentials: { identifier: 'id-1', key: 'key-1' },
-        websiteIds: ['website-1', 'website-2'],
+        workspaces: [
+          { identifier: 'id-1', key: 'key-1', websiteId: 'website-1' },
+          { identifier: 'id-2', key: 'key-2', websiteId: 'website-2' },
+        ],
         domain: 'quiet-shop.com',
       }),
     ).resolves.toBeUndefined();

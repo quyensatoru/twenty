@@ -3,16 +3,11 @@ import { CoreApiClient } from 'twenty-client-sdk/core';
 
 import { SYNC_CRISP_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection, type ProspectRow } from '../utils/api-types';
-import {
-  resolveCrispMatch,
-  type CrispCredentials,
-  type CrispMatch,
-} from '../utils/crisp-search';
+import { resolveCrispMatch, type CrispMatch } from '../utils/crisp-search';
 import { executeWithRetry } from '../utils/execute-with-retry';
 import {
-  readCrispCredentials,
   readCrispSettings,
-  resolveCrispWebsiteIds,
+  resolveCrispWorkspaces,
   type CrispSettings,
 } from '../utils/read-crisp-settings';
 
@@ -120,13 +115,11 @@ const writeMatch = async ({
 
 const syncOne = async ({
   client,
-  credentials,
   settings,
   prospect,
   summary,
 }: {
   client: ApiClient;
-  credentials: CrispCredentials;
   settings: CrispSettings;
   prospect: SyncProspectRow;
   summary: CrispSyncSummary;
@@ -141,8 +134,7 @@ const syncOne = async ({
   }
 
   const match = await resolveCrispMatch({
-    credentials,
-    websiteIds: resolveCrispWebsiteIds({
+    workspaces: resolveCrispWorkspaces({
       ourApps: prospect.ourApps,
       settings,
     }),
@@ -166,14 +158,12 @@ const syncOne = async ({
 
 export const syncCrispConversations = async ({
   client,
-  credentials,
   settings,
   prospectId,
   writeLimit,
   shouldStop = () => false,
 }: {
   client: ApiClient;
-  credentials: CrispCredentials;
   settings: CrispSettings;
   prospectId?: string;
   writeLimit?: number;
@@ -208,7 +198,7 @@ export const syncCrispConversations = async ({
     summary.checked += 1;
 
     try {
-      await syncOne({ client, credentials, settings, prospect, summary });
+        await syncOne({ client, settings, prospect, summary });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -282,7 +272,7 @@ export const syncCrispConversations = async ({
       summary.checked += 1;
 
       try {
-        await syncOne({ client, credentials, settings, prospect, summary });
+      await syncOne({ client, settings, prospect, summary });
       } catch (error) {
         // One bad prospect must not fail the batch. Auth/quota errors abort
         // the whole run instead of burning through prospects that would all
@@ -340,19 +330,17 @@ const handler = async (payload?: unknown): Promise<CrispSyncSummary> => {
     };
   }
 
-  if (resolveCrispWebsiteIds({ settings }).length === 0) {
+  if (resolveCrispWorkspaces({ settings }).length === 0) {
     throw new Error(
-      'No Crisp website is configured. Add CRISP_WEBSITE_ID_BLOY, CRISP_WEBSITE_ID_MIDA or the CRISP_WEBSITE_ID fallback under Settings > Apps > BD Prospects > Variables.',
+      'No Crisp workspace is configured. Add one triple per app (CRISP_API_IDENTIFIER_<APP>, CRISP_API_KEY_<APP>, CRISP_WEBSITE_ID_<APP>) or the fallback triple under Settings > Apps > BD Prospects > Variables.',
     );
   }
 
-  const credentials = readCrispCredentials();
   const client: ApiClient = new CoreApiClient();
   const startedAt = Date.now();
 
   return syncCrispConversations({
     client,
-    credentials,
     settings,
     writeLimit: readWriteLimit(payload),
     shouldStop: () => Date.now() - startedAt > TIME_BUDGET_MS,

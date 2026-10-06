@@ -4,9 +4,8 @@ import { CoreApiClient } from 'twenty-client-sdk/core';
 import { SYNC_CRISP_MANUAL_ROUTE_PATH } from '../constants/route-paths';
 import { SYNC_CRISP_MANUAL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import {
-  readCrispCredentials,
   readCrispSettings,
-  resolveCrispWebsiteIds,
+  resolveCrispWorkspaces,
 } from '../utils/read-crisp-settings';
 import {
   syncCrispConversations,
@@ -29,13 +28,12 @@ const handler = async (
 ): Promise<{ success: true } & CrispSyncSummary> => {
   const settings = readCrispSettings();
 
-  if (resolveCrispWebsiteIds({ settings }).length === 0) {
+  if (resolveCrispWorkspaces({ settings }).length === 0) {
     throw new Error(
-      'No Crisp website is configured. Add CRISP_WEBSITE_ID_BLOY, CRISP_WEBSITE_ID_MIDA or the CRISP_WEBSITE_ID fallback under Settings > Apps > BD Prospects > Variables.',
+      'No Crisp workspace is configured. Add one triple per app (CRISP_API_IDENTIFIER_<APP>, CRISP_API_KEY_<APP>, CRISP_WEBSITE_ID_<APP>) or the fallback triple under Settings > Apps > BD Prospects > Variables.',
     );
   }
 
-  const credentials = readCrispCredentials();
   const client: ApiClient = new CoreApiClient();
   const prospectId =
     typeof event.body?.prospectId === 'string'
@@ -49,7 +47,6 @@ const handler = async (
 
   const summary = await syncCrispConversations({
     client,
-    credentials,
     settings,
     prospectId,
     writeLimit,
