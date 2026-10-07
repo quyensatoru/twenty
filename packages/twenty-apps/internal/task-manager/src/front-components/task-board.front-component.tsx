@@ -5,12 +5,19 @@ import {
   t,
   useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
-import { IconCheck, IconFilterOff, IconPlus, IconX } from 'twenty-ui/icon';
+import {
+  IconCheck,
+  IconFilterOff,
+  IconGripVertical,
+  IconPlus,
+  IconX,
+} from 'twenty-ui/icon';
 
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
   CREATE_ISSUE_ROUTE_PATH,
   DELETE_ISSUE_ROUTE_PATH,
+  REORDER_ISSUE_STATUSES_ROUTE_PATH,
   TASK_BOARD_ROUTE_PATH,
   UPDATE_ISSUE_ROUTE_PATH,
 } from '../constants/route-paths';
@@ -42,6 +49,12 @@ import {
   TASK_THIN_SCROLLBAR_STYLE,
   TASK_TOKENS,
 } from './components/task-tokens';
+import {
+  clampColumnWidth,
+  COLUMN_DEFAULT_WIDTH,
+  parseColumnWidths,
+} from './utils/column-widths.util';
+import { moveIdOnto } from './utils/move-id-onto.util';
 import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
@@ -50,7 +63,31 @@ import { readMemberName } from './utils/read-member-name.util';
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
 const NO_STATUS_VALUE = 'NO_STATUS';
-const COLUMN_MIN_WIDTH = 272;
+const COLUMN_WIDTHS_STORAGE_KEY = 'task-board.column-widths';
+
+// The sandbox's localStorage is seeded from the host before the first render,
+// so this reads synchronously. Guarded anyway: a store that is missing or
+// full must never take the board down with it.
+const readStoredColumnWidths = (): Record<string, number> => {
+  try {
+    return parseColumnWidths(localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY));
+  } catch {
+    return {};
+  }
+};
+
+const storeColumnWidths = (columnWidths: Record<string, number>) => {
+  try {
+    localStorage.setItem(
+      COLUMN_WIDTHS_STORAGE_KEY,
+      JSON.stringify(columnWidths),
+    );
+  } catch {
+    // Widths are a convenience: losing them only costs the reader a drag.
+  }
+};
+
+type ColumnResize = { statusId: string; startX: number; startWidth: number };
 
 // The Jira-style board: one column per project status, cards filtered by
 // sprint, search, owner and type, drag-and-drop between columns, inline create
@@ -93,6 +130,20 @@ const TaskBoard = () => {
     parseBoardIssueAnchor(locationHash),
   );
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
+  // A column being dragged by its header, and the column it would land on.
+  // Kept apart from the card drag: both use the same drop zones.
+  const [draggingStatusId, setDraggingStatusId] = useState<string | null>(
+    null,
+  );
+  const [statusDropTargetId, setStatusDropTargetId] = useState<string | null>(
+    null,
+  );
+  const [hoveredHeaderId, setHoveredHeaderId] = useState<string | null>(null);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
+    readStoredColumnWidths,
+  );
+  const [columnResize, setColumnResize] = useState<ColumnResize | null>(null);
+  const [hoveredResizeId, setHoveredResizeId] = useState<string | null>(null);
   const [dropTargetStatusId, setDropTargetStatusId] = useState<string | null>(
     null,
   );
@@ -432,6 +483,97 @@ const TaskBoard = () => {
     }
   };
 
+  // Optimistic like moveIssue: the columns swap at once, and a refused write
+  // (no grant, or statuses changed elsewhere) puts the old order back.
+  const reorderStatuses = async (movedId: string, targetId: string) => {
+    setDraggingStatusId(null);
+    setStatusDropTargetId(null);
+
+    const activeProjectId = board?.activeProjectId ?? null;
+
+    if (board === null || activeProjectId === null) {
+      return;
+    }
+
+    const orderedIds = statuses.map((status) => status.id);
+    const nextIds = moveIdOnto(orderedIds, movedId, targetId);
+
+    if (nextIds === orderedIds) {
+      return;
+    }
+
+    const previousStatuses = board.issueStatuses;
+
+    setBoard({
+      ...board,
+      issueStatuses: board.issueStatuses.map((status) => ({
+        ...status,
+        position: nextIds.indexOf(status.id),
+      })),
+    });
+
+    try {
+      await postAppRoute(REORDER_ISSUE_STATUSES_ROUTE_PATH, {
+        projectId: activeProjectId,
+        issueStatusIds: nextIds,
+      });
+    } catch (error) {
+      setBoard((current) =>
+        current === null
+          ? current
+          : { ...current, issueStatuses: previousStatuses },
+      );
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+    }
+  };
+
+  const readColumnWidth = (statusId: string) =>
+    columnWidths[statusId] ?? COLUMN_DEFAULT_WIDTH;
+
+  // No window listener reaches the sandbox, so a resize follows the pointer
+  // through the columns strip itself, and ends when the button comes up
+  // there or the pointer leaves the strip.
+  const readResizedWidth = (resize: ColumnResize, clientX: number) =>
+    clampColumnWidth(resize.startWidth + clientX - resize.startX);
+
+  const updateColumnResize = (clientX: number) => {
+    if (columnResize === null) {
+      return;
+    }
+
+    const width = readResizedWidth(columnResize, clientX);
+
+    setColumnWidths((current) =>
+      current[columnResize.statusId] === width
+        ? current
+        : { ...current, [columnResize.statusId]: width },
+    );
+  };
+
+  const endColumnResize = (clientX: number) => {
+    if (columnResize === null) {
+      return;
+    }
+
+    const next = {
+      ...columnWidths,
+      [columnResize.statusId]: readResizedWidth(columnResize, clientX),
+    };
+
+    setColumnResize(null);
+    setColumnWidths(next);
+    storeColumnWidths(next);
+  };
+
+  const resetColumnWidth = (statusId: string) => {
+    const next = Object.fromEntries(
+      Object.entries(columnWidths).filter(([id]) => id !== statusId),
+    );
+
+    setColumnWidths(next);
+    storeColumnWidths(next);
+  };
+
   const closeComposer = () => {
     setComposerStatusId(null);
     setComposerTitle('');
@@ -663,8 +805,12 @@ const TaskBoard = () => {
       </div>
 
       <div
+        onMouseMove={(event) => updateColumnResize(event.clientX)}
+        onMouseUp={(event) => endColumnResize(event.clientX)}
+        onMouseLeave={(event) => endColumnResize(event.clientX)}
         style={{
           alignItems: 'stretch',
+          cursor: columnResize === null ? 'auto' : 'col-resize',
           display: 'flex',
           flex: 1,
           gap: 12,
@@ -672,16 +818,42 @@ const TaskBoard = () => {
           overflowX: 'auto',
           ...TASK_THIN_SCROLLBAR_STYLE,
           padding: '0 20px 20px 20px',
+          // A resize drag would otherwise sweep a text selection across
+          // every card it passes.
+          userSelect: columnResize === null ? 'auto' : 'none',
         }}
       >
         {columns.map((column) => {
           const cards = issuesByStatus.get(column.id) ?? [];
           const isDropTarget = dropTargetStatusId === column.id;
+          const isReorderable = column.id !== NO_STATUS_VALUE;
+          const isColumnDragged = draggingStatusId === column.id;
+          // Which edge the dragged column will land against, so the bar shows
+          // the slot it takes rather than just the column it is over.
+          const columnDropSide =
+            draggingStatusId === null || statusDropTargetId !== column.id
+              ? null
+              : columns.findIndex((candidate) => candidate.id === draggingStatusId) <
+                  columns.findIndex((candidate) => candidate.id === column.id)
+                ? 'right'
+                : 'left';
 
           return (
             <section
               key={column.id}
               onDragOver={(event) => {
+                if (draggingStatusId !== null) {
+                  // Not preventing the default is what marks this column as
+                  // no drop target: the uncategorised column and the dragged
+                  // one itself.
+                  if (isReorderable && !isColumnDragged) {
+                    event.preventDefault();
+                    setStatusDropTargetId(column.id);
+                  }
+
+                  return;
+                }
+
                 event.preventDefault();
 
                 // Guarded like the card's dragstart: the sandbox proxy has no
@@ -693,13 +865,25 @@ const TaskBoard = () => {
 
                 setDropTargetStatusId(column.id);
               }}
-              onDragLeave={() =>
+              onDragLeave={() => {
                 setDropTargetStatusId((current) =>
                   current === column.id ? null : current,
-                )
-              }
+                );
+                setStatusDropTargetId((current) =>
+                  current === column.id ? null : current,
+                );
+              }}
               onDrop={(event) => {
                 event.preventDefault();
+
+                if (draggingStatusId !== null) {
+                  if (isReorderable && !isColumnDragged) {
+                    void reorderStatuses(draggingStatusId, column.id);
+                  }
+
+                  return;
+                }
+
                 // Without dataTransfer the payload falls back to the card's
                 // own dragstart state, which the board already tracks for the
                 // drag ghost — so dropping works in the sandbox too.
@@ -717,24 +901,120 @@ const TaskBoard = () => {
                   : TASK_TOKENS.backgroundSecondary,
                 border: `1px solid ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderLight}`,
                 borderRadius: TASK_TOKENS.radius,
+                boxShadow:
+                  columnDropSide === 'left'
+                    ? `inset 3px 0 0 ${TASK_TOKENS.accent}`
+                    : columnDropSide === 'right'
+                      ? `inset -3px 0 0 ${TASK_TOKENS.accent}`
+                      : 'none',
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 flexShrink: 0,
                 maxHeight: '100%',
                 minHeight: 0,
-                width: COLUMN_MIN_WIDTH,
+                opacity: isColumnDragged ? 0.5 : 1,
+                position: 'relative',
+                width: readColumnWidth(column.id),
               }}
             >
+              {/* Sits in the gap to the next column, so it never covers a
+                  card's own controls. A sibling of the header, not inside it:
+                  the header is draggable, and a press here must not start a
+                  column move. */}
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={t('Resize column')}
+                title={t('Drag to resize · Double-click to reset')}
+                onMouseDown={(event) =>
+                  setColumnResize({
+                    statusId: column.id,
+                    startX: event.clientX,
+                    startWidth: readColumnWidth(column.id),
+                  })
+                }
+                onDoubleClick={() => resetColumnWidth(column.id)}
+                onMouseEnter={() => setHoveredResizeId(column.id)}
+                onMouseLeave={() => setHoveredResizeId(null)}
+                style={{
+                  bottom: 0,
+                  cursor: 'col-resize',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  position: 'absolute',
+                  right: -10,
+                  top: 0,
+                  // The strip only stops selecting once the resize state has
+                  // rendered; a press that starts here must not begin one.
+                  userSelect: 'none',
+                  width: 8,
+                  zIndex: 2,
+                }}
+              >
+                <span
+                  style={{
+                    background:
+                      columnResize?.statusId === column.id
+                        ? TASK_TOKENS.accent
+                        : hoveredResizeId === column.id &&
+                            columnResize === null
+                          ? TASK_TOKENS.borderStrong
+                          : 'transparent',
+                    borderRadius: 1,
+                    height: '100%',
+                    width: 2,
+                  }}
+                />
+              </div>
               <header
+                draggable={isReorderable}
+                title={isReorderable ? t('Drag to reorder columns') : undefined}
+                onMouseEnter={() => setHoveredHeaderId(column.id)}
+                onMouseLeave={() => setHoveredHeaderId(null)}
+                onDragStart={(event) => {
+                  // Same guard as the card's dragstart: the sandbox proxy has
+                  // no dataTransfer, and state carries the drag regardless.
+                  try {
+                    event.dataTransfer?.setData('text/plain', column.name);
+
+                    if (event.dataTransfer) {
+                      event.dataTransfer.effectAllowed = 'move';
+                    }
+                  } catch {
+                    // Sandbox proxy: state carries the payload.
+                  }
+
+                  setDraggingStatusId(column.id);
+                }}
+                onDragEnd={() => {
+                  setDraggingStatusId(null);
+                  setStatusDropTargetId(null);
+                }}
                 style={{
                   alignItems: 'center',
+                  cursor: isReorderable ? 'grab' : 'default',
                   display: 'flex',
                   flexShrink: 0,
                   gap: 8,
-                  padding: '12px 12px 8px 12px',
+                  padding: '12px 12px 8px 6px',
                 }}
               >
+                {/* Room held whether shown or not, so the title never shifts
+                    when the grip appears under the pointer. */}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    flexShrink: 0,
+                    marginRight: -4,
+                    visibility:
+                      isReorderable && hoveredHeaderId === column.id
+                        ? 'visible'
+                        : 'hidden',
+                  }}
+                >
+                  <IconGripVertical size={14} color={TASK_TOKENS.textTertiary} />
+                </span>
                 <span
                   style={{
                     background: readTagColor(column.color).text,
