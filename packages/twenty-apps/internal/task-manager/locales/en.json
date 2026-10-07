@@ -465,14 +465,9 @@
     "App Accesses": "App Accesses",
     "Apps": "Apps",
     "Board": "Board",
-    "Epics": "Epics",
-    "Issue Comments": "Issue Comments",
-    "Issue Statuses": "Issue Statuses",
     "Projects": "Projects",
     "Sprints": "Sprints",
-    "Task Board": "Task Board",
-    "Task Manager": "Task Manager",
-    "Worklogs": "Worklogs"
+    "Task Manager": "Task Manager"
   },
   "objectMetadata.description": {
     "A comment on an issue": "A comment on an issue",
@@ -516,26 +511,26 @@
   "pageLayout.name": {
     "App Access Record Page": "App Access Record Page",
     "App Record Page": "App Record Page",
+    "Board": "Board",
     "Issue Merchant Record Page": "Issue Merchant Record Page",
     "Issue Record Page": "Issue Record Page",
-    "Issue Status Record Page": "Issue Status Record Page",
-    "Task Board": "Task Board"
+    "Issue Status Record Page": "Issue Status Record Page"
   },
   "pageLayoutTab.title": {
     "App": "App",
     "App Access": "App Access",
+    "Board": "Board",
     "Issue": "Issue",
     "Issue Merchant": "Issue Merchant",
-    "Issue Status": "Issue Status",
-    "Task Board": "Task Board"
+    "Issue Status": "Issue Status"
   },
   "pageLayoutWidget.title": {
     " ": " ",
     "Attachments": "Attachments",
+    "Board": "Board",
     "Custom Settings": "Custom Settings",
     "Details": "Details",
-    "DETAILS": "DETAILS",
-    "Task Board": "Task Board"
+    "DETAILS": "DETAILS"
   },
   "view.name": {
     "App Access Record Page Fields": "App Access Record Page Fields",

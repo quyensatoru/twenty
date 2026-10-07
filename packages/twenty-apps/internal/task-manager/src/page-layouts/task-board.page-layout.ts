@@ -17,19 +17,19 @@ import {
 // height, so the header stays pinned while the columns scroll inside it.
 export default definePageLayout({
   universalIdentifier: TASK_BOARD_PAGE_LAYOUT_UID,
-  name: 'Task Board',
+  name: 'Board',
   type: PageLayoutType.STANDALONE_PAGE,
   tabs: [
     {
       universalIdentifier: TASK_BOARD_PAGE_LAYOUT_TAB_UID,
-      title: 'Task Board',
+      title: 'Board',
       position: 0,
       icon: 'IconLayoutKanban',
       layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgets: [
         {
           universalIdentifier: TASK_BOARD_PAGE_LAYOUT_WIDGET_UID,
-          title: 'Task Board',
+          title: 'Board',
           type: 'FRONT_COMPONENT',
           heightBehavior: 'TAB_VIEWPORT',
           configuration: {

@@ -9,15 +9,15 @@ import {
   TASK_MANAGER_FOLDER_NAV_ITEM_UID,
 } from '../constants/universal-identifiers';
 
-// Sits right under the legacy Board entry: that OBJECT entry resolves per
-// person to their last opened view (usually a per-project Kanban the
-// project.created trigger built), while this page is the Jira-style board
-// with its issue drawer built in.
+// The only board entry: the legacy OBJECT entry that resolved per person to
+// their last opened per-project Kanban is gone, those views stay reachable
+// from the issue object.
 export default defineNavigationMenuItem({
   universalIdentifier: TASK_BOARD_NAV_ITEM_UID,
-  name: 'Task Board',
+  name: 'Board',
   icon: 'IconLayoutKanban',
-  position: 1,
+  color: 'red',
+  position: 0,
   type: NavigationMenuItemType.PAGE_LAYOUT,
   pageLayoutUniversalIdentifier: TASK_BOARD_PAGE_LAYOUT_UID,
   folderUniversalIdentifier: TASK_MANAGER_FOLDER_NAV_ITEM_UID,

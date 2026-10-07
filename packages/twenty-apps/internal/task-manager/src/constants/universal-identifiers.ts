@@ -324,15 +324,9 @@ export const TASK_MANAGER_FOLDER_NAV_ITEM_UID =
   '203067fc-6551-45bd-b3f3-9fd4dabe5b09';
 export const PROJECTS_NAV_ITEM_UID = 'df0304b5-36e3-4f7d-b787-9a5b54a44951';
 export const SPRINTS_NAV_ITEM_UID = '28187522-2df6-4a0e-a856-7828dd81f3e2';
-export const EPICS_NAV_ITEM_UID = '2a45a8ee-1719-4e70-bb84-6eadba4ffe07';
 export const APPS_NAV_ITEM_UID = 'c8ff4ad2-edc4-4d62-ada9-561dcbbb36f9';
 export const APP_ACCESSES_NAV_ITEM_UID =
   '7ec0097c-c929-441a-9ede-0a428281c1c0';
-export const WORKLOGS_NAV_ITEM_UID = 'aae26a5a-b81e-4b4d-998f-549e814c2aaf';
-export const ISSUE_COMMENTS_NAV_ITEM_UID =
-  'a6eb5c8a-cb6a-471e-9fbf-ebbcd46e2ad7';
-export const ISSUE_STATUSES_NAV_ITEM_UID =
-  'd74bb2b8-0cac-47c5-91de-49b9e397b1f6';
 
 // Row-level app-scope prototype. The engine can only compare a field ON the
 // record being read, so `issue.app` mirrors what `issue -> project -> app`
@@ -360,7 +354,6 @@ export const ON_PROJECT_CREATED_LOGIC_FUNCTION_UID =
 // project.created trigger. There is deliberately no workspace-wide board: it
 // would carry no project or app filter, so creating an issue from it arrives
 // with neither and the row-level predicate refuses the write.
-export const BOARD_NAV_ITEM_UID = '5a334159-0734-4854-ab25-c71469ffa8d7';
 export const CREATE_PROJECT_BOARD_VIEW_LOGIC_FUNCTION_UID =
   '401f76ff-b653-4407-b5b9-9d010d171549';
 export const PROJECT_APP_SCOPE_PREDICATE_UID =

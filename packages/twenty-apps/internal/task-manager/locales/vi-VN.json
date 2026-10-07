@@ -465,14 +465,9 @@
     "App Accesses": "Quyền truy cập app",
     "Apps": "Ứng dụng",
     "Board": "Bảng",
-    "Epics": "Epic",
-    "Issue Comments": "Bình luận issue",
-    "Issue Statuses": "Trạng thái issue",
     "Projects": "Dự án",
     "Sprints": "Sprint",
-    "Task Board": "Bảng công việc",
-    "Task Manager": "Quản lý công việc",
-    "Worklogs": "Ghi nhận thời gian"
+    "Task Manager": "Quản lý công việc"
   },
   "objectMetadata.description": {
     "A comment on an issue": "Bình luận trên một issue",
@@ -516,26 +511,26 @@
   "pageLayout.name": {
     "App Access Record Page": "Trang chi tiết quyền truy cập app",
     "App Record Page": "Trang chi tiết ứng dụng",
+    "Board": "Bảng",
     "Issue Merchant Record Page": "Trang chi tiết merchant của issue",
     "Issue Record Page": "Trang chi tiết issue",
-    "Issue Status Record Page": "Trang chi tiết trạng thái issue",
-    "Task Board": "Bảng công việc"
+    "Issue Status Record Page": "Trang chi tiết trạng thái issue"
   },
   "pageLayoutTab.title": {
     "App": "Ứng dụng",
     "App Access": "Quyền truy cập app",
+    "Board": "Bảng",
     "Issue": "Issue",
     "Issue Merchant": "Merchant của issue",
-    "Issue Status": "Trạng thái issue",
-    "Task Board": "Bảng công việc"
+    "Issue Status": "Trạng thái issue"
   },
   "pageLayoutWidget.title": {
     " ": " ",
     "Attachments": "Tệp đính kèm",
+    "Board": "Bảng",
     "Custom Settings": "Cài đặt tùy chỉnh",
     "Details": "Chi tiết",
-    "DETAILS": "CHI TIẾT",
-    "Task Board": "Bảng công việc"
+    "DETAILS": "CHI TIẾT"
   },
   "view.name": {
     "App Access Record Page Fields": "Trường trang quyền truy cập app",
