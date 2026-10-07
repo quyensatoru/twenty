@@ -76,51 +76,50 @@ export const readCrispSettings = (
   return { enabled, fallbackWorkspace, workspacesByAppKey };
 };
 
-// Each app lives in its own Crisp workspace with its own credentials. A shop
-// may have chatted in any of them, so every complete workspace is tried: the
-// shop's own apps first, then the remaining workspaces, then the fallback, so
-// the common single-app case costs a single Crisp call and a cross-app chat
-// is still found.
+export type AppCrispWorkspace = {
+  appKey: string;
+  workspace: CrispWorkspace;
+};
+
+export const hasAnyCrispWorkspace = (settings: CrispSettings): boolean =>
+  Object.keys(settings.workspacesByAppKey).length > 0 ||
+  isCompleteWorkspace(settings.fallbackWorkspace);
+
+// A shop's conversations live in the Crisp workspace of the app it chatted
+// about, so only the workspaces of its own apps are searched. Shops with no app
+// of ours are not synced at all. An app without its own triple borrows the
+// fallback one.
 export const resolveCrispWorkspaces = ({
   ourApps,
   settings,
 }: {
   ourApps?: string[] | null;
   settings: CrispSettings;
-}): CrispWorkspace[] => {
+}): AppCrispWorkspace[] => {
   const normalizedApps = new Set(
     (ourApps ?? [])
       .filter((app): app is string => typeof app === 'string')
-      .map((app) => app.trim().toUpperCase())
-      .filter((app) => app.length > 0),
+      .map((app) => app.trim().toUpperCase()),
   );
-  const orderedKeys = [
-    ...SELLABLE_APPS.map((app) => app.key).filter((key) =>
-      normalizedApps.has(key),
-    ),
-    ...SELLABLE_APPS.map((app) => app.key).filter(
-      (key) => !normalizedApps.has(key),
-    ),
-  ];
-  const workspaces: CrispWorkspace[] = [];
+  const workspaces: AppCrispWorkspace[] = [];
   const seenWebsiteIds = new Set<string>();
 
-  const pushWorkspace = (workspace: CrispWorkspace | undefined): void => {
+  for (const { key: appKey } of SELLABLE_APPS) {
+    if (!normalizedApps.has(appKey)) {
+      continue;
+    }
+
+    const workspace =
+      settings.workspacesByAppKey[appKey] ?? settings.fallbackWorkspace;
+
     if (
-      workspace !== undefined &&
       isCompleteWorkspace(workspace) &&
       !seenWebsiteIds.has(workspace.websiteId)
     ) {
       seenWebsiteIds.add(workspace.websiteId);
-      workspaces.push(workspace);
+      workspaces.push({ appKey, workspace });
     }
-  };
-
-  for (const key of orderedKeys) {
-    pushWorkspace(settings.workspacesByAppKey[key]);
   }
-
-  pushWorkspace(settings.fallbackWorkspace);
 
   return workspaces;
 };

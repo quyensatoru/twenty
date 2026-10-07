@@ -4,8 +4,8 @@ import { CoreApiClient } from 'twenty-client-sdk/core';
 import { SYNC_CRISP_MANUAL_ROUTE_PATH } from '../constants/route-paths';
 import { SYNC_CRISP_MANUAL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import {
+  hasAnyCrispWorkspace,
   readCrispSettings,
-  resolveCrispWorkspaces,
 } from '../utils/read-crisp-settings';
 import {
   syncCrispConversations,
@@ -28,7 +28,7 @@ const handler = async (
 ): Promise<{ success: true } & CrispSyncSummary> => {
   const settings = readCrispSettings();
 
-  if (resolveCrispWorkspaces({ settings }).length === 0) {
+  if (!hasAnyCrispWorkspace(settings)) {
     throw new Error(
       'No Crisp workspace is configured. Add one triple per app (CRISP_API_IDENTIFIER_<APP>, CRISP_API_KEY_<APP>, CRISP_WEBSITE_ID_<APP>) or the fallback triple under Settings > Apps > BD Prospects > Variables.',
     );

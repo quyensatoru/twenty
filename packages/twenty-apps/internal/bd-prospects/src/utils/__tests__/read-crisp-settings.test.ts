@@ -74,33 +74,41 @@ describe('resolveCrispWorkspaces', () => {
     },
   };
 
-  it('tries the shop’s own workspace first', () => {
+  it('searches only the workspaces of the shop’s own apps', () => {
     expect(
-      resolveCrispWorkspaces({ ourApps: ['MIDA'], settings }).map(
-        (workspace) => workspace.websiteId,
-      ),
-    ).toEqual(['mida-site', 'bloy-site', 'fallback-site']);
+      resolveCrispWorkspaces({ ourApps: ['MIDA'], settings }),
+    ).toEqual([
+      {
+        appKey: 'MIDA',
+        workspace: {
+          identifier: 'mida-id',
+          key: 'mida-key',
+          websiteId: 'mida-site',
+        },
+      },
+    ]);
   });
 
-  it('covers every workspace for shops with no app', () => {
+  it('gives a shop on several apps one workspace per app', () => {
     expect(
-      resolveCrispWorkspaces({ settings }).map(
-        (workspace) => workspace.websiteId,
+      resolveCrispWorkspaces({ ourApps: ['mida', 'BLOY'], settings }).map(
+        ({ appKey, workspace }) => `${appKey}:${workspace.websiteId}`,
       ),
-    ).toEqual(['bloy-site', 'mida-site', 'fallback-site']);
+    ).toEqual(['BLOY:bloy-site', 'MIDA:mida-site']);
   });
 
-  it('carries each workspace’s own credentials', () => {
-    const [first] = resolveCrispWorkspaces({
-      ourApps: ['BLOY'],
-      settings,
-    });
+  it('skips shops with no app of ours', () => {
+    expect(resolveCrispWorkspaces({ settings })).toEqual([]);
+    expect(resolveCrispWorkspaces({ ourApps: [], settings })).toEqual([]);
+  });
 
-    expect(first).toEqual({
-      identifier: 'bloy-id',
-      key: 'bloy-key',
-      websiteId: 'bloy-site',
-    });
+  it('lends the fallback triple to an app without its own', () => {
+    expect(
+      resolveCrispWorkspaces({
+        ourApps: ['BLOY'],
+        settings: { ...settings, workspacesByAppKey: {} },
+      }).map(({ appKey, workspace }) => `${appKey}:${workspace.websiteId}`),
+    ).toEqual(['BLOY:fallback-site']);
   });
 
   it('resolves to nothing when unconfigured', () => {

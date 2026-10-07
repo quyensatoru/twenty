@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildCrispConversationUrl,
   pickCrispConversation,
-  resolveCrispMatch,
+  resolveCrispMatches,
   searchCrispConversations,
   type CrispConversation,
 } from '../crisp-search';
@@ -140,109 +140,151 @@ describe('searchCrispConversations', () => {
     expect(calledInit.headers['X-Crisp-Tier']).toBe('plugin');
   });
 
-  it('surfaces auth failures with the status', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 401 }),
+  it('retries with the user tier when the plugin tier is rejected', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: [{ session_id: 'session_1', meta: {} }] }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const found = await searchCrispConversations({
+      workspace: { identifier: 'id-1', key: 'key-1', websiteId: 'website-1' },
+      domain: 'shopabc.com',
+    });
+
+    expect(found.map((row) => row.sessionId)).toEqual(['session_1']);
+
+    const tiers = fetchMock.mock.calls.map(
+      ([, init]) =>
+        (init as { headers: Record<string, string> }).headers['X-Crisp-Tier'],
     );
+    expect(tiers).toEqual(['plugin', 'user']);
+  });
+
+  it('surfaces auth failures with the status and website', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+    vi.stubGlobal('fetch', fetchMock);
 
     await expect(
       searchCrispConversations({
         workspace: { identifier: 'bad', key: 'bad', websiteId: 'website-1' },
         domain: 'shopabc.com',
       }),
-    ).rejects.toThrow(/HTTP 401/);
+    ).rejects.toThrow(/website-1: HTTP 401/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 
-describe('resolveCrispMatch', () => {
-  it('links the picked conversation', async () => {
+const okResponse = (data: unknown[]) => ({
+  ok: true,
+  status: 200,
+  json: async () => ({ data }),
+});
+
+const bloy = {
+  appKey: 'BLOY',
+  workspace: { identifier: 'id-1', key: 'key-1', websiteId: 'website-bloy' },
+};
+const mida = {
+  appKey: 'MIDA',
+  workspace: { identifier: 'id-2', key: 'key-2', websiteId: 'website-mida' },
+};
+
+describe('resolveCrispMatches', () => {
+  it('links one conversation per app from its own website', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          data: [
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          okResponse([
             {
-              session_id: 'session_9',
+              session_id: 'session_1',
               meta: { email: 'lan@shopabc.com', nickname: 'Lan' },
             },
-          ],
-        }),
-      }),
+          ]),
+        )
+        .mockResolvedValueOnce(
+          okResponse([
+            { session_id: 'session_2', meta: { nickname: 'ShopABC' } },
+          ]),
+        ),
     );
 
     await expect(
-      resolveCrispMatch({
-        workspaces: [
-          { identifier: 'id-1', key: 'key-1', websiteId: 'website-1' },
-        ],
+      resolveCrispMatches({
+        workspaces: [bloy, mida],
         domain: 'shopabc.com',
       }),
     ).resolves.toEqual({
-      sessionId: 'session_9',
-      email: 'lan@shopabc.com',
-      nickname: 'Lan',
-      url: 'https://app.crisp.chat/website/website-1/inbox/session_9/',
+      matches: [
+        {
+          appKey: 'BLOY',
+          sessionId: 'session_1',
+          email: 'lan@shopabc.com',
+          nickname: 'Lan',
+          url: 'https://app.crisp.chat/website/website-bloy/inbox/session_1/',
+        },
+        {
+          appKey: 'MIDA',
+          sessionId: 'session_2',
+          email: null,
+          nickname: 'ShopABC',
+          url: 'https://app.crisp.chat/website/website-mida/inbox/session_2/',
+        },
+      ],
+      blockedAppKeys: [],
     });
   });
 
-  it('tries the next website when the first misses', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ data: [] }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          data: [
-            {
-              session_id: 'session_2',
-              meta: { email: null, nickname: 'ShopABC' },
-            },
-          ],
-        }),
-      });
-    vi.stubGlobal('fetch', fetchMock);
+  it('resolves to no match when every website misses', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okResponse([])));
 
     await expect(
-      resolveCrispMatch({
-        workspaces: [
-          { identifier: 'id-1', key: 'key-1', websiteId: 'website-bloy' },
-          { identifier: 'id-2', key: 'key-2', websiteId: 'website-mida' },
-        ],
-        domain: 'shopabc.com',
-      }),
-    ).resolves.toMatchObject({
-      sessionId: 'session_2',
-      url: 'https://app.crisp.chat/website/website-mida/inbox/session_2/',
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it('resolves to nothing when every website misses', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ data: [] }),
-      }),
-    );
-
-    await expect(
-      resolveCrispMatch({
-        workspaces: [
-          { identifier: 'id-1', key: 'key-1', websiteId: 'website-1' },
-          { identifier: 'id-2', key: 'key-2', websiteId: 'website-2' },
-        ],
+      resolveCrispMatches({
+        workspaces: [bloy, mida],
         domain: 'quiet-shop.com',
       }),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({ matches: [], blockedAppKeys: [] });
+  });
+
+  it('keeps going past a website that rejects its credentials and stops calling it', async () => {
+    const fetchMock = vi.fn((url: string) =>
+      Promise.resolve(
+        url.includes('website-bloy')
+          ? { ok: false, status: 401 }
+          : okResponse([
+              { session_id: 'session_2', meta: { nickname: 'ShopABC' } },
+            ]),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const brokenWebsiteIds = new Set<string>();
+    const failedApps: string[] = [];
+
+    const first = await resolveCrispMatches({
+      workspaces: [bloy, mida],
+      domain: 'shopabc.com',
+      brokenWebsiteIds,
+      onAuthFailure: (appKey) => failedApps.push(appKey),
+    });
+
+    expect(first.blockedAppKeys).toEqual(['BLOY']);
+    expect(first.matches.map((match) => match.appKey)).toEqual(['MIDA']);
+    expect(failedApps).toEqual(['BLOY']);
+
+    const callsAfterFirst = fetchMock.mock.calls.length;
+    const second = await resolveCrispMatches({
+      workspaces: [bloy],
+      domain: 'other-shop.com',
+      brokenWebsiteIds,
+    });
+
+    expect(second).toEqual({ matches: [], blockedAppKeys: ['BLOY'] });
+    expect(fetchMock.mock.calls.length).toBe(callsAfterFirst);
   });
 });

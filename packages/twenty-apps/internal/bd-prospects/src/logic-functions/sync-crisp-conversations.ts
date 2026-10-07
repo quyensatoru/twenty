@@ -1,11 +1,17 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 import { CoreApiClient } from 'twenty-client-sdk/core';
 
+import { SELLABLE_APP_KEYS } from '../constants/registered-apps';
 import { SYNC_CRISP_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection, type ProspectRow } from '../utils/api-types';
-import { resolveCrispMatch, type CrispMatch } from '../utils/crisp-search';
+import {
+  resolveCrispMatches,
+  type CrispAuthError,
+  type CrispMatch,
+} from '../utils/crisp-search';
 import { executeWithRetry } from '../utils/execute-with-retry';
 import {
+  hasAnyCrispWorkspace,
   readCrispSettings,
   resolveCrispWorkspaces,
   type CrispSettings,
@@ -36,7 +42,11 @@ export type CrispSyncSummary = {
   linked: number;
   empty: number;
   skipped: number;
+  // Prospects left for a later run because one of their apps' workspaces
+  // rejected its credentials.
+  blocked: number;
   failed: string[];
+  workspaceErrors: string[];
   completed: boolean;
   disabled?: true;
 };
@@ -79,15 +89,28 @@ const stampChecked = async (
   );
 };
 
-const writeMatch = async ({
+const labelOf = (match: CrispMatch): string =>
+  `${match.appKey}: ${match.nickname ?? match.email ?? 'Crisp conversation'}`;
+
+const writeMatches = async ({
   client,
   prospectId,
-  match,
+  matches,
 }: {
   client: ApiClient;
   prospectId: string;
-  match: CrispMatch;
+  matches: CrispMatch[];
 }): Promise<void> => {
+  const [primary, ...rest] = matches;
+  const emails = [
+    ...new Set(
+      matches
+        .map((match) => match.email)
+        .filter((email): email is string => typeof email === 'string'),
+    ),
+  ];
+  const [primaryEmail, ...additionalEmails] = emails;
+
   await executeWithRetry(() =>
     client.mutation({
       updateProspect: {
@@ -95,15 +118,19 @@ const writeMatch = async ({
           id: prospectId,
           data: {
             crispChat: {
-              primaryLinkUrl: match.url,
-              primaryLinkLabel:
-                match.nickname ?? match.email ?? 'Crisp conversation',
+              primaryLinkUrl: primary.url,
+              primaryLinkLabel: labelOf(primary),
+              secondaryLinks: rest.map((match) => ({
+                url: match.url,
+                label: labelOf(match),
+              })),
             },
-            // Null clears a stale address: the link above is the only
-            // conversation this column may describe.
-            crispEmail: match.email
-              ? { primaryEmail: match.email }
-              : null,
+            // Null clears a stale address: the links above are the only
+            // conversations this column may describe.
+            crispEmail:
+              primaryEmail === undefined
+                ? null
+                : { primaryEmail, additionalEmails },
             crispCheckedAt: new Date().toISOString(),
           },
         },
@@ -118,11 +145,13 @@ const syncOne = async ({
   settings,
   prospect,
   summary,
+  brokenWebsiteIds,
 }: {
   client: ApiClient;
   settings: CrispSettings;
   prospect: SyncProspectRow;
   summary: CrispSyncSummary;
+  brokenWebsiteIds: Set<string>;
 }): Promise<void> => {
   const domain = prospect.domain?.trim().toLowerCase() ?? '';
 
@@ -133,16 +162,34 @@ const syncOne = async ({
     return;
   }
 
-  const match = await resolveCrispMatch({
-    workspaces: resolveCrispWorkspaces({
-      ourApps: prospect.ourApps,
-      settings,
-    }),
-    domain,
-    shopName: prospect.shopName,
+  const workspaces = resolveCrispWorkspaces({
+    ourApps: prospect.ourApps,
+    settings,
   });
 
-  if (match === undefined) {
+  if (workspaces.length === 0) {
+    await stampChecked(client, prospect.id);
+    summary.skipped += 1;
+    return;
+  }
+
+  const { matches, blockedAppKeys } = await resolveCrispMatches({
+    workspaces,
+    domain,
+    shopName: prospect.shopName,
+    brokenWebsiteIds,
+    onAuthFailure: (appKey: string, error: CrispAuthError) => {
+      summary.workspaceErrors.push(`${appKey}: ${error.message}`);
+    },
+  });
+
+  // Not stamped, so the shop is searched again once the workspace is fixed.
+  if (blockedAppKeys.length > 0) {
+    summary.blocked += 1;
+    return;
+  }
+
+  if (matches.length === 0) {
     // Miss: columns stay as they are per spec for never-found rows, and a
     // previously found link is left untouched: text search is fuzzy and a
     // miss must not wipe a good link. Stamp so a miss is not re-searched
@@ -152,7 +199,7 @@ const syncOne = async ({
     return;
   }
 
-  await writeMatch({ client, prospectId: prospect.id, match });
+  await writeMatches({ client, prospectId: prospect.id, matches });
   summary.linked += 1;
 };
 
@@ -174,9 +221,12 @@ export const syncCrispConversations = async ({
     linked: 0,
     empty: 0,
     skipped: 0,
+    blocked: 0,
     failed: [],
+    workspaceErrors: [],
     completed: true,
   };
+  const brokenWebsiteIds = new Set<string>();
 
   if (typeof prospectId === 'string') {
     const { prospects } = await executeWithRetry<{
@@ -198,7 +248,7 @@ export const syncCrispConversations = async ({
     summary.checked += 1;
 
     try {
-        await syncOne({ client, settings, prospect, summary });
+      await syncOne({ client, settings, prospect, summary, brokenWebsiteIds });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -232,6 +282,7 @@ export const syncCrispConversations = async ({
           __args: {
             first: PROSPECT_PAGE_SIZE,
             after,
+            filter: { ourApps: { containsAny: SELLABLE_APP_KEYS } },
             orderBy: [{ crispCheckedAt: 'AscNullsFirst' }],
           },
           edges: { node: prospectSelection },
@@ -269,21 +320,27 @@ export const syncCrispConversations = async ({
         break;
       }
 
-      summary.checked += 1;
+      const blockedBefore = summary.blocked;
 
       try {
-      await syncOne({ client, settings, prospect, summary });
+        await syncOne({ client, settings, prospect, summary, brokenWebsiteIds });
       } catch (error) {
-        // One bad prospect must not fail the batch. Auth/quota errors abort
-        // the whole run instead of burning through prospects that would all
-        // fail the same way.
+        // One bad prospect must not fail the batch. Rate limiting aborts the
+        // whole run instead of burning through prospects that would all fail
+        // the same way; a broken workspace is handled per app in syncOne.
         const message = error instanceof Error ? error.message : String(error);
 
-        if (/HTTP 401|HTTP 403|HTTP 429/.test(message)) {
+        if (/HTTP 429/.test(message)) {
           throw error;
         }
 
         summary.failed.push(`${prospect.id}: ${message}`);
+      }
+
+      // Blocked rows stay unstamped at the head of the queue, so counting them
+      // against the write limit would make every run re-read the same rows.
+      if (summary.blocked === blockedBefore) {
+        summary.checked += 1;
       }
     }
 
@@ -324,13 +381,15 @@ const handler = async (payload?: unknown): Promise<CrispSyncSummary> => {
       linked: 0,
       empty: 0,
       skipped: 0,
+      blocked: 0,
       failed: [],
+      workspaceErrors: [],
       completed: true,
       disabled: true as const,
     };
   }
 
-  if (resolveCrispWorkspaces({ settings }).length === 0) {
+  if (!hasAnyCrispWorkspace(settings)) {
     throw new Error(
       'No Crisp workspace is configured. Add one triple per app (CRISP_API_IDENTIFIER_<APP>, CRISP_API_KEY_<APP>, CRISP_WEBSITE_ID_<APP>) or the fallback triple under Settings > Apps > BD Prospects > Variables.',
     );

@@ -1,11 +1,17 @@
 import { brandSpaced, domainOfEmail } from './build-linkedin-queries';
 import { delay } from './rate-limiter';
-import { type CrispWorkspace } from './read-crisp-settings';
+import {
+  type AppCrispWorkspace,
+  type CrispWorkspace,
+} from './read-crisp-settings';
 
 const CRISP_API_BASE_URL = 'https://api.crisp.chat/v1';
 const CONVERSATIONS_PER_REQUEST = 20;
 const RATE_LIMIT_ATTEMPTS = 3;
 const RATE_LIMIT_DELAY_MS = 5_000;
+// Marketplace plugin tokens and personal user tokens look identical but are
+// only accepted under their own tier, and BD may paste either kind.
+const CRISP_TIERS = ['plugin', 'user'] as const;
 
 export type CrispConversation = {
   sessionId: string;
@@ -14,6 +20,7 @@ export type CrispConversation = {
 };
 
 export type CrispMatch = {
+  appKey: string;
   sessionId: string;
   email: string | null;
   nickname: string | null;
@@ -27,6 +34,15 @@ type CrispConversationResponse = {
     nickname?: string | null;
   } | null;
 };
+
+export class CrispAuthError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 
 const normalizeDomain = (domain: string): string =>
   domain.toLowerCase().trim().replace(/^www\./, '');
@@ -126,12 +142,14 @@ export const searchCrispConversations = async ({
     `${workspace.identifier}:${workspace.key}`,
   ).toString('base64')}`;
 
+  let tierIndex = 0;
+
   for (let attempt = 0; ; attempt += 1) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: authorization,
-        'X-Crisp-Tier': 'plugin',
+        'X-Crisp-Tier': CRISP_TIERS[tierIndex],
       },
     });
 
@@ -140,10 +158,22 @@ export const searchCrispConversations = async ({
       continue;
     }
 
+    if (
+      (response.status === 401 || response.status === 403) &&
+      tierIndex < CRISP_TIERS.length - 1
+    ) {
+      tierIndex += 1;
+      continue;
+    }
+
     if (!response.ok) {
-      throw new Error(
-        `Crisp search failed for ${JSON.stringify(domain)}: HTTP ${response.status}`,
-      );
+      const message = `Crisp search failed for ${JSON.stringify(domain)} on website ${workspace.websiteId}: HTTP ${response.status}`;
+
+      if (response.status === 401 || response.status === 403) {
+        throw new CrispAuthError(message, response.status);
+      }
+
+      throw new Error(message);
     }
 
     const body = (await response.json()) as {
@@ -163,24 +193,57 @@ export const searchCrispConversations = async ({
   }
 };
 
-export const resolveCrispMatch = async ({
+export type CrispMatchResult = {
+  matches: CrispMatch[];
+  // Apps whose workspace rejected the credentials: the shop was not fully
+  // searched, so the caller must not treat the result as a miss.
+  blockedAppKeys: string[];
+};
+
+// One conversation per app, each searched only in that app's own workspace. A
+// workspace that rejects its credentials is remembered in brokenWebsiteIds so
+// the rest of the run stops calling it, while the other apps carry on.
+export const resolveCrispMatches = async ({
   workspaces,
   domain,
   shopName,
+  brokenWebsiteIds = new Set<string>(),
+  onAuthFailure,
 }: {
-  workspaces: CrispWorkspace[];
+  workspaces: AppCrispWorkspace[];
   domain: string;
   shopName?: string | null;
-}): Promise<CrispMatch | undefined> => {
-  for (const workspace of workspaces) {
-    const conversations = await searchCrispConversations({
-      workspace,
-      domain,
-    });
+  brokenWebsiteIds?: Set<string>;
+  onAuthFailure?: (appKey: string, error: CrispAuthError) => void;
+}): Promise<CrispMatchResult> => {
+  const result: CrispMatchResult = { matches: [], blockedAppKeys: [] };
+
+  for (const { appKey, workspace } of workspaces) {
+    if (brokenWebsiteIds.has(workspace.websiteId)) {
+      result.blockedAppKeys.push(appKey);
+      continue;
+    }
+
+    let conversations: CrispConversation[];
+
+    try {
+      conversations = await searchCrispConversations({ workspace, domain });
+    } catch (error) {
+      if (!(error instanceof CrispAuthError)) {
+        throw error;
+      }
+
+      brokenWebsiteIds.add(workspace.websiteId);
+      onAuthFailure?.(appKey, error);
+      result.blockedAppKeys.push(appKey);
+      continue;
+    }
+
     const picked = pickCrispConversation({ conversations, domain, shopName });
 
     if (picked !== undefined) {
-      return {
+      result.matches.push({
+        appKey,
         sessionId: picked.sessionId,
         email: picked.email,
         nickname: picked.nickname,
@@ -188,9 +251,9 @@ export const resolveCrispMatch = async ({
           websiteId: workspace.websiteId,
           sessionId: picked.sessionId,
         }),
-      };
+      });
     }
   }
 
-  return undefined;
+  return result;
 };

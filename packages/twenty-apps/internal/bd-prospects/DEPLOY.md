@@ -222,17 +222,27 @@ Manifest không làm thay được bốn việc này. Bỏ bước 1 thì coi nh
    (`CRISP_API_IDENTIFIER_BLOY`, `CRISP_API_KEY_BLOY`, `CRISP_WEBSITE_ID_BLOY`, tương tự cho
    `MIDA`; lấy ở Crisp Settings → Workspace settings → Integrations → API của từng workspace,
    website ID trong URL dashboard). Bộ ba `CRISP_API_IDENTIFIER` / `CRISP_API_KEY` /
-   `CRISP_WEBSITE_ID` không hậu tố là fallback cho shop chưa có app. Xong chạy backfill lần đầu,
-   lặp tới khi `completed: true`:
+   `CRISP_WEBSITE_ID` không hậu tố dùng cho app nào chưa có bộ riêng.
+
+   Chỉ prospect có app (`ourApps` không rỗng) mới được sync, và mỗi app chỉ tìm trong workspace
+   của chính app đó. Shop dùng nhiều app có một link mỗi app (link chính + link phụ, nhãn ghi
+   tên app). Workspace nào bị Crisp từ chối (401/403) thì bị bỏ qua tới hết lượt, lỗi nằm ở
+   `workspaceErrors`, và prospect cần workspace đó không bị đánh dấu đã kiểm tra (đếm ở
+   `blocked`) để lần sau tìm lại.
+
+   Chạy backfill lần đầu, lặp tới khi `completed: true`. `dev:function:exec` cần đăng nhập bằng
+   user, API key bị từ chối, nên với remote dùng API key thì gọi route:
 
 ```bash
-yarn twenty dev:function:exec -n sync-crisp-conversations -r prod -p '{"limit":200}'
+curl -X POST "$URL/s/bd-prospects/sync-crisp-manual" -H "Authorization: Bearer $API_KEY" \
+  -H 'Content-Type: application/json' -d '{"limit":200}'
 ```
 
 Kiểm tra một shop cụ thể:
 
 ```bash
-yarn twenty dev:function:exec -n sync-crisp-conversations-manual -r prod -p '{"prospectId":"<id>"}'
+curl -X POST "$URL/s/bd-prospects/sync-crisp-manual" -H "Authorization: Bearer $API_KEY" \
+  -H 'Content-Type: application/json' -d '{"prospectId":"<id>"}'
 ```
 
 ### Bước 6 — Kiểm tra
