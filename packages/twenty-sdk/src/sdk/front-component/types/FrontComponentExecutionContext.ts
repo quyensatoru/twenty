@@ -30,6 +30,12 @@ export type FrontComponentExecutionContext = {
    * that addresses something inside it rather than the record as a whole.
    */
   locationHash?: string;
+  /**
+   * Path of the host page, without query or fragment. A front component runs
+   * in a worker with an opaque origin and no `location` of its own, so this
+   * is the only way it can link back to exactly the page it renders on.
+   */
+  locationPathname?: string;
   /** Set when the component renders an AI chat tool call */
   toolCall?: FrontComponentToolCall;
 };

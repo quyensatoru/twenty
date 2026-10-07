@@ -458,6 +458,10 @@ export const useFrontComponentExecutionContext = ({
     // no `location` of its own — its worker runs on an opaque origin — so a
     // deep link into something it renders can only arrive this way.
     locationHash: decodeURIComponent(location.hash.replace(/^#/, '')),
+    // The path of the host page, so a guest can link back to exactly the page
+    // it renders on (a board deep link, for example) without knowing the
+    // workspace-specific identifiers inside that path.
+    locationPathname: location.pathname,
     // The host is always configured with APP_LOCALES, so this is a valid AppLocale.
     locale: i18n.locale as AppLocale,
   };
