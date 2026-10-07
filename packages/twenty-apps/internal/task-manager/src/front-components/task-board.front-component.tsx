@@ -231,6 +231,8 @@ const TaskBoard = () => {
         members: result.members ?? [],
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
         hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
+        canWrite: result.canWrite === true,
+        canSoftDelete: result.canSoftDelete === true,
       });
       setLoadError(null);
     } catch (error) {
@@ -749,17 +751,19 @@ const TaskBoard = () => {
             placeholder={t('Search issues by key or title…')}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <TaskButton
-              variant="primary"
-              isDisabled={statuses.length === 0}
-              onClick={() => {
-                setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
-                setComposerTitle('');
-              }}
-            >
-              <IconPlus size={14} />
-              {t('Create issue')}
-            </TaskButton>
+            {board.canWrite && (
+              <TaskButton
+                variant="primary"
+                isDisabled={statuses.length === 0}
+                onClick={() => {
+                  setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
+                  setComposerTitle('');
+                }}
+              >
+                <IconPlus size={14} />
+                {t('Create issue')}
+              </TaskButton>
+            )}
           </div>
         </div>
         <div
@@ -881,7 +885,8 @@ const TaskBoard = () => {
           const remainingCardCount = cards.length - shownCards.length;
           const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
-          const isReorderable = column.id !== NO_STATUS_VALUE;
+          // Column order is the project's, shared by everyone on it.
+          const isReorderable = column.id !== NO_STATUS_VALUE && board.canWrite;
           const isColumnDragged = draggingStatusId === column.id;
           // Which edge the dragged column will land against, so the bar shows
           // the slot it takes rather than just the column it is over.
@@ -1197,6 +1202,8 @@ const TaskBoard = () => {
                     isDone={doneStatusIds.has(issue.statusId ?? '')}
                     isSelected={selectedIssueId === issue.id}
                     isDragging={draggingIssueId === issue.id}
+                    canMove={board.canWrite}
+                    canDelete={board.canSoftDelete}
                     onOpen={() => setSelectedIssueId(issue.id)}
                     onMove={(statusId) => void moveIssue(issue.id, statusId)}
                     onDelete={() => void deleteIssue(issue.id)}
@@ -1249,7 +1256,9 @@ const TaskBoard = () => {
                     </TaskColumnFooterButton>
                   ))}
 
-                {composerStatusId === column.id ? (
+                {/* Creating writes to the project, so a reader without the
+                    grant gets neither the composer nor its trigger. */}
+                {!board.canWrite ? null : composerStatusId === column.id ? (
                   <div
                     style={{
                       background: TASK_TOKENS.background,

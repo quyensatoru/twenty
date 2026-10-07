@@ -13,6 +13,7 @@ import { type ApiClient } from '../types/api-client';
 import { type Connection } from '../types/connection';
 import { type IssueRow } from '../types/task-manager-rows';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
+import { hasAppGrant } from './app-scope/has-app-grant.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
 import { buildBoardIssueFilters } from './utils/build-board-issue-filters.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
@@ -49,6 +50,8 @@ const EMPTY_BOARD = {
   issues: [],
   members: [],
   hiddenDoneIssueCount: 0,
+  canWrite: false,
+  canSoftDelete: false,
 };
 
 // One round trip for the whole board: the visible projects, the active
@@ -94,6 +97,12 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       requestedIsVisible && projectIds.has(requestedProjectId as string)
         ? (requestedProjectId as string)
         : (projects[0] as { id: string }).id;
+    const activeProjectAppId =
+      (
+        projects.find(
+          (project) => (project as { id: string }).id === activeProjectId,
+        ) as { appId?: string | null } | undefined
+      )?.appId ?? null;
 
     const sprintId =
       event.body?.sprintId === undefined ? undefined : event.body.sprintId;
@@ -160,6 +169,10 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       members,
       hiddenDoneIssueCount,
       currentWorkspaceMemberId: scope.workspaceMemberId,
+      // What the board may offer on this project, by the rule its write
+      // routes enforce. Only hides controls; the routes still decide.
+      canWrite: hasAppGrant(scope, activeProjectAppId, 'write'),
+      canSoftDelete: hasAppGrant(scope, activeProjectAppId, 'softDelete'),
     };
   });
 

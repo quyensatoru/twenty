@@ -38,6 +38,10 @@ type TaskBoardCardProps = {
   isDone: boolean;
   isSelected: boolean;
   isDragging: boolean;
+  // Moving and deleting change the issue for everyone, so they follow the
+  // caller's grants on the project; a reader without them can only open it.
+  canMove: boolean;
+  canDelete: boolean;
   onOpen: () => void;
   onMove: (statusId: string) => void;
   onDelete: () => void;
@@ -142,6 +146,8 @@ export const TaskBoardCard = ({
   isDone,
   isSelected,
   isDragging,
+  canMove,
+  canDelete,
   onOpen,
   onMove,
   onDelete,
@@ -165,7 +171,7 @@ export const TaskBoardCard = ({
 
   return (
     <div
-      draggable
+      draggable={canMove}
       onDragStart={(event) => {
         // The sandbox proxy carries no dataTransfer, so the card id travels
         // on component state (onDragStartCard) instead — dataTransfer is a
@@ -385,7 +391,10 @@ export const TaskBoardCard = ({
       </button>
       <span
         style={{
-          display: isHovered || isMoveOpen ? 'inline-flex' : 'none',
+          display:
+            (canMove || canDelete) && (isHovered || isMoveOpen)
+              ? 'inline-flex'
+              : 'none',
           position: 'absolute',
           right: 6,
           top: 6,
@@ -433,43 +442,116 @@ export const TaskBoardCard = ({
                   width: 200,
                 }}
               >
-                <span
-                  style={{
-                    color: TASK_TOKENS.textTertiary,
-                    display: 'block',
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '6px 8px 4px 8px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {t('Move to')}
-                </span>
-                {statusOptions.map((status) => (
+                {canMove && (
+                  <>
+                    <span
+                      style={{
+                        color: TASK_TOKENS.textTertiary,
+                        display: 'block',
+                        fontFamily: TASK_TOKENS.fontFamily,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: '6px 8px 4px 8px',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {t('Move to')}
+                    </span>
+                    {statusOptions.map((status) => (
+                      <button
+                        key={status.value}
+                        type="button"
+                        role="menuitem"
+                        onMouseEnter={() => setHoveredStatus(status.value)}
+                        onMouseLeave={() => setHoveredStatus(null)}
+                        onClick={() => {
+                          onMove(status.value);
+                          setIsMoveOpen(false);
+                        }}
+                        style={{
+                          alignItems: 'center',
+                          background:
+                            hoveredStatus === status.value
+                              ? TASK_TOKENS.backgroundHover
+                              : 'transparent',
+                          border: 'none',
+                          borderRadius: TASK_TOKENS.radiusSmall,
+                          color: TASK_TOKENS.textPrimary,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          fontFamily: TASK_TOKENS.fontFamily,
+                          fontSize: 13,
+                          gap: 8,
+                          minHeight: 32,
+                          padding: '0 8px',
+                          textAlign: 'left',
+                          width: '100%',
+                        }}
+                      >
+                        <span
+                          style={{
+                            background: readTagColor(status.color).text,
+                            ...TASK_CIRCLE_STYLE,
+                            flexShrink: 0,
+                            height: 8,
+                            width: 8,
+                          }}
+                        />
+                        <span
+                          style={{
+                            flex: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {status.label}
+                        </span>
+                        {status.value === issue.statusId && (
+                          <IconCheck size={14} color={TASK_TOKENS.accent} />
+                        )}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {canMove && canDelete && (
+                  <div
+                    style={{
+                      background: TASK_TOKENS.borderLight,
+                      height: 1,
+                      margin: '4px 0',
+                      width: '100%',
+                    }}
+                  />
+                )}
+                {canDelete && (
                   <button
-                    key={status.value}
                     type="button"
                     role="menuitem"
-                    onMouseEnter={() => setHoveredStatus(status.value)}
-                    onMouseLeave={() => setHoveredStatus(null)}
                     onClick={() => {
-                      onMove(status.value);
-                      setIsMoveOpen(false);
+                      if (isConfirmingDelete) {
+                        onDelete();
+                        setIsConfirmingDelete(false);
+                        setIsMoveOpen(false);
+                      } else {
+                        setIsConfirmingDelete(true);
+                      }
                     }}
                     style={{
                       alignItems: 'center',
-                      background:
-                        hoveredStatus === status.value
-                          ? TASK_TOKENS.backgroundHover
-                          : 'transparent',
+                      background: isConfirmingDelete
+                        ? TASK_TOKENS.red
+                        : 'transparent',
                       border: 'none',
                       borderRadius: TASK_TOKENS.radiusSmall,
-                      color: TASK_TOKENS.textPrimary,
+                      color: isConfirmingDelete
+                        ? '#ffffff'
+                        : TASK_TOKENS.textDanger,
                       cursor: 'pointer',
                       display: 'flex',
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 13,
+                      fontWeight: isConfirmingDelete ? 600 : 400,
                       gap: 8,
                       minHeight: 32,
                       padding: '0 8px',
@@ -477,78 +559,13 @@ export const TaskBoardCard = ({
                       width: '100%',
                     }}
                   >
-                    <span
-                      style={{
-                        background: readTagColor(status.color).text,
-                        ...TASK_CIRCLE_STYLE,
-                        flexShrink: 0,
-                        height: 8,
-                        width: 8,
-                      }}
+                    <IconTrash
+                      size={14}
+                      color={isConfirmingDelete ? '#ffffff' : TASK_TOKENS.textDanger}
                     />
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {status.label}
-                    </span>
-                    {status.value === issue.statusId && (
-                      <IconCheck size={14} color={TASK_TOKENS.accent} />
-                    )}
+                    {isConfirmingDelete ? t('Confirm delete?') : t('Delete issue')}
                   </button>
-                ))}
-                <div
-                  style={{
-                    background: TASK_TOKENS.borderLight,
-                    height: 1,
-                    margin: '4px 0',
-                    width: '100%',
-                  }}
-                />
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    if (isConfirmingDelete) {
-                      onDelete();
-                      setIsConfirmingDelete(false);
-                      setIsMoveOpen(false);
-                    } else {
-                      setIsConfirmingDelete(true);
-                    }
-                  }}
-                  style={{
-                    alignItems: 'center',
-                    background: isConfirmingDelete
-                      ? TASK_TOKENS.red
-                      : 'transparent',
-                    border: 'none',
-                    borderRadius: TASK_TOKENS.radiusSmall,
-                    color: isConfirmingDelete
-                      ? '#ffffff'
-                      : TASK_TOKENS.textDanger,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 13,
-                    fontWeight: isConfirmingDelete ? 600 : 400,
-                    gap: 8,
-                    minHeight: 32,
-                    padding: '0 8px',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
-                >
-                  <IconTrash
-                    size={14}
-                    color={isConfirmingDelete ? '#ffffff' : TASK_TOKENS.textDanger}
-                  />
-                  {isConfirmingDelete ? t('Confirm delete?') : t('Delete issue')}
-                </button>
+                )}
               </div>
             </twenty-overlay>
           )}

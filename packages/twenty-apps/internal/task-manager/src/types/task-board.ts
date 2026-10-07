@@ -67,6 +67,9 @@ export type BoardData = {
   currentWorkspaceMemberId: string | null;
   // Done issues left off the board for being older than its window.
   hiddenDoneIssueCount: number;
+  // What the caller may change on the active project's board.
+  canWrite: boolean;
+  canSoftDelete: boolean;
 };
 
 // What the search-issues route answers: one page of matches across every

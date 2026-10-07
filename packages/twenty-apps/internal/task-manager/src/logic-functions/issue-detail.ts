@@ -13,27 +13,15 @@ import {
 } from '../constants/record-selections';
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DETAIL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
-import { type AppScopeOperation } from '../types/app-scope-operation';
-import { type CallerScope } from '../types/caller-scope';
 import { type Connection } from '../types/connection';
 import { listGrantedAppIds } from '../utils/list-granted-app-ids.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
+import { hasAppGrant } from './app-scope/has-app-grant.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type IssueDetailBody = { issueId?: string };
-
-// An issue with no project resolves to no app, which every guard treats as
-// denied — so does this, unless the caller bypasses app-scope.
-const hasAppGrant = (
-  scope: CallerScope,
-  appId: string | null,
-  operation: AppScopeOperation,
-): boolean =>
-  scope.canBypassAppScope ||
-  (appId !== null &&
-    listGrantedAppIds(scope.grantsByAppId, operation).includes(appId));
 
 const handler = async (event: RoutePayload<IssueDetailBody>) =>
   runScopedRoute(async ({ client, scope }) => {
