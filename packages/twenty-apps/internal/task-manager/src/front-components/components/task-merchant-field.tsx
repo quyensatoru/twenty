@@ -25,6 +25,9 @@ type TaskMerchantFieldProps = {
   onOpenChange: (isOpen: boolean) => void;
   onOpenMerchant: (merchantId: string) => void;
   isDisabled?: boolean;
+  // Visible but not editable: no tint, no pencil, no list. The chips still
+  // open their merchants.
+  isReadOnly?: boolean;
 };
 
 const ROW_HEIGHT = 24;
@@ -57,6 +60,7 @@ export const TaskMerchantField = ({
   onOpenChange,
   onOpenMerchant,
   isDisabled = false,
+  isReadOnly = false,
 }: TaskMerchantFieldProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -158,17 +162,30 @@ export const TaskMerchantField = ({
           type="button"
           aria-label={t('Merchants')}
           aria-expanded={isOpen}
+          aria-readonly={isReadOnly}
           disabled={isDisabled}
-          onClick={() => (isOpen ? close() : open())}
+          onClick={() => {
+            if (!isReadOnly) {
+              if (isOpen) {
+                close();
+              } else {
+                open();
+              }
+            }
+          }}
           style={{
             alignItems: 'center',
             background:
-              isHovered && !isDisabled
+              isHovered && !isDisabled && !isReadOnly
                 ? TASK_TOKENS.backgroundHover
                 : 'transparent',
             border: 'none',
             borderRadius: TASK_TOKENS.radius,
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            cursor: isDisabled
+              ? 'not-allowed'
+              : isReadOnly
+                ? 'default'
+                : 'pointer',
             display: 'flex',
             // One line, never wrapping. This is the only row whose height would
             // otherwise follow its data, and a panel taller than its widget is
@@ -214,7 +231,7 @@ export const TaskMerchantField = ({
           )}
         </button>
 
-        {isHovered && !isDisabled && shownMerchants.length > 0 && (
+        {isHovered && !isDisabled && !isReadOnly && shownMerchants.length > 0 && (
           <TaskIconButton
             label={t('Edit')}
             isElevated
@@ -224,7 +241,7 @@ export const TaskMerchantField = ({
           </TaskIconButton>
         )}
 
-        {isOpen && (
+        {isOpen && !isReadOnly && (
           <twenty-overlay
             offsetX={-OVERLAY_INSET}
             offsetY={-OVERLAY_INSET}

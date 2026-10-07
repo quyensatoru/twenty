@@ -13,6 +13,8 @@ import {
 } from '../constants/record-selections';
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DETAIL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
+import { type AppScopeOperation } from '../types/app-scope-operation';
+import { type CallerScope } from '../types/caller-scope';
 import { type Connection } from '../types/connection';
 import { listGrantedAppIds } from '../utils/list-granted-app-ids.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
@@ -21,6 +23,17 @@ import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type IssueDetailBody = { issueId?: string };
+
+// An issue with no project resolves to no app, which every guard treats as
+// denied — so does this, unless the caller bypasses app-scope.
+const hasAppGrant = (
+  scope: CallerScope,
+  appId: string | null,
+  operation: AppScopeOperation,
+): boolean =>
+  scope.canBypassAppScope ||
+  (appId !== null &&
+    listGrantedAppIds(scope.grantsByAppId, operation).includes(appId));
 
 const handler = async (event: RoutePayload<IssueDetailBody>) =>
   runScopedRoute(async ({ client, scope }) => {
@@ -257,6 +270,12 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
       // offer from this; the routes re-check the same rule themselves, so a
       // wrong answer here can only hide a control, never authorise a write.
       currentWorkspaceMemberId: scope.workspaceMemberId,
+      // What the caller may do to this issue, by the same rule the write
+      // routes enforce: a grant on the project's app, or a bypass. The panels
+      // lock their controls from these; like the member id above they only
+      // hide controls, the routes still decide.
+      canWrite: hasAppGrant(scope, projectAppId, 'write'),
+      canSoftDelete: hasAppGrant(scope, projectAppId, 'softDelete'),
     };
   });
 

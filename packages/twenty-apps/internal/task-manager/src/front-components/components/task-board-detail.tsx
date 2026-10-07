@@ -294,6 +294,7 @@ export const TaskBoardDetail = ({
     isOpen: openField === field,
     onOpenChange: (isOpen: boolean) => setOpenField(isOpen ? field : null),
     overlayOffsetX: -10,
+    isReadOnly: !data.canWrite,
   });
 
   const buildMemberOptions = (
@@ -815,7 +816,8 @@ export const TaskBoardDetail = ({
           ) : (
             <button
               type="button"
-              title={t('Edit title')}
+              title={data.canWrite ? t('Edit title') : undefined}
+              disabled={!data.canWrite}
               onClick={() => {
                 setTitleDraft(issue.title ?? '');
                 setIsEditingTitle(true);
@@ -825,7 +827,7 @@ export const TaskBoardDetail = ({
                 border: 'none',
                 borderRadius: TASK_TOKENS.radiusSmall,
                 color: TASK_TOKENS.textPrimary,
-                cursor: 'text',
+                cursor: data.canWrite ? 'text' : 'default',
                 fontFamily: TASK_TOKENS.fontFamily,
                 fontSize: 20,
                 fontWeight: 600,
@@ -870,6 +872,22 @@ export const TaskBoardDetail = ({
                     issueId={issueId}
                   />
               </div>
+            ) : !data.canWrite ? (
+              currentDescription.trim() === '' ? (
+                <span
+                  style={{
+                    color: TASK_TOKENS.textTertiary,
+                    fontSize: 13,
+                    padding: '4px 8px',
+                  }}
+                >
+                  {t('No description.')}
+                </span>
+              ) : (
+                <div style={{ padding: '4px 8px' }}>
+                  <TaskRichTextEditor value={currentDescription} isReadOnly />
+                </div>
+              )
             ) : (
               <div
                 role="button"
@@ -921,21 +939,25 @@ export const TaskBoardDetail = ({
                 }
                 ownerAvatarUrl={membersById.get(child.assigneeId ?? '')?.avatarUrl}
                 onOpen={() => onSelectIssue(child.id)}
-                onUnlink={() => unlinkSubtask(child.id)}
+                onUnlink={
+                  data.canWrite ? () => unlinkSubtask(child.id) : undefined
+                }
                 unlinkLabel={t('Remove subtask link')}
               />
             ))}
-            <TaskIssueSearch
-              value={subtaskDraft}
-              onChange={setSubtaskDraft}
-              onSelectIssue={linkSubtask}
-              onCreateNew={createSubtask}
-              isShortcutEnabled={false}
-              ariaLabel={t('New subtask title')}
-              placeholder={t('Add a subtask…')}
-              excludeIds={unlinkableIds}
-              maxWidth="100%"
-            />
+            {data.canWrite && (
+              <TaskIssueSearch
+                value={subtaskDraft}
+                onChange={setSubtaskDraft}
+                onSelectIssue={linkSubtask}
+                onCreateNew={createSubtask}
+                isShortcutEnabled={false}
+                ariaLabel={t('New subtask title')}
+                placeholder={t('Add a subtask…')}
+                excludeIds={unlinkableIds}
+                maxWidth="100%"
+              />
+            )}
           </section>
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -958,6 +980,8 @@ export const TaskBoardDetail = ({
                 membersById={membersById}
                 currentMemberId={data.currentWorkspaceMemberId}
                 highlightedCommentId={null}
+                canWrite={data.canWrite}
+                canSoftDelete={data.canSoftDelete}
                 isBusy={isSaving}
                 onCreate={(input) =>
                   void runFeedAction(() =>
@@ -994,6 +1018,8 @@ export const TaskBoardDetail = ({
                 membersById={membersById}
                 currentMemberId={data.currentWorkspaceMemberId}
                 highlightedWorklogId={null}
+                canWrite={data.canWrite}
+                canSoftDelete={data.canSoftDelete}
                 totalMinutes={issue.timeSpentMinutes}
                 originalEstimateMinutes={issue.originalEstimateMinutes}
                 isBusy={isSaving}
@@ -1257,6 +1283,7 @@ export const TaskBoardDetail = ({
               onOpenChange={(isOpen) => setOpenField(isOpen ? 'labels' : null)}
               onChange={(labels) => void update({ data: { labels } })}
               overlayOffsetX={-10}
+              isReadOnly={!data.canWrite}
             />
           </TaskFieldRow>
           )}
@@ -1280,6 +1307,7 @@ export const TaskBoardDetail = ({
             ) : (
               <DetailReadButton
                 label={t('Edit story points')}
+                isReadOnly={!data.canWrite}
                 onOpen={() => {
                   setPointsDraft(
                     typeof issue.storyPoints === 'number'
@@ -1315,6 +1343,7 @@ export const TaskBoardDetail = ({
             <div style={{ minWidth: 0, position: 'relative', width: '100%' }}>
               <DetailReadButton
                 label={t('Edit due date')}
+                isReadOnly={!data.canWrite}
                 onOpen={() => setIsDuePickerOpen(true)}
               >
                 {(() => {
@@ -1430,7 +1459,7 @@ export const TaskBoardDetail = ({
                   </span>
                 )}
               </span>
-              {!isEditingEstimate && (
+              {!isEditingEstimate && data.canWrite && (
                 <TaskIconButton
                   label={t('Edit estimate')}
                   onClick={() => {
@@ -1479,11 +1508,13 @@ export const TaskBoardDetail = ({
                 />
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <TaskButton size="small" onClick={() => setActivityTab('worklogs')}>
-                {t('Log work')}
-              </TaskButton>
-            </div>
+            {data.canWrite && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <TaskButton size="small" onClick={() => setActivityTab('worklogs')}>
+                  {t('Log work')}
+                </TaskButton>
+              </div>
+            )}
           </div>
           )}
 
@@ -1500,7 +1531,7 @@ export const TaskBoardDetail = ({
                 }
                 ownerName={null}
                 onOpen={() => onSelectIssue(data.parentIssue?.id ?? issueId)}
-                onUnlink={detachParent}
+                onUnlink={data.canWrite ? detachParent : undefined}
                 unlinkLabel={t('Remove parent link')}
               />
             </div>
@@ -1639,28 +1670,33 @@ const DetailReadButton = ({
   label,
   children,
   onOpen,
+  isReadOnly = false,
 }: {
   label: string;
   children: React.ReactNode;
   onOpen: () => void;
+  isReadOnly?: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <button
       type="button"
-      title={label}
+      title={isReadOnly ? undefined : label}
       aria-label={label}
+      aria-readonly={isReadOnly}
+      disabled={isReadOnly}
       onClick={onOpen}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         alignItems: 'center',
-        background: isHovered ? TASK_TOKENS.backgroundHover : 'transparent',
+        background:
+          isHovered && !isReadOnly ? TASK_TOKENS.backgroundHover : 'transparent',
         border: 'none',
         borderRadius: TASK_TOKENS.radius,
         color: TASK_TOKENS.textPrimary,
-        cursor: 'pointer',
+        cursor: isReadOnly ? 'default' : 'pointer',
         display: 'flex',
         fontFamily: TASK_TOKENS.fontFamily,
         fontSize: 13,
@@ -1687,12 +1723,14 @@ const LabelPicker = ({
   onOpenChange,
   onChange,
   overlayOffsetX = -4,
+  isReadOnly = false,
 }: {
   selected: string[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onChange: (labels: string[]) => void;
   overlayOffsetX?: number;
+  isReadOnly?: boolean;
 }) => {
   const [search, setSearch] = useState('');
   const term = search.trim().toLowerCase();
@@ -1706,13 +1744,15 @@ const LabelPicker = ({
         type="button"
         aria-label={t('Labels')}
         aria-expanded={isOpen}
+        aria-readonly={isReadOnly}
+        disabled={isReadOnly}
         onClick={() => onOpenChange(!isOpen)}
         style={{
           alignItems: 'center',
           background: 'transparent',
           border: 'none',
           borderRadius: TASK_TOKENS.radius,
-          cursor: 'pointer',
+          cursor: isReadOnly ? 'default' : 'pointer',
           display: 'flex',
           flexWrap: 'wrap',
           gap: 4,
@@ -1740,7 +1780,7 @@ const LabelPicker = ({
           })
         )}
       </button>
-      {isOpen && (
+      {isOpen && !isReadOnly && (
         <twenty-overlay offsetY={-4} offsetX={overlayOffsetX} onClose={() => onOpenChange(false)}>
           <div
             style={{

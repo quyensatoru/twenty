@@ -38,6 +38,9 @@ type TaskRelationSelectProps = {
   // first and an editor second: the pencil is what changes the value.
   onOpenRecord?: () => void;
   isDisabled?: boolean;
+  // The caller may see the value but not change it: drawn as plain as any
+  // other value, with no pencil and no list. A chip still opens its record.
+  isReadOnly?: boolean;
   // Shifts the card left of its anchor. The host only clamps overlays to the
   // viewport, so a left-aligned 202px card in the modal's right-hand Details
   // panel spills past the modal border onto the backdrop. A negative offset
@@ -84,6 +87,7 @@ export const TaskRelationSelect = ({
   onOpenChange,
   onOpenRecord,
   isDisabled = false,
+  isReadOnly = false,
   overlayOffsetX = -OVERLAY_INSET,
 }: TaskRelationSelectProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -91,6 +95,8 @@ export const TaskRelationSelect = ({
   const [search, setSearch] = useState('');
 
   const selected = options.find((option) => option.value === value) ?? null;
+  const canOpenRecord = selected !== null && onOpenRecord !== undefined;
+  const isInteractive = !isDisabled && (!isReadOnly || canOpenRecord);
 
   const matches = options.filter((option) =>
     option.label.toLowerCase().includes(search.trim().toLowerCase()),
@@ -129,14 +135,19 @@ export const TaskRelationSelect = ({
           type="button"
           aria-label={ariaLabel}
           aria-expanded={isOpen}
-          disabled={isDisabled}
+          aria-readonly={isReadOnly}
+          disabled={isDisabled || !isInteractive}
           onClick={() => {
             // A chip stands for a record, so it goes to that record. Changing
             // the value is the pencil's job — and an empty field has no record
             // to go to, so there the whole row opens the list.
-            if (selected !== null && onOpenRecord !== undefined) {
+            if (canOpenRecord) {
               onOpenRecord();
 
+              return;
+            }
+
+            if (isReadOnly) {
               return;
             }
 
@@ -149,13 +160,17 @@ export const TaskRelationSelect = ({
           style={{
             alignItems: 'center',
             background:
-              isHovered && !isDisabled
+              isHovered && isInteractive
                 ? TASK_TOKENS.backgroundHover
                 : 'transparent',
             border: 'none',
             borderRadius: TASK_TOKENS.radius,
             color: TASK_TOKENS.textPrimary,
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            cursor: isDisabled
+              ? 'not-allowed'
+              : isInteractive
+                ? 'pointer'
+                : 'default',
             display: 'flex',
             fontFamily: TASK_TOKENS.fontFamily,
             fontSize: 13,
@@ -177,7 +192,7 @@ export const TaskRelationSelect = ({
 
         {/* On hover, beside the value, and only when there is a value to edit
             — the same three conditions RecordInlineCellDisplayMode puts on it. */}
-        {isHovered && !isDisabled && selected !== null && (
+        {isHovered && !isDisabled && !isReadOnly && selected !== null && (
           <TaskIconButton
             label={t('Edit')}
             isElevated
@@ -187,7 +202,7 @@ export const TaskRelationSelect = ({
           </TaskIconButton>
         )}
 
-        {isOpen && (
+        {isOpen && !isReadOnly && (
           <twenty-overlay
             offsetX={overlayOffsetX}
             offsetY={-OVERLAY_INSET}

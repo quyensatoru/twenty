@@ -224,6 +224,8 @@ export const IssueSubtasks = () => {
     row: LinkedIssueRow,
     unlink: { onUnlink: () => void; unlinkLabel: string },
   ) => {
+    // Unlinking writes the issue, so a reader without the grant gets the row
+    // without its control.
     const status = statusById.get(row.statusId ?? '');
     const owner =
       typeof row.assigneeId === 'string'
@@ -243,7 +245,7 @@ export const IssueSubtasks = () => {
         }
         ownerAvatarUrl={owner?.avatarUrl}
         onOpen={() => openIssue(row.id)}
-        onUnlink={unlink.onUnlink}
+        onUnlink={data.canWrite ? unlink.onUnlink : undefined}
         unlinkLabel={unlink.unlinkLabel}
       />
     );
@@ -294,22 +296,28 @@ export const IssueSubtasks = () => {
         <TaskEmptyState
           icon={<IconStack2 size={16} />}
           title={t('No subtasks yet')}
-          description={t(
-            'Break this issue down — create a subtask or link an existing issue below.',
-          )}
+          description={
+            data.canWrite
+              ? t(
+                  'Break this issue down — create a subtask or link an existing issue below.',
+                )
+              : t('This issue has not been broken down into subtasks.')
+          }
         />
       )}
-      <TaskIssueSearch
-        value={subtaskDraft}
-        onChange={setSubtaskDraft}
-        onSelectIssue={linkSubtask}
-        onCreateNew={createSubtask}
-        isShortcutEnabled={false}
-        ariaLabel={t('New subtask title')}
-        placeholder={t('Add a subtask…')}
-        excludeIds={unlinkableIds}
-        maxWidth="100%"
-      />
+      {data.canWrite && (
+        <TaskIssueSearch
+          value={subtaskDraft}
+          onChange={setSubtaskDraft}
+          onSelectIssue={linkSubtask}
+          onCreateNew={createSubtask}
+          isShortcutEnabled={false}
+          ariaLabel={t('New subtask title')}
+          placeholder={t('Add a subtask…')}
+          excludeIds={unlinkableIds}
+          maxWidth="100%"
+        />
+      )}
       {actionError !== null && (
         <TaskStatusLine text={actionError} tone="danger" />
       )}

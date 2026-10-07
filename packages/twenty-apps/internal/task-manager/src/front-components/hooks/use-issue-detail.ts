@@ -130,6 +130,10 @@ type IssueDetail = {
   childIssues: LinkedIssueRow[];
   attachments: IssueAttachmentRow[];
   currentWorkspaceMemberId: string | null;
+  // Whether the caller may edit / delete this issue and its feed. False until
+  // the route says otherwise, so nothing offers an edit it might refuse.
+  canWrite: boolean;
+  canSoftDelete: boolean;
 };
 
 const EMPTY_DETAIL: IssueDetail = {
@@ -147,6 +151,8 @@ const EMPTY_DETAIL: IssueDetail = {
   childIssues: [],
   attachments: [],
   currentWorkspaceMemberId: null,
+  canWrite: false,
+  canSoftDelete: false,
 };
 
 export const useIssueDetail = (issueId: string | null) => {
@@ -201,6 +207,8 @@ export const useIssueDetail = (issueId: string | null) => {
         childIssues: readLinkedIssues(result.childIssues),
         attachments: readIssueAttachments(result.issue?.files),
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
+        canWrite: result.canWrite === true,
+        canSoftDelete: result.canSoftDelete === true,
       }));
       setLoadError(null);
     } catch (error) {

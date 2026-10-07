@@ -1,4 +1,6 @@
-export const APP_SCOPE_PERMISSION_DENIED = 'PERMISSION_DENIED';
+import { APP_SCOPE_PERMISSION_DENIED } from '../../constants/app-scope-permission-denied';
+
+export { APP_SCOPE_PERMISSION_DENIED };
 
 // Thrown by every guard in this directory. Routes translate it into a
 // `{ success: false, error }` body rather than letting it escape as a 500.

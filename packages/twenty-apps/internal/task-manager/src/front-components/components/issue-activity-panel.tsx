@@ -227,6 +227,8 @@ export const IssueActivity = () => {
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}
         highlightedCommentId={anchor?.kind === 'comment' ? anchor.id : null}
+        canWrite={data.canWrite}
+        canSoftDelete={data.canSoftDelete}
         isBusy={isBusy}
         onCreate={(input) =>
           void run(() =>
@@ -263,6 +265,8 @@ export const IssueActivity = () => {
         membersById={membersById}
         currentMemberId={data.currentWorkspaceMemberId}
         highlightedWorklogId={anchor?.kind === 'worklog' ? anchor.id : null}
+        canWrite={data.canWrite}
+        canSoftDelete={data.canSoftDelete}
         totalMinutes={data.issue.timeSpentMinutes}
         originalEstimateMinutes={data.issue.originalEstimateMinutes}
         isBusy={isBusy}

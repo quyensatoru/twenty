@@ -36,6 +36,10 @@ type IssueCommentListProps = {
   membersById: Map<string, MemberRow>;
   currentMemberId: string | null;
   highlightedCommentId: string | null;
+  // The caller's grants on the issue's app: writing covers posting, replying
+  // and editing; deleting needs its own grant.
+  canWrite: boolean;
+  canSoftDelete: boolean;
   isBusy: boolean;
   onCreate: (input: { markdown: string; parentCommentId?: string }) => void;
   onUpdate: (commentId: string, markdown: string) => void;
@@ -65,6 +69,8 @@ export const IssueCommentList = ({
   membersById,
   currentMemberId,
   highlightedCommentId,
+  canWrite,
+  canSoftDelete,
   isBusy,
   onCreate,
   onUpdate,
@@ -155,8 +161,13 @@ export const IssueCommentList = ({
     const isEditing = editingCommentId === comment.id;
     // The route enforces the same rule; hiding the controls just stops the
     // UI from offering an action the server will refuse.
-    const canEdit =
+    const isOwnComment =
       currentMemberId !== null && comment.authorId === currentMemberId;
+    const canEdit = isOwnComment && canWrite;
+    const canDelete = isOwnComment && canSoftDelete;
+    // Replying to a reply would need a tree the data does not carry, so a
+    // second level always answers the same root.
+    const canReply = !isReply && canWrite;
     const author =
       typeof comment.authorId === 'string'
         ? membersById.get(comment.authorId)
@@ -189,11 +200,9 @@ export const IssueCommentList = ({
           )
         }
         actions={
-          isEditing || (isReply && !canEdit) ? undefined : (
+          isEditing || !(canReply || canEdit || canDelete) ? undefined : (
             <>
-              {/* Replying to a reply would need a tree the data does not
-                  carry, so a second level always answers the same root. */}
-              {!isReply && (
+              {canReply && (
                 <TaskIconButton
                   label={t('Reply')}
                   isDisabled={isBusy}
@@ -206,26 +215,26 @@ export const IssueCommentList = ({
                 </TaskIconButton>
               )}
               {canEdit && (
-                <>
-                  <TaskIconButton
-                    label={t('Edit')}
-                    isDisabled={isBusy}
-                    onClick={() => {
-                      setEditingCommentId(comment.id);
-                      setEditDraft(readRichTextPlainValue(comment.bodyV2));
-                    }}
-                  >
-                    <IconPencil size={14} />
-                  </TaskIconButton>
-                  <TaskIconButton
-                    label={t('Delete')}
-                    isDanger
-                    isDisabled={isBusy}
-                    onClick={() => onDelete(comment.id)}
-                  >
-                    <IconTrash size={14} />
-                  </TaskIconButton>
-                </>
+                <TaskIconButton
+                  label={t('Edit')}
+                  isDisabled={isBusy}
+                  onClick={() => {
+                    setEditingCommentId(comment.id);
+                    setEditDraft(readRichTextPlainValue(comment.bodyV2));
+                  }}
+                >
+                  <IconPencil size={14} />
+                </TaskIconButton>
+              )}
+              {canDelete && (
+                <TaskIconButton
+                  label={t('Delete')}
+                  isDanger
+                  isDisabled={isBusy}
+                  onClick={() => onDelete(comment.id)}
+                >
+                  <IconTrash size={14} />
+                </TaskIconButton>
               )}
             </>
           )
@@ -320,56 +329,58 @@ export const IssueCommentList = ({
           every row beneath it instead of starting a column of its own. The
           indent also leaves the block handles their strip, so the editor needs
           no inset of its own. */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          padding: `0 ${ROW_INLINE_PADDING}px 8px`,
-        }}
-      >
-        <TaskAvatar
-          name={currentMemberName}
-          avatarUrl={
-            currentMemberId === null
-              ? null
-              : membersById.get(currentMemberId)?.avatarUrl
-          }
-          size={24}
-        />
-        {/* The button is under the box, not beside it: beside it the box was
-            short by a button's width on every panel, and the two controls
-            fought for the same line the moment the text wrapped. */}
+      {canWrite && (
         <div
           style={{
             display: 'flex',
-            flex: 1,
             flexDirection: 'column',
             gap: 8,
-            minWidth: 0,
-            paddingLeft: FEED_BODY_INDENT,
+            padding: `0 ${ROW_INLINE_PADDING}px 8px`,
           }}
         >
-          <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-            <TaskRichTextEditor
-              value={draft}
-              onChange={setDraft}
-              placeholder={t('Type a comment…')}
-              minHeight={COMPOSER_MIN_HEIGHT}
-              issueId={issueId}
-            />
-          </div>
-          <div style={{ display: 'flex' }}>
-            <TaskButton
-              variant="primary"
-              isDisabled={isBusy || draft.trim() === ''}
-              onClick={submitDraft}
-            >
-              {t('Comment')}
-            </TaskButton>
+          <TaskAvatar
+            name={currentMemberName}
+            avatarUrl={
+              currentMemberId === null
+                ? null
+                : membersById.get(currentMemberId)?.avatarUrl
+            }
+            size={24}
+          />
+          {/* The button is under the box, not beside it: beside it the box was
+              short by a button's width on every panel, and the two controls
+              fought for the same line the moment the text wrapped. */}
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              flexDirection: 'column',
+              gap: 8,
+              minWidth: 0,
+              paddingLeft: FEED_BODY_INDENT,
+            }}
+          >
+            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+              <TaskRichTextEditor
+                value={draft}
+                onChange={setDraft}
+                placeholder={t('Type a comment…')}
+                minHeight={COMPOSER_MIN_HEIGHT}
+                issueId={issueId}
+              />
+            </div>
+            <div style={{ display: 'flex' }}>
+              <TaskButton
+                variant="primary"
+                isDisabled={isBusy || draft.trim() === ''}
+                onClick={submitDraft}
+              >
+                {t('Comment')}
+              </TaskButton>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {comments.length === 0 ? (
         <TaskEmptyState

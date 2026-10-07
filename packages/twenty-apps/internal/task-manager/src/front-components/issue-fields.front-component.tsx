@@ -137,6 +137,7 @@ const IssueFields = () => {
   const buildOpenProps = (field: OpenField) => ({
     isOpen: openField === field,
     onOpenChange: (isOpen: boolean) => setOpenField(isOpen ? field : null),
+    isReadOnly: !data.canWrite,
   });
 
   if (issueId === null) {

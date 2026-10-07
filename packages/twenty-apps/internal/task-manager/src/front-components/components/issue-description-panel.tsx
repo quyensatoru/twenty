@@ -359,6 +359,24 @@ export const IssueDescription = () => {
               issueId={issueId}
             />
           </div>
+        ) : !data.canWrite ? (
+          <div
+            style={{
+              boxSizing: 'border-box',
+              flex: 1,
+              minHeight: 0,
+              padding: '4px 8px',
+              width: '100%',
+            }}
+          >
+            {isEmpty ? (
+              <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 13 }}>
+                {t('No description.')}
+              </span>
+            ) : (
+              <TaskRichTextEditor value={currentMarkdown} isReadOnly />
+            )}
+          </div>
         ) : (
           <div
             role="button"

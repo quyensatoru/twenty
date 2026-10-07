@@ -1,3 +1,4 @@
+import { APP_SCOPE_PERMISSION_DENIED } from '../../constants/app-scope-permission-denied';
 import { type ApiClient } from '../../types/api-client';
 import { type CallerScope } from '../../types/caller-scope';
 import { resolveCallerScope } from '../app-scope/resolve-caller-scope.util';
@@ -26,7 +27,7 @@ export const runScopedRoute = async (
     return { success: true, ...payload };
   } catch (error) {
     if (isAppScopePermissionDeniedError(error)) {
-      return { success: false, error: 'PERMISSION_DENIED' };
+      return { success: false, error: APP_SCOPE_PERMISSION_DENIED };
     }
 
     return { success: false, error: readErrorMessage(error) };

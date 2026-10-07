@@ -30,6 +30,10 @@ type IssueWorklogListProps = {
   membersById: Map<string, MemberRow>;
   currentMemberId: string | null;
   highlightedWorklogId: string | null;
+  // The caller's grants on the issue's app: writing covers logging and
+  // editing; deleting needs its own grant.
+  canWrite: boolean;
+  canSoftDelete: boolean;
   totalMinutes: number | null | undefined;
   originalEstimateMinutes: number | null | undefined;
   isBusy: boolean;
@@ -153,6 +157,8 @@ export const IssueWorklogList = ({
   membersById,
   currentMemberId,
   highlightedWorklogId,
+  canWrite,
+  canSoftDelete,
   totalMinutes,
   originalEstimateMinutes,
   isBusy,
@@ -212,70 +218,72 @@ export const IssueWorklogList = ({
           field, a date field, a note and a button pushed into the column left
           of an avatar leave each of them too narrow to read. The avatar goes on
           top, as the byline of what is about to be logged. */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          padding: `0 ${ROW_INLINE_PADDING}px 8px`,
-        }}
-      >
-        <TaskAvatar
-          name={currentMemberName}
-          avatarUrl={
-            currentMemberId === null
-              ? null
-              : membersById.get(currentMemberId)?.avatarUrl
-          }
-          size={24}
-        />
+      {canWrite && (
         <div
           style={{
             display: 'flex',
-            flex: 1,
             flexDirection: 'column',
             gap: 8,
-            minWidth: 0,
-            paddingLeft: FEED_BODY_INDENT,
+            padding: `0 ${ROW_INLINE_PADDING}px 8px`,
           }}
         >
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <TaskTextInput
-              ariaLabel={t('Time spent')}
-              value={timeSpent}
-              onChange={setTimeSpent}
-              placeholder={t('e.g. 90 or 1h30m')}
-              width={150}
-              prefixIcon={
-                <IconClock size={14} color={TASK_TOKENS.textTertiary} />
-              }
-            />
-            <TaskDateTimeInput
-              ariaLabel={t('Started at')}
-              value={startedAt}
-              onChange={setStartedAt}
-            />
-          </div>
-          <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-            <TaskRichTextEditor
-              value={description}
-              onChange={setDescription}
-              placeholder={t('Write what you worked on…')}
-              minHeight={NOTE_MIN_HEIGHT}
-              issueId={issueId}
-            />
-          </div>
-          <div style={{ display: 'flex' }}>
-            <TaskButton
-              variant="primary"
-              isDisabled={isBusy || parsedMinutes === null || parsedMinutes <= 0}
-              onClick={submit}
-            >
-              {t('Log time')}
-            </TaskButton>
+          <TaskAvatar
+            name={currentMemberName}
+            avatarUrl={
+              currentMemberId === null
+                ? null
+                : membersById.get(currentMemberId)?.avatarUrl
+            }
+            size={24}
+          />
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              flexDirection: 'column',
+              gap: 8,
+              minWidth: 0,
+              paddingLeft: FEED_BODY_INDENT,
+            }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <TaskTextInput
+                ariaLabel={t('Time spent')}
+                value={timeSpent}
+                onChange={setTimeSpent}
+                placeholder={t('e.g. 90 or 1h30m')}
+                width={150}
+                prefixIcon={
+                  <IconClock size={14} color={TASK_TOKENS.textTertiary} />
+                }
+              />
+              <TaskDateTimeInput
+                ariaLabel={t('Started at')}
+                value={startedAt}
+                onChange={setStartedAt}
+              />
+            </div>
+            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+              <TaskRichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder={t('Write what you worked on…')}
+                minHeight={NOTE_MIN_HEIGHT}
+                issueId={issueId}
+              />
+            </div>
+            <div style={{ display: 'flex' }}>
+              <TaskButton
+                variant="primary"
+                isDisabled={isBusy || parsedMinutes === null || parsedMinutes <= 0}
+                onClick={submit}
+              >
+                {t('Log time')}
+              </TaskButton>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {worklogs.length === 0 ? (
         <TaskEmptyState
@@ -302,6 +310,8 @@ export const IssueWorklogList = ({
       {sortedWorklogs.map((worklog) => {
         const isOwn =
           currentMemberId !== null && worklog.memberId === currentMemberId;
+        const canEdit = isOwn && canWrite;
+        const canDelete = isOwn && canSoftDelete;
         const isEditing = editingWorklogId === worklog.id;
         const member =
           typeof worklog.memberId === 'string'
@@ -346,26 +356,30 @@ export const IssueWorklogList = ({
               )
             }
             actions={
-              isEditing || !isOwn ? undefined : (
+              isEditing || !(canEdit || canDelete) ? undefined : (
                 <>
-                  <TaskIconButton
-                    label={t('Edit')}
-                    isDisabled={isBusy}
-                    onClick={() => {
-                      setEditingWorklogId(worklog.id);
-                      setEditDraft(worklog.description ?? '');
-                    }}
-                  >
-                    <IconPencil size={14} />
-                  </TaskIconButton>
-                  <TaskIconButton
-                    label={t('Delete')}
-                    isDanger
-                    isDisabled={isBusy}
-                    onClick={() => onDelete(worklog.id)}
-                  >
-                    <IconTrash size={14} />
-                  </TaskIconButton>
+                  {canEdit && (
+                    <TaskIconButton
+                      label={t('Edit')}
+                      isDisabled={isBusy}
+                      onClick={() => {
+                        setEditingWorklogId(worklog.id);
+                        setEditDraft(worklog.description ?? '');
+                      }}
+                    >
+                      <IconPencil size={14} />
+                    </TaskIconButton>
+                  )}
+                  {canDelete && (
+                    <TaskIconButton
+                      label={t('Delete')}
+                      isDanger
+                      isDisabled={isBusy}
+                      onClick={() => onDelete(worklog.id)}
+                    >
+                      <IconTrash size={14} />
+                    </TaskIconButton>
+                  )}
                 </>
               )
             }
