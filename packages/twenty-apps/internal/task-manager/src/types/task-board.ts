@@ -83,6 +83,9 @@ export type BoardData = {
   // What the caller may change on the active project's board.
   canWrite: boolean;
   canSoftDelete: boolean;
+  // The role's "Manage Views": may change what everyone sees of the board,
+  // such as its column order.
+  canManageViews: boolean;
 };
 
 // What the board-column-issues route answers: one more page of one column.

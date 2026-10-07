@@ -26,6 +26,7 @@ describe('listVisibleProjectIds', () => {
           workspaceMemberId: null,
           grantsByAppId: {},
           canBypassAppScope: true,
+          canManageViews: false,
         },
         operation: 'read',
       }),
@@ -42,6 +43,7 @@ describe('listVisibleProjectIds', () => {
           workspaceMemberId: 'member-1',
           grantsByAppId: {},
           canBypassAppScope: false,
+          canManageViews: false,
         },
         operation: 'read',
       }),
@@ -53,6 +55,7 @@ describe('listVisibleProjectIds', () => {
       workspaceMemberId: 'member-1',
       grantsByAppId: { 'app-1': ['read'], 'app-2': ['read', 'write'] },
       canBypassAppScope: false,
+      canManageViews: false,
     };
     const client = buildClient({
       'app-1': ['project-1'],

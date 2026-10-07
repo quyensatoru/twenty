@@ -8,6 +8,7 @@ const scope: CallerScope = {
   workspaceMemberId: 'member-1',
   grantsByAppId: { 'app-1': ['read', 'write'] },
   canBypassAppScope: false,
+  canManageViews: false,
 };
 
 const buildClient = ({

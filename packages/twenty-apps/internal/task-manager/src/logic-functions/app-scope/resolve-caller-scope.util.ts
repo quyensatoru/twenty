@@ -1,6 +1,7 @@
 import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 
 import { BYPASS_PERMISSION_FLAGS } from '../../constants/bypass-permission-flags';
+import { MANAGE_VIEWS_PERMISSION_FLAG } from '../../constants/manage-views-permission-flag';
 import { type ApiClient } from '../../types/api-client';
 import { type CallerScope } from '../../types/caller-scope';
 import { type Connection } from '../../types/connection';
@@ -38,6 +39,7 @@ export const resolveCallerScope = async (
       workspaceMemberId: null,
       grantsByAppId: {},
       canBypassAppScope: true,
+      canManageViews: true,
     };
   }
 
@@ -56,6 +58,9 @@ export const resolveCallerScope = async (
       await listMemberAppAccessRows({ client, workspaceMemberId }),
     ),
     canBypassAppScope,
+    canManageViews: callerPermissionFlags.includes(
+      MANAGE_VIEWS_PERMISSION_FLAG,
+    ),
   };
 };
 

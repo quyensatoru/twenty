@@ -61,6 +61,7 @@ const EMPTY_BOARD = {
   hiddenDoneIssueCount: 0,
   canWrite: false,
   canSoftDelete: false,
+  canManageViews: false,
 };
 
 // One round trip for the whole board: the visible projects, the active
@@ -222,6 +223,9 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       // routes enforce. Only hides controls; the routes still decide.
       canWrite: hasAppGrant(scope, activeProjectAppId, 'write'),
       canSoftDelete: hasAppGrant(scope, activeProjectAppId, 'softDelete'),
+      // Column order is a view everyone on the project shares, so it follows
+      // the role's "Manage Views" permission rather than an app grant.
+      canManageViews: scope.canManageViews,
     };
   });
 

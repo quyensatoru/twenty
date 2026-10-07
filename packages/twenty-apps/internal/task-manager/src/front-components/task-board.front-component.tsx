@@ -284,6 +284,7 @@ const TaskBoard = () => {
         hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
         canWrite: result.canWrite === true,
         canSoftDelete: result.canSoftDelete === true,
+        canManageViews: result.canManageViews === true,
       });
       setLoadError(null);
     } catch (error) {
@@ -990,7 +991,9 @@ const TaskBoard = () => {
         onMouseUp={(event) => endColumnResize(event.clientX)}
         onMouseLeave={(event) => endColumnResize(event.clientX)}
         style={{
-          alignItems: 'stretch',
+          // Each column is as tall as its cards, as on Jira, and only a full
+          // one reaches the board's height and scrolls inside it.
+          alignItems: 'flex-start',
           cursor: columnResize === null ? 'auto' : 'col-resize',
           display: 'flex',
           flex: 1,
@@ -1013,8 +1016,10 @@ const TaskBoard = () => {
           const isColumnLoading = loadingColumnKeys.includes(column.id);
           const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
-          // Column order is the project's, shared by everyone on it.
-          const isReorderable = column.id !== NO_STATUS_VALUE && board.canWrite;
+          // Column order is a view everyone on the project shares, so it
+          // follows the role's "Manage Views", not a write grant on the app.
+          const isReorderable =
+            column.id !== NO_STATUS_VALUE && board.canManageViews;
           const isColumnDragged = draggingStatusId === column.id;
           // Which edge the dragged column will land against, so the bar shows
           // the slot it takes rather than just the column it is over.
@@ -1278,7 +1283,10 @@ const TaskBoard = () => {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  flex: 1,
+                  // Content-sized, shrinking (and scrolling) only once the
+                  // column hits the board's height with the create control
+                  // still pinned under it.
+                  flex: '0 1 auto',
                   gap: 8,
                   minHeight: 0,
                   overflowY: 'auto',

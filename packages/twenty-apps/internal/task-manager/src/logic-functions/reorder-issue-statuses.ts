@@ -3,7 +3,8 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import { REORDER_ISSUE_STATUSES_ROUTE_PATH } from '../constants/route-paths';
 import { REORDER_ISSUE_STATUSES_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
-import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
+import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -28,20 +29,30 @@ const readIssueStatusIds = (value: unknown): string[] => {
   return value;
 };
 
-// The board's column order is the statuses' `position`. The whole list is
-// sent rather than one move, and it must be exactly the project's statuses:
-// a board that went stale (a status added or removed elsewhere) is refused
-// instead of writing an order built from columns it never saw.
+// The board's column order is the statuses' `position`, the same for everyone
+// on the project. The whole list is sent rather than one move, and it must be
+// exactly the project's statuses: a board that went stale (a status added or
+// removed elsewhere) is refused instead of writing an order built from columns
+// it never saw.
 const handler = async (event: RoutePayload<ReorderIssueStatusesBody>) =>
   runScopedRoute(async ({ client, scope }) => {
     const projectId = requireString(event.body?.projectId, 'projectId');
     const issueStatusIds = readIssueStatusIds(event.body?.issueStatusIds);
 
-    await assertAppScopeWriteAccess({
+    // Reordering changes the board for everyone on the project, which makes
+    // it a view edit: Twenty's own "Manage Views" role permission decides,
+    // not a write grant on the app. Seeing the project is still required, so
+    // the route cannot be pointed at a project the caller has no access to.
+    if (!scope.canManageViews) {
+      throw new AppScopePermissionDeniedError();
+    }
+
+    await assertRecordInScope({
       client,
       scope,
-      objectNameSingular: 'issueStatus',
-      foreignKeyValue: projectId,
+      objectNameSingular: 'project',
+      recordId: projectId,
+      operation: 'read',
     });
 
     const existing = await client.query({

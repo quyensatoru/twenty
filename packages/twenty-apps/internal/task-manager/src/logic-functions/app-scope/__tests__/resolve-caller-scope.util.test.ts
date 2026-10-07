@@ -73,6 +73,7 @@ describe('resolveCallerScope', () => {
       workspaceMemberId: 'member-1',
       grantsByAppId: { 'app-1': ['read', 'write'], 'app-2': ['read'] },
       canBypassAppScope: false,
+      canManageViews: false,
     });
   });
 
@@ -100,6 +101,7 @@ describe('resolveCallerScope', () => {
       workspaceMemberId: null,
       grantsByAppId: {},
       canBypassAppScope: true,
+      canManageViews: true,
     });
     expect(client.query).not.toHaveBeenCalled();
   });
@@ -121,6 +123,23 @@ describe('resolveCallerScope', () => {
     const scope = await resolveCallerScope(buildClient([[]]));
 
     expect(scope.canBypassAppScope).toBe(false);
+  });
+
+  it('lets a caller whose role holds Manage Views change shared views', async () => {
+    answerCurrentUser({ permissionFlags: ['VIEWS'] });
+
+    const scope = await resolveCallerScope(buildClient([[]]));
+
+    expect(scope.canManageViews).toBe(true);
+    expect(scope.canBypassAppScope).toBe(false);
+  });
+
+  it('does not read an app-scope bypass as Manage Views', async () => {
+    answerCurrentUser({ permissionFlags: ['WORKSPACE'] });
+
+    const scope = await resolveCallerScope(buildClient([[]]));
+
+    expect(scope.canManageViews).toBe(false);
   });
 
   it('treats absent permission flags as none rather than failing', async () => {

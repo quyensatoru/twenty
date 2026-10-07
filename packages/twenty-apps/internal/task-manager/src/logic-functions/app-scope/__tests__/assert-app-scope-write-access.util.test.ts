@@ -8,6 +8,7 @@ const buildScope = (overrides: Partial<CallerScope> = {}): CallerScope => ({
   workspaceMemberId: 'member-1',
   grantsByAppId: {},
   canBypassAppScope: false,
+  canManageViews: false,
   ...overrides,
 });
 
