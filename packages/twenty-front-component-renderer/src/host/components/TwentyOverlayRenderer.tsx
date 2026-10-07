@@ -118,7 +118,9 @@ export const TwentyOverlayRenderer = ({
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
+      // An overlay the guest dismisses itself (a modal handling its own keys)
+      // must let Escape through, or the guest never sees it.
+      if (event.key !== 'Escape' || !isDefined(onCloseRef.current)) {
         return;
       }
 
