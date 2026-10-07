@@ -1,29 +1,31 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { randomUUID } from 'node:crypto';
+
 import { isNonEmptyString } from '@sniptt/guards';
 import {
   type RunAgentMessage,
   type RunAgentResult,
   type RunAgentThread,
 } from 'twenty-shared/application';
+import { type ActorMetadata } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
+import { buildActorMetadataFromAuthContext } from 'src/engine/core-modules/actor/utils/build-actor-metadata-from-auth-context.util';
+import { buildCreatedByFromApplication } from 'src/engine/core-modules/actor/utils/build-created-by-from-application.util';
 import { ApplicationLookupService } from 'src/engine/core-modules/application/application-lookup/application-lookup.service';
 import { type FlatApplication } from 'src/engine/core-modules/application/types/flat-application.type';
+import { workspaceAuthContextStorage } from 'src/engine/core-modules/auth/storage/workspace-auth-context.storage';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { type FlatWorkspace } from 'src/engine/core-modules/workspace/types/flat-workspace.type';
 import { AgentActorContextService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-actor-context.service';
-import { AgentAsyncExecutorService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-async-executor.service';
-import { AgentRunConversationService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-run-conversation.service';
+import { AgentRunnerService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-runner.service';
 import { type RunAsWorkspaceMemberContext } from 'src/engine/metadata-modules/ai/ai-agent-execution/types/run-as-workspace-member-context.type';
 import { addAdditionalInstructionsToLastRunAgentMessage } from 'src/engine/metadata-modules/ai/ai-agent-execution/utils/add-additional-instructions-to-last-run-agent-message.util';
 import { buildAgentRunThreadId } from 'src/engine/metadata-modules/ai/ai-agent-execution/utils/build-agent-run-thread-id.util';
 import { resolveRunAgentMessagesOrThrow } from 'src/engine/metadata-modules/ai/ai-agent-execution/utils/resolve-run-agent-messages-or-throw.util';
 import { AGENT_RUN_BASE_SYSTEM_PROMPT } from 'src/engine/metadata-modules/ai/ai-agent/constants/agent-run-base-system-prompt.const';
 import { AgentEntity } from 'src/engine/metadata-modules/ai/ai-agent/entities/agent.entity';
-import { AgentConversationReaderService } from 'src/engine/metadata-modules/ai/ai-history/services/agent-conversation-reader.service';
-import { type AgentConversationActor } from 'src/engine/metadata-modules/ai/ai-history/types/agent-conversation-actor.type';
-import { withDedicatedAiTrace } from 'src/engine/metadata-modules/ai/ai-models/utils/with-dedicated-ai-trace.util';
 import {
   AiException,
   AiExceptionCode,
@@ -47,10 +49,8 @@ export class AgentRunService {
 
   constructor(
     private readonly agentActorContextService: AgentActorContextService,
-    private readonly agentAsyncExecutorService: AgentAsyncExecutorService,
-    private readonly agentRunConversationService: AgentRunConversationService,
+    private readonly agentRunnerService: AgentRunnerService,
     private readonly applicationLookupService: ApplicationLookupService,
-    private readonly conversationReaderService: AgentConversationReaderService,
     @InjectWorkspaceScopedRepository(AgentEntity)
     private readonly agentRepository: WorkspaceScopedRepository<AgentEntity>,
   ) {}
@@ -135,12 +135,11 @@ export class AgentRunService {
       application,
     };
 
-    const actor: AgentConversationActor = isDefined(runAsContext)
-      ? {
-          type: 'user',
-          userWorkspaceId: runAsContext.authContext.userWorkspaceId,
-        }
-      : { type: 'application', applicationId: application.id };
+    const senderUserWorkspaceId = this.resolveRunSender({
+      runAsContext,
+      callerApplication,
+      requestUserWorkspaceId,
+    });
 
     const threadTitle = isNonEmptyString(thread?.title)
       ? thread.title
@@ -152,7 +151,11 @@ export class AgentRunService {
           agentId: agent.id,
           threadKey: thread.key,
         })
-      : null;
+      : randomUUID();
+
+    const createdBy =
+      runAsContext?.actorContext ??
+      this.buildRunCreator({ callerApplication, application });
 
     const executionMessages = isNonEmptyString(input.additionalInstructions)
       ? addAdditionalInstructionsToLastRunAgentMessage({
@@ -161,22 +164,26 @@ export class AgentRunService {
         })
       : messages;
 
-    const runTurn = async (): Promise<RunAgentResult> => {
-      const priorMessages = isDefined(threadId)
-        ? await this.conversationReaderService.loadMessages({
-            workspaceId: workspace.id,
-            threadId,
-            actor,
-          })
-        : [];
-
-      const startedAt = new Date();
-
-      const executionResult = await withDedicatedAiTrace(() =>
-        this.agentAsyncExecutorService.executeAgent({
+    try {
+      const { outcome } = await this.agentRunnerService.run({
+        workspaceId: workspace.id,
+        conversation: { threadId, isCreated: !isDefined(thread) },
+        conversationActor: isDefined(runAsContext)
+          ? {
+              type: 'user',
+              userWorkspaceId: runAsContext.authContext.userWorkspaceId,
+            }
+          : { type: 'application', applicationId: application.id },
+        turn: {
+          title: threadTitle,
+          senderUserWorkspaceId,
+          senderApplicationId: callerApplication?.id ?? null,
+          messages,
+          resolveCreatedBy: async () => createdBy,
+        },
+        execution: {
           agent,
           messages: executionMessages,
-          priorMessages,
           baseSystemPrompt: AGENT_RUN_BASE_SYSTEM_PROMPT,
           actorContext: runAsContext?.actorContext,
           authContext,
@@ -185,55 +192,19 @@ export class AgentRunService {
             runAsContext?.authContext.userWorkspaceId ?? requestUserWorkspaceId,
           runAsRoleId: runAsContext?.roleId,
           toolLoadingStrategy: 'lazy',
-        }),
-      );
+        },
+      });
 
-      if (executionResult.hasNoMoreAvailableCredits) {
-        return {
-          result: null,
-          error: 'Agent stopped: no more available credits.',
-          success: false,
-          threadId,
-        };
-      }
-
-      if (isDefined(threadId)) {
-        await this.agentRunConversationService
-          .recordTurn({
-            workspaceId: workspace.id,
-            threadId,
-            title: threadTitle,
-            agentId: agent.id,
-            applicationId: application.id,
-            actor,
-            messages,
-            startedAt,
-            execution: executionResult,
-          })
-          .catch((error: unknown) =>
-            this.logger.error(
-              `Failed to record the turn of ${input.agentUniversalIdentifier} in thread ${threadId}`,
-              error instanceof Error ? error.stack : error,
-            ),
-          );
+      if (outcome.status === 'FAILED') {
+        return { result: null, error: outcome.error, success: false, threadId };
       }
 
       return {
-        result: executionResult.result,
+        result: outcome.status === 'COMPLETED' ? outcome.result : null,
         error: null,
         success: true,
         threadId,
       };
-    };
-
-    try {
-      return isDefined(threadId)
-        ? await this.agentRunConversationService.withThreadLock({
-            workspaceId: workspace.id,
-            threadId,
-            work: runTurn,
-          })
-        : await runTurn();
     } catch (error) {
       if (
         error instanceof AiException &&
@@ -254,6 +225,45 @@ export class AgentRunService {
         threadId,
       };
     }
+  }
+
+  // a member calling without runAs still sent the input, while an app's call has no member behind it
+  private resolveRunSender({
+    runAsContext,
+    callerApplication,
+    requestUserWorkspaceId,
+  }: {
+    runAsContext?: RunAsWorkspaceMemberContext;
+    callerApplication?: FlatApplication;
+    requestUserWorkspaceId: string | null;
+  }): string | null {
+    if (isDefined(runAsContext)) {
+      return runAsContext.authContext.userWorkspaceId;
+    }
+
+    if (isDefined(callerApplication)) {
+      return null;
+    }
+
+    return requestUserWorkspaceId;
+  }
+
+  private buildRunCreator({
+    callerApplication,
+    application,
+  }: {
+    callerApplication?: FlatApplication;
+    application: FlatApplication;
+  }): ActorMetadata {
+    if (isDefined(callerApplication)) {
+      return buildCreatedByFromApplication({ application: callerApplication });
+    }
+
+    const requestAuthContext = workspaceAuthContextStorage.getStore();
+
+    return isDefined(requestAuthContext)
+      ? buildActorMetadataFromAuthContext(requestAuthContext)
+      : buildCreatedByFromApplication({ application });
   }
 
   private assertCanContinueConversation({

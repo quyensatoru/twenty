@@ -10,14 +10,12 @@ import { buildCreatedByFromAgent } from 'src/engine/core-modules/actor/utils/bui
 import { buildApplicationAuthContext } from 'src/engine/core-modules/auth/utils/build-application-auth-context.util';
 import { fromWorkspaceEntityToFlat } from 'src/engine/core-modules/workspace/utils/from-workspace-entity-to-flat.util';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
-import { AgentAsyncExecutorService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-async-executor.service';
-import { AgentRunConversationService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-run-conversation.service';
+import { AgentRunnerService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-runner.service';
 import { buildAgentRunThreadId } from 'src/engine/metadata-modules/ai/ai-agent-execution/utils/build-agent-run-thread-id.util';
 import { AGENT_TRIGGER_BASE_SYSTEM_PROMPT } from 'src/engine/metadata-modules/ai/ai-agent-trigger/constants/agent-trigger-base-system-prompt.const';
 import { type RunAgentTriggerJobData } from 'src/engine/metadata-modules/ai/ai-agent-trigger/types/run-agent-trigger-job-data.type';
 import { buildAgentTriggerMessages } from 'src/engine/metadata-modules/ai/ai-agent-trigger/utils/build-agent-trigger-messages.util';
 import { AgentEntity } from 'src/engine/metadata-modules/ai/ai-agent/entities/agent.entity';
-import { withDedicatedAiTrace } from 'src/engine/metadata-modules/ai/ai-models/utils/with-dedicated-ai-trace.util';
 import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
 import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
@@ -27,8 +25,7 @@ export class AgentTriggerRunnerService {
   private readonly logger = new Logger(AgentTriggerRunnerService.name);
 
   constructor(
-    private readonly agentAsyncExecutorService: AgentAsyncExecutorService,
-    private readonly agentRunConversationService: AgentRunConversationService,
+    private readonly agentRunnerService: AgentRunnerService,
     private readonly applicationLookupService: ApplicationLookupService,
     @InjectWorkspaceScopedRepository(AgentEntity)
     private readonly agentRepository: WorkspaceScopedRepository<AgentEntity>,
@@ -100,47 +97,38 @@ export class AgentTriggerRunnerService {
       instructions: trigger.instructions,
       payload,
     });
-    const threadId = buildAgentRunThreadId({
+    const createdBy = buildCreatedByFromAgent({
+      agent: actingAgent,
       applicationId: application.id,
-      agentId: agent.id,
-      threadKey: `trigger:${trigger.id}:${v4()}`,
     });
-    const startedAt = new Date();
 
-    const execution = await withDedicatedAiTrace(() =>
-      this.agentAsyncExecutorService.executeAgent({
+    await this.agentRunnerService.run({
+      workspaceId,
+      conversation: {
+        threadId: buildAgentRunThreadId({
+          applicationId: application.id,
+          agentId: agent.id,
+          threadKey: `trigger:${trigger.id}:${v4()}`,
+        }),
+        isCreated: true,
+      },
+      turn: {
+        title: agent.label,
+        senderUserWorkspaceId: null,
+        senderApplicationId: application.id,
+        messages,
+        resolveCreatedBy: async () => createdBy,
+      },
+      execution: {
         agent,
         messages,
         baseSystemPrompt: AGENT_TRIGGER_BASE_SYSTEM_PROMPT,
-        actorContext: buildCreatedByFromAgent({
-          agent: actingAgent,
-          applicationId: application.id,
-        }),
+        actorContext: createdBy,
         authContext,
         workspaceId,
         userWorkspaceId: null,
         toolLoadingStrategy: 'lazy',
-      }),
-    );
-
-    // The agent already acted through its tools, so a failed log write must not fail the run
-    await this.agentRunConversationService
-      .recordTurn({
-        workspaceId,
-        threadId,
-        title: agent.label,
-        agentId: agent.id,
-        applicationId: application.id,
-        actor: { type: 'application', applicationId: application.id },
-        messages,
-        startedAt,
-        execution,
-      })
-      .catch((error: unknown) =>
-        this.logger.error(
-          `Failed to record the run of trigger ${triggerId} of agent ${agentId} in thread ${threadId}`,
-          error instanceof Error ? error.stack : error,
-        ),
-      );
+      },
+    });
   }
 }
