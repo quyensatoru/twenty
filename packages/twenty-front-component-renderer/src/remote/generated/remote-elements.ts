@@ -2682,9 +2682,9 @@ export const TwentyRichTextEditorElement = createRemoteElement<
   Record<string, never>,
   Record<string, never>,
   {
-    change(event: RemoteEvent<SerializedEventData>): void;
-    blur(event: RemoteEvent<SerializedEventData>): void;
-    upload(event: RemoteEvent<SerializedEventData>): void;
+    change(event: Event): void;
+    blur(event: Event): void;
+    upload(event: Event): void;
   }
 >({
   properties: {
@@ -2709,7 +2709,7 @@ export const TwentyOverlayElement = createRemoteElement<
   TwentyOverlayProperties,
   Record<string, never>,
   Record<string, never>,
-  { close(event: RemoteEvent<SerializedEventData>): void }
+  { close(event: Event): void }
 >({
   properties: {
     offsetX: { type: Number },

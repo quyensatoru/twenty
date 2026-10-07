@@ -1,5 +1,5 @@
 import { isString } from '@sniptt/guards';
-import { isPlainObject } from 'twenty-shared/utils';
+import { isDefined, isPlainObject } from 'twenty-shared/utils';
 
 import { applyEventModifierKeys } from '@/host/events/utils/applyEventModifierKeys';
 import { applyEventTargetProperties } from '@/host/events/utils/applyEventTargetProperties';
@@ -8,6 +8,7 @@ import { applyKeyboardEventProperties } from '@/host/events/utils/applyKeyboardE
 import { applyMouseEventProperties } from '@/host/events/utils/applyMouseEventProperties';
 import { applyPointerEventProperties } from '@/host/events/utils/applyPointerEventProperties';
 import { applyWheelEventProperties } from '@/host/events/utils/applyWheelEventProperties';
+import { serializeTransferredFileList } from '@/host/events/utils/serializeTransferredFileList';
 import { type SerializedEventData } from '@/types/SerializedEventData';
 
 type SerializeEventOptions = {
@@ -39,6 +40,17 @@ export const serializeEvent = (
     target: domEvent.target,
     includesFormControlState,
   });
+
+  // Fork-only: paste/drop carry files behind transfer objects and file
+  // inputs need stash handles for uploadFileByHandle, neither of which
+  // upstream's pipeline extracts.
+  const transferredFiles = serializeTransferredFileList(
+    domEvent,
+    serializedEvent.type,
+  );
+  if (isDefined(transferredFiles)) {
+    serializedEvent.files = transferredFiles;
+  }
 
   return serializedEvent;
 };

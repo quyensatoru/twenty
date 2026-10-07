@@ -22,5 +22,10 @@ export const applySerializedEventProperties = ({
   }
 
   applySerializedEventClipboardData(event, eventData);
-  applySerializedEventTransferredFiles(event, eventData);
+  // Transferred-files support is fork-only and works on the event as a
+  // record, while this wrapper keeps upstream's `object` signature.
+  applySerializedEventTransferredFiles(
+    event as Record<string, unknown>,
+    eventData,
+  );
 };
