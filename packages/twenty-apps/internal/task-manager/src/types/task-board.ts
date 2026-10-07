@@ -65,6 +65,8 @@ export type BoardData = {
   issues: BoardIssue[];
   members: BoardMember[];
   currentWorkspaceMemberId: string | null;
+  // Done issues left off the board for being older than its window.
+  hiddenDoneIssueCount: number;
 };
 
 // What the search-issues route answers: one page of matches across every

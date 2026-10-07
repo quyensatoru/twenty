@@ -13,6 +13,7 @@ import {
   IconX,
 } from 'twenty-ui/icon';
 
+import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../constants/board-done-issue-visible-days';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
   CREATE_ISSUE_ROUTE_PATH,
@@ -64,6 +65,14 @@ const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
 const NO_STATUS_VALUE = 'NO_STATUS';
 const COLUMN_WIDTHS_STORAGE_KEY = 'task-board.column-widths';
+const PROJECT_STORAGE_KEY = 'task-board.project-id';
+// Cards drawn per column before a "show more": every card is dozens of
+// elements the sandbox has to ship to the host, and a column of hundreds is
+// what made a large board take seconds to appear.
+const CARDS_PER_COLUMN_PAGE = 50;
+// How close to a column's bottom the next page is drawn: a little ahead, so
+// the reader does not hit the end before the cards are there.
+const LAZY_LOAD_THRESHOLD_PX = 400;
 
 // The sandbox's localStorage is seeded from the host before the first render,
 // so this reads synchronously. Guarded anyway: a store that is missing or
@@ -84,6 +93,27 @@ const storeColumnWidths = (columnWidths: Record<string, number>) => {
     );
   } catch {
     // Widths are a convenience: losing them only costs the reader a drag.
+  }
+};
+
+// The project the reader last looked at, so the board does not open on the
+// alphabetically first project — in production also the heaviest one. The
+// route falls back to a visible project if this one is no longer visible.
+const readStoredProjectId = (): string | null => {
+  try {
+    const projectId = localStorage.getItem(PROJECT_STORAGE_KEY);
+
+    return projectId === null || projectId === '' ? null : projectId;
+  } catch {
+    return null;
+  }
+};
+
+const storeProjectId = (projectId: string) => {
+  try {
+    localStorage.setItem(PROJECT_STORAGE_KEY, projectId);
+  } catch {
+    // A convenience only: the board still opens, on the default project.
   }
 };
 
@@ -115,7 +145,13 @@ const TaskBoard = () => {
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(
+    readStoredProjectId,
+  );
+  const [shouldIncludeOlderDone, setShouldIncludeOlderDone] = useState(false);
+  const [shownCardCountByStatus, setShownCardCountByStatus] = useState<
+    Record<string, number>
+  >({});
   const [sprintFilter, setSprintFilter] = useState<string>(ALL_VALUE);
   const [search, setSearch] = useState('');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
@@ -173,9 +209,12 @@ const TaskBoard = () => {
         BoardData & { success: true }
       >(
         TASK_BOARD_ROUTE_PATH,
-        projectId === null
-          ? {}
-          : { projectId, ...(sprintId === undefined ? {} : { sprintId }) },
+        {
+          ...(projectId === null
+            ? {}
+            : { projectId, ...(sprintId === undefined ? {} : { sprintId }) }),
+          includeOlderDone: shouldIncludeOlderDone,
+        },
       );
 
       setBoard({
@@ -187,12 +226,13 @@ const TaskBoard = () => {
         issues: result.issues ?? [],
         members: result.members ?? [],
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
+        hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
       });
       setLoadError(null);
     } catch (error) {
       setLoadError(readErrorText(error));
     }
-  }, [projectId, sprintId]);
+  }, [projectId, sprintId, shouldIncludeOlderDone]);
 
   useEffect(() => {
     const load = async () => {
@@ -527,6 +567,15 @@ const TaskBoard = () => {
     }
   };
 
+  // Keyed to the count the scroll saw, so a burst of scroll events while the
+  // next page renders adds one page, not one per event.
+  const showMoreCards = (statusId: string, fromCount: number) =>
+    setShownCardCountByStatus((current) =>
+      (current[statusId] ?? CARDS_PER_COLUMN_PAGE) === fromCount
+        ? { ...current, [statusId]: fromCount + CARDS_PER_COLUMN_PAGE }
+        : current,
+    );
+
   const readColumnWidth = (statusId: string) =>
     columnWidths[statusId] ?? COLUMN_DEFAULT_WIDTH;
 
@@ -628,6 +677,13 @@ const TaskBoard = () => {
             : []),
         ];
 
+  // One toggle for the whole window, on the first done column: the count
+  // covers every done status, so a second copy would only repeat it.
+  const olderDoneToggleColumnId =
+    shouldIncludeOlderDone || board.hiddenDoneIssueCount > 0
+      ? (columns.find((column) => doneStatusIds.has(column.id))?.id ?? null)
+      : null;
+
   return (
     <TaskBoardFrame>
       <div
@@ -666,9 +722,12 @@ const TaskBoard = () => {
               }))}
               onChange={(value) => {
                 setProjectId(value);
+                storeProjectId(value);
                 setSelectedIssueId(null);
                 setComposerStatusId(null);
                 setSelectedAssigneeIds([]);
+                setShouldIncludeOlderDone(false);
+                setShownCardCountByStatus({});
               }}
             />
             <TaskBoardSelect
@@ -825,6 +884,11 @@ const TaskBoard = () => {
       >
         {columns.map((column) => {
           const cards = issuesByStatus.get(column.id) ?? [];
+          const shownCardCount =
+            shownCardCountByStatus[column.id] ?? CARDS_PER_COLUMN_PAGE;
+          const shownCards = cards.slice(0, shownCardCount);
+          const remainingCardCount = cards.length - shownCards.length;
+          const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
           const isReorderable = column.id !== NO_STATUS_VALUE;
           const isColumnDragged = draggingStatusId === column.id;
@@ -1064,6 +1128,28 @@ const TaskBoard = () => {
               </header>
 
               <div
+                onScroll={(event) => {
+                  if (remainingCardCount <= 0) {
+                    return;
+                  }
+
+                  // scrollTop rides the event; the heights come from the
+                  // host's geometry snapshots, a frame behind at most, which
+                  // the threshold absorbs. A zero height means not measured
+                  // yet, never "at the bottom".
+                  const scroller = event.currentTarget;
+                  const distanceToBottom =
+                    scroller.scrollHeight -
+                    scroller.clientHeight -
+                    scroller.scrollTop;
+
+                  if (
+                    scroller.scrollHeight > 0 &&
+                    distanceToBottom < LAZY_LOAD_THRESHOLD_PX
+                  ) {
+                    showMoreCards(column.id, shownCardCount);
+                  }
+                }}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -1093,7 +1179,7 @@ const TaskBoard = () => {
                     {t('Drop here')}
                   </span>
                 )}
-                {cards.map((issue) => (
+                {shownCards.map((issue) => (
                   <TaskBoardCard
                     key={issue.id}
                     issue={issue}
@@ -1129,6 +1215,47 @@ const TaskBoard = () => {
                     }}
                   />
                 ))}
+
+                {/* Scrolling near the bottom draws the next page. The line
+                    is a click target too, for a reader on a keyboard or a
+                    column the host has not measured yet. */}
+                {remainingCardCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => showMoreCards(column.id, shownCardCount)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: TASK_TOKENS.textTertiary,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      fontFamily: TASK_TOKENS.fontFamily,
+                      fontSize: 12,
+                      padding: '6px 0',
+                    }}
+                  >
+                    {t('{count} more issues', { count: remainingCardCount })}
+                  </button>
+                )}
+
+                {isOlderDoneToggleColumn &&
+                  (shouldIncludeOlderDone ? (
+                    <TaskColumnFooterButton
+                      onClick={() => setShouldIncludeOlderDone(false)}
+                    >
+                      {t('Hide done issues older than {days} days', {
+                        days: BOARD_DONE_ISSUE_VISIBLE_DAYS,
+                      })}
+                    </TaskColumnFooterButton>
+                  ) : (
+                    <TaskColumnFooterButton
+                      onClick={() => setShouldIncludeOlderDone(true)}
+                    >
+                      {t('Show {count} older done issues', {
+                        count: board.hiddenDoneIssueCount,
+                      })}
+                    </TaskColumnFooterButton>
+                  ))}
 
                 {composerStatusId === column.id ? (
                   <div
@@ -1254,6 +1381,42 @@ const TaskBoard = () => {
         </twenty-overlay>
       )}
     </TaskBoardFrame>
+  );
+};
+
+// A quiet full-width link at the foot of a column: more cards, or the older
+// done issues. Hover is state-driven, as everywhere in this app.
+const TaskColumnFooterButton = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        background: isHovered ? TASK_TOKENS.backgroundHover : 'transparent',
+        border: `1px dashed ${TASK_TOKENS.border}`,
+        borderRadius: TASK_TOKENS.radiusSmall,
+        color: isHovered ? TASK_TOKENS.textPrimary : TASK_TOKENS.textSecondary,
+        cursor: 'pointer',
+        flexShrink: 0,
+        fontFamily: TASK_TOKENS.fontFamily,
+        fontSize: 12,
+        minHeight: 30,
+        padding: '0 8px',
+        width: '100%',
+      }}
+    >
+      {children}
+    </button>
   );
 };
 

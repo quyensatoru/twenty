@@ -1,5 +1,6 @@
 {
   "(No title)": "(No title)",
+  "{count} more issues": "{count} more issues",
   "↑↓ navigate · Enter open · Esc close": "↑↓ navigate · Enter open · Esc close",
   "Across every project you can access": "Across every project you can access",
   "Action": "Action",
@@ -94,6 +95,7 @@
   "Grass": "Grass",
   "Gray": "Gray",
   "Green": "Green",
+  "Hide done issues older than {days} days": "Hide done issues older than {days} days",
   "High": "High",
   "Highest": "Highest",
   "Histories": "Histories",
@@ -223,6 +225,7 @@
   "Search merchants": "Search merchants",
   "Searching…": "Searching…",
   "Settings": "Settings",
+  "Show {count} older done issues": "Show {count} older done issues",
   "Show and hide fields": "Show and hide fields",
   "Showing the first 50 — keep typing to narrow it down": "Showing the first 50 — keep typing to narrow it down",
   "Sky": "Sky",

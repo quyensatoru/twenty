@@ -9,9 +9,12 @@ import {
 } from '../constants/record-selections';
 import { TASK_BOARD_ROUTE_PATH } from '../constants/route-paths';
 import { TASK_BOARD_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
+import { type ApiClient } from '../types/api-client';
+import { type Connection } from '../types/connection';
 import { type IssueRow } from '../types/task-manager-rows';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
+import { buildBoardIssueFilters } from './utils/build-board-issue-filters.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -20,6 +23,21 @@ type TaskBoardBody = {
   projectId?: string;
   // undefined = every sprint, null = backlog (no sprint), string = one sprint.
   sprintId?: string | null;
+  // Done issues past the board's window are left out unless asked for.
+  includeOlderDone?: boolean;
+};
+
+// A count, not a read: the board only says how many older done issues there
+// are until the reader asks to see them.
+const countIssues = async (
+  client: ApiClient,
+  filter: Record<string, unknown>,
+): Promise<number> => {
+  const result = await client.query({
+    issues: { __args: { filter, first: 1 }, totalCount: true },
+  });
+
+  return (result?.issues as Connection<unknown> | undefined)?.totalCount ?? 0;
 };
 
 const EMPTY_BOARD = {
@@ -30,6 +48,7 @@ const EMPTY_BOARD = {
   epics: [],
   issues: [],
   members: [],
+  hiddenDoneIssueCount: 0,
 };
 
 // One round trip for the whole board: the visible projects, the active
@@ -79,17 +98,8 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
     const sprintId =
       event.body?.sprintId === undefined ? undefined : event.body.sprintId;
 
-    const issueFilter: Record<string, unknown> = {
-      projectId: { eq: activeProjectId },
-      ...(sprintId === undefined
-        ? {}
-        : sprintId === null
-          ? { sprintId: { is: 'NULL' } }
-          : { sprintId: { eq: sprintId } }),
-    };
-
-    const [issueStatuses, sprints, epics, issues] = await Promise.all([
-      listScopedRecords({
+    const [issueStatuses, sprints, epics] = await Promise.all([
+      listScopedRecords<{ id: string; category?: string | null }>({
         client,
         pluralName: 'issueStatuses',
         filter: { projectId: { eq: activeProjectId } },
@@ -110,16 +120,32 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
         selection: EPIC_SELECTION,
         orderBy: [{ position: 'AscNullsLast' }],
       }),
+    ]);
+
+    // Statuses first, issues second: which statuses count as done decides
+    // which issues are worth fetching at all.
+    const { visibleFilter, hiddenDoneFilter } = buildBoardIssueFilters({
+      projectId: activeProjectId,
+      sprintId,
+      statuses: issueStatuses,
+      shouldIncludeOlderDone: event.body?.includeOlderDone === true,
+      now: new Date(),
+    });
+
+    const [issues, hiddenDoneIssueCount] = await Promise.all([
       // SEARCH selection, not the full one: a card renders key, title, type,
       // priority, points, due date, labels, status and owner — never the rich
       // text body, which would multiply the payload per row.
       listScopedRecords<IssueRow>({
         client,
         pluralName: 'issues',
-        filter: issueFilter,
+        filter: visibleFilter,
         selection: ISSUE_SEARCH_SELECTION,
         orderBy: [{ position: 'AscNullsLast' }],
       }),
+      hiddenDoneFilter === null
+        ? Promise.resolve(0)
+        : countIssues(client, hiddenDoneFilter),
     ]);
 
     const members = await listIssueMembers({ client, issues });
@@ -132,6 +158,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       epics,
       issues,
       members,
+      hiddenDoneIssueCount,
       currentWorkspaceMemberId: scope.workspaceMemberId,
     };
   });

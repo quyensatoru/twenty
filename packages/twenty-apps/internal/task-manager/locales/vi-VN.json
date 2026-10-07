@@ -1,5 +1,6 @@
 {
   "(No title)": "(Chưa có tiêu đề)",
+  "{count} more issues": "Còn {count} issue",
   "↑↓ navigate · Enter open · Esc close": "↑↓ di chuyển · Enter mở · Esc đóng",
   "Across every project you can access": "Trong mọi dự án bạn được truy cập",
   "Action": "Hành động",
@@ -94,6 +95,7 @@
   "Grass": "Xanh cỏ",
   "Gray": "Xám",
   "Green": "Xanh lục",
+  "Hide done issues older than {days} days": "Ẩn issue đã xong quá {days} ngày",
   "High": "Cao",
   "Highest": "Cao nhất",
   "Histories": "Lịch sử",
@@ -223,6 +225,7 @@
   "Search merchants": "Tìm merchant",
   "Searching…": "Đang tìm…",
   "Settings": "Cài đặt",
+  "Show {count} older done issues": "Hiện {count} issue đã xong cũ hơn",
   "Show and hide fields": "Ẩn/hiện trường",
   "Showing the first 50 — keep typing to narrow it down": "Đang hiện 50 kết quả đầu — gõ thêm để thu hẹp",
   "Sky": "Xanh trời",
