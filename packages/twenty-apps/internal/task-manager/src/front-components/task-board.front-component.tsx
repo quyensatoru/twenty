@@ -36,7 +36,12 @@ import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTextInput } from './components/task-text-input';
-import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './components/task-tokens';
+import {
+  readTagColor,
+  TASK_CIRCLE_STYLE,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './components/task-tokens';
 import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
@@ -665,6 +670,7 @@ const TaskBoard = () => {
           gap: 12,
           minHeight: 0,
           overflowX: 'auto',
+          ...TASK_THIN_SCROLLBAR_STYLE,
           padding: '0 20px 20px 20px',
         }}
       >
@@ -785,6 +791,7 @@ const TaskBoard = () => {
                   gap: 8,
                   minHeight: 0,
                   overflowY: 'auto',
+                  ...TASK_THIN_SCROLLBAR_STYLE,
                   padding: '4px 8px 8px 8px',
                 }}
               >

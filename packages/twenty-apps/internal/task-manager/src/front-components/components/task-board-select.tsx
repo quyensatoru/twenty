@@ -3,7 +3,12 @@ import { t } from 'twenty-sdk/front-component';
 import { IconCheck, IconChevronDown, IconSearch } from 'twenty-ui/icon';
 
 import { TASK_BARE_FIELD_STYLE } from './task-control-styles';
-import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
+import {
+  readTagColor,
+  TASK_CIRCLE_STYLE,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './task-tokens';
 
 export type TaskBoardSelectOption = {
   value: string;
@@ -163,7 +168,7 @@ export const TaskBoardSelect = ({
                 style={TASK_BARE_FIELD_STYLE}
               />
             </div>
-            <div style={{ maxHeight: OPTIONS_MAX_HEIGHT, overflowY: 'auto', padding: 4 }}>
+            <div style={{ maxHeight: OPTIONS_MAX_HEIGHT, overflowY: 'auto', ...TASK_THIN_SCROLLBAR_STYLE, padding: 4 }}>
               {matches.length === 0 ? (
                 <span
                   style={{

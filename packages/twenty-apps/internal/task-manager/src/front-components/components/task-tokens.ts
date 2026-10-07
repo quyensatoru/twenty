@@ -48,6 +48,15 @@ export const TASK_CIRCLE_STYLE = {
   cornerShape: 'round',
 } as CSSProperties;
 
+// The host's own scrollbar (DefaultLayout): thin, with a medium-border thumb
+// on a clear track. Needed here because overlays and the issue modal portal to
+// the body, outside the layout that sets it, where Linux and Windows fall back
+// to a 15px system bar with arrow buttons.
+export const TASK_THIN_SCROLLBAR_STYLE = {
+  scrollbarColor: `${TASK_TOKENS.border} transparent`,
+  scrollbarWidth: 'thin',
+} as const;
+
 // Maps the option colours the objects declare onto readable foreground and
 // background pairs. twenty-ui's Tag cannot be used: it is base-ui backed and
 // constructs PointerEvents the sandbox has no constructor for.

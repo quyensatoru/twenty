@@ -46,7 +46,12 @@ export const TaskIconButton = ({
           ? TASK_TOKENS.radius
           : TASK_TOKENS.radiusSmall,
         boxShadow: isElevated ? TASK_TOKENS.shadowLight : 'none',
-        color: isDanger ? TASK_TOKENS.red : TASK_TOKENS.textTertiary,
+        // Red only under the pointer: a delete sitting in an always-visible
+        // action row would otherwise shout louder than the content it serves.
+        color:
+          isDanger && isHovered && !isDisabled
+            ? TASK_TOKENS.red
+            : TASK_TOKENS.textTertiary,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         display: 'inline-flex',
         flexShrink: 0,

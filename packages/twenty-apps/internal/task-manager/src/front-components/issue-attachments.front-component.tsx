@@ -7,7 +7,10 @@ import { TaskAttachmentRow } from './components/task-attachment-row';
 import { TaskEmptyState } from './components/task-empty-state';
 import { TaskSkeletonBar } from './components/task-skeleton';
 import { TaskMessage } from './components/task-message';
-import { TASK_TOKENS } from './components/task-tokens';
+import {
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './components/task-tokens';
 import { useIssueDetail } from './hooks/use-issue-detail';
 
 // The files filed against issue.attachments: uploads from the host picker and
@@ -33,6 +36,7 @@ const IssueAttachments = () => {
           height: '100%',
           minHeight: 0,
           overflowY: 'auto',
+          ...TASK_THIN_SCROLLBAR_STYLE,
           width: '100%',
         }}
       >
@@ -72,6 +76,7 @@ const IssueAttachments = () => {
         height: '100%',
         minHeight: 0,
         overflowY: 'auto',
+        ...TASK_THIN_SCROLLBAR_STYLE,
         width: '100%',
       }}
     >

@@ -4,7 +4,7 @@ import { IconCheck, IconForbid, IconPencil, IconSearch } from 'twenty-ui/icon';
 
 import { TASK_BARE_FIELD_STYLE } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 export type TaskRelationOption = {
   value: string;
@@ -234,6 +234,7 @@ export const TaskRelationSelect = ({
                 style={{
                   maxHeight: OPTIONS_MAX_HEIGHT,
                   overflowY: 'auto',
+                  ...TASK_THIN_SCROLLBAR_STYLE,
                   padding: 4,
                 }}
               >

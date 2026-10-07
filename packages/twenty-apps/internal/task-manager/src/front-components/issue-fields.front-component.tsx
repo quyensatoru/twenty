@@ -27,7 +27,10 @@ import {
 } from './components/task-relation-select';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTag } from './components/task-tag';
-import { TASK_TOKENS } from './components/task-tokens';
+import {
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './components/task-tokens';
 import { type MemberRow, useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
@@ -152,6 +155,7 @@ const IssueFields = () => {
           height: '100%',
           minHeight: 0,
           overflowY: 'auto',
+          ...TASK_THIN_SCROLLBAR_STYLE,
           width: '100%',
         }}
       >
@@ -292,6 +296,7 @@ const IssueFields = () => {
         height: '100%',
         minHeight: 0,
         overflowY: 'auto',
+        ...TASK_THIN_SCROLLBAR_STYLE,
         width: '100%',
       }}
     >

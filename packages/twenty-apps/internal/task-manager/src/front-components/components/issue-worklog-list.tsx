@@ -333,39 +333,39 @@ export const IssueWorklogList = ({
                 {t('logged')} {formatMinutes(worklog.timeSpentMinutes)}
               </span>
             }
-            actions={
+            nameAction={
               isEditing ? undefined : (
+                <TaskCopyLinkButton
+                  url={buildIssueWorklogUrl({
+                    baseUrl,
+                    issueId,
+                    worklogId: worklog.id,
+                  })}
+                  label={t('Copy link to worklog')}
+                />
+              )
+            }
+            actions={
+              isEditing || !isOwn ? undefined : (
                 <>
-                  <TaskCopyLinkButton
-                    url={buildIssueWorklogUrl({
-                      baseUrl,
-                      issueId,
-                      worklogId: worklog.id,
-                    })}
-                    label={t('Copy link to worklog')}
-                  />
-                  {isOwn && (
-                    <>
-                      <TaskIconButton
-                        label={t('Edit')}
-                        isDisabled={isBusy}
-                        onClick={() => {
-                          setEditingWorklogId(worklog.id);
-                          setEditDraft(worklog.description ?? '');
-                        }}
-                      >
-                        <IconPencil size={14} />
-                      </TaskIconButton>
-                      <TaskIconButton
-                        label={t('Delete')}
-                        isDanger
-                        isDisabled={isBusy}
-                        onClick={() => onDelete(worklog.id)}
-                      >
-                        <IconTrash size={14} />
-                      </TaskIconButton>
-                    </>
-                  )}
+                  <TaskIconButton
+                    label={t('Edit')}
+                    isDisabled={isBusy}
+                    onClick={() => {
+                      setEditingWorklogId(worklog.id);
+                      setEditDraft(worklog.description ?? '');
+                    }}
+                  >
+                    <IconPencil size={14} />
+                  </TaskIconButton>
+                  <TaskIconButton
+                    label={t('Delete')}
+                    isDanger
+                    isDisabled={isBusy}
+                    onClick={() => onDelete(worklog.id)}
+                  >
+                    <IconTrash size={14} />
+                  </TaskIconButton>
                 </>
               )
             }

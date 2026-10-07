@@ -16,7 +16,7 @@ import { TaskSkeletonBar } from './task-skeleton';
 import { TaskMessage } from './task-message';
 import { TaskStatusLine } from './task-status-line';
 import { TaskSubtaskRow } from './task-subtask-row';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import {
   type LinkedIssueRow,
   type MemberRow,
@@ -98,6 +98,7 @@ export const IssueSubtasks = () => {
           height: '100%',
           minHeight: 0,
           overflowY: 'auto',
+          ...TASK_THIN_SCROLLBAR_STYLE,
           width: '100%',
         }}
       >
@@ -258,6 +259,7 @@ export const IssueSubtasks = () => {
         height: '100%',
         minHeight: 0,
         overflowY: 'auto',
+        ...TASK_THIN_SCROLLBAR_STYLE,
         width: '100%',
       }}
     >

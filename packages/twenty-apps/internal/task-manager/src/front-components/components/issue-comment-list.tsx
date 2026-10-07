@@ -176,17 +176,21 @@ export const IssueCommentList = ({
         authorEmail={author?.userEmail}
         avatarUrl={author?.avatarUrl}
         timestamp={comment.createdAt}
-        actions={
+        nameAction={
           isEditing ? undefined : (
+            <TaskCopyLinkButton
+              url={buildIssueCommentUrl({
+                baseUrl,
+                issueId,
+                commentId: comment.id,
+              })}
+              label={t('Copy link to comment')}
+            />
+          )
+        }
+        actions={
+          isEditing || (isReply && !canEdit) ? undefined : (
             <>
-              <TaskCopyLinkButton
-                url={buildIssueCommentUrl({
-                  baseUrl,
-                  issueId,
-                  commentId: comment.id,
-                })}
-                label={t('Copy link to comment')}
-              />
               {/* Replying to a reply would need a tree the data does not
                   carry, so a second level always answers the same root. */}
               {!isReply && (

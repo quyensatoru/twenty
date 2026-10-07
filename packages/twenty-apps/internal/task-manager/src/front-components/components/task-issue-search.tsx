@@ -14,7 +14,11 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { getTaskControlStyle, TASK_BARE_FIELD_STYLE } from './task-control-styles';
 import { TaskTag } from './task-tag';
-import { readTagColor, TASK_TOKENS } from './task-tokens';
+import {
+  readTagColor,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './task-tokens';
 
 type TaskIssueSearchProps = {
   // The board owns the text, but typing never narrows the columns — it only
@@ -352,7 +356,7 @@ export const TaskIssueSearch = ({
                   : POPOVER_WIDTH,
             }}
           >
-            <div style={{ overflowY: 'auto', padding: 4 }}>
+            <div style={{ overflowY: 'auto', ...TASK_THIN_SCROLLBAR_STYLE, padding: 4 }}>
               {state.isLoading && results.length === 0 ? (
                 <PopoverNote text={t('Searching…')} />
               ) : state.error !== null ? (

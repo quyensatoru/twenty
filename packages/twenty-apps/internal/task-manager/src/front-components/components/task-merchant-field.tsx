@@ -10,7 +10,7 @@ import { TaskCheckbox } from './task-checkbox';
 import { TASK_BARE_FIELD_STYLE } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
 import { TaskRecordChip } from './task-record-chip';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskMerchantFieldProps = {
   projectId: string | null;
@@ -270,6 +270,7 @@ export const TaskMerchantField = ({
                 style={{
                   maxHeight: OPTIONS_MAX_HEIGHT,
                   overflowY: 'auto',
+                  ...TASK_THIN_SCROLLBAR_STYLE,
                   padding: 4,
                 }}
               >

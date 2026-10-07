@@ -16,6 +16,9 @@ type TaskAvatarProps = {
   // Overrides the hash for anything whose colour is a stored choice rather
   // than a function of its name — an issue status, say.
   colorName?: ThemeColorName;
+  // Off where a richer hover card already names the person: the browser's
+  // own tooltip would land on top of it.
+  shouldShowTitle?: boolean;
 };
 
 // twenty-ui's Avatar is base-ui backed, and base-ui's event handling throws in
@@ -28,6 +31,7 @@ export const TaskAvatar = ({
   size = 24,
   shape = 'circle',
   colorName,
+  shouldShowTitle = true,
 }: TaskAvatarProps) => {
   const [hasImageFailed, setHasImageFailed] = useState(false);
   const trimmedName = name.trim();
@@ -53,7 +57,7 @@ export const TaskAvatar = ({
       <img
         src={imageUrl}
         alt=""
-        title={trimmedName}
+        title={shouldShowTitle ? trimmedName : undefined}
         onError={() => setHasImageFailed(true)}
         // The tint the initials would have had sits behind the picture, so the
         // circle is already the right colour while the bytes are in flight
@@ -69,7 +73,7 @@ export const TaskAvatar = ({
 
   return (
     <span
-      title={trimmedName}
+      title={shouldShowTitle ? trimmedName : undefined}
       style={{
         ...frame,
         background: `var(--t-color-${resolvedColorName}4, ${TASK_TOKENS.backgroundTertiary})`,

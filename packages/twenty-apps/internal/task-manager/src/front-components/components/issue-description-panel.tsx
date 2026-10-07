@@ -18,7 +18,7 @@ import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSkeletonBar, TaskSkeletonLines } from './task-skeleton';
 import { TaskStatusLine } from './task-status-line';
 import { TaskTag } from './task-tag';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import { useIssueDetail } from '../hooks/use-issue-detail';
 import { buildRecordUrl } from '../utils/build-record-url.util';
 import { postAppRoute } from '../utils/post-app-route.util';
@@ -61,6 +61,7 @@ const DescriptionBody = ({ children }: { children: ReactNode }) => (
       flex: 1,
       minHeight: 0,
       overflowY: 'auto',
+      ...TASK_THIN_SCROLLBAR_STYLE,
       width: '100%',
     }}
   >

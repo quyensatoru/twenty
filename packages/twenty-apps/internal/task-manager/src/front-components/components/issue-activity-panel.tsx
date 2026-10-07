@@ -26,7 +26,7 @@ import {
 } from './task-skeleton';
 import { TaskStatusLine } from './task-status-line';
 import { TaskTabs } from './task-tabs';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
@@ -50,6 +50,7 @@ const ActivityFrame = ({ children }: { children: ReactNode }) => (
       height: '100%',
       minHeight: 0,
       overflowY: 'auto',
+      ...TASK_THIN_SCROLLBAR_STYLE,
       paddingBottom: 16,
       width: '100%',
     }}

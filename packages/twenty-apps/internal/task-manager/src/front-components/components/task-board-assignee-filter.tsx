@@ -3,7 +3,11 @@ import { t } from 'twenty-sdk/front-component';
 import { IconCheck, IconUser } from 'twenty-ui/icon';
 
 import { TaskAvatar } from './task-avatar';
-import { TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
+import {
+  TASK_CIRCLE_STYLE,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './task-tokens';
 
 export const UNASSIGNED_ASSIGNEE_VALUE = 'UNASSIGNED';
 
@@ -133,6 +137,7 @@ export const TaskBoardAssigneeFilter = ({
                   boxSizing: 'border-box',
                   maxHeight: 280,
                   overflowY: 'auto',
+                  ...TASK_THIN_SCROLLBAR_STYLE,
                   padding: 4,
                   width: 220,
                 }}

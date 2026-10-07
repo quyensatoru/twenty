@@ -64,7 +64,7 @@ import { TaskSubtaskRow } from './task-subtask-row';
 import { TaskTabs } from './task-tabs';
 import { TaskTag } from './task-tag';
 import { TaskTextInput } from './task-text-input';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskBoardDetailProps = {
   issueId: string;
@@ -112,6 +112,20 @@ export const TaskBoardDetail = ({
   const [openField, setOpenField] = useState<OpenField | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Field values just picked, shown before the server confirms them, the way
+  // the record page's Details widget does: saving re-runs the issue-detail
+  // route, and a chip sitting on its old value until that returns is the lag.
+  const [pendingPatch, setPendingPatch] = useState<Record<string, unknown>>(
+    {},
+  );
+  // Writes still in flight. The record is only re-read once the last one
+  // lands: re-reading after each would paint a later pick back to its old
+  // value while its own write is still on the wire.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const pendingWriteCountRef = useRef(0);
+  // oxlint-disable-next-line twenty/no-state-useref
+  const currentIssueIdRef = useRef(issueId);
+  currentIssueIdRef.current = issueId;
   const [activityTab, setActivityTab] = useState<
     'comments' | 'worklogs' | 'history'
   >('comments');
@@ -142,6 +156,7 @@ export const TaskBoardDetail = ({
   // the next. The hidden-fields preference is the exception: it is a view
   // choice, not a draft, so it survives across cards until the modal closes.
   useEffect(() => {
+    setPendingPatch({});
     setOpenField(null);
     setActionError(null);
     setIsEditingTitle(false);
@@ -210,12 +225,18 @@ export const TaskBoardDetail = ({
     body: Record<string, unknown>,
     options?: { refreshBoard?: boolean },
   ) => {
+    const patch =
+      typeof body.data === 'object' && body.data !== null
+        ? (body.data as Record<string, unknown>)
+        : {};
+
+    setPendingPatch((current) => ({ ...current, ...patch }));
+    pendingWriteCountRef.current += 1;
     setIsSaving(true);
 
     try {
       await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, { issueId, ...body });
       setActionError(null);
-      await reload();
 
       if (options?.refreshBoard === true) {
         onCardChanged();
@@ -225,7 +246,20 @@ export const TaskBoardDetail = ({
       setActionError(message);
       void enqueueSnackbar({ message, variant: 'error' });
     } finally {
-      setIsSaving(false);
+      pendingWriteCountRef.current -= 1;
+
+      // Stepping to another card mid-write leaves this one's re-read behind:
+      // it would paint the old issue into the new card's modal.
+      if (
+        pendingWriteCountRef.current === 0 &&
+        currentIssueIdRef.current === issueId
+      ) {
+        // The re-read is the truth either way: it confirms what succeeded and
+        // puts back whatever a failed write had shown early.
+        await reload();
+        setPendingPatch({});
+        setIsSaving(false);
+      }
     }
   };
 
@@ -356,7 +390,7 @@ export const TaskBoardDetail = ({
     );
   }
 
-  const issue = data.issue;
+  const issue = { ...data.issue, ...pendingPatch } as typeof data.issue;
   const typeOption = ISSUE_TYPE_OPTIONS.find(
     (candidate) => candidate.value === issue.issueType,
   );
@@ -753,6 +787,7 @@ export const TaskBoardDetail = ({
             minHeight: 0,
             minWidth: 0,
             overflowY: 'auto',
+            ...TASK_THIN_SCROLLBAR_STYLE,
           }}
         >
           {isEditingTitle ? (
@@ -1010,6 +1045,7 @@ export const TaskBoardDetail = ({
             minWidth: 0,
             overflowX: 'hidden',
             overflowY: 'auto',
+            ...TASK_THIN_SCROLLBAR_STYLE,
             paddingLeft: 16,
             width: 320,
           }}
@@ -1042,6 +1078,7 @@ export const TaskBoardDetail = ({
                       boxSizing: 'border-box',
                       maxHeight: 320,
                       overflowY: 'auto',
+                      ...TASK_THIN_SCROLLBAR_STYLE,
                       padding: 4,
                       width: 200,
                     }}
@@ -1730,7 +1767,7 @@ const LabelPicker = ({
                 onChange={setSearch}
               />
             </div>
-            <div style={{ maxHeight: 180, overflowY: 'auto', padding: 4 }}>
+            <div style={{ maxHeight: 180, overflowY: 'auto', ...TASK_THIN_SCROLLBAR_STYLE, padding: 4 }}>
               {matches.map((option) => {
                 const isChecked = selected.includes(option.value);
 

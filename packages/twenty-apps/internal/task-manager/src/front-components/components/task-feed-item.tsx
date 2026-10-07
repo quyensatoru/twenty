@@ -19,8 +19,8 @@ export const FEED_BODY_INDENT = AVATAR_SIZE + AVATAR_GAP;
 // Activity card's border, which it otherwise runs straight into. Applied by the
 // lists to their whole column, so the composer above the rows moves with them.
 export const FEED_INLINE_INSET = 8;
-// The name line is exactly as tall as the row actions, so a row without them
-// is the same height as a row with them and the feed keeps one rhythm.
+// Tall enough for the copy-link button beside the name, so a row without one
+// keeps the same rhythm as a row with one.
 const HEADER_HEIGHT = 24;
 
 type TaskFeedItemProps = {
@@ -40,6 +40,11 @@ type TaskFeedItemProps = {
   // Sits beside the author name: a duration, a status transition, whatever the
   // row is about when that is one short phrase rather than a body.
   meta?: ReactNode;
+  // Beside the author name, the way Jira puts a comment's permalink there.
+  nameAction?: ReactNode;
+  // A row of buttons under the body (reply, edit, delete), always shown, as
+  // in Jira: hover-only buttons in the header were hard to find and jumped in
+  // over the name line.
   actions?: ReactNode;
   // Drawn under the body, in the body's column. Reply composers go here, so
   // they line up with the text they answer rather than with the avatar.
@@ -51,8 +56,8 @@ type TaskFeedItemProps = {
 // feed under three tabs rather than three lists that happen to share a panel:
 // avatar, author, what happened, when.
 //
-// Actions appear on hover. An app ships no stylesheet, so there is no `:hover`
-// to declare and the state has to be held here.
+// The hover tint is state-driven: an app ships no stylesheet, so there is no
+// `:hover` to declare and the state has to be held here.
 export const TaskFeedItem = ({
   anchorId,
   isHighlighted = false,
@@ -61,6 +66,7 @@ export const TaskFeedItem = ({
   avatarUrl,
   timestamp,
   meta,
+  nameAction,
   actions,
   footer,
   children,
@@ -98,6 +104,10 @@ export const TaskFeedItem = ({
         // its own block rather than as more of the one above. Twelve pixels
         // all round is the same rhythm the Details groups keep.
         padding: '12px',
+        // The record page grid sets user-select: none and hands widgets back
+        // only `auto`, which still resolves to none under it — so a read-only
+        // comment could not be selected or copied without this.
+        userSelect: 'text',
       }}
     >
       <TaskMemberHoverCard
@@ -109,6 +119,7 @@ export const TaskFeedItem = ({
           name={authorName}
           avatarUrl={avatarUrl}
           size={AVATAR_SIZE}
+          shouldShowTitle={false}
         />
       </TaskMemberHoverCard>
       <div
@@ -149,32 +160,15 @@ export const TaskFeedItem = ({
             </span>
           </TaskMemberHoverCard>
           {meta}
-          <span style={{ flex: 1, minWidth: 0 }} />
-          {actions !== undefined && (
-            <div
-              style={{
-                alignItems: 'center',
-                display: 'flex',
-                flexShrink: 0,
-                gap: 2,
-                // Held in the layout whether shown or not: revealing the
-                // buttons on hover must not reflow the row under the pointer.
-                pointerEvents: isHovered ? 'auto' : 'none',
-                visibility: isHovered ? 'visible' : 'hidden',
-              }}
-            >
-              {actions}
-            </div>
-          )}
+          {nameAction}
         </header>
-
-        {children}
 
         <span
           title={formatDateTimeLabel(timestamp)}
           style={{
             color: TASK_TOKENS.textTertiary,
             fontSize: 12,
+            marginBottom: 6,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -182,6 +176,24 @@ export const TaskFeedItem = ({
         >
           {formatRelativeTimeLabel(timestamp)}
         </span>
+
+        {children}
+
+        {actions !== undefined && (
+          <div
+            style={{
+              alignItems: 'center',
+              display: 'flex',
+              gap: 4,
+              // Pulled left by the buttons' own inset so the first icon lines
+              // up with the text above it rather than 4px to its right.
+              marginLeft: -4,
+              marginTop: 6,
+            }}
+          >
+            {actions}
+          </div>
+        )}
 
         {footer}
       </div>

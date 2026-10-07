@@ -18,7 +18,12 @@ import { type BoardIssue } from '../../types/task-board';
 import { TaskAvatar } from './task-avatar';
 import { TaskPriorityGlyph } from './task-priority-glyph';
 import { TaskTag } from './task-tag';
-import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
+import {
+  readTagColor,
+  TASK_CIRCLE_STYLE,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './task-tokens';
 
 type TaskBoardCardProps = {
   issue: BoardIssue;
@@ -423,6 +428,7 @@ export const TaskBoardCard = ({
                   boxSizing: 'border-box',
                   maxHeight: 280,
                   overflowY: 'auto',
+                  ...TASK_THIN_SCROLLBAR_STYLE,
                   padding: 4,
                   width: 200,
                 }}

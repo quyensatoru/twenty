@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { IconCheck, IconChevronDown } from 'twenty-ui/icon';
 
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskSelectProps = {
   value: string;
@@ -94,6 +94,7 @@ export const TaskSelect = ({
               boxSizing: 'border-box',
               maxHeight: OPTIONS_MAX_HEIGHT,
               overflowY: 'auto',
+              ...TASK_THIN_SCROLLBAR_STYLE,
               padding: 4,
               width: CARD_WIDTH,
             }}
