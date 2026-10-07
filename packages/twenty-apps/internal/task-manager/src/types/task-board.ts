@@ -56,20 +56,39 @@ export type BoardMember = {
   userEmail?: string | null;
 };
 
+// Where a board column stands in its paging: how many issues it holds in
+// all, and the cursor its next page starts from.
+export type BoardColumnPage = {
+  totalCount: number;
+  endCursor: string | null;
+  hasNextPage: boolean;
+};
+
 export type BoardData = {
   projects: BoardProject[];
   activeProjectId: string | null;
   issueStatuses: BoardStatus[];
   sprints: BoardSprint[];
   epics: BoardEpic[];
+  // The first page of every column, then whatever scrolling has added.
   issues: BoardIssue[];
+  // Keyed by status id, or NO_STATUS for the issues with no status.
+  columnPages: Record<string, BoardColumnPage>;
   members: BoardMember[];
+  // Everyone who can work on the project: the assignee filter's faces.
+  assignableMembers: BoardMember[];
   currentWorkspaceMemberId: string | null;
   // Done issues left off the board for being older than its window.
   hiddenDoneIssueCount: number;
   // What the caller may change on the active project's board.
   canWrite: boolean;
   canSoftDelete: boolean;
+};
+
+// What the board-column-issues route answers: one more page of one column.
+export type BoardColumnIssuesResponse = BoardColumnPage & {
+  issues: BoardIssue[];
+  members: BoardMember[];
 };
 
 // What the search-issues route answers: one page of matches across every

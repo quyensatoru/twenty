@@ -37,6 +37,8 @@ export const SEARCH_MERCHANTS_ROUTE_PATH = '/task-manager/search-merchants';
 export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
 
 export const TASK_BOARD_ROUTE_PATH = '/task-manager/task-board';
+export const BOARD_COLUMN_ISSUES_ROUTE_PATH =
+  '/task-manager/board-column-issues';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
 

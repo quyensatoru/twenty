@@ -1,74 +1,104 @@
 import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../../constants/board-done-issue-visible-days';
 
-type BoardStatus = { id: string; category?: string | null };
-
 type IssueFilter = Record<string, unknown>;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-// The board's issue reads. A long-lived project is mostly finished work — the
-// biggest one in production is 98% done — and drawing every closed card is
-// what made the board slow. So, like Jira, a done issue only stays on the
-// board for a while after its last update; the rest is counted, not loaded,
-// and fetched only when the reader asks for it.
-//
-// updatedAt stands in for "when it was done": the issue has no resolution
-// date of its own.
-export const buildBoardIssueFilters = ({
-  projectId,
-  sprintId,
-  statuses,
-  shouldIncludeOlderDone,
-  now,
-}: {
+// The avatar filter's "Unassigned" pick, sent alongside member ids.
+export const BOARD_UNASSIGNED_ASSIGNEE = 'UNASSIGNED';
+
+export type BoardIssueQuery = {
   projectId: string;
   // undefined = every sprint, null = backlog (no sprint), string = one sprint.
   sprintId: string | null | undefined;
-  statuses: readonly BoardStatus[];
-  shouldIncludeOlderDone: boolean;
-  now: Date;
-}): { visibleFilter: IssueFilter; hiddenDoneFilter: IssueFilter | null } => {
-  const scopeFilter: IssueFilter = {
-    projectId: { eq: projectId },
-    ...(sprintId === undefined
-      ? {}
-      : sprintId === null
-        ? { sprintId: { is: 'NULL' } }
-        : { sprintId: { eq: sprintId } }),
-  };
+  // Member ids, optionally with BOARD_UNASSIGNED_ASSIGNEE. Empty = everyone.
+  assigneeIds: readonly string[];
+  issueType: string | null;
+};
 
-  const doneStatusIds = statuses
-    .filter((status) => status.category === 'DONE')
-    .map((status) => status.id);
+const readDoneCutoff = (now: Date): string =>
+  new Date(now.getTime() - BOARD_DONE_ISSUE_VISIBLE_DAYS * DAY_IN_MS).toISOString();
 
-  if (shouldIncludeOlderDone || doneStatusIds.length === 0) {
-    return { visibleFilter: scopeFilter, hiddenDoneFilter: null };
+const buildAssigneeFilter = (assigneeIds: readonly string[]): IssueFilter => {
+  const memberIds = assigneeIds.filter(
+    (assigneeId) => assigneeId !== BOARD_UNASSIGNED_ASSIGNEE,
+  );
+  const includesUnassigned = memberIds.length !== assigneeIds.length;
+
+  if (assigneeIds.length === 0) {
+    return {};
   }
 
-  const openStatusIds = statuses
-    .filter((status) => status.category !== 'DONE')
-    .map((status) => status.id);
-  const cutoff = new Date(
-    now.getTime() - BOARD_DONE_ISSUE_VISIBLE_DAYS * DAY_IN_MS,
-  ).toISOString();
+  if (memberIds.length === 0) {
+    return { assigneeId: { is: 'NULL' } };
+  }
 
-  return {
-    visibleFilter: {
-      ...scopeFilter,
-      // Spelled out rather than `not: { statusId: { in: done } }`: in SQL that
-      // drops the issues with no status at all, which must stay visible.
-      or: [
-        ...(openStatusIds.length === 0
-          ? []
-          : [{ statusId: { in: openStatusIds } }]),
-        { statusId: { is: 'NULL' } },
-        { updatedAt: { gte: cutoff } },
-      ],
-    },
-    hiddenDoneFilter: {
-      ...scopeFilter,
-      statusId: { in: doneStatusIds },
-      updatedAt: { lt: cutoff },
-    },
-  };
+  return includesUnassigned
+    ? { or: [{ assigneeId: { in: memberIds } }, { assigneeId: { is: 'NULL' } }] }
+    : { assigneeId: { in: memberIds } };
 };
+
+// Everything a board read shares, whichever column it is for. The filters
+// apply on the server because a column only ever holds its first pages: a
+// filter run over the loaded cards would miss every card not loaded yet.
+export const buildBoardScopeFilter = ({
+  projectId,
+  sprintId,
+  assigneeIds,
+  issueType,
+}: BoardIssueQuery): IssueFilter => ({
+  projectId: { eq: projectId },
+  ...(sprintId === undefined
+    ? {}
+    : sprintId === null
+      ? { sprintId: { is: 'NULL' } }
+      : { sprintId: { eq: sprintId } }),
+  ...buildAssigneeFilter(assigneeIds),
+  ...(issueType === null ? {} : { issueType: { eq: issueType } }),
+});
+
+// One column's issues. A long-lived project is mostly finished work — the
+// biggest one in production is 98% done — so, like Jira, a done issue only
+// stays on the board for a while after its last update; the rest is counted,
+// not loaded, and fetched only when the reader asks for it. updatedAt stands
+// in for "when it was done": the issue has no resolution date of its own.
+export const buildBoardColumnFilter = ({
+  scopeFilter,
+  statusId,
+  isDoneStatus,
+  shouldIncludeOlderDone,
+  now,
+}: {
+  scopeFilter: IssueFilter;
+  // null = the issues with no status at all.
+  statusId: string | null;
+  isDoneStatus: boolean;
+  shouldIncludeOlderDone: boolean;
+  now: Date;
+}): IssueFilter => ({
+  ...scopeFilter,
+  statusId: statusId === null ? { is: 'NULL' } : { eq: statusId },
+  ...(isDoneStatus && !shouldIncludeOlderDone
+    ? { updatedAt: { gte: readDoneCutoff(now) } }
+    : {}),
+});
+
+// The done issues the window leaves out, for the count on the done column.
+export const buildBoardHiddenDoneFilter = ({
+  scopeFilter,
+  doneStatusIds,
+  shouldIncludeOlderDone,
+  now,
+}: {
+  scopeFilter: IssueFilter;
+  doneStatusIds: readonly string[];
+  shouldIncludeOlderDone: boolean;
+  now: Date;
+}): IssueFilter | null =>
+  shouldIncludeOlderDone || doneStatusIds.length === 0
+    ? null
+    : {
+        ...scopeFilter,
+        statusId: { in: [...doneStatusIds] },
+        updatedAt: { lt: readDoneCutoff(now) },
+      };

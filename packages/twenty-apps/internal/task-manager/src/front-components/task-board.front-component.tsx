@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   enqueueSnackbar,
@@ -16,6 +16,7 @@ import {
 import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../constants/board-done-issue-visible-days';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
+  BOARD_COLUMN_ISSUES_ROUTE_PATH,
   CREATE_ISSUE_ROUTE_PATH,
   DELETE_ISSUE_ROUTE_PATH,
   REORDER_ISSUE_STATUSES_ROUTE_PATH,
@@ -24,6 +25,8 @@ import {
 } from '../constants/route-paths';
 import { TASK_BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import {
+  type BoardColumnIssuesResponse,
+  type BoardColumnPage,
   type BoardData,
   type BoardIssue,
   type BoardMember,
@@ -66,13 +69,33 @@ const BACKLOG_VALUE = 'BACKLOG';
 const NO_STATUS_VALUE = 'NO_STATUS';
 const COLUMN_WIDTH_STORAGE_KEY = 'task-board.column-width';
 const PROJECT_STORAGE_KEY = 'task-board.project-id';
-// Cards drawn per column before a "show more": every card is dozens of
-// elements the sandbox has to ship to the host, and a column of hundreds is
-// what made a large board take seconds to appear.
-const CARDS_PER_COLUMN_PAGE = 50;
-// How close to a column's bottom the next page is drawn: a little ahead, so
+// How close to a column's bottom its next page is fetched: a little ahead, so
 // the reader does not hit the end before the cards are there.
 const LAZY_LOAD_THRESHOLD_PX = 400;
+
+const readColumnKey = (statusId: string | null | undefined) =>
+  typeof statusId === 'string' ? statusId : NO_STATUS_VALUE;
+
+// Shifts one column's total, for the optimistic moves and deletes: the totals
+// are the server's, and a card leaving or arriving changes them before it
+// answers again.
+const shiftColumnTotal = (
+  columnPages: Record<string, BoardColumnPage>,
+  columnKey: string,
+  delta: number,
+): Record<string, BoardColumnPage> => {
+  const page = columnPages[columnKey];
+
+  return page === undefined
+    ? columnPages
+    : {
+        ...columnPages,
+        [columnKey]: {
+          ...page,
+          totalCount: Math.max(0, page.totalCount + delta),
+        },
+      };
+};
 
 // The sandbox's localStorage is seeded from the host before the first render,
 // so this reads synchronously. Guarded anyway: a store that is missing or
@@ -153,9 +176,11 @@ const TaskBoard = () => {
     readStoredProjectId,
   );
   const [shouldIncludeOlderDone, setShouldIncludeOlderDone] = useState(false);
-  const [shownCardCountByStatus, setShownCardCountByStatus] = useState<
-    Record<string, number>
-  >({});
+  const [loadingColumnKeys, setLoadingColumnKeys] = useState<string[]>([]);
+  // Bumped on every full load, so a column page that was in flight when the
+  // project or a filter changed is dropped instead of landing on the new board.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const boardGenerationRef = useRef(0);
   const [sprintFilter, setSprintFilter] = useState<string>(ALL_VALUE);
   const [search, setSearch] = useState('');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
@@ -206,18 +231,42 @@ const TaskBoard = () => {
       : sprintFilter === BACKLOG_VALUE
         ? null
         : sprintFilter;
+  const currentMemberId = board?.currentWorkspaceMemberId ?? null;
+  // Filters run on the server: a column only holds its first pages, so a
+  // filter over the loaded cards would miss every card not loaded yet.
+  const assigneeFilterIds = useMemo(
+    () =>
+      isOnlyMine
+        ? currentMemberId === null
+          ? []
+          : [currentMemberId]
+        : selectedAssigneeIds,
+    [isOnlyMine, currentMemberId, selectedAssigneeIds],
+  );
+  const issueTypeFilter = typeFilter === ALL_VALUE ? null : typeFilter;
+
+  const boardQueryBody = useMemo(
+    () => ({
+      ...(sprintId === undefined ? {} : { sprintId }),
+      assigneeIds: assigneeFilterIds,
+      issueType: issueTypeFilter,
+      includeOlderDone: shouldIncludeOlderDone,
+    }),
+    [sprintId, assigneeFilterIds, issueTypeFilter, shouldIncludeOlderDone],
+  );
 
   const loadBoard = useCallback(async () => {
+    boardGenerationRef.current += 1;
+    setLoadingColumnKeys([]);
+
     try {
       const result = await postAppRoute<
         BoardData & { success: true }
       >(
         TASK_BOARD_ROUTE_PATH,
         {
-          ...(projectId === null
-            ? {}
-            : { projectId, ...(sprintId === undefined ? {} : { sprintId }) }),
-          includeOlderDone: shouldIncludeOlderDone,
+          ...(projectId === null ? {} : { projectId }),
+          ...boardQueryBody,
         },
       );
 
@@ -228,7 +277,9 @@ const TaskBoard = () => {
         sprints: result.sprints ?? [],
         epics: result.epics ?? [],
         issues: result.issues ?? [],
+        columnPages: result.columnPages ?? {},
         members: result.members ?? [],
+        assignableMembers: result.assignableMembers ?? [],
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
         hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
         canWrite: result.canWrite === true,
@@ -238,7 +289,7 @@ const TaskBoard = () => {
     } catch (error) {
       setLoadError(readErrorText(error));
     }
-  }, [projectId, sprintId, shouldIncludeOlderDone]);
+  }, [projectId, boardQueryBody]);
 
   useEffect(() => {
     const load = async () => {
@@ -284,12 +335,22 @@ const TaskBoard = () => {
     setTypeFilter(ALL_VALUE);
   };
 
-  const toggleAssignee = (assigneeId: string) =>
+  // Picking faces and "Only my issues" are two ways to say whose cards to
+  // show, so each one clears the other rather than intersecting into a board
+  // that is empty for no visible reason.
+  const toggleAssignee = (assigneeId: string) => {
+    setIsOnlyMine(false);
     setSelectedAssigneeIds((current) =>
       current.includes(assigneeId)
         ? current.filter((id) => id !== assigneeId)
         : [...current, assigneeId],
     );
+  };
+
+  const toggleOnlyMine = () => {
+    setSelectedAssigneeIds([]);
+    setIsOnlyMine(!isOnlyMine);
+  };
 
   const membersById = useMemo(
     () =>
@@ -307,35 +368,26 @@ const TaskBoard = () => {
     [board],
   );
 
-  // Faces for the quick filter: whoever owns a card on this board, read from
-  // every loaded issue rather than the filtered ones, so a face never vanishes
-  // the moment it is picked.
+  // Faces for the quick filter: everyone who can work on the project, so the
+  // row is the same whatever is loaded or filtered, plus "Unassigned".
   const assigneeOptions = useMemo(() => {
-    const issues = board?.issues ?? [];
-    const assigneeIds = [
-      ...new Set(
-        issues
-          .map((issue) => issue.assigneeId)
-          .filter(
-            (assigneeId): assigneeId is string =>
-              typeof assigneeId === 'string' && assigneeId !== '',
-          ),
-      ),
-    ];
-    const options: TaskBoardAssigneeOption[] = assigneeIds
-      .map((assigneeId) => ({
-        id: assigneeId,
-        name: readMemberName(membersById, assigneeId, t('Unknown')),
-        avatarUrl: membersById.get(assigneeId)?.avatarUrl,
+    const assignableMembers = board?.assignableMembers ?? [];
+    const assignableById = new Map(
+      assignableMembers.map((member) => [member.id, member]),
+    );
+    const options: TaskBoardAssigneeOption[] = assignableMembers
+      .map((member) => ({
+        id: member.id,
+        name: readMemberName(assignableById, member.id, t('Unknown')),
+        avatarUrl: member.avatarUrl,
       }))
       .sort((left, right) => left.name.localeCompare(right.name));
 
-    if (issues.some((issue) => typeof issue.assigneeId !== 'string')) {
-      options.push({ id: UNASSIGNED_ASSIGNEE_VALUE, name: t('Unassigned') });
-    }
-
-    return options;
-  }, [board, membersById]);
+    return [
+      ...options,
+      { id: UNASSIGNED_ASSIGNEE_VALUE, name: t('Unassigned') },
+    ];
+  }, [board]);
 
   const statuses = useMemo(
     () =>
@@ -355,50 +407,25 @@ const TaskBoard = () => {
     [statuses],
   );
 
-  const visibleIssues = useMemo(() => {
-    // The header search never narrows the columns: it only feeds the global
-    // results popover (jump-to-issue), so typing never rearranges the board
-    // under the pointer. Column filtering is the selects' job.
-    return (board?.issues ?? []).filter((issue) => {
-      if (typeFilter !== ALL_VALUE && issue.issueType !== typeFilter) {
-        return false;
-      }
-
-      if (
-        isOnlyMine &&
-        (board?.currentWorkspaceMemberId === null ||
-          issue.assigneeId !== board?.currentWorkspaceMemberId)
-      ) {
-        return false;
-      }
-
-      if (selectedAssigneeIds.length > 0) {
-        const assigneeKey =
-          typeof issue.assigneeId === 'string'
-            ? issue.assigneeId
-            : UNASSIGNED_ASSIGNEE_VALUE;
-
-        if (!selectedAssigneeIds.includes(assigneeKey)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [board, isOnlyMine, selectedAssigneeIds, typeFilter]);
-
+  // The header search never narrows the columns: it only feeds the global
+  // results popover (jump-to-issue), so typing never rearranges the board
+  // under the pointer. The filters above already narrowed what was loaded.
   const issuesByStatus = useMemo(() => {
     const grouped = new Map<string, BoardIssue[]>();
 
-    for (const issue of visibleIssues) {
-      const key =
-        typeof issue.statusId === 'string' ? issue.statusId : NO_STATUS_VALUE;
+    for (const issue of board?.issues ?? []) {
+      const key = readColumnKey(issue.statusId);
 
       grouped.set(key, [...(grouped.get(key) ?? []), issue]);
     }
 
     return grouped;
-  }, [visibleIssues]);
+  }, [board]);
+
+  // A column's real size is the server's count, not the cards loaded so far.
+  const readColumnTotal = (columnKey: string) =>
+    board?.columnPages[columnKey]?.totalCount ??
+    (issuesByStatus.get(columnKey) ?? []).length;
 
   // Flat card order across columns, for the drawer's previous / next stepping.
   const navIssueIds = useMemo(() => {
@@ -417,13 +444,14 @@ const TaskBoard = () => {
     return ordered;
   }, [statuses, issuesByStatus]);
 
-  const doneCount = visibleIssues.filter((issue) =>
-    doneStatusIds.has(issue.statusId ?? ''),
-  ).length;
+  const totalIssueCount = [...statuses.map((status) => status.id), NO_STATUS_VALUE]
+    .map(readColumnTotal)
+    .reduce((sum, count) => sum + count, 0);
+  const doneCount = [...doneStatusIds]
+    .map(readColumnTotal)
+    .reduce((sum, count) => sum + count, 0);
   const progressPercent =
-    visibleIssues.length === 0
-      ? 0
-      : Math.round((doneCount / visibleIssues.length) * 100);
+    totalIssueCount === 0 ? 0 : Math.round((doneCount / totalIssueCount) * 100);
 
   // Optimistic like the record page's status picker: the card sits in its new
   // column before the server confirms it, and a failed write puts everything
@@ -434,8 +462,20 @@ const TaskBoard = () => {
     }
 
     const previousIssues = board.issues;
+    const previousColumnPages = board.columnPages;
     const targetStatusId =
       statusId === NO_STATUS_VALUE ? null : (statusId as string);
+    const fromColumnKey = readColumnKey(
+      board.issues.find((issue) => issue.id === issueId)?.statusId,
+    );
+    const toColumnKey = readColumnKey(targetStatusId);
+
+    setDropTargetStatusId(null);
+    setDraggingIssueId(null);
+
+    if (fromColumnKey === toColumnKey) {
+      return;
+    }
 
     setBoard({
       ...board,
@@ -444,9 +484,12 @@ const TaskBoard = () => {
           ? { ...issue, statusId: targetStatusId }
           : issue,
       ),
+      columnPages: shiftColumnTotal(
+        shiftColumnTotal(board.columnPages, fromColumnKey, -1),
+        toColumnKey,
+        1,
+      ),
     });
-    setDropTargetStatusId(null);
-    setDraggingIssueId(null);
 
     try {
       await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
@@ -454,7 +497,11 @@ const TaskBoard = () => {
         data: { statusId: targetStatusId },
       });
     } catch (error) {
-      setBoard({ ...board, issues: previousIssues });
+      setBoard({
+        ...board,
+        issues: previousIssues,
+        columnPages: previousColumnPages,
+      });
       const message = readErrorText(error);
       void enqueueSnackbar({ message, variant: 'error' });
     }
@@ -470,10 +517,18 @@ const TaskBoard = () => {
     }
 
     const previousIssues = board.issues;
+    const previousColumnPages = board.columnPages;
 
     setBoard({
       ...board,
       issues: board.issues.filter((issue) => issue.id !== issueId),
+      columnPages: shiftColumnTotal(
+        board.columnPages,
+        readColumnKey(
+          board.issues.find((issue) => issue.id === issueId)?.statusId,
+        ),
+        -1,
+      ),
     });
 
     if (selectedIssueId === issueId) {
@@ -487,7 +542,11 @@ const TaskBoard = () => {
         variant: 'success',
       });
     } catch (error) {
-      setBoard({ ...board, issues: previousIssues });
+      setBoard({
+        ...board,
+        issues: previousIssues,
+        columnPages: previousColumnPages,
+      });
       void enqueueSnackbar({
         message: readErrorText(error),
         variant: 'error',
@@ -573,14 +632,83 @@ const TaskBoard = () => {
     }
   };
 
-  // Keyed to the count the scroll saw, so a burst of scroll events while the
-  // next page renders adds one page, not one per event.
-  const showMoreCards = (statusId: string, fromCount: number) =>
-    setShownCardCountByStatus((current) =>
-      (current[statusId] ?? CARDS_PER_COLUMN_PAGE) === fromCount
-        ? { ...current, [statusId]: fromCount + CARDS_PER_COLUMN_PAGE }
-        : current,
-    );
+  // The next page of one column, as it is scrolled near its end. One request
+  // per column at a time, so a burst of scroll events fetches one page.
+  const loadMoreColumn = async (columnKey: string) => {
+    const page = board?.columnPages[columnKey];
+    const activeProjectId = board?.activeProjectId ?? null;
+
+    if (
+      page === undefined ||
+      activeProjectId === null ||
+      !page.hasNextPage ||
+      page.endCursor === null ||
+      loadingColumnKeys.includes(columnKey)
+    ) {
+      return;
+    }
+
+    const generation = boardGenerationRef.current;
+
+    setLoadingColumnKeys((current) => [...current, columnKey]);
+
+    try {
+      const result = await postAppRoute<
+        BoardColumnIssuesResponse & { success: true }
+      >(BOARD_COLUMN_ISSUES_ROUTE_PATH, {
+        ...boardQueryBody,
+        projectId: activeProjectId,
+        statusId: columnKey === NO_STATUS_VALUE ? null : columnKey,
+        after: page.endCursor,
+      });
+
+      if (generation !== boardGenerationRef.current) {
+        return;
+      }
+
+      setBoard((current) => {
+        if (current === null) {
+          return current;
+        }
+
+        // A card moved into this column by hand can come back in its pages.
+        const loadedIds = new Set(current.issues.map((issue) => issue.id));
+        const knownMemberIds = new Set(
+          current.members.map((member) => member.id),
+        );
+
+        return {
+          ...current,
+          issues: [
+            ...current.issues,
+            ...(result.issues ?? []).filter(
+              (issue) => !loadedIds.has(issue.id),
+            ),
+          ],
+          members: [
+            ...current.members,
+            ...(result.members ?? []).filter(
+              (member) => !knownMemberIds.has(member.id),
+            ),
+          ],
+          columnPages: {
+            ...current.columnPages,
+            [columnKey]: {
+              totalCount: result.totalCount,
+              endCursor: result.endCursor,
+              hasNextPage: result.hasNextPage,
+            },
+          },
+        };
+      });
+    } catch (error) {
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+    } finally {
+      setLoadingColumnKeys((current) =>
+        current.filter((key) => key !== columnKey),
+      );
+    }
+  };
 
   // No window listener reaches the sandbox, so a resize follows the pointer
   // through the columns strip itself, and ends when the button comes up
@@ -665,7 +793,7 @@ const TaskBoard = () => {
             name: status.name ?? status.id,
             color: status.color ?? null,
           })),
-          ...((issuesByStatus.get(NO_STATUS_VALUE) ?? []).length > 0
+          ...(readColumnTotal(NO_STATUS_VALUE) > 0
             ? [{ id: NO_STATUS_VALUE, name: t('No status'), color: 'gray' as string | null }]
             : []),
         ];
@@ -720,7 +848,6 @@ const TaskBoard = () => {
                 setComposerStatusId(null);
                 setSelectedAssigneeIds([]);
                 setShouldIncludeOlderDone(false);
-                setShownCardCountByStatus({});
               }}
             />
             <TaskBoardSelect
@@ -784,7 +911,7 @@ const TaskBoard = () => {
             <TaskFilterToggle
               label={t('Only my issues')}
               isActive={isOnlyMine}
-              onToggle={() => setIsOnlyMine(!isOnlyMine)}
+              onToggle={toggleOnlyMine}
             />
           )}
           <TaskBoardSelect
@@ -820,16 +947,16 @@ const TaskBoard = () => {
             }}
           >
             <span>
-              {visibleIssues.length === 1
+              {totalIssueCount === 1
                 ? `1 ${t('issue')}`
-                : `${visibleIssues.length} ${t('issues')}`}
+                : `${totalIssueCount} ${t('issues')}`}
             </span>
             <span
               title={`${progressPercent}%`}
               style={{ alignItems: 'center', display: 'inline-flex', gap: 8 }}
             >
               <span style={{ color: TASK_TOKENS.textSecondary }}>
-                {`${doneCount} / ${visibleIssues.length} ${t('done')}`}
+                {`${doneCount} / ${totalIssueCount} ${t('done')}`}
               </span>
               <span
                 style={{
@@ -879,10 +1006,11 @@ const TaskBoard = () => {
       >
         {columns.map((column, columnIndex) => {
           const cards = issuesByStatus.get(column.id) ?? [];
-          const shownCardCount =
-            shownCardCountByStatus[column.id] ?? CARDS_PER_COLUMN_PAGE;
-          const shownCards = cards.slice(0, shownCardCount);
-          const remainingCardCount = cards.length - shownCards.length;
+          const columnPage = board.columnPages[column.id];
+          const columnTotal = readColumnTotal(column.id);
+          const remainingCardCount = Math.max(0, columnTotal - cards.length);
+          const hasMoreCards = columnPage?.hasNextPage === true;
+          const isColumnLoading = loadingColumnKeys.includes(column.id);
           const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
           // Column order is the project's, shared by everyone on it.
@@ -1120,13 +1248,13 @@ const TaskBoard = () => {
                     textAlign: 'center',
                   }}
                 >
-                  {cards.length}
+                  {columnTotal}
                 </span>
               </header>
 
               <div
                 onScroll={(event) => {
-                  if (remainingCardCount <= 0) {
+                  if (!hasMoreCards) {
                     return;
                   }
 
@@ -1144,7 +1272,7 @@ const TaskBoard = () => {
                     scroller.scrollHeight > 0 &&
                     distanceToBottom < LAZY_LOAD_THRESHOLD_PX
                   ) {
-                    showMoreCards(column.id, shownCardCount);
+                    void loadMoreColumn(column.id);
                   }
                 }}
                 style={{
@@ -1176,7 +1304,7 @@ const TaskBoard = () => {
                     {t('Drop here')}
                   </span>
                 )}
-                {shownCards.map((issue) => (
+                {cards.map((issue) => (
                   <TaskBoardCard
                     key={issue.id}
                     issue={issue}
@@ -1215,25 +1343,28 @@ const TaskBoard = () => {
                   />
                 ))}
 
-                {/* Scrolling near the bottom draws the next page. The line
+                {/* Scrolling near the bottom fetches the next page. The line
                     is a click target too, for a reader on a keyboard or a
                     column the host has not measured yet. */}
-                {remainingCardCount > 0 && (
+                {hasMoreCards && (
                   <button
                     type="button"
-                    onClick={() => showMoreCards(column.id, shownCardCount)}
+                    disabled={isColumnLoading}
+                    onClick={() => void loadMoreColumn(column.id)}
                     style={{
                       background: 'transparent',
                       border: 'none',
                       color: TASK_TOKENS.textTertiary,
-                      cursor: 'pointer',
+                      cursor: isColumnLoading ? 'default' : 'pointer',
                       flexShrink: 0,
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 12,
                       padding: '6px 0',
                     }}
                   >
-                    {t('{count} more issues', { count: remainingCardCount })}
+                    {isColumnLoading
+                      ? t('Loading…')
+                      : t('{count} more issues', { count: remainingCardCount })}
                   </button>
                 )}
 
@@ -1256,98 +1387,103 @@ const TaskBoard = () => {
                     </TaskColumnFooterButton>
                   ))}
 
-                {/* Creating writes to the project, so a reader without the
-                    grant gets neither the composer nor its trigger. */}
-                {!board.canWrite ? null : composerStatusId === column.id ? (
-                  <div
-                    style={{
-                      background: TASK_TOKENS.background,
-                      border: `1px solid ${TASK_TOKENS.accent}`,
-                      borderRadius: TASK_TOKENS.radius,
-                      boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
-                      boxSizing: 'border-box',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      flexShrink: 0,
-                      gap: 8,
-                      padding: 8,
-                    }}
-                  >
-                    <TaskTextInput
-                      key={composerKey}
-                      ariaLabel={t('Issue title')}
-                      placeholder={t('What needs to be done?')}
-                      shouldAutoFocus
-                      value={composerTitle}
-                      onChange={setComposerTitle}
-                      onEnter={createIssue}
-                      onEscape={closeComposer}
-                    />
-                    <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
-                      <TaskBoardSelect
-                        ariaLabel={t('Issue type')}
-                        width={112}
-                        value={composerType}
-                        options={ISSUE_TYPE_OPTIONS.map((option) => ({
-                          value: option.value,
-                          label: option.label,
-                          color: option.color,
-                        }))}
-                        onChange={setComposerType}
-                      />
-                      <span style={{ flex: 1 }} />
-                      <TaskIconButton label={t('Cancel')} onClick={closeComposer}>
-                        <IconX size={14} />
-                      </TaskIconButton>
-                      <TaskButton
-                        size="small"
-                        variant="primary"
-                        title={t('Create (Enter)')}
-                        isDisabled={composerTitle.trim() === '' || isCreating}
-                        onClick={createIssue}
-                      >
-                        {t('Create')}
-                      </TaskButton>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setComposerStatusId(column.id);
-                      setComposerTitle('');
-                    }}
-                    onMouseEnter={() => setHoveredCreateColumnId(column.id)}
-                    onMouseLeave={() => setHoveredCreateColumnId(null)}
-                    style={{
-                      alignItems: 'center',
-                      background:
-                        hoveredCreateColumnId === column.id
-                          ? TASK_TOKENS.backgroundHover
-                          : 'transparent',
-                      border: 'none',
-                      borderRadius: TASK_TOKENS.radiusSmall,
-                      color:
-                        hoveredCreateColumnId === column.id
-                          ? TASK_TOKENS.textSecondary
-                          : TASK_TOKENS.textTertiary,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexShrink: 0,
-                      fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 13,
-                      gap: 6,
-                      justifyContent: 'flex-start',
-                      minHeight: 32,
-                      padding: '0 8px',
-                      width: '100%',
-                    }}
-                  >
-                    <IconPlus size={14} />
-                    {t('Create issue')}
-                  </button>
-                )}
               </div>
+
+              {/* Pinned under the cards rather than after the last one, so
+                  creating in a long column never means scrolling to its end. */}
+              {board.canWrite && (
+                <div style={{ flexShrink: 0, padding: '0 8px 8px 8px' }}>
+                  {composerStatusId === column.id ? (
+                    <div
+                      style={{
+                        background: TASK_TOKENS.background,
+                        border: `1px solid ${TASK_TOKENS.accent}`,
+                        borderRadius: TASK_TOKENS.radius,
+                        boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flexShrink: 0,
+                        gap: 8,
+                        padding: 8,
+                      }}
+                    >
+                      <TaskTextInput
+                        key={composerKey}
+                        ariaLabel={t('Issue title')}
+                        placeholder={t('What needs to be done?')}
+                        shouldAutoFocus
+                        value={composerTitle}
+                        onChange={setComposerTitle}
+                        onEnter={createIssue}
+                        onEscape={closeComposer}
+                      />
+                      <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
+                        <TaskBoardSelect
+                          ariaLabel={t('Issue type')}
+                          width={112}
+                          value={composerType}
+                          options={ISSUE_TYPE_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                            color: option.color,
+                          }))}
+                          onChange={setComposerType}
+                        />
+                        <span style={{ flex: 1 }} />
+                        <TaskIconButton label={t('Cancel')} onClick={closeComposer}>
+                          <IconX size={14} />
+                        </TaskIconButton>
+                        <TaskButton
+                          size="small"
+                          variant="primary"
+                          title={t('Create (Enter)')}
+                          isDisabled={composerTitle.trim() === '' || isCreating}
+                          onClick={createIssue}
+                        >
+                          {t('Create')}
+                        </TaskButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComposerStatusId(column.id);
+                        setComposerTitle('');
+                      }}
+                      onMouseEnter={() => setHoveredCreateColumnId(column.id)}
+                      onMouseLeave={() => setHoveredCreateColumnId(null)}
+                      style={{
+                        alignItems: 'center',
+                        background:
+                          hoveredCreateColumnId === column.id
+                            ? TASK_TOKENS.backgroundHover
+                            : 'transparent',
+                        border: 'none',
+                        borderRadius: TASK_TOKENS.radiusSmall,
+                        color:
+                          hoveredCreateColumnId === column.id
+                            ? TASK_TOKENS.textSecondary
+                            : TASK_TOKENS.textTertiary,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexShrink: 0,
+                        fontFamily: TASK_TOKENS.fontFamily,
+                        fontSize: 13,
+                        gap: 6,
+                        justifyContent: 'flex-start',
+                        minHeight: 32,
+                        padding: '0 8px',
+                        width: '100%',
+                      }}
+                    >
+                      <IconPlus size={14} />
+                      {t('Create issue')}
+                    </button>
+                  )}
+                </div>
+              )}
             </section>
           );
         })}

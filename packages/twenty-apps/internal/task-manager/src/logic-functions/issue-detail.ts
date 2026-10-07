@@ -14,9 +14,9 @@ import {
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DETAIL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
-import { listGrantedAppIds } from '../utils/list-granted-app-ids.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { hasAppGrant } from './app-scope/has-app-grant.util';
+import { listAppMembers } from './utils/list-app-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -137,9 +137,8 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
     // picker cannot produce a choice the write would reject.
     const canListMembers =
       typeof projectAppId === 'string' &&
-      (scope.canBypassAppScope ||
-        listGrantedAppIds(scope.grantsByAppId, 'read').includes(projectAppId));
-    const [sprints, epics, grantedMemberIds] =
+      hasAppGrant(scope, projectAppId, 'read');
+    const [sprints, epics, assignableMembers] =
       typeof issue.projectId === 'string'
         ? await Promise.all([
             listScopedRecords({
@@ -157,15 +156,8 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
               orderBy: [{ position: 'AscNullsLast' }],
             }),
             canListMembers
-              ? listScopedRecords<{ memberId: string }>({
-                  client,
-                  pluralName: 'appAccesses',
-                  filter: { appId: { eq: projectAppId } },
-                  selection: { id: true, memberId: true },
-                }).then((grants) => [
-                  ...new Set(grants.map((grant) => grant.memberId)),
-                ])
-              : Promise.resolve([] as string[]),
+              ? listAppMembers({ client, appId: projectAppId })
+              : Promise.resolve([]),
           ])
         : [[], [], []];
 
@@ -190,21 +182,6 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
             pluralName: 'merchants',
             filter: { id: { in: merchantIds } },
             selection: MERCHANT_SELECTION,
-          });
-
-    const assignableMembers =
-      grantedMemberIds.length === 0
-        ? []
-        : await listScopedRecords({
-            client,
-            pluralName: 'workspaceMembers',
-            filter: { id: { in: grantedMemberIds } },
-            selection: {
-              id: true,
-              name: { firstName: true, lastName: true },
-              userEmail: true,
-              avatarUrl: true,
-            },
           });
 
     // Names for every member the panel has to label: comment authors, worklog

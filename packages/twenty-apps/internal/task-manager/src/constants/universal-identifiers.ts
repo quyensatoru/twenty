@@ -611,3 +611,5 @@ export const TASK_BOARD_FRONT_COMPONENT_UID =
 export const TASK_BOARD_NAV_ITEM_UID = '8bf079a3-6d31-49d5-8e27-6880ecda4fae';
 export const TASK_BOARD_LOGIC_FUNCTION_UID =
   '8ea7f77e-e6cd-4580-8bdc-8ac58ffc9e56';
+export const BOARD_COLUMN_ISSUES_LOGIC_FUNCTION_UID =
+  '2b1dd369-1c28-4fa3-b78a-6ecd2418fd5d';

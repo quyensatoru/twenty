@@ -1,103 +1,160 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBoardIssueFilters } from '../build-board-issue-filters.util';
+import {
+  BOARD_UNASSIGNED_ASSIGNEE,
+  buildBoardColumnFilter,
+  buildBoardHiddenDoneFilter,
+  buildBoardScopeFilter,
+} from '../build-board-issue-filters.util';
 
 const NOW = new Date('2026-10-07T12:00:00.000Z');
 const CUTOFF = '2026-09-23T12:00:00.000Z';
 
-const STATUSES = [
-  { id: 'todo', category: 'UNSTARTED' },
-  { id: 'doing', category: 'STARTED' },
-  { id: 'golive', category: null },
-  { id: 'done', category: 'DONE' },
-];
+const BASE_QUERY = {
+  projectId: 'p1',
+  sprintId: undefined,
+  assigneeIds: [],
+  issueType: null,
+};
 
-describe('buildBoardIssueFilters', () => {
-  it('keeps open work and only recently updated done issues', () => {
-    const { visibleFilter, hiddenDoneFilter } = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: undefined,
-      statuses: STATUSES,
-      shouldIncludeOlderDone: false,
-      now: NOW,
-    });
-
-    expect(visibleFilter).toEqual({
+describe('buildBoardScopeFilter', () => {
+  it('scopes to the project alone by default', () => {
+    expect(buildBoardScopeFilter(BASE_QUERY)).toEqual({
       projectId: { eq: 'p1' },
-      or: [
-        { statusId: { in: ['todo', 'doing', 'golive'] } },
-        { statusId: { is: 'NULL' } },
-        { updatedAt: { gte: CUTOFF } },
-      ],
     });
-    expect(hiddenDoneFilter).toEqual({
+  });
+
+  it('adds the sprint scope', () => {
+    expect(
+      buildBoardScopeFilter({ ...BASE_QUERY, sprintId: null }).sprintId,
+    ).toEqual({ is: 'NULL' });
+    expect(
+      buildBoardScopeFilter({ ...BASE_QUERY, sprintId: 's1' }).sprintId,
+    ).toEqual({ eq: 's1' });
+  });
+
+  it('filters by assignees and type', () => {
+    expect(
+      buildBoardScopeFilter({
+        ...BASE_QUERY,
+        assigneeIds: ['m1', 'm2'],
+        issueType: 'BUG',
+      }),
+    ).toEqual({
+      projectId: { eq: 'p1' },
+      assigneeId: { in: ['m1', 'm2'] },
+      issueType: { eq: 'BUG' },
+    });
+  });
+
+  it('reads the unassigned pick as an empty assignee', () => {
+    expect(
+      buildBoardScopeFilter({
+        ...BASE_QUERY,
+        assigneeIds: [BOARD_UNASSIGNED_ASSIGNEE],
+      }),
+    ).toEqual({ projectId: { eq: 'p1' }, assigneeId: { is: 'NULL' } });
+
+    expect(
+      buildBoardScopeFilter({
+        ...BASE_QUERY,
+        assigneeIds: ['m1', BOARD_UNASSIGNED_ASSIGNEE],
+      }),
+    ).toEqual({
+      projectId: { eq: 'p1' },
+      or: [{ assigneeId: { in: ['m1'] } }, { assigneeId: { is: 'NULL' } }],
+    });
+  });
+});
+
+describe('buildBoardColumnFilter', () => {
+  const scopeFilter = { projectId: { eq: 'p1' } };
+
+  it('reads one open status', () => {
+    expect(
+      buildBoardColumnFilter({
+        scopeFilter,
+        statusId: 'todo',
+        isDoneStatus: false,
+        shouldIncludeOlderDone: false,
+        now: NOW,
+      }),
+    ).toEqual({ projectId: { eq: 'p1' }, statusId: { eq: 'todo' } });
+  });
+
+  it('reads the issues with no status', () => {
+    expect(
+      buildBoardColumnFilter({
+        scopeFilter,
+        statusId: null,
+        isDoneStatus: false,
+        shouldIncludeOlderDone: false,
+        now: NOW,
+      }),
+    ).toEqual({ projectId: { eq: 'p1' }, statusId: { is: 'NULL' } });
+  });
+
+  it('keeps a done column to its recent issues unless asked otherwise', () => {
+    expect(
+      buildBoardColumnFilter({
+        scopeFilter,
+        statusId: 'done',
+        isDoneStatus: true,
+        shouldIncludeOlderDone: false,
+        now: NOW,
+      }),
+    ).toEqual({
+      projectId: { eq: 'p1' },
+      statusId: { eq: 'done' },
+      updatedAt: { gte: CUTOFF },
+    });
+
+    expect(
+      buildBoardColumnFilter({
+        scopeFilter,
+        statusId: 'done',
+        isDoneStatus: true,
+        shouldIncludeOlderDone: true,
+        now: NOW,
+      }),
+    ).toEqual({ projectId: { eq: 'p1' }, statusId: { eq: 'done' } });
+  });
+});
+
+describe('buildBoardHiddenDoneFilter', () => {
+  const scopeFilter = { projectId: { eq: 'p1' } };
+
+  it('counts the done issues past the window', () => {
+    expect(
+      buildBoardHiddenDoneFilter({
+        scopeFilter,
+        doneStatusIds: ['done'],
+        shouldIncludeOlderDone: false,
+        now: NOW,
+      }),
+    ).toEqual({
       projectId: { eq: 'p1' },
       statusId: { in: ['done'] },
       updatedAt: { lt: CUTOFF },
     });
   });
 
-  it('carries the sprint scope into both filters', () => {
-    const { visibleFilter, hiddenDoneFilter } = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: null,
-      statuses: STATUSES,
-      shouldIncludeOlderDone: false,
-      now: NOW,
-    });
-
-    expect(visibleFilter.sprintId).toEqual({ is: 'NULL' });
-    expect(hiddenDoneFilter?.sprintId).toEqual({ is: 'NULL' });
-
-    const oneSprint = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: 's1',
-      statuses: STATUSES,
-      shouldIncludeOlderDone: false,
-      now: NOW,
-    });
-
-    expect(oneSprint.visibleFilter.sprintId).toEqual({ eq: 's1' });
-  });
-
-  it('loads everything when older done issues are asked for', () => {
-    const { visibleFilter, hiddenDoneFilter } = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: undefined,
-      statuses: STATUSES,
-      shouldIncludeOlderDone: true,
-      now: NOW,
-    });
-
-    expect(visibleFilter).toEqual({ projectId: { eq: 'p1' } });
-    expect(hiddenDoneFilter).toBeNull();
-  });
-
-  it('hides nothing when the project has no done status', () => {
-    const { visibleFilter, hiddenDoneFilter } = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: undefined,
-      statuses: [{ id: 'todo', category: 'UNSTARTED' }],
-      shouldIncludeOlderDone: false,
-      now: NOW,
-    });
-
-    expect(visibleFilter).toEqual({ projectId: { eq: 'p1' } });
-    expect(hiddenDoneFilter).toBeNull();
-  });
-
-  it('still shows issues without a status when every status is done', () => {
-    const { visibleFilter } = buildBoardIssueFilters({
-      projectId: 'p1',
-      sprintId: undefined,
-      statuses: [{ id: 'done', category: 'DONE' }],
-      shouldIncludeOlderDone: false,
-      now: NOW,
-    });
-
-    expect(visibleFilter.or).toEqual([
-      { statusId: { is: 'NULL' } },
-      { updatedAt: { gte: CUTOFF } },
-    ]);
+  it('hides nothing when older issues are shown or nothing is done', () => {
+    expect(
+      buildBoardHiddenDoneFilter({
+        scopeFilter,
+        doneStatusIds: ['done'],
+        shouldIncludeOlderDone: true,
+        now: NOW,
+      }),
+    ).toBeNull();
+    expect(
+      buildBoardHiddenDoneFilter({
+        scopeFilter,
+        doneStatusIds: [],
+        shouldIncludeOlderDone: false,
+        now: NOW,
+      }),
+    ).toBeNull();
   });
 });
