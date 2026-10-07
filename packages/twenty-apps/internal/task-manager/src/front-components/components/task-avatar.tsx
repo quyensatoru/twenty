@@ -5,7 +5,7 @@ import {
   type ThemeColorName,
 } from '../../utils/string-to-theme-color.util';
 import { readAvatarImageUrl } from '../utils/read-avatar-image-url.util';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskAvatarProps = {
   name: string;
@@ -37,7 +37,9 @@ export const TaskAvatar = ({
 
   const frame = {
     alignItems: 'center',
-    borderRadius: shape === 'circle' ? '50%' : Math.max(2, Math.round(size / 4)),
+    ...(shape === 'circle'
+      ? TASK_CIRCLE_STYLE
+      : { borderRadius: Math.max(2, Math.round(size / 4)) }),
     display: 'inline-flex',
     flexShrink: 0,
     height: size,

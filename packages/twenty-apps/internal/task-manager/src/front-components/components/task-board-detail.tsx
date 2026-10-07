@@ -339,7 +339,7 @@ export const TaskBoardDetail = ({
 
   if (isLoading && data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose}>
+      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
         <TaskBoardDetailSkeleton />
       </TaskBoardDetailFrame>
     );
@@ -347,7 +347,7 @@ export const TaskBoardDetail = ({
 
   if (data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose}>
+      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
         <TaskMessage
           text={loadError ?? t('This issue is not available to you.')}
           tone={loadError === null ? 'neutral' : 'danger'}
@@ -682,7 +682,7 @@ export const TaskBoardDetail = ({
   };
 
   return (
-    <TaskBoardDetailFrame onClose={onClose}>
+    <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
       <div
         style={{
           alignItems: 'center',
@@ -1494,10 +1494,23 @@ export const TaskBoardDetail = ({
 const TaskBoardDetailFrame = ({
   children,
   onClose,
+  focusKey,
 }: {
   children: React.ReactNode;
   onClose: () => void;
-}) => (
+  focusKey: string;
+}) => {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  // autoFocus is a no-op on the sandbox's custom elements, so the dialog is
+  // focused by hand: Escape only reaches onKeyDown from inside it. Stepping
+  // to another issue re-renders the header buttons and drops focus to the
+  // body, hence the key.
+  useEffect(() => {
+    dialogRef.current?.focus();
+  }, [focusKey]);
+
+  return (
   <div
     style={{
       alignItems: 'center',
@@ -1518,11 +1531,11 @@ const TaskBoardDetailFrame = ({
       }}
     />
     <div
+      ref={dialogRef}
       role="dialog"
       aria-label={t('Issue detail')}
       aria-modal="true"
       tabIndex={-1}
-      autoFocus
       onKeyDown={(event) => {
         // The wrapping overlay carries no onClose (a nested dropdown's
         // portal counts as "outside" to the host, so it would dismiss the
@@ -1553,7 +1566,8 @@ const TaskBoardDetailFrame = ({
       {children}
     </div>
   </div>
-);
+  );
+};
 
 // Shared with the record page's unified left column so both read as the same
 // Jira-style sections rather than drifting apart one edit at a time.

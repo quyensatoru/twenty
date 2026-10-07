@@ -1,3 +1,5 @@
+import { type CSSProperties } from 'react';
+
 // Twenty's own CSS variables, so every screen follows light and dark mode. The
 // fallbacks only matter when a page renders outside a Twenty host.
 export const TASK_TOKENS = {
@@ -37,6 +39,14 @@ export const TASK_TOKENS = {
   borderInverted: 'var(--t-border-color-inverted, #333333)',
   textInverted: 'var(--t-font-color-inverted, #ffffff)',
 } as const;
+
+// Twenty's theme squircles every corner (a global `corner-shape`), so a 50%
+// radius draws a rounded square. Faces and dots opt back into a true circle,
+// as twenty-ui's own Avatar does. Cast: csstype has no cornerShape yet.
+export const TASK_CIRCLE_STYLE = {
+  borderRadius: '50%',
+  cornerShape: 'round',
+} as CSSProperties;
 
 // Maps the option colours the objects declare onto readable foreground and
 // background pairs. twenty-ui's Tag cannot be used: it is base-ui backed and

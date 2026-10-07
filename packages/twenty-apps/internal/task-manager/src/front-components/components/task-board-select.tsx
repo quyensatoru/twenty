@@ -3,7 +3,7 @@ import { t } from 'twenty-sdk/front-component';
 import { IconCheck, IconChevronDown, IconSearch } from 'twenty-ui/icon';
 
 import { TASK_BARE_FIELD_STYLE } from './task-control-styles';
-import { readTagColor, TASK_TOKENS } from './task-tokens';
+import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 
 export type TaskBoardSelectOption = {
   value: string;
@@ -107,7 +107,7 @@ export const TaskBoardSelect = ({
             <span
               style={{
                 background: readTagColor(selected.color).text,
-                borderRadius: '50%',
+                ...TASK_CIRCLE_STYLE,
                 flexShrink: 0,
                 height: 8,
                 width: 8,
@@ -223,7 +223,7 @@ export const TaskBoardSelect = ({
                         <span
                           style={{
                             background: readTagColor(option.color).text,
-                            borderRadius: '50%',
+                            ...TASK_CIRCLE_STYLE,
                             flexShrink: 0,
                             height: 8,
                             width: 8,

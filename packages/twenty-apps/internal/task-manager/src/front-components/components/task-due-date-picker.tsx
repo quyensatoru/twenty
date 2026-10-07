@@ -8,7 +8,7 @@ import {
 } from 'twenty-ui/icon';
 
 import { TaskButton } from './task-button';
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskDueDatePickerProps = {
   // ISO instant, or null when no date is set yet.
@@ -193,7 +193,7 @@ export const TaskDueDatePicker = ({
                   border: isToday
                     ? `1px solid ${TASK_TOKENS.accent}`
                     : '1px solid transparent',
-                  borderRadius: '50%',
+                  ...TASK_CIRCLE_STYLE,
                   boxSizing: 'border-box',
                   color: isSelected
                     ? '#ffffff'

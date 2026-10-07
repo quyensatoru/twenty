@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 
-import { TASK_TOKENS } from './task-tokens';
+import { TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskEmptyStateProps = {
   icon: ReactNode;
@@ -38,7 +38,7 @@ export const TaskEmptyState = ({
       style={{
         alignItems: 'center',
         background: TASK_TOKENS.backgroundTertiary,
-        borderRadius: '50%',
+        ...TASK_CIRCLE_STYLE,
         color: TASK_TOKENS.textTertiary,
         display: 'flex',
         height: 32,

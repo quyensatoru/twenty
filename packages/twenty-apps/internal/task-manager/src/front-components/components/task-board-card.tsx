@@ -6,19 +6,19 @@ import {
   IconCalendarEvent,
   IconCheck,
   IconDotsVertical,
-  IconFlag,
   IconHierarchy2,
   IconSquareCheck,
   IconTrash,
+  IconUser,
 } from 'twenty-ui/icon';
 
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
-import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { ISSUE_TYPE_OPTIONS } from '../../constants/issue-type-options';
 import { type BoardIssue } from '../../types/task-board';
 import { TaskAvatar } from './task-avatar';
+import { TaskPriorityGlyph } from './task-priority-glyph';
 import { TaskTag } from './task-tag';
-import { readTagColor, TASK_TOKENS } from './task-tokens';
+import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskBoardCardProps = {
   issue: BoardIssue;
@@ -29,6 +29,7 @@ type TaskBoardCardProps = {
   }[];
   assigneeName: string | null;
   assigneeAvatarUrl?: string | null;
+  epicName: string | null;
   isDone: boolean;
   isSelected: boolean;
   isDragging: boolean;
@@ -98,8 +99,29 @@ const readIsOverdue = (
   return parsed.getTime() < today.getTime();
 };
 
-// One Jira card: key and type on the top line, title, labels, then a footer of
-// priority, points, due date and owner.
+// The unassigned slot keeps its place in the footer, so every card lines up
+// and "nobody owns this" reads at a glance, the way Jira draws it.
+const UnassignedAvatar = ({ size }: { size: number }) => (
+  <span
+    title={t('Unassigned')}
+    style={{
+      alignItems: 'center',
+      border: `1px dashed ${TASK_TOKENS.borderStrong}`,
+      ...TASK_CIRCLE_STYLE,
+      boxSizing: 'border-box',
+      display: 'inline-flex',
+      flexShrink: 0,
+      height: size,
+      justifyContent: 'center',
+      width: size,
+    }}
+  >
+    <IconUser size={Math.round(size * 0.6)} color={TASK_TOKENS.textLight} />
+  </span>
+);
+
+// One Jira card: the title first, then epic and labels, then a footer of type,
+// key and due date on the left and points, priority and owner on the right.
 //
 // Only the main area opens the detail drawer — the hover menu beside it must
 // stay OUTSIDE that click target. A nested button with stopPropagation reads
@@ -111,6 +133,7 @@ export const TaskBoardCard = ({
   statusOptions,
   assigneeName,
   assigneeAvatarUrl,
+  epicName,
   isDone,
   isSelected,
   isDragging,
@@ -128,14 +151,12 @@ export const TaskBoardCard = ({
   // closes, so a stale arm can never survive to the next open.
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  const priorityOption = ISSUE_PRIORITY_OPTIONS.find(
-    (candidate) => candidate.value === issue.priority,
-  );
   const dueLabel = readShortDate(issue.dueDate);
   const isOverdue = readIsOverdue(issue.dueDate, isDone);
   const labelOptions = (issue.labels ?? []).slice(0, 2);
   const extraLabelCount = (issue.labels ?? []).length - labelOptions.length;
   const tooltip = `${issue.issueKey ?? ''} ${issue.title ?? ''}`.trim();
+  const hasTags = epicName !== null || labelOptions.length > 0;
 
   return (
     <div
@@ -164,16 +185,19 @@ export const TaskBoardCard = ({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         background: TASK_TOKENS.background,
-        border: `1px solid ${isSelected ? TASK_TOKENS.accent : isDone ? readTagColor('green').text : TASK_TOKENS.border}`,
+        border: `1px solid ${isSelected ? TASK_TOKENS.accent : isHovered ? TASK_TOKENS.borderStrong : TASK_TOKENS.border}`,
         borderRadius: TASK_TOKENS.radius,
-        boxShadow: isHovered && !isDragging ? TASK_TOKENS.shadowLight : 'none',
+        boxShadow: isSelected
+          ? `0 0 0 1px ${TASK_TOKENS.accent}`
+          : isHovered && !isDragging
+            ? TASK_TOKENS.shadowLight
+            : 'none',
         boxSizing: 'border-box',
-        cursor: 'pointer',
+        cursor: isDragging ? 'grabbing' : 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        flexShrink: 0,
         opacity: isDragging ? 0.4 : 1,
-        padding: '8px 10px',
         position: 'relative',
         width: '100%',
       }}
@@ -187,182 +211,185 @@ export const TaskBoardCard = ({
           background: 'transparent',
           border: 'none',
           color: 'inherit',
-          cursor: 'pointer',
+          cursor: 'inherit',
           display: 'flex',
           flexDirection: 'column',
           fontFamily: TASK_TOKENS.fontFamily,
-          gap: 6,
+          gap: 8,
           margin: 0,
-          padding: 0,
+          padding: '10px 12px',
           textAlign: 'left',
           width: '100%',
         }}
       >
-      <div
-        style={{
-          alignItems: 'center',
-          display: 'flex',
-          gap: 6,
-          paddingRight: 24,
-          width: '100%',
-        }}
-      >
-        <span style={{ display: 'inline-flex', flexShrink: 0 }}>
-          <IssueTypeGlyph issueType={issue.issueType ?? null} />
-        </span>
         <span
           style={{
-            color: TASK_TOKENS.textTertiary,
-            flex: 1,
+            color: TASK_TOKENS.textPrimary,
+            display: '-webkit-box',
             fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 0.2,
-            minWidth: 0,
+            fontSize: 13,
+            lineHeight: '18px',
+            maxHeight: 54,
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            overflowWrap: 'anywhere',
+            paddingRight: 20,
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 3,
           }}
         >
-          {issue.issueKey ?? ''}
+          {issue.title ?? t('(No title)')}
         </span>
-        {isDone && (
+
+        {hasTags && (
+          <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {epicName !== null && (
+              <TaskTag color="purple">{epicName}</TaskTag>
+            )}
+            {labelOptions.map((label) => {
+              const option = ISSUE_LABEL_OPTIONS.find(
+                (candidate) => candidate.value === label,
+              );
+
+              return (
+                <TaskTag key={label} color={option?.color ?? 'gray'}>
+                  {option?.label ?? label}
+                </TaskTag>
+              );
+            })}
+            {extraLabelCount > 0 && (
+              <span
+                style={{
+                  alignSelf: 'center',
+                  color: TASK_TOKENS.textTertiary,
+                  fontFamily: TASK_TOKENS.fontFamily,
+                  fontSize: 11,
+                }}
+              >
+                +{extraLabelCount}
+              </span>
+            )}
+          </span>
+        )}
+
+        <span
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            gap: 6,
+            minHeight: 22,
+            width: '100%',
+          }}
+        >
           <span
-            title={t('Done')}
+            title={
+              ISSUE_TYPE_OPTIONS.find(
+                (candidate) => candidate.value === issue.issueType,
+              )?.label
+            }
             style={{ display: 'inline-flex', flexShrink: 0 }}
           >
-            <IconCheck size={14} color={readTagColor('green').text} />
+            <IssueTypeGlyph issueType={issue.issueType ?? null} />
           </span>
-        )}
-      </div>
-
-      <span
-        style={{
-          color: isDone ? TASK_TOKENS.textTertiary : TASK_TOKENS.textPrimary,
-          display: '-webkit-box',
-          fontFamily: TASK_TOKENS.fontFamily,
-          fontSize: 13,
-          lineHeight: '18px',
-          maxHeight: 36,
-          overflow: 'hidden',
-          overflowWrap: 'anywhere',
-          textDecoration: isDone ? 'line-through' : 'none',
-          WebkitBoxOrient: 'vertical',
-          WebkitLineClamp: 2,
-        }}
-      >
-        {issue.title ?? t('(No title)')}
-      </span>
-
-      {(labelOptions.length > 0 || extraLabelCount > 0) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {labelOptions.map((label) => {
-            const option = ISSUE_LABEL_OPTIONS.find(
-              (candidate) => candidate.value === label,
-            );
-
-            return (
-              <TaskTag key={label} color={option?.color ?? 'gray'}>
-                {option?.label ?? label}
-              </TaskTag>
-            );
-          })}
-          {extraLabelCount > 0 && (
-            <span
-              style={{
-                color: TASK_TOKENS.textTertiary,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 11,
-              }}
-            >
-              +{extraLabelCount}
+          <span
+            style={{
+              color: TASK_TOKENS.textTertiary,
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 12,
+              fontWeight: 500,
+              minWidth: 0,
+              overflow: 'hidden',
+              // Jira strikes the key, not the title, once the work is done:
+              // the card stays readable while its state still shows.
+              textDecoration: isDone ? 'line-through' : 'none',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {issue.issueKey ?? ''}
+          </span>
+          {isDone && (
+            <span title={t('Done')} style={{ display: 'inline-flex', flexShrink: 0 }}>
+              <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
             </span>
           )}
-        </div>
-      )}
-
-      <div
-        style={{
-          alignItems: 'center',
-          display: 'flex',
-          gap: 6,
-          width: '100%',
-        }}
-      >
-        {priorityOption !== undefined && (
-          <span title={priorityOption.label} style={{ display: 'inline-flex' }}>
-            <IconFlag
-              size={14}
-              color={readTagColor(priorityOption.color).text}
+          {dueLabel !== null && (
+            <span
+              title={isOverdue ? t('Overdue') : t('Due date')}
+              style={{
+                alignItems: 'center',
+                background: isOverdue
+                  ? readTagColor('red').background
+                  : 'transparent',
+                borderRadius: TASK_TOKENS.radiusExtraSmall,
+                color: isOverdue
+                  ? TASK_TOKENS.textDanger
+                  : TASK_TOKENS.textSecondary,
+                display: 'inline-flex',
+                flexShrink: 0,
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 11,
+                fontWeight: isOverdue ? 600 : 400,
+                gap: 2,
+                height: 18,
+                padding: isOverdue ? '0 4px' : 0,
+              }}
+            >
+              <IconCalendarEvent
+                size={12}
+                color={
+                  isOverdue ? TASK_TOKENS.textDanger : TASK_TOKENS.textTertiary
+                }
+              />
+              {dueLabel}
+            </span>
+          )}
+          <span style={{ flex: 1 }} />
+          {typeof issue.storyPoints === 'number' && (
+            <span
+              title={t('Story points')}
+              style={{
+                alignItems: 'center',
+                background: TASK_TOKENS.backgroundTertiary,
+                borderRadius: 10,
+                color: TASK_TOKENS.textSecondary,
+                display: 'inline-flex',
+                flexShrink: 0,
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 11,
+                fontWeight: 600,
+                height: 18,
+                justifyContent: 'center',
+                minWidth: 18,
+                padding: '0 6px',
+              }}
+            >
+              {issue.storyPoints}
+            </span>
+          )}
+          <TaskPriorityGlyph priority={issue.priority} />
+          {assigneeName !== null ? (
+            <TaskAvatar
+              name={assigneeName}
+              avatarUrl={assigneeAvatarUrl}
+              size={22}
             />
-          </span>
-        )}
-        {typeof issue.storyPoints === 'number' && (
-          <span
-            title={t('Story points')}
-            style={{
-              alignItems: 'center',
-              background: TASK_TOKENS.backgroundTertiary,
-              borderRadius: 10,
-              color: TASK_TOKENS.textSecondary,
-              display: 'inline-flex',
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 11,
-              fontWeight: 600,
-              height: 20,
-              justifyContent: 'center',
-              minWidth: 20,
-              padding: '0 6px',
-            }}
-          >
-            {issue.storyPoints}
-          </span>
-        )}
-        {dueLabel !== null && (
-          <span
-            title={issue.dueDate ?? ''}
-            style={{
-              alignItems: 'center',
-              color: isOverdue
-                ? TASK_TOKENS.textDanger
-                : TASK_TOKENS.textSecondary,
-              display: 'inline-flex',
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 11,
-              fontWeight: isOverdue ? 600 : 400,
-              gap: 2,
-            }}
-          >
-            <IconCalendarEvent
-              size={12}
-              color={
-                isOverdue ? TASK_TOKENS.textDanger : TASK_TOKENS.textTertiary
-              }
-            />
-            {dueLabel}
-          </span>
-        )}
-        <span style={{ flex: 1 }} />
-        {assigneeName !== null && (
-          <TaskAvatar
-            name={assigneeName}
-            avatarUrl={assigneeAvatarUrl}
-            size={22}
-          />
-        )}
-      </div>
+          ) : (
+            <UnassignedAvatar size={22} />
+          )}
+        </span>
       </button>
       <span
         style={{
           display: isHovered || isMoveOpen ? 'inline-flex' : 'none',
           position: 'absolute',
-          right: 4,
-          top: 4,
+          right: 6,
+          top: 6,
         }}
       >
           <button
             type="button"
-            aria-label={t('Move to status')}
+            aria-label={t('Card actions')}
+            title={t('Card actions')}
             onClick={() => setIsMoveOpen(!isMoveOpen)}
             style={{
               alignItems: 'center',
@@ -400,6 +427,19 @@ export const TaskBoardCard = ({
                   width: 200,
                 }}
               >
+                <span
+                  style={{
+                    color: TASK_TOKENS.textTertiary,
+                    display: 'block',
+                    fontFamily: TASK_TOKENS.fontFamily,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '6px 8px 4px 8px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {t('Move to')}
+                </span>
                 {statusOptions.map((status) => (
                   <button
                     key={status.value}
@@ -425,7 +465,6 @@ export const TaskBoardCard = ({
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 13,
                       gap: 8,
-                      justifyContent: 'space-between',
                       minHeight: 32,
                       padding: '0 8px',
                       textAlign: 'left',
@@ -434,6 +473,16 @@ export const TaskBoardCard = ({
                   >
                     <span
                       style={{
+                        background: readTagColor(status.color).text,
+                        ...TASK_CIRCLE_STYLE,
+                        flexShrink: 0,
+                        height: 8,
+                        width: 8,
+                      }}
+                    />
+                    <span
+                      style={{
+                        flex: 1,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',

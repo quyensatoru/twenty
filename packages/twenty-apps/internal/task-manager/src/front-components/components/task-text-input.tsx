@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { useStableFieldValue } from '../hooks/use-stable-field-value';
 import { getTaskControlStyle, TASK_BARE_FIELD_STYLE } from './task-control-styles';
@@ -13,6 +13,7 @@ type TaskTextInputProps = {
   prefixIcon?: ReactNode;
   suffix?: ReactNode;
   onEnter?: () => void;
+  onEscape?: () => void;
   onBlur?: () => void;
   shouldAutoFocus?: boolean;
   width?: number | string;
@@ -28,6 +29,7 @@ export const TaskTextInput = ({
   prefixIcon,
   suffix,
   onEnter,
+  onEscape,
   onBlur,
   shouldAutoFocus = false,
   width = '100%',
@@ -35,6 +37,15 @@ export const TaskTextInput = ({
 }: TaskTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const { fieldValue, fieldKey, report } = useStableFieldValue(value);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // The sandbox renders custom elements, on which React's autoFocus is a
+  // no-op, so focus is requested by hand. fieldKey remounts the input.
+  useEffect(() => {
+    if (shouldAutoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [shouldAutoFocus, fieldKey]);
 
   return (
     <div
@@ -51,11 +62,11 @@ export const TaskTextInput = ({
       {prefixIcon}
       <input
         key={fieldKey}
+        ref={inputRef}
         aria-label={ariaLabel}
         type={type}
         value={fieldValue}
         placeholder={placeholder}
-        autoFocus={shouldAutoFocus}
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
           setIsFocused(false);
@@ -64,6 +75,10 @@ export const TaskTextInput = ({
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             onEnter?.();
+          } else if (event.key === 'Escape' && onEscape !== undefined) {
+            // Keeps a surrounding modal open: Escape cancels this field only.
+            event.stopPropagation();
+            onEscape();
           }
         }}
         onChange={(event) => {

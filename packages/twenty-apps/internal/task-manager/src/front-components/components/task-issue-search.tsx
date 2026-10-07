@@ -29,6 +29,9 @@ type TaskIssueSearchProps = {
   // slash in a comment never yanks focus back to the board.
   isShortcutEnabled: boolean;
   maxWidth?: number | string;
+  // `large` is the board header's search: taller, raised off the header so it
+  // reads as the page's main entry point rather than one more filter.
+  size?: 'medium' | 'large';
   placeholder?: string;
   // Rows that must never be offered: linking them would loop the tree (the
   // issue itself, its current children, its parent). The server takes any
@@ -50,6 +53,7 @@ type SearchState = {
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
 const INPUT_HEIGHT = 36;
+const LARGE_INPUT_HEIGHT = 40;
 // Falls back to this when the search width is fluid (a "100%" maxWidth the
 // popover cannot measure — it lives in a body portal, not under the field).
 const POPOVER_WIDTH = 480;
@@ -64,6 +68,7 @@ export const TaskIssueSearch = ({
   onSelectIssue,
   isShortcutEnabled,
   maxWidth = 520,
+  size = 'medium',
   placeholder,
   excludeIds,
   onCreateNew,
@@ -84,6 +89,7 @@ export const TaskIssueSearch = ({
   const requestIdRef = useRef(0);
 
   const query = value.trim();
+  const isLarge = size === 'large';
   const isQualified = query.length >= MIN_QUERY_LENGTH;
 
   useEffect(() => {
@@ -217,9 +223,24 @@ export const TaskIssueSearch = ({
           height: INPUT_HEIGHT,
           padding: '0 8px',
           width: '100%',
+          ...(isLarge && {
+            background: TASK_TOKENS.background,
+            borderColor: isFocused ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong,
+            boxShadow: isFocused
+              ? `0 0 0 3px ${TASK_TOKENS.accentSoft}`
+              : TASK_TOKENS.shadowLight,
+            fontSize: 14,
+            height: LARGE_INPUT_HEIGHT,
+            padding: '0 12px',
+          }),
         }}
       >
-        <IconSearch size={15} color={TASK_TOKENS.textTertiary} />
+        <IconSearch
+          size={isLarge ? 16 : 15}
+          color={
+            isLarge && isFocused ? TASK_TOKENS.accent : TASK_TOKENS.textTertiary
+          }
+        />
         <input
           ref={inputRef}
           aria-label={ariaLabel ?? t('Search all issues')}
@@ -273,7 +294,11 @@ export const TaskIssueSearch = ({
               close();
             }
           }}
-          style={{ ...TASK_BARE_FIELD_STYLE, height: '100%' }}
+          style={{
+            ...TASK_BARE_FIELD_STYLE,
+            fontSize: isLarge ? 14 : TASK_BARE_FIELD_STYLE.fontSize,
+            height: '100%',
+          }}
         />
         {value === '' ? (
           <KbdHint label="/" />

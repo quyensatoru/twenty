@@ -5,7 +5,7 @@ import {
   t,
   useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
-import { IconPlus } from 'twenty-ui/icon';
+import { IconCheck, IconFilterOff, IconPlus, IconX } from 'twenty-ui/icon';
 
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
@@ -20,16 +20,23 @@ import {
   type BoardIssue,
   type BoardMember,
 } from '../types/task-board';
+import {
+  TaskBoardAssigneeFilter,
+  type TaskBoardAssigneeOption,
+  UNASSIGNED_ASSIGNEE_VALUE,
+} from './components/task-board-assignee-filter';
 import { TaskBoardCard } from './components/task-board-card';
 import { TaskBoardDetail } from './components/task-board-detail';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { TaskButton } from './components/task-button';
+import { TaskFilterToggle } from './components/task-filter-toggle';
+import { TaskIconButton } from './components/task-icon-button';
 import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTextInput } from './components/task-text-input';
-import { readTagColor, TASK_TOKENS } from './components/task-tokens';
+import { readTagColor, TASK_CIRCLE_STYLE, TASK_TOKENS } from './components/task-tokens';
 import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
@@ -37,7 +44,6 @@ import { readMemberName } from './utils/read-member-name.util';
 
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
-const ME_VALUE = 'ME';
 const NO_STATUS_VALUE = 'NO_STATUS';
 const COLUMN_MIN_WIDTH = 272;
 
@@ -70,7 +76,10 @@ const TaskBoard = () => {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [sprintFilter, setSprintFilter] = useState<string>(ALL_VALUE);
   const [search, setSearch] = useState('');
-  const [assigneeFilter, setAssigneeFilter] = useState<string>(ALL_VALUE);
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
+    [],
+  );
+  const [isOnlyMine, setIsOnlyMine] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
   // A board deep link decides the opening modal, so a pasted link lands on
   // the issue it is about. It is the INITIAL value only: the reader keeps
@@ -85,7 +94,14 @@ const TaskBoard = () => {
   const [composerStatusId, setComposerStatusId] = useState<string | null>(null);
   const [composerTitle, setComposerTitle] = useState('');
   const [composerType, setComposerType] = useState<string>('TASK');
+  // Bumped after each create: the title field only takes an outside reset on
+  // remount (see useStableFieldValue), and the composer stays open for the
+  // next title the way Jira's inline create does.
+  const [composerKey, setComposerKey] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [hoveredCreateColumnId, setHoveredCreateColumnId] = useState<
+    string | null
+  >(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const sprintId =
@@ -154,15 +170,24 @@ const TaskBoard = () => {
   const isFiltered =
     search.trim() !== '' ||
     sprintFilter !== ALL_VALUE ||
-    assigneeFilter !== ALL_VALUE ||
+    selectedAssigneeIds.length > 0 ||
+    isOnlyMine ||
     typeFilter !== ALL_VALUE;
 
   const resetFilters = () => {
     setSearch('');
     setSprintFilter(ALL_VALUE);
-    setAssigneeFilter(ALL_VALUE);
+    setSelectedAssigneeIds([]);
+    setIsOnlyMine(false);
     setTypeFilter(ALL_VALUE);
   };
+
+  const toggleAssignee = (assigneeId: string) =>
+    setSelectedAssigneeIds((current) =>
+      current.includes(assigneeId)
+        ? current.filter((id) => id !== assigneeId)
+        : [...current, assigneeId],
+    );
 
   const membersById = useMemo(
     () =>
@@ -171,6 +196,44 @@ const TaskBoard = () => {
       ),
     [board],
   );
+
+  const epicNamesById = useMemo(
+    () =>
+      new Map(
+        (board?.epics ?? []).map((epic) => [epic.id, epic.name ?? epic.id]),
+      ),
+    [board],
+  );
+
+  // Faces for the quick filter: whoever owns a card on this board, read from
+  // every loaded issue rather than the filtered ones, so a face never vanishes
+  // the moment it is picked.
+  const assigneeOptions = useMemo(() => {
+    const issues = board?.issues ?? [];
+    const assigneeIds = [
+      ...new Set(
+        issues
+          .map((issue) => issue.assigneeId)
+          .filter(
+            (assigneeId): assigneeId is string =>
+              typeof assigneeId === 'string' && assigneeId !== '',
+          ),
+      ),
+    ];
+    const options: TaskBoardAssigneeOption[] = assigneeIds
+      .map((assigneeId) => ({
+        id: assigneeId,
+        name: readMemberName(membersById, assigneeId, t('Unknown')),
+        avatarUrl: membersById.get(assigneeId)?.avatarUrl,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    if (issues.some((issue) => typeof issue.assigneeId !== 'string')) {
+      options.push({ id: UNASSIGNED_ASSIGNEE_VALUE, name: t('Unassigned') });
+    }
+
+    return options;
+  }, [board, membersById]);
 
   const statuses = useMemo(
     () =>
@@ -199,23 +262,28 @@ const TaskBoard = () => {
         return false;
       }
 
-      if (assigneeFilter === ME_VALUE) {
-        if (
-          board?.currentWorkspaceMemberId === null ||
-          issue.assigneeId !== board?.currentWorkspaceMemberId
-        ) {
-          return false;
-        }
-      } else if (
-        assigneeFilter !== ALL_VALUE &&
-        issue.assigneeId !== assigneeFilter
+      if (
+        isOnlyMine &&
+        (board?.currentWorkspaceMemberId === null ||
+          issue.assigneeId !== board?.currentWorkspaceMemberId)
       ) {
         return false;
       }
 
+      if (selectedAssigneeIds.length > 0) {
+        const assigneeKey =
+          typeof issue.assigneeId === 'string'
+            ? issue.assigneeId
+            : UNASSIGNED_ASSIGNEE_VALUE;
+
+        if (!selectedAssigneeIds.includes(assigneeKey)) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [board, assigneeFilter, typeFilter]);
+  }, [board, isOnlyMine, selectedAssigneeIds, typeFilter]);
 
   const issuesByStatus = useMemo(() => {
     const grouped = new Map<string, BoardIssue[]>();
@@ -346,7 +414,7 @@ const TaskBoard = () => {
         },
       });
       setComposerTitle('');
-      setComposerStatusId(null);
+      setComposerKey((key) => key + 1);
       refreshBoard();
       void enqueueSnackbar({ message: t('Issue created.'), variant: 'success' });
     } catch (error) {
@@ -359,9 +427,10 @@ const TaskBoard = () => {
     }
   };
 
-  const activeProject = (board?.projects ?? []).find(
-    (project) => project.id === (projectId ?? board?.activeProjectId),
-  );
+  const closeComposer = () => {
+    setComposerStatusId(null);
+    setComposerTitle('');
+  };
 
   const statusOptions = statuses.map((status) => ({
     value: status.id,
@@ -416,102 +485,107 @@ const TaskBoard = () => {
     <TaskBoardFrame>
       <div
         style={{
-          alignItems: 'stretch',
           background: TASK_TOKENS.background,
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
-          gap: 6,
-          padding: '12px 20px 8px 20px',
+          gap: 10,
+          padding: '12px 20px 12px 20px',
         }}
       >
         <div
           style={{
             alignItems: 'center',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8,
+            columnGap: 16,
+            display: 'grid',
+            // Equal outer tracks keep the search centred on the board itself,
+            // whatever the pickers on the left and the button on the right
+            // measure; max-content stops either side from being squeezed.
+            gridTemplateColumns:
+              'minmax(max-content, 1fr) minmax(240px, 560px) minmax(max-content, 1fr)',
           }}
         >
-        <div
-          style={{
-            alignItems: 'center',
-            display: 'flex',
-            flexShrink: 0,
-            gap: 8,
-          }}
-        >
-          <TaskBoardSelect
-            ariaLabel={t('Project')}
-            width={170}
-            value={projectId ?? board.activeProjectId ?? ''}
-            options={board.projects.map((project) => ({
-              value: project.id,
-              label:
-                typeof project.key === 'string' && project.key !== ''
-                  ? `${project.name ?? project.id} (${project.key})`
-                  : (project.name ?? project.id),
-            }))}
-            onChange={(value) => {
-              setProjectId(value);
-              setSelectedIssueId(null);
-              setComposerStatusId(null);
-            }}
-          />
-          <TaskBoardSelect
-            ariaLabel={t('Sprint')}
-            width={140}
-            value={sprintFilter}
-            options={[
-              { value: ALL_VALUE, label: t('All sprints') },
-              { value: BACKLOG_VALUE, label: t('Backlog') },
-              ...board.sprints.map((sprint) => ({
-                value: sprint.id,
-                label: sprint.name ?? sprint.id,
-              })),
-            ]}
-            onChange={(value) => setSprintFilter(value)}
-          />
-        </div>
-          <div
-            style={{
-              display: 'flex',
-              flex: 1,
-              justifyContent: 'center',
-              minWidth: 200,
-            }}
-          >
+          <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+            <TaskBoardSelect
+              ariaLabel={t('Project')}
+              width={190}
+              value={projectId ?? board.activeProjectId ?? ''}
+              options={board.projects.map((project) => ({
+                value: project.id,
+                label:
+                  typeof project.key === 'string' && project.key !== ''
+                    ? `${project.name ?? project.id} (${project.key})`
+                    : (project.name ?? project.id),
+              }))}
+              onChange={(value) => {
+                setProjectId(value);
+                setSelectedIssueId(null);
+                setComposerStatusId(null);
+                setSelectedAssigneeIds([]);
+              }}
+            />
+            <TaskBoardSelect
+              ariaLabel={t('Sprint')}
+              width={150}
+              value={sprintFilter}
+              options={[
+                { value: ALL_VALUE, label: t('All sprints') },
+                { value: BACKLOG_VALUE, label: t('Backlog') },
+                ...board.sprints.map((sprint) => ({
+                  value: sprint.id,
+                  label:
+                    sprint.state === 'ACTIVE'
+                      ? `${sprint.name ?? sprint.id} · ${t('Active')}`
+                      : (sprint.name ?? sprint.id),
+                })),
+              ]}
+              onChange={(value) => setSprintFilter(value)}
+            />
+          </div>
           <TaskIssueSearch
             value={search}
             onChange={setSearch}
             onSelectIssue={selectSearchResult}
             isShortcutEnabled={selectedIssueId === null}
             maxWidth={560}
+            size="large"
+            placeholder={t('Search issues by key or title…')}
           />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <TaskButton
+              variant="primary"
+              isDisabled={statuses.length === 0}
+              onClick={() => {
+                setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
+                setComposerTitle('');
+              }}
+            >
+              <IconPlus size={14} />
+              {t('Create issue')}
+            </TaskButton>
+          </div>
         </div>
         <div
           style={{
             alignItems: 'center',
             display: 'flex',
-            flexShrink: 0,
             flexWrap: 'wrap',
-            gap: 8,
+            gap: 12,
+            minHeight: 32,
           }}
         >
-          <TaskBoardSelect
-            ariaLabel={t('Assignee')}
-            width={140}
-            value={assigneeFilter}
-            options={[
-              { value: ALL_VALUE, label: t('All assignees') },
-              { value: ME_VALUE, label: t('Only my issues') },
-              ...board.members.map((member) => ({
-                value: member.id,
-                label: readMemberName(membersById, member.id, member.id),
-              })),
-            ]}
-            onChange={(value) => setAssigneeFilter(value)}
+          <TaskBoardAssigneeFilter
+            options={assigneeOptions}
+            selectedIds={selectedAssigneeIds}
+            onToggle={toggleAssignee}
           />
+          {board.currentWorkspaceMemberId !== null && (
+            <TaskFilterToggle
+              label={t('Only my issues')}
+              isActive={isOnlyMine}
+              onToggle={() => setIsOnlyMine(!isOnlyMine)}
+            />
+          )}
           <TaskBoardSelect
             ariaLabel={t('Type')}
             width={130}
@@ -526,101 +600,59 @@ const TaskBoard = () => {
             ]}
             onChange={(value) => setTypeFilter(value)}
           />
-          <TaskButton
-            variant="primary"
-            isDisabled={statuses.length === 0}
-            onClick={() => {
-              setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
-              setComposerTitle('');
-            }}
-          >
-            <IconPlus size={14} />
-            {t('Create')}
-          </TaskButton>
-          </div>
-        </div>
-        <div
-          style={{
-            alignItems: 'center',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8,
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-        >
+          {isFiltered && (
+            <TaskButton variant="ghost" onClick={resetFilters}>
+              <IconFilterOff size={14} />
+              {t('Clear filters')}
+            </TaskButton>
+          )}
+          <span style={{ flex: 1 }} />
           <span
             style={{
               alignItems: 'center',
+              color: TASK_TOKENS.textTertiary,
               display: 'inline-flex',
-              gap: 8,
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 12,
+              gap: 10,
+              whiteSpace: 'nowrap',
             }}
           >
-            <span
-              style={{
-                color: TASK_TOKENS.textTertiary,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 12,
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <span>
               {visibleIssues.length === 1
                 ? `1 ${t('issue')}`
                 : `${visibleIssues.length} ${t('issues')}`}
             </span>
-            {isFiltered && (
-              <TaskButton size="small" variant="ghost" onClick={resetFilters}>
-                {t('Reset')}
-              </TaskButton>
-            )}
-          </span>
-          <span
-            style={{
-              alignItems: 'center',
-              display: 'inline-flex',
-              gap: 8,
-            }}
-          >
-          {typeof activeProject?.key === 'string' && (
             <span
-              style={{
-                color: TASK_TOKENS.textTertiary,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 12,
-                fontWeight: 600,
-              }}
+              title={`${progressPercent}%`}
+              style={{ alignItems: 'center', display: 'inline-flex', gap: 8 }}
             >
-              {activeProject.key}
+              <span style={{ color: TASK_TOKENS.textSecondary }}>
+                {`${doneCount} / ${visibleIssues.length} ${t('done')}`}
+              </span>
+              <span
+                style={{
+                  background: TASK_TOKENS.backgroundTertiary,
+                  borderRadius: 4,
+                  display: 'inline-flex',
+                  height: 6,
+                  overflow: 'hidden',
+                  width: 120,
+                }}
+              >
+                <span
+                  style={{
+                    background: readTagColor('green').text,
+                    display: 'block',
+                    height: '100%',
+                    width: `${progressPercent}%`,
+                  }}
+                />
+              </span>
+              <span style={{ fontWeight: 600, minWidth: 32 }}>
+                {`${progressPercent}%`}
+              </span>
             </span>
-          )}
-          <span
-            style={{
-              color: TASK_TOKENS.textSecondary,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 12,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {`${doneCount} / ${visibleIssues.length} ${t('done')}`}
-          </span>
-          <span
-            style={{
-              background: TASK_TOKENS.backgroundTertiary,
-              borderRadius: 4,
-              height: 6,
-              overflow: 'hidden',
-              width: 120,
-            }}
-          >
-            <span
-              style={{
-                background: TASK_TOKENS.accent,
-                display: 'block',
-                height: '100%',
-                width: `${progressPercent}%`,
-              }}
-            />
-          </span>
           </span>
         </div>
       </div>
@@ -700,7 +732,7 @@ const TaskBoard = () => {
                 <span
                   style={{
                     background: readTagColor(column.color).text,
-                    borderRadius: '50%',
+                    ...TASK_CIRCLE_STYLE,
                     flexShrink: 0,
                     height: 8,
                     width: 8,
@@ -723,6 +755,11 @@ const TaskBoard = () => {
                 >
                   {column.name}
                 </span>
+                {doneStatusIds.has(column.id) && (
+                  <span title={t('Done')} style={{ display: 'inline-flex', flexShrink: 0 }}>
+                    <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
+                  </span>
+                )}
                 <span
                   style={{
                     background: TASK_TOKENS.backgroundTertiary,
@@ -751,21 +788,22 @@ const TaskBoard = () => {
                   padding: '4px 8px 8px 8px',
                 }}
               >
-                {cards.length === 0 && composerStatusId !== column.id && (
+                {cards.length === 0 && draggingIssueId !== null && (
                   <span
                     style={{
-                      border: `1px dashed ${TASK_TOKENS.borderStrong}`,
+                      border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
                       borderRadius: TASK_TOKENS.radius,
-                      color: TASK_TOKENS.textTertiary,
+                      color: isDropTarget
+                        ? TASK_TOKENS.accent
+                        : TASK_TOKENS.textTertiary,
+                      flexShrink: 0,
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 12,
-                      padding: '12px 8px',
+                      padding: '16px 8px',
                       textAlign: 'center',
                     }}
                   >
-                    {draggingIssueId !== null
-                      ? t('Drop here')
-                      : t('No issues')}
+                    {t('Drop here')}
                   </span>
                 )}
                 {cards.map((issue) => (
@@ -785,6 +823,11 @@ const TaskBoard = () => {
                     }
                     assigneeAvatarUrl={
                       membersById.get(issue.assigneeId ?? '')?.avatarUrl
+                    }
+                    epicName={
+                      typeof issue.epicId === 'string'
+                        ? (epicNamesById.get(issue.epicId) ?? null)
+                        : null
                     }
                     isDone={doneStatusIds.has(issue.statusId ?? '')}
                     isSelected={selectedIssueId === issue.id}
@@ -806,45 +849,45 @@ const TaskBoard = () => {
                       background: TASK_TOKENS.background,
                       border: `1px solid ${TASK_TOKENS.accent}`,
                       borderRadius: TASK_TOKENS.radius,
+                      boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
                       boxSizing: 'border-box',
                       display: 'flex',
                       flexDirection: 'column',
+                      flexShrink: 0,
                       gap: 8,
                       padding: 8,
                     }}
                   >
-                    <TaskBoardSelect
-                      ariaLabel={t('Issue type')}
-                      width="100%"
-                      value={composerType}
-                      options={ISSUE_TYPE_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.label,
-                        color: option.color,
-                      }))}
-                      onChange={setComposerType}
-                    />
                     <TaskTextInput
+                      key={composerKey}
                       ariaLabel={t('Issue title')}
                       placeholder={t('What needs to be done?')}
                       shouldAutoFocus
                       value={composerTitle}
                       onChange={setComposerTitle}
                       onEnter={createIssue}
+                      onEscape={closeComposer}
                     />
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <TaskButton
-                        size="small"
-                        onClick={() => {
-                          setComposerStatusId(null);
-                          setComposerTitle('');
-                        }}
-                      >
-                        {t('Cancel')}
-                      </TaskButton>
+                    <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
+                      <TaskBoardSelect
+                        ariaLabel={t('Issue type')}
+                        width={112}
+                        value={composerType}
+                        options={ISSUE_TYPE_OPTIONS.map((option) => ({
+                          value: option.value,
+                          label: option.label,
+                          color: option.color,
+                        }))}
+                        onChange={setComposerType}
+                      />
+                      <span style={{ flex: 1 }} />
+                      <TaskIconButton label={t('Cancel')} onClick={closeComposer}>
+                        <IconX size={14} />
+                      </TaskIconButton>
                       <TaskButton
                         size="small"
                         variant="primary"
+                        title={t('Create (Enter)')}
                         isDisabled={composerTitle.trim() === '' || isCreating}
                         onClick={createIssue}
                       >
@@ -859,24 +902,34 @@ const TaskBoard = () => {
                       setComposerStatusId(column.id);
                       setComposerTitle('');
                     }}
+                    onMouseEnter={() => setHoveredCreateColumnId(column.id)}
+                    onMouseLeave={() => setHoveredCreateColumnId(null)}
                     style={{
                       alignItems: 'center',
-                      background: 'transparent',
+                      background:
+                        hoveredCreateColumnId === column.id
+                          ? TASK_TOKENS.backgroundHover
+                          : 'transparent',
                       border: 'none',
                       borderRadius: TASK_TOKENS.radiusSmall,
-                      color: TASK_TOKENS.textTertiary,
+                      color:
+                        hoveredCreateColumnId === column.id
+                          ? TASK_TOKENS.textSecondary
+                          : TASK_TOKENS.textTertiary,
                       cursor: 'pointer',
                       display: 'flex',
+                      flexShrink: 0,
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 13,
-                      gap: 4,
-                      justifyContent: 'center',
+                      gap: 6,
+                      justifyContent: 'flex-start',
                       minHeight: 32,
+                      padding: '0 8px',
                       width: '100%',
                     }}
                   >
                     <IconPlus size={14} />
-                    {t('Create')}
+                    {t('Create issue')}
                   </button>
                 )}
               </div>

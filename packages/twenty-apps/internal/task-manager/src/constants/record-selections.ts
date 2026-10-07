@@ -46,6 +46,7 @@ export const ISSUE_SEARCH_SELECTION = {
   sprintId: true,
   assigneeId: true,
   reporterId: true,
+  epicId: true,
   updatedAt: true,
 } as const;
 
