@@ -11,7 +11,9 @@ type TaskRichTextEditorProps = {
   // column of other controls.
   shouldFillHeight?: boolean;
   // Overrides the resting height of an editable box. The comment composer is
-  // one line in the design; a worklog note is a paragraph under a form.
+  // one line in the design; a worklog note is a paragraph under a form. Also
+  // floors a fill-height box: the record page's unified column has no fixed
+  // height, so fill-height alone collapses an empty editor to one line.
   minHeight?: number;
   // The issue a stored image is filed against. Without it the upload still
   // lands in storage and in the prose, but the Attachments widget never sees
@@ -51,7 +53,7 @@ export const TaskRichTextEditor = ({
         // comment composer is.
         width: '100%',
         ...(shouldFillHeight
-          ? { flex: 1, minHeight: 0 }
+          ? { flex: 1, minHeight: minHeight ?? 0 }
           : isReadOnly
             ? {}
             : { minHeight: minHeight ?? COMPOSER_MIN_HEIGHT }),

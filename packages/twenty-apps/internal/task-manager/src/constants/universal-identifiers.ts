@@ -589,17 +589,17 @@ export const UPDATE_MERCHANT_CUSTOM_SETTINGS_LOGIC_FUNCTION_UID =
 export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_LOGIC_FUNCTION_UID =
   '6e057a27-eede-47f3-b525-fe735af608e7';
 
-// The Home tab of the merchant record page, which the Standard application
-// owns: `merchant` had no page of its own in any manifest, and the engine's
-// backfill gave it "Default Merchant Layout". The widget above attaches to
-// that tab rather than this app redeclaring the whole layout.
+// The Home tab of the merchant record page: `merchant` has no page of its
+// own in any manifest, and the engine's backfill gave it "Default Merchant
+// Layout" (owned by the Customer Support application, which owns the merchant
+// object). The widget above attaches to that tab rather than this app
+// redeclaring the whole layout.
 //
-// A LITERAL on purpose. The value is v5 over the Standard application
-// namespace, so it is the same in every workspace, but the uuid module the
-// derivation helper needs is stubbed out in a bundled front component, so
-// computing it there yields a value that resolves to nothing.
+// A LITERAL on purpose: the backfill derives tab identifiers per workspace,
+// so this is the Apple workspace's value — verified against
+// core.pageLayoutTab. Other workspaces get their own value.
 export const STANDARD_MERCHANT_RECORD_PAGE_HOME_TAB_UID =
-  'c578b3a9-a013-560e-99d8-957d8e338f65';
+  'f6c4069a-eab1-563e-be30-b415cb42f032';
 
 // Jira-style board: one STANDALONE page rendering every status of the selected
 // project as a column, with the issue detail as a drawer inside the same front

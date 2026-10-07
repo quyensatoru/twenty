@@ -49,8 +49,10 @@ type SearchState = {
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LENGTH = 2;
-const POPOVER_WIDTH = 480;
 const INPUT_HEIGHT = 36;
+// Falls back to this when the search width is fluid (a "100%" maxWidth the
+// popover cannot measure — it lives in a body portal, not under the field).
+const POPOVER_WIDTH = 480;
 
 // Jira's board search, not the browser-filter box it replaces: typing still
 // narrows the columns on screen, but matches from EVERY project the caller
@@ -315,7 +317,14 @@ export const TaskIssueSearch = ({
               flexDirection: 'column',
               maxHeight: 380,
               overflow: 'hidden',
-              width: POPOVER_WIDTH,
+              // The same width as the field above it: the overlay portals to
+              // the body, so no percentage can reach the field — but a numeric
+              // maxWidth is the field's own width, and it doubles as the
+              // popover's. Clamped to the viewport for narrow screens.
+              width:
+                typeof maxWidth === 'number'
+                  ? `min(${maxWidth}px, calc(100vw - 16px))`
+                  : POPOVER_WIDTH,
             }}
           >
             <div style={{ overflowY: 'auto', padding: 4 }}>

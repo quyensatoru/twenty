@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
+import {
+  enqueueSnackbar,
+  t,
+  useFrontComponentExecutionContext,
+} from 'twenty-sdk/front-component';
 import { IconPlus } from 'twenty-ui/icon';
 
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
@@ -19,12 +23,14 @@ import {
 import { TaskBoardCard } from './components/task-board-card';
 import { TaskBoardDetail } from './components/task-board-detail';
 import { TaskBoardSelect } from './components/task-board-select';
+import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { TaskButton } from './components/task-button';
 import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTextInput } from './components/task-text-input';
 import { readTagColor, TASK_TOKENS } from './components/task-tokens';
+import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
 import { readMemberName } from './utils/read-member-name.util';
@@ -46,6 +52,18 @@ const COLUMN_MIN_WIDTH = 272;
 // accepts the write), and host widgets read with the viewer's own token while
 // this app's reads go through its scoped routes.
 const TaskBoard = () => {
+  // Pinned to the published SDK, whose context type predates these fields.
+  // The host sends them (useFrontComponentExecutionContext in twenty-front);
+  // drop the casts once the app moves to an SDK that declares them.
+  const locationHash = useFrontComponentExecutionContext(
+    (context) => (context as { locationHash?: string }).locationHash ?? '',
+  );
+  const boardPath = useFrontComponentExecutionContext((context) => {
+    const pathname = (context as { locationPathname?: string })
+      .locationPathname;
+
+    return typeof pathname === 'string' && pathname !== '' ? pathname : null;
+  });
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -54,7 +72,12 @@ const TaskBoard = () => {
   const [search, setSearch] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState<string>(ALL_VALUE);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  // A board deep link decides the opening modal, so a pasted link lands on
+  // the issue it is about. It is the INITIAL value only: the reader keeps
+  // whatever they open afterwards.
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(
+    parseBoardIssueAnchor(locationHash),
+  );
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [dropTargetStatusId, setDropTargetStatusId] = useState<string | null>(
     null,
@@ -349,7 +372,7 @@ const TaskBoard = () => {
   if (isLoading && board === null) {
     return (
       <TaskBoardFrame>
-        <TaskMessage text={t('Loading board…')} />
+        <TaskBoardSkeleton />
       </TaskBoardFrame>
     );
   }
@@ -885,6 +908,7 @@ const TaskBoard = () => {
             navIssueIds={navIssueIds}
             onSelectIssue={setSelectedIssueId}
             onClose={() => setSelectedIssueId(null)}
+            boardPath={boardPath}
             onCardChanged={refreshBoard}
           />
         </twenty-overlay>

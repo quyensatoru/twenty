@@ -1,14 +1,18 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  copyToClipboard,
   enqueueSnackbar,
   t,
   useRecordId,
 } from 'twenty-sdk/front-component';
+import { IconLink } from 'twenty-ui/icon';
 
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { UPDATE_ISSUE_ROUTE_PATH } from '../../constants/route-paths';
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
+import { DescriptionEmptyBox } from './task-description-empty-box';
+import { TaskIconButton } from './task-icon-button';
 import { TaskMessage } from './task-message';
 import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSkeletonBar, TaskSkeletonLines } from './task-skeleton';
@@ -16,12 +20,19 @@ import { TaskStatusLine } from './task-status-line';
 import { TaskTag } from './task-tag';
 import { TASK_TOKENS } from './task-tokens';
 import { useIssueDetail } from '../hooks/use-issue-detail';
+import { buildRecordUrl } from '../utils/build-record-url.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
 
 // Long enough that a normal typing burst is one write, short enough that a
 // pause of a sentence already has the text on the server.
 const SAVE_DEBOUNCE_MS = 700;
+
+// A paragraph-sized editing surface even when the prose is empty: the unified
+// column has no fixed height, so without a floor the editor opens one line
+// tall. Matches the board modal's description box.
+const DESCRIPTION_EDITOR_MIN_HEIGHT = 180;
 
 // One frame for the loaded state.
 const DescriptionFrame = ({ children }: { children: ReactNode }) => (
@@ -181,6 +192,29 @@ export const IssueDescription = () => {
     }, SAVE_DEBOUNCE_MS);
   };
 
+  // The record's own URL, like the modal's board deep link: the widget header
+  // command only shows where the host draws that header, so the panel carries
+  // its own button that is always there.
+  const copyIssueLink = () => {
+    if (issueId === null) {
+      return;
+    }
+
+    void copyToClipboard(
+      buildRecordUrl({
+        baseUrl: readRecordPageBaseUrl(),
+        objectNameSingular: 'issue',
+        recordId: issueId,
+      }),
+    )
+      .then(() =>
+        enqueueSnackbar({ message: t('Link copied'), variant: 'success' }),
+      )
+      .catch((error: unknown) =>
+        enqueueSnackbar({ message: readErrorText(error), variant: 'error' }),
+      );
+  };
+
   if (issueId === null) {
     return <TaskMessage text={t('No issue selected.')} />;
   }
@@ -270,6 +304,10 @@ export const IssueDescription = () => {
             {priorityOption.label}
           </TaskTag>
         )}
+        <span style={{ flex: 1 }} />
+        <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
+          <IconLink size={14} />
+        </TaskIconButton>
       </div>
       {labelRows.length > 0 && (
         <div
@@ -316,6 +354,7 @@ export const IssueDescription = () => {
               }}
               placeholder={t('Describe the issue…')}
               shouldFillHeight
+              minHeight={DESCRIPTION_EDITOR_MIN_HEIGHT}
               issueId={issueId}
             />
           </div>
@@ -341,19 +380,12 @@ export const IssueDescription = () => {
               cursor: 'text',
               flex: 1,
               minHeight: 0,
+              padding: isEmpty ? 0 : '4px 8px',
               width: '100%',
             }}
           >
             {isEmpty ? (
-              <span
-                style={{
-                  color: TASK_TOKENS.textTertiary,
-                  fontFamily: TASK_TOKENS.fontFamily,
-                  fontSize: 13,
-                }}
-              >
-                {t('Describe the issue…')}
-              </span>
+              <DescriptionEmptyBox />
             ) : (
               <TaskRichTextEditor value={currentMarkdown} isReadOnly />
             )}

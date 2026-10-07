@@ -59,3 +59,21 @@ export const buildIssueWorklogUrl = ({
   worklogId: string;
 }): string =>
   buildIssueFragmentUrl({ baseUrl, issueId, fragment: `worklog-${worklogId}` });
+
+// A board deep link: the board page with the issue's modal open. `boardPageUrl`
+// is the host page URL without fragment, assembled from the base URL and the
+// page path the execution context reports — the path carries
+// workspace-specific identifiers no source file may hardcode.
+export const buildBoardIssueUrl = ({
+  baseUrl,
+  boardPath,
+  issueId,
+}: {
+  baseUrl: string | undefined;
+  boardPath: string;
+  issueId: string;
+}): string => {
+  const trimmedBaseUrl = (baseUrl ?? '').trim().replace(/\/+$/, '');
+
+  return `${trimmedBaseUrl}${boardPath}#issue-${issueId}`;
+};

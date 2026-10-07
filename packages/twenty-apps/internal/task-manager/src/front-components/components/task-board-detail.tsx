@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AppPath, enqueueSnackbar, navigate, t } from 'twenty-sdk/front-component';
+import { AppPath, copyToClipboard, enqueueSnackbar, navigate, t } from 'twenty-sdk/front-component';
 import {
   IconCalendarEvent,
   IconChevronLeft,
@@ -7,6 +7,7 @@ import {
   IconClock,
   IconExternalLink,
   IconFlag,
+  IconLink,
   IconNumber,
   IconPencil,
   IconProgressCheck,
@@ -34,6 +35,7 @@ import { type BoardIssue } from '../../types/task-board';import {
 } from '../../constants/route-paths';
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { formatMinutes } from '../../utils/format-minutes.util';
+import { buildBoardIssueUrl } from '../utils/build-record-url.util';
 import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
@@ -44,11 +46,13 @@ import { IssueHistoryList } from './issue-history-list';
 import { IssueWorklogList } from './issue-worklog-list';
 import { TaskButton } from './task-button';
 import { TaskCheckbox } from './task-checkbox';
+import { DescriptionEmptyBox } from './task-description-empty-box';
 import { TaskDueDatePicker } from './task-due-date-picker';
 import { TaskFieldRow } from './task-field-row';
 import { TaskIconButton } from './task-icon-button';
 import { TaskIssueSearch } from './task-issue-search';
 import { TaskMessage } from './task-message';
+import { TaskBoardDetailSkeleton } from './task-board-skeleton';
 import { TaskRecordChip } from './task-record-chip';
 import {
   type TaskRelationOption,
@@ -69,6 +73,10 @@ type TaskBoardDetailProps = {
   navIssueIds: readonly string[];
   onSelectIssue: (issueId: string) => void;
   onClose: () => void;
+  // The board page path, for the copy-link button. Null when the host did not
+  // report the page path — the button hides instead of copying a link to the
+  // wrong page.
+  boardPath: string | null;
   // Card-visible fields changed (title, status, owner, type, priority): the
   // board refetches its columns. Description, comments and worklogs skip it —
   // no card renders them.
@@ -97,6 +105,7 @@ export const TaskBoardDetail = ({
   navIssueIds,
   onSelectIssue,
   onClose,
+  boardPath,
   onCardChanged,
 }: TaskBoardDetailProps) => {
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
@@ -331,7 +340,7 @@ export const TaskBoardDetail = ({
   if (isLoading && data.issue === null) {
     return (
       <TaskBoardDetailFrame onClose={onClose}>
-        <TaskMessage text={t('Loading…')} />
+        <TaskBoardDetailSkeleton />
       </TaskBoardDetailFrame>
     );
   }
@@ -566,6 +575,28 @@ export const TaskBoardDetail = ({
     }
   };
 
+  // The board deep link: opening it lands on the board with this issue's
+  // modal open. The button hides when the host did not report the page path.
+  const copyIssueLink = () => {
+    if (boardPath === null) {
+      return;
+    }
+
+    void copyToClipboard(
+      buildBoardIssueUrl({
+        baseUrl: readRecordPageBaseUrl(),
+        boardPath,
+        issueId,
+      }),
+    )
+      .then(() =>
+        enqueueSnackbar({ message: t('Link copied'), variant: 'success' }),
+      )
+      .catch((error: unknown) =>
+        enqueueSnackbar({ message: readErrorText(error), variant: 'error' }),
+      );
+  };
+
   const createSubtask = () => {    const title = subtaskDraft.trim();
 
     if (title === '' || projectId === null) {
@@ -702,6 +733,11 @@ export const TaskBoardDetail = ({
         >
           <IconExternalLink size={16} />
         </TaskIconButton>
+        {boardPath !== null && (
+          <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
+            <IconLink size={16} />
+          </TaskIconButton>
+        )}
         <TaskIconButton label={t('Close')} onClick={onClose}>
           <IconX size={16} />
         </TaskIconButton>
@@ -819,17 +855,11 @@ export const TaskBoardDetail = ({
                 style={{ cursor: 'text', minHeight: 120 }}
               >
                 {currentDescription.trim() === '' ? (
-                  <span
-                    style={{
-                      color: TASK_TOKENS.textTertiary,
-                      fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 13,
-                    }}
-                  >
-                    {t('Describe the issue…')}
-                  </span>
+                  <DescriptionEmptyBox />
                 ) : (
-                  <TaskRichTextEditor value={currentDescription} isReadOnly />
+                  <div style={{ padding: '4px 8px' }}>
+                    <TaskRichTextEditor value={currentDescription} isReadOnly />
+                  </div>
                 )}
               </div>
             )}
