@@ -596,10 +596,11 @@ export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_LOGIC_FUNCTION_UID =
 // redeclaring the whole layout.
 //
 // A LITERAL on purpose: the backfill derives tab identifiers per workspace,
-// so this is the Apple workspace's value — verified against
+// so this is the production workspace's value (the dev workspace's was
+// f6c4069a-eab1-563e-be30-b415cb42f032) — verified against
 // core.pageLayoutTab. Other workspaces get their own value.
 export const STANDARD_MERCHANT_RECORD_PAGE_HOME_TAB_UID =
-  'f6c4069a-eab1-563e-be30-b415cb42f032';
+  'c578b3a9-a013-560e-99d8-957d8e338f65';
 
 // Jira-style board: one STANDALONE page rendering every status of the selected
 // project as a column, with the issue detail as a drawer inside the same front
