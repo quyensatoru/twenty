@@ -53,7 +53,7 @@ import {
 import {
   clampColumnWidth,
   COLUMN_DEFAULT_WIDTH,
-  parseColumnWidths,
+  parseColumnWidth,
 } from './utils/column-widths.util';
 import { moveIdOnto } from './utils/move-id-onto.util';
 import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
@@ -64,7 +64,7 @@ import { readMemberName } from './utils/read-member-name.util';
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
 const NO_STATUS_VALUE = 'NO_STATUS';
-const COLUMN_WIDTHS_STORAGE_KEY = 'task-board.column-widths';
+const COLUMN_WIDTH_STORAGE_KEY = 'task-board.column-width';
 const PROJECT_STORAGE_KEY = 'task-board.project-id';
 // Cards drawn per column before a "show more": every card is dozens of
 // elements the sandbox has to ship to the host, and a column of hundreds is
@@ -77,22 +77,19 @@ const LAZY_LOAD_THRESHOLD_PX = 400;
 // The sandbox's localStorage is seeded from the host before the first render,
 // so this reads synchronously. Guarded anyway: a store that is missing or
 // full must never take the board down with it.
-const readStoredColumnWidths = (): Record<string, number> => {
+const readStoredColumnWidth = (): number => {
   try {
-    return parseColumnWidths(localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY));
+    return parseColumnWidth(localStorage.getItem(COLUMN_WIDTH_STORAGE_KEY));
   } catch {
-    return {};
+    return COLUMN_DEFAULT_WIDTH;
   }
 };
 
-const storeColumnWidths = (columnWidths: Record<string, number>) => {
+const storeColumnWidth = (columnWidth: number) => {
   try {
-    localStorage.setItem(
-      COLUMN_WIDTHS_STORAGE_KEY,
-      JSON.stringify(columnWidths),
-    );
+    localStorage.setItem(COLUMN_WIDTH_STORAGE_KEY, String(columnWidth));
   } catch {
-    // Widths are a convenience: losing them only costs the reader a drag.
+    // The width is a convenience: losing it only costs the reader a drag.
   }
 };
 
@@ -117,7 +114,14 @@ const storeProjectId = (projectId: string) => {
   }
 };
 
-type ColumnResize = { statusId: string; startX: number; startWidth: number };
+// The column whose edge is held, and where it sits: every column takes the
+// same width, so the held edge moves (index + 1) times the width change.
+type ColumnResize = {
+  statusId: string;
+  columnIndex: number;
+  startX: number;
+  startWidth: number;
+};
 
 // The Jira-style board: one column per project status, cards filtered by
 // sprint, search, owner and type, drag-and-drop between columns, inline create
@@ -175,8 +179,8 @@ const TaskBoard = () => {
     null,
   );
   const [hoveredHeaderId, setHoveredHeaderId] = useState<string | null>(null);
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
-    readStoredColumnWidths,
+  const [columnWidth, setColumnWidth] = useState<number>(
+    readStoredColumnWidth,
   );
   const [columnResize, setColumnResize] = useState<ColumnResize | null>(null);
   const [hoveredResizeId, setHoveredResizeId] = useState<string | null>(null);
@@ -576,27 +580,21 @@ const TaskBoard = () => {
         : current,
     );
 
-  const readColumnWidth = (statusId: string) =>
-    columnWidths[statusId] ?? COLUMN_DEFAULT_WIDTH;
-
   // No window listener reaches the sandbox, so a resize follows the pointer
   // through the columns strip itself, and ends when the button comes up
-  // there or the pointer leaves the strip.
+  // there or the pointer leaves the strip. Dividing by the columns up to the
+  // held one keeps that edge under the pointer while all of them grow.
   const readResizedWidth = (resize: ColumnResize, clientX: number) =>
-    clampColumnWidth(resize.startWidth + clientX - resize.startX);
+    clampColumnWidth(
+      resize.startWidth + (clientX - resize.startX) / (resize.columnIndex + 1),
+    );
 
   const updateColumnResize = (clientX: number) => {
     if (columnResize === null) {
       return;
     }
 
-    const width = readResizedWidth(columnResize, clientX);
-
-    setColumnWidths((current) =>
-      current[columnResize.statusId] === width
-        ? current
-        : { ...current, [columnResize.statusId]: width },
-    );
+    setColumnWidth(readResizedWidth(columnResize, clientX));
   };
 
   const endColumnResize = (clientX: number) => {
@@ -604,23 +602,16 @@ const TaskBoard = () => {
       return;
     }
 
-    const next = {
-      ...columnWidths,
-      [columnResize.statusId]: readResizedWidth(columnResize, clientX),
-    };
+    const width = readResizedWidth(columnResize, clientX);
 
     setColumnResize(null);
-    setColumnWidths(next);
-    storeColumnWidths(next);
+    setColumnWidth(width);
+    storeColumnWidth(width);
   };
 
-  const resetColumnWidth = (statusId: string) => {
-    const next = Object.fromEntries(
-      Object.entries(columnWidths).filter(([id]) => id !== statusId),
-    );
-
-    setColumnWidths(next);
-    storeColumnWidths(next);
+  const resetColumnWidth = () => {
+    setColumnWidth(COLUMN_DEFAULT_WIDTH);
+    storeColumnWidth(COLUMN_DEFAULT_WIDTH);
   };
 
   const closeComposer = () => {
@@ -882,7 +873,7 @@ const TaskBoard = () => {
           userSelect: columnResize === null ? 'auto' : 'none',
         }}
       >
-        {columns.map((column) => {
+        {columns.map((column, columnIndex) => {
           const cards = issuesByStatus.get(column.id) ?? [];
           const shownCardCount =
             shownCardCountByStatus[column.id] ?? CARDS_PER_COLUMN_PAGE;
@@ -979,7 +970,7 @@ const TaskBoard = () => {
                 minHeight: 0,
                 opacity: isColumnDragged ? 0.5 : 1,
                 position: 'relative',
-                width: readColumnWidth(column.id),
+                width: columnWidth,
               }}
             >
               {/* Sits in the gap to the next column, so it never covers a
@@ -994,11 +985,12 @@ const TaskBoard = () => {
                 onMouseDown={(event) =>
                   setColumnResize({
                     statusId: column.id,
+                    columnIndex,
                     startX: event.clientX,
-                    startWidth: readColumnWidth(column.id),
+                    startWidth: columnWidth,
                   })
                 }
-                onDoubleClick={() => resetColumnWidth(column.id)}
+                onDoubleClick={resetColumnWidth}
                 onMouseEnter={() => setHoveredResizeId(column.id)}
                 onMouseLeave={() => setHoveredResizeId(null)}
                 style={{

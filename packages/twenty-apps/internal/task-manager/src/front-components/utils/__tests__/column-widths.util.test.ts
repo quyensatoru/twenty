@@ -5,7 +5,7 @@ import {
   COLUMN_DEFAULT_WIDTH,
   COLUMN_MAX_WIDTH,
   COLUMN_MIN_WIDTH,
-  parseColumnWidths,
+  parseColumnWidth,
 } from '../column-widths.util';
 
 describe('clampColumnWidth', () => {
@@ -23,21 +23,15 @@ describe('clampColumnWidth', () => {
   });
 });
 
-describe('parseColumnWidths', () => {
-  it('reads a stored map and clamps every width', () => {
-    expect(parseColumnWidths('{"a":320,"b":9999}')).toEqual({
-      a: 320,
-      b: COLUMN_MAX_WIDTH,
-    });
+describe('parseColumnWidth', () => {
+  it('reads a stored width and clamps it', () => {
+    expect(parseColumnWidth('320')).toBe(320);
+    expect(parseColumnWidth('9999')).toBe(COLUMN_MAX_WIDTH);
   });
 
-  it('drops entries that are not numbers', () => {
-    expect(parseColumnWidths('{"a":"wide","b":250}')).toEqual({ b: 250 });
-  });
-
-  it('returns an empty map for nothing stored or broken JSON', () => {
-    expect(parseColumnWidths(null)).toEqual({});
-    expect(parseColumnWidths('not json')).toEqual({});
-    expect(parseColumnWidths('[1,2]')).toEqual({});
+  it('falls back to the default for nothing stored or garbage', () => {
+    expect(parseColumnWidth(null)).toBe(COLUMN_DEFAULT_WIDTH);
+    expect(parseColumnWidth('wide')).toBe(COLUMN_DEFAULT_WIDTH);
+    expect(parseColumnWidth('')).toBe(COLUMN_DEFAULT_WIDTH);
   });
 });
