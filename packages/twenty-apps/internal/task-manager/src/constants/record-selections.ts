@@ -78,6 +78,7 @@ export const PROJECT_SELECTION = {
   leadId: true,
   appId: true,
   nextIssueNumber: true,
+  issueViewSettings: true,
 } as const;
 
 export const SPRINT_SELECTION = {

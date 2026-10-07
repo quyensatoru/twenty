@@ -54,6 +54,8 @@ export const PROJECT_NEXT_ISSUE_NUMBER_FIELD_UID =
   'cf46bf2b-8c71-4925-9533-9abc7d2e57cb';
 export const PROJECT_DESCRIPTION_FIELD_UID =
   '21a68c5d-8d68-46e2-a53a-943a8d135795';
+export const PROJECT_ISSUE_VIEW_SETTINGS_FIELD_UID =
+  '37a1ac5c-a930-4be4-8288-6f8b0ac7357b';
 export const PROJECT_CATEGORY_FIELD_UID =
   '427396a5-36d1-4b9c-ba7b-29667191a578';
 export const PROJECT_LEAD_FIELD_UID = 'e5e2b42e-4568-4498-96e6-9a35546ac1f9';
@@ -406,12 +408,8 @@ export const ISSUE_RECORD_PAGE_LAYOUT_UID =
   'cef71956-64b4-41a1-9771-84b0aa0d474b';
 export const ISSUE_RECORD_PAGE_FIELDS_TAB_UID =
   'e80796d1-e0a1-4f1a-aa89-6f257efa1556';
-export const ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID =
-  '116c8bd6-51bb-4153-ab56-86aedb836282';
 // The FIELDS widget needs a view of its own, or Twenty's show/hide/reorder
 // editor has nothing to write to — see src/views/issue-record-page-fields.view.ts.
-export const ISSUE_RECORD_PAGE_FIELDS_VIEW_UID =
-  'b3e9f1d4-7c58-4a0e-9f21-5d8c6a41b703';
 export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
   '21f425f4-489a-4920-a42a-64085f6fafb5';
@@ -484,6 +482,8 @@ export const CREATE_ISSUE_STATUS_LOGIC_FUNCTION_UID =
   '52a3850a-6d71-4a66-b3d1-7bbb5e248a42';
 export const DELETE_ISSUE_STATUS_LOGIC_FUNCTION_UID =
   '70e8da72-4f63-4e38-a51f-2292383e8d73';
+export const UPDATE_ISSUE_VIEW_SETTINGS_LOGIC_FUNCTION_UID =
+  '6e2e268e-39bf-4fb8-9417-cfc037f7d27d';
 export const REORDER_ISSUE_STATUSES_LOGIC_FUNCTION_UID =
   'bdfb541d-3e36-415a-bce8-f06c07db230b';
 export const CREATE_ISSUE_COMMENT_LOGIC_FUNCTION_UID =

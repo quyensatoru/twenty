@@ -2,7 +2,7 @@ import { defineFrontComponent } from 'twenty-sdk/define';
 import { t } from 'twenty-sdk/front-component';
 
 import { ISSUE_RECORD_MAIN_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
-import { SectionHeading } from './components/task-board-detail';
+import { SectionHeading } from './components/task-section-heading';
 import { IssueActivity } from './components/issue-activity-panel';
 import { IssueDescription } from './components/issue-description-panel';
 import { IssueSubtasks } from './components/issue-subtasks-panel';

@@ -37,6 +37,7 @@ export type IssueRow = {
   issueKey?: string | null;
   issueType?: string | null;
   priority?: string | null;
+  resolution?: string | null;
   storyPoints?: number | null;
   dueDate?: string | null;
   labels?: string[] | null;

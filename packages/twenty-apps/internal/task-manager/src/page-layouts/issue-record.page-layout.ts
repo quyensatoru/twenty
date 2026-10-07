@@ -12,8 +12,6 @@ import {
   ISSUE_RECORD_MAIN_FRONT_COMPONENT_UID,
   ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
-  ISSUE_RECORD_PAGE_FIELDS_VIEW_UID,
-  ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
   ISSUE_RECORD_PAGE_LAYOUT_UID,
   ISSUE_RECORD_PAGE_MAIN_WIDGET_UID,
   ISSUE_RECORD_PAGE_RELATIONS_WIDGET_UID,
@@ -46,20 +44,11 @@ import {
 // tab carries one. The activity panel already sizes itself to its slot
 // (height 100% + overflowY auto), so the fixed row budget is what bounds it.
 //
-// The field table is host-rendered: FIELDS replaces the fork's hand-rolled
-// IssueFieldPanel. It points at a view of its own
-// (src/views/issue-record-page-fields.view.ts) rather than being left to the
-// host's fallback, because the fallback orders fields by whatever order
-// metadata returns, hides every relation field with no way to reach it, and
-// makes Twenty's own field editor fail on save — it writes view fields, and a
-// widget with no view has none. With the view bound, show, hide, reorder and
-// grouping are the host's own controls, on the same path a native object's
-// record page uses: command menu → Edit Layout → click the widget → Layout.
-// The host exposes no entry point outside that mode and offers an app no hook
-// to add one — a widget header action is keyed by widget type in
-// getWidgetHeaderActionDefinition and FIELDS has none, and an app-declared
-// command menu item must point at a front component, so it cannot invoke the
-// host's EDIT_RECORD_PAGE_LAYOUT.
+// The Details column is the app's own panel (issue-fields), not the host's
+// FIELDS widget: it shows every field of the issue, follows the project's
+// choice of rows (issueViewSettings, edited by a role with Manage Views), and
+// narrows its relation pickers to the issue's project. The host widget could
+// do none of that, so it is gone rather than kept under the panel.
 //
 // Description is NOT the host's FIELD_RICH_TEXT widget. That widget's
 // configuration carries no field reference (FieldRichTextConfiguration is
@@ -85,9 +74,9 @@ import {
 // what keeps worklog time-tracking recomputed and the comment author rule
 // enforced. The cost is a plain markdown composer rather than BlockNote.
 //
-// The widget titles are the design's section labels — Details, and blanks
-// where the panel carries its own Jira-style headings inside (the main panel's
-// Description / Subtasks / Activity, the field table under Details). The host
+// The widget titles are the design's section labels, and blanks where the
+// panel carries its own Jira-style headings inside (the main panel's
+// Description / Subtasks / Activity, and Details with its show/hide gear). The host
 // draws titles verbatim through WidgetCardHeader -> OverflowingTextWithTooltip,
 // with no text-transform of its own, so the casing is the whole of what an app
 // can say about them.
@@ -96,18 +85,10 @@ import {
 // for the three of them, the way the board modal draws it, instead of three
 // boxes each scrolling on its own.
 const MAIN_ROW_SPAN = 9 + 3 + 17;
-// Six rows of 24px, their gaps and the error line, with room to spare. Every
-// row here is a fixed height whatever its data — the merchant chips are kept on
-// one line for exactly that reason — and a picker opens OVER the rows rather
-// than pushing them, so nothing the panel does can make it outgrow the widget.
-// That is the whole point: a panel taller than its widget is answered with a
-// scrollbar, and there is no way to ask the host not to.
-const RELATIONS_ROW_SPAN = 4;
-// Eight rows is the collapsed field table with headroom: nine visible fields
-// at the host's 32px pitch plus the More line. The table scrolls inside its
-// slot instead of pushing Attachments a thousand pixels down the page, where
-// nobody scrolls to.
-const FIELDS_ROW_SPAN = 8;
+// Twelve rows: every Details row at its 24px height plus the time tracking
+// card. The panel scrolls inside its slot when a project shows everything,
+// rather than pushing Attachments down the page, where nobody scrolls to.
+const DETAILS_ROW_SPAN = 12;
 // Two rows is two or three files before the inner scroll starts.
 const ATTACHMENTS_ROW_SPAN = 2;
 
@@ -157,16 +138,15 @@ export default definePageLayout({
         },
         {
           universalIdentifier: ISSUE_RECORD_PAGE_RELATIONS_WIDGET_UID,
-          // The heading for BOTH field widgets: this one and the host's
-          // FIELDS widget under it are one list as far as the reader is
-          // concerned, so only the first one is titled.
-          title: 'Details',
+          // Blank, because the panel carries its own Details heading, with the
+          // show/hide gear beside it.
+          title: ' ',
           type: 'FRONT_COMPONENT',
           position: {
             layoutMode: PageLayoutTabLayoutMode.GRID,
             row: 0,
             column: MAIN_COLUMN_SPAN,
-            rowSpan: RELATIONS_ROW_SPAN,
+            rowSpan: DETAILS_ROW_SPAN,
             columnSpan: SIDE_COLUMN_SPAN,
           },
           configuration: {
@@ -176,44 +156,12 @@ export default definePageLayout({
           },
         },
         {
-          universalIdentifier: ISSUE_RECORD_PAGE_FIELDS_WIDGET_UID,
-          // Blank, because the panel above already carries the section's
-          // heading. A widget always draws its header bar and the manifest
-          // validator rejects an empty string, so a space is how a widget says
-          // it has no title of its own.
-          title: ' ',
-          type: 'FIELDS',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.GRID,
-            row: RELATIONS_ROW_SPAN,
-            column: MAIN_COLUMN_SPAN,
-            rowSpan: FIELDS_ROW_SPAN,
-            columnSpan: SIDE_COLUMN_SPAN,
-          },
-          configuration: {
-            configurationType: 'FIELDS',
-            viewUniversalIdentifier: ISSUE_RECORD_PAGE_FIELDS_VIEW_UID,
-            // Closed on purpose. "More" renders every field the view hides
-            // AND every field it never listed, each with the host's own
-            // editor — which for a relation means a picker scoped to the
-            // caller's apps and nothing finer. That is the hole the app panel
-            // above exists to close, and leaving the same pickers one click
-            // further down would reopen it.
-            //
-            // The cost is that a field is reachable here only if the view
-            // lists it as visible: a field added to `issue` later has to be
-            // added there too.
-            shouldAllowUserToSeeHiddenFields: false,
-            newFieldDefaultVisibility: false,
-          },
-        },
-        {
           universalIdentifier: ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID,
           title: 'Attachments',
           type: 'FRONT_COMPONENT',
           position: {
             layoutMode: PageLayoutTabLayoutMode.GRID,
-            row: RELATIONS_ROW_SPAN + FIELDS_ROW_SPAN,
+            row: DETAILS_ROW_SPAN,
             column: MAIN_COLUMN_SPAN,
             rowSpan: ATTACHMENTS_ROW_SPAN,
             columnSpan: SIDE_COLUMN_SPAN,

@@ -14,6 +14,7 @@ import {
 
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_TYPE_OPTIONS } from '../../constants/issue-type-options';
+import { type IssueCardFieldKey } from '../../constants/issue-view-fields';
 import { type BoardIssue } from '../../types/task-board';
 import { TaskAvatar } from './task-avatar';
 import { TaskPriorityGlyph } from './task-priority-glyph';
@@ -35,6 +36,11 @@ type TaskBoardCardProps = {
   assigneeName: string | null;
   assigneeAvatarUrl?: string | null;
   epicName: string | null;
+  sprintName: string | null;
+  reporterName: string | null;
+  reporterAvatarUrl?: string | null;
+  // What the project chose to keep off its cards; title and key always show.
+  hiddenFields: readonly IssueCardFieldKey[];
   isDone: boolean;
   isSelected: boolean;
   isDragging: boolean;
@@ -143,6 +149,10 @@ export const TaskBoardCard = ({
   assigneeName,
   assigneeAvatarUrl,
   epicName,
+  sprintName,
+  reporterName,
+  reporterAvatarUrl,
+  hiddenFields,
   isDone,
   isSelected,
   isDragging,
@@ -167,7 +177,12 @@ export const TaskBoardCard = ({
   const labelOptions = (issue.labels ?? []).slice(0, 2);
   const extraLabelCount = (issue.labels ?? []).length - labelOptions.length;
   const tooltip = `${issue.issueKey ?? ''} ${issue.title ?? ''}`.trim();
-  const hasTags = epicName !== null || labelOptions.length > 0;
+  const isShown = (key: IssueCardFieldKey) => !hiddenFields.includes(key);
+  const shownEpicName = isShown('epic') ? epicName : null;
+  const shownSprintName = isShown('sprint') ? sprintName : null;
+  const shownLabels = isShown('labels') ? labelOptions : [];
+  const hasTags =
+    shownEpicName !== null || shownSprintName !== null || shownLabels.length > 0;
 
   return (
     <div
@@ -253,10 +268,13 @@ export const TaskBoardCard = ({
 
         {hasTags && (
           <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {epicName !== null && (
-              <TaskTag color="purple">{epicName}</TaskTag>
+            {shownEpicName !== null && (
+              <TaskTag color="purple">{shownEpicName}</TaskTag>
             )}
-            {labelOptions.map((label) => {
+            {shownSprintName !== null && (
+              <TaskTag color="sky">{shownSprintName}</TaskTag>
+            )}
+            {shownLabels.map((label) => {
               const option = ISSUE_LABEL_OPTIONS.find(
                 (candidate) => candidate.value === label,
               );
@@ -267,7 +285,7 @@ export const TaskBoardCard = ({
                 </TaskTag>
               );
             })}
-            {extraLabelCount > 0 && (
+            {shownLabels.length > 0 && extraLabelCount > 0 && (
               <span
                 style={{
                   alignSelf: 'center',
@@ -291,16 +309,18 @@ export const TaskBoardCard = ({
             width: '100%',
           }}
         >
-          <span
-            title={
-              ISSUE_TYPE_OPTIONS.find(
-                (candidate) => candidate.value === issue.issueType,
-              )?.label
-            }
-            style={{ display: 'inline-flex', flexShrink: 0 }}
-          >
-            <IssueTypeGlyph issueType={issue.issueType ?? null} />
-          </span>
+          {isShown('type') && (
+            <span
+              title={
+                ISSUE_TYPE_OPTIONS.find(
+                  (candidate) => candidate.value === issue.issueType,
+                )?.label
+              }
+              style={{ display: 'inline-flex', flexShrink: 0 }}
+            >
+              <IssueTypeGlyph issueType={issue.issueType ?? null} />
+            </span>
+          )}
           <span
             style={{
               color: TASK_TOKENS.textTertiary,
@@ -323,7 +343,7 @@ export const TaskBoardCard = ({
               <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
             </span>
           )}
-          {dueLabel !== null && (
+          {isShown('dueDate') && dueLabel !== null && (
             <span
               title={isOverdue ? t('Overdue') : t('Due date')}
               style={{
@@ -355,7 +375,7 @@ export const TaskBoardCard = ({
             </span>
           )}
           <span style={{ flex: 1 }} />
-          {typeof issue.storyPoints === 'number' && (
+          {isShown('points') && typeof issue.storyPoints === 'number' && (
             <span
               title={t('Story points')}
               style={{
@@ -377,16 +397,32 @@ export const TaskBoardCard = ({
               {issue.storyPoints}
             </span>
           )}
-          <TaskPriorityGlyph priority={issue.priority} />
-          {assigneeName !== null ? (
-            <TaskAvatar
-              name={assigneeName}
-              avatarUrl={assigneeAvatarUrl}
-              size={22}
-            />
-          ) : (
-            <UnassignedAvatar size={22} />
+          {isShown('priority') && <TaskPriorityGlyph priority={issue.priority} />}
+          {/* Smaller and first: the reporter is context, the assignee is who
+              the card belongs to. */}
+          {isShown('reporter') && reporterName !== null && (
+            <span
+              title={`${t('Reporter')}: ${reporterName}`}
+              style={{ display: 'inline-flex', flexShrink: 0, opacity: 0.8 }}
+            >
+              <TaskAvatar
+                name={reporterName}
+                avatarUrl={reporterAvatarUrl}
+                size={18}
+                shouldShowTitle={false}
+              />
+            </span>
           )}
+          {isShown('assignee') &&
+            (assigneeName !== null ? (
+              <TaskAvatar
+                name={assigneeName}
+                avatarUrl={assigneeAvatarUrl}
+                size={22}
+              />
+            ) : (
+              <UnassignedAvatar size={22} />
+            ))}
         </span>
       </button>
       <span

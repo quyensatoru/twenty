@@ -11,6 +11,10 @@ import {
   resolveSignedMarkdown,
   stripFileTokens,
 } from '../../utils/resolve-signed-markdown.util';
+import {
+  type IssueViewSettings,
+  readIssueViewSettings,
+} from '../../utils/read-issue-view-settings.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import {
   type IssueAttachmentRow,
@@ -113,7 +117,7 @@ const readLinkedIssues = (value: unknown): LinkedIssueRow[] => {
     .filter((row): row is LinkedIssueRow => row !== null);
 };
 
-type IssueDetail = {
+export type IssueDetail = {
   issue: IssueRow | null;
   issueComments: IssueCommentRow[];
   worklogs: WorklogRow[];
@@ -134,6 +138,12 @@ type IssueDetail = {
   // the route says otherwise, so nothing offers an edit it might refuse.
   canWrite: boolean;
   canSoftDelete: boolean;
+  // The issue's project, as the Details panel labels it.
+  project: { id: string; name: string | null; key: string | null } | null;
+  // What the project shows in the Details panel and on board cards.
+  issueViewSettings: IssueViewSettings;
+  // The role's Manage Views: may change issueViewSettings for everyone.
+  canManageViews: boolean;
 };
 
 const EMPTY_DETAIL: IssueDetail = {
@@ -153,6 +163,9 @@ const EMPTY_DETAIL: IssueDetail = {
   currentWorkspaceMemberId: null,
   canWrite: false,
   canSoftDelete: false,
+  project: null,
+  issueViewSettings: readIssueViewSettings(null),
+  canManageViews: false,
 };
 
 export const useIssueDetail = (issueId: string | null) => {
@@ -209,6 +222,9 @@ export const useIssueDetail = (issueId: string | null) => {
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
         canWrite: result.canWrite === true,
         canSoftDelete: result.canSoftDelete === true,
+        project: result.project ?? null,
+        issueViewSettings: readIssueViewSettings(result.issueViewSettings),
+        canManageViews: result.canManageViews === true,
       }));
       setLoadError(null);
     } catch (error) {

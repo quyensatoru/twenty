@@ -14,6 +14,7 @@ import {
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DETAIL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
+import { readIssueViewSettings } from '../utils/read-issue-view-settings.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { hasAppGrant } from './app-scope/has-app-grant.util';
 import { listAppMembers } from './utils/list-app-members.util';
@@ -116,16 +117,33 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
         ? client.query({
             projects: {
               __args: { filter: { id: { eq: issue.projectId } }, first: 1 },
-              edges: { node: { id: true, appId: true } },
+              edges: {
+                node: {
+                  id: true,
+                  name: true,
+                  key: true,
+                  appId: true,
+                  issueViewSettings: true,
+                },
+              },
             },
           })
         : Promise.resolve(null),
     ]);
 
-    const projectAppId =
-      (projectResult?.projects as
-        | Connection<{ appId?: string | null }>
-        | undefined)?.edges?.[0]?.node?.appId ?? null;
+    const project =
+      (
+        projectResult?.projects as
+          | Connection<{
+              id: string;
+              name?: string | null;
+              key?: string | null;
+              appId?: string | null;
+              issueViewSettings?: unknown;
+            }>
+          | undefined
+      )?.edges?.[0]?.node ?? null;
+    const projectAppId = project?.appId ?? null;
 
     // Options for the relation pickers the app draws itself, narrowed to the
     // issue's own project. The host's FIELDS widget cannot narrow them: it
@@ -241,6 +259,15 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
       // hide controls, the routes still decide.
       canWrite: hasAppGrant(scope, projectAppId, 'write'),
       canSoftDelete: hasAppGrant(scope, projectAppId, 'softDelete'),
+      // The project as the Details panel labels it, and what the project has
+      // chosen to show there; editing that choice is a view edit, so it goes
+      // by the role's Manage Views rather than the grants above.
+      project:
+        project === null
+          ? null
+          : { id: project.id, name: project.name ?? null, key: project.key ?? null },
+      issueViewSettings: readIssueViewSettings(project?.issueViewSettings),
+      canManageViews: scope.canManageViews,
     };
   });
 

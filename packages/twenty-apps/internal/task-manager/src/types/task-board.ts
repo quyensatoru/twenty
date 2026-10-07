@@ -23,6 +23,8 @@ export type BoardProject = {
   id: string;
   name?: string | null;
   key?: string | null;
+  // Raw JSON; read through readIssueViewSettings.
+  issueViewSettings?: unknown;
 };
 
 export type BoardStatus = {

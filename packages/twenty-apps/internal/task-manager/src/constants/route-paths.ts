@@ -20,6 +20,8 @@ export const CREATE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/create-issue-status
 export const DELETE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/delete-issue-status';
 export const REORDER_ISSUE_STATUSES_ROUTE_PATH =
   '/task-manager/reorder-issue-statuses';
+export const UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH =
+  '/task-manager/update-issue-view-settings';
 
 export const CREATE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/create-issue-comment';
 export const UPDATE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/update-issue-comment';

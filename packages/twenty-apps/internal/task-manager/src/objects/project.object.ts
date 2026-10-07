@@ -4,6 +4,7 @@ import { PROJECT_CATEGORY_OPTIONS } from '../constants/project-category-options'
 import {
   PROJECT_CATEGORY_FIELD_UID,
   PROJECT_DESCRIPTION_FIELD_UID,
+  PROJECT_ISSUE_VIEW_SETTINGS_FIELD_UID,
   PROJECT_KEY_FIELD_UID,
   PROJECT_NAME_FIELD_UID,
   PROJECT_NEXT_ISSUE_NUMBER_FIELD_UID,
@@ -74,6 +75,19 @@ export default defineObject({
       isNullable: true,
       defaultValue: "'SOFTWARE'",
       options: [...PROJECT_CATEGORY_OPTIONS],
+    },
+    {
+      universalIdentifier: PROJECT_ISSUE_VIEW_SETTINGS_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'issueViewSettings',
+      label: 'Issue view settings',
+      description:
+        "Which fields this project's issues show in their Details panel and on board cards",
+      icon: 'IconLayoutList',
+      isNullable: true,
+      // Written through the update-issue-view-settings route, which checks
+      // the role's Manage Views; the raw JSON is not for hand editing.
+      isUIEditable: false,
     },
   ],
 });

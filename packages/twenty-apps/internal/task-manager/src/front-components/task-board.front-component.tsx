@@ -16,12 +16,17 @@ import {
 import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../constants/board-done-issue-visible-days';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
+  ISSUE_CARD_FIELDS,
+  type IssueCardFieldKey,
+} from '../constants/issue-view-fields';
+import {
   BOARD_COLUMN_ISSUES_ROUTE_PATH,
   CREATE_ISSUE_ROUTE_PATH,
   DELETE_ISSUE_ROUTE_PATH,
   REORDER_ISSUE_STATUSES_ROUTE_PATH,
   TASK_BOARD_ROUTE_PATH,
   UPDATE_ISSUE_ROUTE_PATH,
+  UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH,
 } from '../constants/route-paths';
 import { TASK_BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import {
@@ -31,6 +36,7 @@ import {
   type BoardIssue,
   type BoardMember,
 } from '../types/task-board';
+import { readIssueViewSettings } from '../utils/read-issue-view-settings.util';
 import {
   TaskBoardAssigneeFilter,
   type TaskBoardAssigneeOption,
@@ -41,6 +47,7 @@ import { TaskBoardDetail } from './components/task-board-detail';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { TaskButton } from './components/task-button';
+import { TaskFieldsMenu } from './components/task-fields-menu';
 import { TaskFilterToggle } from './components/task-filter-toggle';
 import { TaskIconButton } from './components/task-icon-button';
 import { TaskIssueSearch } from './components/task-issue-search';
@@ -181,6 +188,8 @@ const TaskBoard = () => {
   // project or a filter changed is dropped instead of landing on the new board.
   // oxlint-disable-next-line twenty/no-state-useref
   const boardGenerationRef = useRef(0);
+  // oxlint-disable-next-line twenty/no-state-useref
+  const cardFieldsWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [sprintFilter, setSprintFilter] = useState<string>(ALL_VALUE);
   const [search, setSearch] = useState('');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
@@ -358,6 +367,26 @@ const TaskBoard = () => {
       new Map<string, BoardMember>(
         (board?.members ?? []).map((member) => [member.id, member]),
       ),
+    [board],
+  );
+
+  const sprintNamesById = useMemo(
+    () =>
+      new Map(
+        (board?.sprints ?? []).map((sprint) => [
+          sprint.id,
+          sprint.name ?? sprint.id,
+        ]),
+      ),
+    [board],
+  );
+
+  const hiddenCardFields = useMemo(
+    () =>
+      readIssueViewSettings(
+        board?.projects.find((project) => project.id === board.activeProjectId)
+          ?.issueViewSettings,
+      ).hiddenCardFields,
     [board],
   );
 
@@ -631,6 +660,55 @@ const TaskBoard = () => {
       );
       void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
     }
+  };
+
+  // Optimistic too: the cards change at once, and a refused write puts the
+  // project's previous settings back.
+  const saveHiddenCardFields = (nextHiddenFields: IssueCardFieldKey[]) => {
+    const activeProjectId = board?.activeProjectId ?? null;
+
+    if (board === null || activeProjectId === null) {
+      return;
+    }
+
+    const previousProjects = board.projects;
+
+    setBoard({
+      ...board,
+      projects: board.projects.map((project) =>
+        project.id === activeProjectId
+          ? {
+              ...project,
+              issueViewSettings: {
+                ...readIssueViewSettings(project.issueViewSettings),
+                hiddenCardFields: nextHiddenFields,
+              },
+            }
+          : project,
+      ),
+    });
+
+    // In order, so a quick second toggle cannot be overwritten by the first.
+    cardFieldsWriteQueueRef.current = cardFieldsWriteQueueRef.current.then(
+      async () => {
+        try {
+          await postAppRoute(UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH, {
+            projectId: activeProjectId,
+            hiddenCardFields: nextHiddenFields,
+          });
+        } catch (error) {
+          setBoard((current) =>
+            current === null
+              ? current
+              : { ...current, projects: previousProjects },
+          );
+          void enqueueSnackbar({
+            message: readErrorText(error),
+            variant: 'error',
+          });
+        }
+      },
+    );
   };
 
   // The next page of one column, as it is scrolled near its end. One request
@@ -983,6 +1061,14 @@ const TaskBoard = () => {
               </span>
             </span>
           </span>
+          {board.canManageViews && (
+            <TaskFieldsMenu
+              label={t('Card fields')}
+              fields={ISSUE_CARD_FIELDS}
+              hiddenFields={hiddenCardFields}
+              onHiddenFieldsChange={saveHiddenCardFields}
+            />
+          )}
         </div>
       </div>
 
@@ -1335,6 +1421,24 @@ const TaskBoard = () => {
                         ? (epicNamesById.get(issue.epicId) ?? null)
                         : null
                     }
+                    sprintName={
+                      typeof issue.sprintId === 'string'
+                        ? (sprintNamesById.get(issue.sprintId) ?? null)
+                        : null
+                    }
+                    reporterName={
+                      typeof issue.reporterId === 'string'
+                        ? readMemberName(
+                            membersById,
+                            issue.reporterId,
+                            t('Unknown'),
+                          )
+                        : null
+                    }
+                    reporterAvatarUrl={
+                      membersById.get(issue.reporterId ?? '')?.avatarUrl
+                    }
+                    hiddenFields={hiddenCardFields}
                     isDone={doneStatusIds.has(issue.statusId ?? '')}
                     isSelected={selectedIssueId === issue.id}
                     isDragging={draggingIssueId === issue.id}
