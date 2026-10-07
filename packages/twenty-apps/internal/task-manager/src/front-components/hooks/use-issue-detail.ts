@@ -123,6 +123,9 @@ type IssueDetail = {
   sprints: SprintRow[];
   epics: EpicRow[];
   members: MemberRow[];
+  // Assignee and owner options: members holding a grant on the issue's app,
+  // resolved in the same round trip so the pickers never wait on a second one.
+  assignableMembers: MemberRow[];
   parentIssue: LinkedIssueRow | null;
   childIssues: LinkedIssueRow[];
   attachments: IssueAttachmentRow[];
@@ -139,6 +142,7 @@ const EMPTY_DETAIL: IssueDetail = {
   sprints: [],
   epics: [],
   members: [],
+  assignableMembers: [],
   parentIssue: null,
   childIssues: [],
   attachments: [],
@@ -192,6 +196,7 @@ export const useIssueDetail = (issueId: string | null) => {
         sprints: result.sprints ?? [],
         epics: result.epics ?? [],
         members: result.members ?? [],
+        assignableMembers: result.assignableMembers ?? [],
         parentIssue: readLinkedIssue(result.parentIssue),
         childIssues: readLinkedIssues(result.childIssues),
         attachments: readIssueAttachments(result.issue?.files),

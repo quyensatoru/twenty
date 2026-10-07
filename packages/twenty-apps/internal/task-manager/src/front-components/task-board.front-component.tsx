@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
-import { IconPlus, IconSearch } from 'twenty-ui/icon';
+import { IconPlus } from 'twenty-ui/icon';
 
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
@@ -20,6 +20,7 @@ import { TaskBoardCard } from './components/task-board-card';
 import { TaskBoardDetail } from './components/task-board-detail';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskButton } from './components/task-button';
+import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTextInput } from './components/task-text-input';
@@ -110,6 +111,36 @@ const TaskBoard = () => {
 
   const refreshBoard = () => setRefreshKey((key) => key + 1);
 
+  // A global-search pick jumps the board to the result's project (when it is
+  // a project on screen) and opens its modal. The typed query is cleared: it
+  // filtered the old project's columns, and keeping it would hide the very
+  // context just jumped to.
+  const selectSearchResult = (issue: BoardIssue) => {
+    if (
+      typeof issue.projectId === 'string' &&
+      issue.projectId !== '' &&
+      (board?.projects ?? []).some((project) => project.id === issue.projectId)
+    ) {
+      setProjectId(issue.projectId);
+    }
+
+    setSearch('');
+    setSelectedIssueId(issue.id);
+  };
+
+  const isFiltered =
+    search.trim() !== '' ||
+    sprintFilter !== ALL_VALUE ||
+    assigneeFilter !== ALL_VALUE ||
+    typeFilter !== ALL_VALUE;
+
+  const resetFilters = () => {
+    setSearch('');
+    setSprintFilter(ALL_VALUE);
+    setAssigneeFilter(ALL_VALUE);
+    setTypeFilter(ALL_VALUE);
+  };
+
   const membersById = useMemo(
     () =>
       new Map<string, BoardMember>(
@@ -137,8 +168,9 @@ const TaskBoard = () => {
   );
 
   const visibleIssues = useMemo(() => {
-    const term = search.trim().toLowerCase();
-
+    // The header search never narrows the columns: it only feeds the global
+    // results popover (jump-to-issue), so typing never rearranges the board
+    // under the pointer. Column filtering is the selects' job.
     return (board?.issues ?? []).filter((issue) => {
       if (typeFilter !== ALL_VALUE && issue.issueType !== typeFilter) {
         return false;
@@ -158,16 +190,9 @@ const TaskBoard = () => {
         return false;
       }
 
-      if (term === '') {
-        return true;
-      }
-
-      return (
-        (issue.title ?? '').toLowerCase().includes(term) ||
-        (issue.issueKey ?? '').toLowerCase().includes(term)
-      );
+      return true;
     });
-  }, [board, search, assigneeFilter, typeFilter]);
+  }, [board, assigneeFilter, typeFilter]);
 
   const issuesByStatus = useMemo(() => {
     const grouped = new Map<string, BoardIssue[]>();
@@ -368,11 +393,13 @@ const TaskBoard = () => {
     <TaskBoardFrame>
       <div
         style={{
+          alignItems: 'stretch',
+          background: TASK_TOKENS.background,
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
-          gap: 12,
-          padding: '16px 20px 12px 20px',
+          gap: 6,
+          padding: '12px 20px 8px 20px',
         }}
       >
         <div
@@ -383,20 +410,17 @@ const TaskBoard = () => {
             gap: 8,
           }}
         >
-          <h1
-            style={{
-              color: TASK_TOKENS.textPrimary,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 18,
-              fontWeight: 600,
-              margin: '0 8px 0 0',
-            }}
-          >
-            {t('Board')}
-          </h1>
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            flexShrink: 0,
+            gap: 8,
+          }}
+        >
           <TaskBoardSelect
             ariaLabel={t('Project')}
-            width={200}
+            width={170}
             value={projectId ?? board.activeProjectId ?? ''}
             options={board.projects.map((project) => ({
               value: project.id,
@@ -413,7 +437,7 @@ const TaskBoard = () => {
           />
           <TaskBoardSelect
             ariaLabel={t('Sprint')}
-            width={170}
+            width={140}
             value={sprintFilter}
             options={[
               { value: ALL_VALUE, label: t('All sprints') },
@@ -425,39 +449,35 @@ const TaskBoard = () => {
             ]}
             onChange={(value) => setSprintFilter(value)}
           />
-          <TaskTextInput
-            ariaLabel={t('Search issues')}
-            placeholder={t('Search by key or title…')}
-            prefixIcon={<IconSearch size={14} color={TASK_TOKENS.textTertiary} />}
-            width={220}
-            value={search}
-            onChange={setSearch}
-          />
-          <span style={{ flex: 1 }} />
-          <TaskButton
-            variant="primary"
-            isDisabled={statuses.length === 0}
-            onClick={() => {
-              setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
-              setComposerTitle('');
+        </div>
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              justifyContent: 'center',
+              minWidth: 200,
             }}
           >
-            <IconPlus size={14} />
-            {t('Create')}
-          </TaskButton>
+          <TaskIssueSearch
+            value={search}
+            onChange={setSearch}
+            onSelectIssue={selectSearchResult}
+            isShortcutEnabled={selectedIssueId === null}
+            maxWidth={560}
+          />
         </div>
-
         <div
           style={{
             alignItems: 'center',
             display: 'flex',
+            flexShrink: 0,
             flexWrap: 'wrap',
             gap: 8,
           }}
         >
           <TaskBoardSelect
             ariaLabel={t('Assignee')}
-            width={170}
+            width={140}
             value={assigneeFilter}
             options={[
               { value: ALL_VALUE, label: t('All assignees') },
@@ -471,7 +491,7 @@ const TaskBoard = () => {
           />
           <TaskBoardSelect
             ariaLabel={t('Type')}
-            width={150}
+            width={130}
             value={typeFilter}
             options={[
               { value: ALL_VALUE, label: t('All types') },
@@ -483,7 +503,61 @@ const TaskBoard = () => {
             ]}
             onChange={(value) => setTypeFilter(value)}
           />
-          <span style={{ flex: 1 }} />
+          <TaskButton
+            variant="primary"
+            isDisabled={statuses.length === 0}
+            onClick={() => {
+              setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
+              setComposerTitle('');
+            }}
+          >
+            <IconPlus size={14} />
+            {t('Create')}
+          </TaskButton>
+          </div>
+        </div>
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+            justifyContent: 'space-between',
+            width: '100%',
+          }}
+        >
+          <span
+            style={{
+              alignItems: 'center',
+              display: 'inline-flex',
+              gap: 8,
+            }}
+          >
+            <span
+              style={{
+                color: TASK_TOKENS.textTertiary,
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {visibleIssues.length === 1
+                ? `1 ${t('issue')}`
+                : `${visibleIssues.length} ${t('issues')}`}
+            </span>
+            {isFiltered && (
+              <TaskButton size="small" variant="ghost" onClick={resetFilters}>
+                {t('Reset')}
+              </TaskButton>
+            )}
+          </span>
+          <span
+            style={{
+              alignItems: 'center',
+              display: 'inline-flex',
+              gap: 8,
+            }}
+          >
           {typeof activeProject?.key === 'string' && (
             <span
               style={{
@@ -501,6 +575,7 @@ const TaskBoard = () => {
               color: TASK_TOKENS.textSecondary,
               fontFamily: TASK_TOKENS.fontFamily,
               fontSize: 12,
+              whiteSpace: 'nowrap',
             }}
           >
             {`${doneCount} / ${visibleIssues.length} ${t('done')}`}
@@ -522,6 +597,7 @@ const TaskBoard = () => {
                 width: `${progressPercent}%`,
               }}
             />
+          </span>
           </span>
         </div>
       </div>
@@ -546,7 +622,14 @@ const TaskBoard = () => {
               key={column.id}
               onDragOver={(event) => {
                 event.preventDefault();
-                event.dataTransfer.dropEffect = 'move';
+
+                // Guarded like the card's dragstart: the sandbox proxy has no
+                // dataTransfer, and an unguarded write throws into the host's
+                // error banner on every hover.
+                if (event.dataTransfer) {
+                  event.dataTransfer.dropEffect = 'move';
+                }
+
                 setDropTargetStatusId(column.id);
               }}
               onDragLeave={() =>
@@ -556,9 +639,14 @@ const TaskBoard = () => {
               }
               onDrop={(event) => {
                 event.preventDefault();
-                const issueId = event.dataTransfer.getData('text/plain');
+                // Without dataTransfer the payload falls back to the card's
+                // own dragstart state, which the board already tracks for the
+                // drag ghost — so dropping works in the sandbox too.
+                const payload = event.dataTransfer?.getData('text/plain') ?? '';
+                const issueId =
+                  payload !== '' ? payload : draggingIssueId;
 
-                if (issueId !== '') {
+                if (issueId !== null && issueId !== '') {
                   void moveIssue(issueId, column.id);
                 }
               }}
@@ -677,6 +765,7 @@ const TaskBoard = () => {
                     }
                     isDone={doneStatusIds.has(issue.statusId ?? '')}
                     isSelected={selectedIssueId === issue.id}
+                    isDragging={draggingIssueId === issue.id}
                     onOpen={() => setSelectedIssueId(issue.id)}
                     onMove={(statusId) => void moveIssue(issue.id, statusId)}
                     onDelete={() => void deleteIssue(issue.id)}

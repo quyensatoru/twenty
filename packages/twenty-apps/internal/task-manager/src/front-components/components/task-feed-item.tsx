@@ -78,6 +78,12 @@ export const TaskFeedItem = ({
           : isHovered
             ? TASK_TOKENS.backgroundTransparentLighter
             : 'transparent',
+        // A row carries a whole host BlockNote editor, so a long thread puts
+        // dozens of them in one scroll container and every frame paints them
+        // all. Off-screen rows skip rendering instead; `auto` keeps each row's
+        // last size so the scrollbar does not jump when they come back.
+        contentVisibility: 'auto',
+        containIntrinsicSize: 'auto 140px',
         borderRadius: TASK_TOKENS.radius,
         // Inside the radius rather than around it, so a highlighted row is the
         // same height as the rows above and below it.

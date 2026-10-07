@@ -450,6 +450,15 @@ export const ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID =
   '2314a9e1-b681-4675-9da5-65f4dbc529c4';
 export const ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID =
   'bad7290f-5886-45cd-92d7-c1eba03fca22';
+// The record page's left column as one panel, the way the board modal draws
+// it: description, subtasks and activity stacked with one shared scroll,
+// instead of three widget cards each scrolling on its own. The Details column
+// stays separate widgets on purpose — its relation pickers are the ones the
+// app-access filter narrows per member.
+export const ISSUE_RECORD_MAIN_FRONT_COMPONENT_UID =
+  '2b7a464d-a0c0-42d5-8531-9e52cbd0000d';
+export const ISSUE_RECORD_PAGE_MAIN_WIDGET_UID =
+  '809f8c48-7930-4953-8ac2-dbad6d842685';
 
 // Logic functions.
 export const ISSUE_DETAIL_LOGIC_FUNCTION_UID =
@@ -494,8 +503,6 @@ export const UPDATE_WORKLOG_LOGIC_FUNCTION_UID =
   'e5072512-7202-463f-b16b-f5e097c373ee';
 export const DELETE_WORKLOG_LOGIC_FUNCTION_UID =
   'b6410b5a-ad84-43ea-ad66-1fb862bf0621';
-export const LIST_MEMBERS_LOGIC_FUNCTION_UID =
-  'bb90db83-1e15-4c4b-ac0e-ecbc5ec39477';
 export const SEARCH_MERCHANTS_LOGIC_FUNCTION_UID =
   '3001695f-14b7-44b1-8d2e-fdd524c6559a';
 export const SEARCH_ISSUES_LOGIC_FUNCTION_UID =

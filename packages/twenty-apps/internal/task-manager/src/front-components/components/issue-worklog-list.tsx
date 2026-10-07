@@ -9,8 +9,9 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskCopyLinkButton } from './task-copy-link-button';
-import { TASK_COMPOSER_BOX_STYLE, TASK_EMPTY_FEED_STYLE } from './task-control-styles';
+import { TASK_COMPOSER_BOX_STYLE } from './task-control-styles';
 import { TaskDateTimeInput } from './task-date-time-input';
+import { TaskEmptyState } from './task-empty-state';
 import {
   FEED_BODY_INDENT,
   FEED_INLINE_INSET,
@@ -277,11 +278,18 @@ export const IssueWorklogList = ({
       </div>
 
       {worklogs.length === 0 ? (
-        <div
-          style={{ ...TASK_EMPTY_FEED_STYLE, margin: `0 ${ROW_INLINE_PADDING}px` }}
-        >
-          {t('No time logged yet.')}
-        </div>
+        <TaskEmptyState
+          icon={<IconClock size={16} />}
+          title={t('No time logged yet')}
+          description={t(
+            'Log the time you spent to keep progress and estimates up to date.',
+          )}
+          // Indented to the composer box it sits under, so the two read as
+          // one column instead of two widths stacked on each other.
+          style={{
+            margin: `0 ${ROW_INLINE_PADDING}px 0 ${ROW_INLINE_PADDING + FEED_BODY_INDENT}px`,
+          }}
+        />
       ) : (
         <WorklogSummary
           totalMinutes={totalMinutes}

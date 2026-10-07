@@ -65,3 +65,15 @@ export type BoardData = {
   members: BoardMember[];
   currentWorkspaceMemberId: string | null;
 };
+
+// What the search-issues route answers: one page of matches across every
+// project the caller may read, with the lookup lists a result row renders
+// (status pill, assignee avatar, project key). Narrower than BoardData on
+// purpose — no epics, no sprints, no full board payload per keystroke.
+export type IssueSearchResponse = {
+  issues: BoardIssue[];
+  projects: BoardProject[];
+  issueStatuses: BoardStatus[];
+  members: BoardMember[];
+  hasMore: boolean;
+};

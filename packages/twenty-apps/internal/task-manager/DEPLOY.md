@@ -263,17 +263,17 @@ Fork có mutation `completeSprint(sprintId, targetSprintId)`. Giờ là `POST /s
 
 Là một RECORD_PAGE layout **một tab duy nhất**, tab đó ở chế độ `GRID` và xếp như Jira:
 
-- **Description** (front component) chiếm cột đọc rộng bên trái, trên cùng;
+- Cột trái là **một** front component duy nhất (`issue-record-main`) xếp
+  **Description**, **Subtasks** rồi **Activity** (bình luận + worklog) liền mạch với một scroll
+  chung, đúng nhịp modal của board — thay cho ba widget card riêng trước đây. Ba section là cùng
+  component (`IssueDescription`, `IssueSubtasks`, `IssueActivity`) nên không trùng logic hay route;
 - bảng field dùng widget `FIELDS` của host nằm ở cột hẹp bên phải → thay cho `IssueFieldPanel`
   viết tay của fork;
-- **Activity** (bình luận + worklog, cũng là front component) nằm **dưới** Description, không còn
-  là một tab riêng;
 - panel Details (front component) nằm trên, bảng field (`FIELDS` của host) dính ngay dưới nó —
   hai khối này là một danh sách liền, không chen widget nào vào giữa;
-- **Subtasks** (issue cha + issue con, bấm mở side panel) và **Attachments** (tên file + copy
-  link) là hai widget riêng nằm ngay dưới bảng field ở cột phải. Bảng field chỉ giữ 8 dòng —
-  vừa bảng thu gọn — nên hai widget này ghé sát lên thay vì tít dưới trang; mở **More** thì bảng
-  cuộn trong ô của nó. Ảnh dán vào description/comment được file tự động vào `issue.attachments`
+- **Attachments** (tên file + copy link) là widget riêng nằm ngay dưới bảng field ở cột phải.
+  **Subtasks** (issue cha + issue con, bấm mở side panel) đã dời sang cột trái, dưới Description.
+  Ảnh dán vào description/comment được file tự động vào `issue.attachments`
   (route `append-issue-attachment`) nên cũng hiện ở đây;
 - không có tab Files và Timeline — xem mục 5.12.
 
@@ -446,7 +446,8 @@ Cái mất, cần nói rõ với khách:
 - Ô soạn issue có sẵn project và sprint. Thay bằng nút tạo trên board từng project, filter của view
   gieo sẵn project và app cho card mới.
 
-Vẫn là front component: **Description** và **Activity** trên trang chi tiết issue.
+Trên trang chi tiết issue vẫn là các front component đó, gộp trong `issue-record-main`:
+**Description**, **Subtasks** và **Activity**.
 
 ### 5.9 CSS chỉ có inline
 

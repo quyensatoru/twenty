@@ -31,18 +31,6 @@ export const TASK_COMPOSER_BOX_STYLE = {
   borderRadius: TASK_TOKENS.radius,
 } as const;
 
-// A dashed placeholder for an empty feed, so "nothing here yet" reads as a
-// state rather than as a missing list.
-export const TASK_EMPTY_FEED_STYLE = {
-  border: `1px dashed ${TASK_TOKENS.borderStrong}`,
-  borderRadius: TASK_TOKENS.radius,
-  color: TASK_TOKENS.textTertiary,
-  fontFamily: TASK_TOKENS.fontFamily,
-  fontSize: 12,
-  padding: 16,
-  textAlign: 'center',
-} as const;
-
 // The borderless field that sits inside a control wrapper already carrying the
 // border, background and focus ring.
 export const TASK_BARE_FIELD_STYLE = {

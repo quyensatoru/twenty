@@ -22,7 +22,7 @@ import {
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { ISSUE_TYPE_OPTIONS } from '../../constants/issue-type-options';
-import {
+import { type BoardIssue } from '../../types/task-board';import {
   CREATE_ISSUE_COMMENT_ROUTE_PATH,
   CREATE_ISSUE_ROUTE_PATH,
   CREATE_WORKLOG_ROUTE_PATH,
@@ -35,7 +35,6 @@ import {
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { formatMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
-import { useAssignableMembers } from '../hooks/use-assignable-members';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
@@ -45,9 +44,10 @@ import { IssueHistoryList } from './issue-history-list';
 import { IssueWorklogList } from './issue-worklog-list';
 import { TaskButton } from './task-button';
 import { TaskCheckbox } from './task-checkbox';
-import { TaskDateTimeInput } from './task-date-time-input';
+import { TaskDueDatePicker } from './task-due-date-picker';
 import { TaskFieldRow } from './task-field-row';
 import { TaskIconButton } from './task-icon-button';
+import { TaskIssueSearch } from './task-issue-search';
 import { TaskMessage } from './task-message';
 import { TaskRecordChip } from './task-record-chip';
 import {
@@ -87,24 +87,6 @@ type OpenField =
 
 const NO_VALUE = '';
 
-const toDateTimeLocalValue = (iso: string | null | undefined): string => {
-  if (typeof iso !== 'string' || iso === '') {
-    return '';
-  }
-
-  const parsed = new Date(iso);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return '';
-  }
-
-  const pad = (value: number) => String(value).padStart(2, '0');
-
-  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(
-    parsed.getDate(),
-  )}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
-};
-
 // Jira's issue view as a modal over the board: title and description on the
 // left with subtasks and the activity feed under them, the Details panel on
 // the right. Every read and write goes through the app's scoped routes — the
@@ -133,8 +115,7 @@ export const TaskBoardDetail = ({
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [estimateDraft, setEstimateDraft] = useState<string | null>(null);
   const [isEditingPoints, setIsEditingPoints] = useState(false);
-  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
-  const [dueDraft, setDueDraft] = useState<string | null>(null);
+  const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
   // Which Details rows are hidden. A view preference for the session, so —
   // unlike the edit drafts above — it survives stepping between cards and is
   // only dropped when the modal closes and unmounts.
@@ -163,19 +144,39 @@ export const TaskBoardDetail = ({
     setIsEditingEstimate(false);
     setEstimateDraft(null);
     setIsEditingPoints(false);
-    setIsEditingDueDate(false);
-    setDueDraft(null);
+    setIsDuePickerOpen(false);
     setIsFieldsMenuOpen(false);
   }, [issueId]);
 
   const projectId =
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
-  const assignableMembers = useAssignableMembers(projectId);
+  // Assignee options ride the detail payload itself, so the modal paints in
+  // one round trip instead of waiting on a second route after this one.
+  const assignableMembers = data.assignableMembers;
 
   const membersById = useMemo(
     () => new Map<string, MemberRow>(data.members.map((member) => [member.id, member])),
     [data.members],
   );
+
+  // Rows the link search must never offer: the issue itself, its current
+  // children and its parent — any of them would loop the parent chain.
+  const unlinkableIds = useMemo(() => {
+    const ids = new Set<string>([issueId]);
+
+    if (
+      data.parentIssue !== null &&
+      typeof data.parentIssue.id === 'string'
+    ) {
+      ids.add(data.parentIssue.id);
+    }
+
+    for (const child of data.childIssues) {
+      ids.add(child.id);
+    }
+
+    return [...ids];
+  }, [issueId, data.parentIssue, data.childIssues]);
 
   const statusNameById = useMemo(() => {
     const names = new Map<string, string>();
@@ -239,9 +240,17 @@ export const TaskBoardDetail = ({
     }
   };
 
+  // One flag for the whole panel: two fields each holding their own open
+  // state means two dropdowns drawn over each other, with neither reachable.
+  // The -10 offset right-aligns every 202px card flush with the modal's right
+  // edge: the card is as wide as the value column plus the panel paddings, so
+  // -10 lands its right edge 8px inside the dialog border. (The host only
+  // clamps overlays to the viewport, and the modal sits well inside it, so
+  // without this the card floats mid-panel.)
   const buildOpenProps = (field: OpenField) => ({
     isOpen: openField === field,
     onOpenChange: (isOpen: boolean) => setOpenField(isOpen ? field : null),
+    overlayOffsetX: -10,
   });
 
   const buildMemberOptions = (
@@ -417,24 +426,18 @@ export const TaskBoardDetail = ({
     void update({ data: { originalEstimateMinutes: next } });
   };
 
-  // The native picker commits one complete value (a pick, or Enter on a valid
-  // entry), so a complete value saves and closes at once. Partial typing only
-  // sits in the draft: Done commits it when it parses, Clear wipes the date.
-  const saveDueDate = (raw: string | null) => {
-    if (raw === null) {
+  // The picker commits one complete value (Done), so a complete value saves
+  // and closes at once. Clear wipes the date. Typing never sits in a draft:
+  // the previous native field saved partial keystrokes and its browser picker
+  // spilled past the modal edge.
+  const saveDueDate = (iso: string | null) => {
+    setIsDuePickerOpen(false);
+
+    if (iso === null) {
       return;
     }
 
-    const trimmed = raw.trim();
-
-    if (trimmed === '') {
-      setDueDraft(null);
-      setIsEditingDueDate(false);
-
-      return;
-    }
-
-    const parsed = new Date(trimmed);
+    const parsed = new Date(iso);
 
     if (Number.isNaN(parsed.getTime())) {
       setActionError(t('That date could not be read.'));
@@ -442,8 +445,6 @@ export const TaskBoardDetail = ({
       return;
     }
 
-    setDueDraft(null);
-    setIsEditingDueDate(false);
     void update(
       { data: { dueDate: parsed.toISOString() } },
       { refreshBoard: true },
@@ -451,8 +452,7 @@ export const TaskBoardDetail = ({
   };
 
   const clearDueDate = () => {
-    setDueDraft(null);
-    setIsEditingDueDate(false);
+    setIsDuePickerOpen(false);
     void update({ data: { dueDate: null } }, { refreshBoard: true });
   };
 
@@ -467,7 +467,7 @@ export const TaskBoardDetail = ({
       return null;
     }
 
-    return parsed.toLocaleDateString(undefined, {
+    const datePart = parsed.toLocaleDateString(undefined, {
       day: 'numeric',
       month: 'short',
       year:
@@ -475,6 +475,34 @@ export const TaskBoardDetail = ({
           ? undefined
           : 'numeric',
     });
+    const hasTime = parsed.getHours() !== 0 || parsed.getMinutes() !== 0;
+    const timePart = hasTime
+      ? parsed.toLocaleTimeString(undefined, {
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(parsed);
+    target.setHours(0, 0, 0, 0);
+    const deltaDays = Math.round(
+      (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+    );
+
+    const relative =
+      deltaDays === 0
+        ? t('Today')
+        : deltaDays === 1
+          ? t('Tomorrow')
+          : deltaDays === -1
+            ? t('Yesterday')
+            : null;
+
+    const dated = relative ?? datePart;
+
+    return timePart === null ? dated : `${dated} · ${timePart}`;
   };
 
   const isDueOverdue = (value: string | null | undefined): boolean => {
@@ -568,14 +596,69 @@ export const TaskBoardDetail = ({
       .finally(() => setIsSaving(false));
   };
 
+  // Attaching an existing issue instead of creating one: only its parent
+  // pointer moves — project, type and status stay exactly as they were. The
+  // server checks write access on the linked row, so a row outside the
+  // caller's grants fails loudly rather than linking silently. Shares the
+  // subtask input with creation: picking a result links, the Create row (or
+  // Enter on no match) creates.
+  const linkSubtask = (picked: BoardIssue) => {
+    setSubtaskDraft('');
+    setIsSaving(true);
+    postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
+      issueId: picked.id,
+      data: { parentId: issueId },
+    })
+      .then(() => {
+        setActionError(null);
+        return reload();
+      })
+      .then(() => onCardChanged())
+      .catch((error: unknown) => {
+        const message = readErrorText(error);
+        setActionError(message);
+        void enqueueSnackbar({ message, variant: 'error' });
+      })
+      .finally(() => setIsSaving(false));
+  };
+
+  // Detaching a subtask clears its parent pointer — the row itself is never
+  // deleted here. Same write path as linking, mirrored: the server checks
+  // write access on the detached row.
+  const unlinkSubtask = (childId: string) => {
+    setIsSaving(true);
+    postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
+      issueId: childId,
+      data: { parentId: null },
+    })
+      .then(() => {
+        setActionError(null);
+        return reload();
+      })
+      .then(() => onCardChanged())
+      .catch((error: unknown) => {
+        const message = readErrorText(error);
+        setActionError(message);
+        void enqueueSnackbar({ message, variant: 'error' });
+      })
+      .finally(() => setIsSaving(false));
+  };
+
+  // Detaching the parent clears this issue's own pointer. Only an unlink —
+  // deleting the parent record itself is never offered from its child.
+  const detachParent = () => {
+    void update({ data: { parentId: null } });
+  };
+
   return (
     <TaskBoardDetailFrame onClose={onClose}>
       <div
         style={{
           alignItems: 'center',
+          borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
           display: 'flex',
           gap: 8,
-          padding: '16px 20px 0 20px',
+          padding: '16px 20px 12px 20px',
         }}
       >
         <TaskTag color={typeOption?.color ?? 'blue'}>
@@ -773,24 +856,21 @@ export const TaskBoardDetail = ({
                 }
                 ownerAvatarUrl={membersById.get(child.assigneeId ?? '')?.avatarUrl}
                 onOpen={() => onSelectIssue(child.id)}
+                onUnlink={() => unlinkSubtask(child.id)}
+                unlinkLabel={t('Remove subtask link')}
               />
             ))}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <TaskTextInput
-                ariaLabel={t('New subtask title')}
-                placeholder={t('Add a subtask…')}
-                value={subtaskDraft}
-                onChange={setSubtaskDraft}
-                onEnter={createSubtask}
-              />
-              <TaskButton
-                size="medium"
-                isDisabled={subtaskDraft.trim() === '' || isSaving}
-                onClick={createSubtask}
-              >
-                {t('Add')}
-              </TaskButton>
-            </div>
+            <TaskIssueSearch
+              value={subtaskDraft}
+              onChange={setSubtaskDraft}
+              onSelectIssue={linkSubtask}
+              onCreateNew={createSubtask}
+              isShortcutEnabled={false}
+              ariaLabel={t('New subtask title')}
+              placeholder={t('Add a subtask…')}
+              excludeIds={unlinkableIds}
+              maxWidth="100%"
+            />
           </section>
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -897,9 +977,11 @@ export const TaskBoardDetail = ({
             flexShrink: 0,
             gap: 4,
             minHeight: 0,
+            minWidth: 0,
+            overflowX: 'hidden',
             overflowY: 'auto',
             paddingLeft: 16,
-            width: 300,
+            width: 320,
           }}
         >
           <div
@@ -982,6 +1064,8 @@ export const TaskBoardDetail = ({
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
+              minWidth: 0,
+              overflow: 'hidden',
               padding: '8px 10px',
               width: '100%',
             }}
@@ -1105,6 +1189,7 @@ export const TaskBoardDetail = ({
               isOpen={openField === 'labels'}
               onOpenChange={(isOpen) => setOpenField(isOpen ? 'labels' : null)}
               onChange={(labels) => void update({ data: { labels } })}
+              overlayOffsetX={-10}
             />
           </TaskFieldRow>
           )}
@@ -1115,7 +1200,6 @@ export const TaskBoardDetail = ({
                 ariaLabel={t('Story points')}
                 type="number"
                 shouldAutoFocus
-                width={80}
                 value={
                   pointsDraft ??
                   (typeof issue.storyPoints === 'number'
@@ -1141,6 +1225,14 @@ export const TaskBoardDetail = ({
                 {typeof issue.storyPoints === 'number' ? (
                   <span style={{ color: TASK_TOKENS.textPrimary }}>
                     {issue.storyPoints}
+                    <span
+                      style={{
+                        color: TASK_TOKENS.textTertiary,
+                        fontSize: 12,
+                      }}
+                    >
+                      {` ${t('pts')}`}
+                    </span>
                   </span>
                 ) : (
                   <span style={{ color: TASK_TOKENS.textLight }}>
@@ -1153,38 +1245,10 @@ export const TaskBoardDetail = ({
           )}
           {!isDetailFieldHidden('dueDate') && (
           <TaskFieldRow label={t('Due date')} Icon={IconCalendarEvent}>
-            {isEditingDueDate ? (
-              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                <TaskDateTimeInput
-                  ariaLabel={t('Due date')}
-                  width="100%"
-                  value={dueDraft ?? toDateTimeLocalValue(issue.dueDate)}
-                  onChange={(value) => {
-                    setDueDraft(value);
-
-                    if (value.trim() !== '') {
-                      const parsed = new Date(value);
-
-                      if (!Number.isNaN(parsed.getTime())) {
-                        saveDueDate(value);
-                      }
-                    }
-                  }}
-                />
-                <TaskButton size="small" onClick={() => saveDueDate(dueDraft)}>
-                  {t('Done')}
-                </TaskButton>
-                <TaskButton size="small" variant="ghost" onClick={clearDueDate}>
-                  {t('Clear')}
-                </TaskButton>
-              </div>
-            ) : (
+            <div style={{ minWidth: 0, position: 'relative', width: '100%' }}>
               <DetailReadButton
                 label={t('Edit due date')}
-                onOpen={() => {
-                  setDueDraft(toDateTimeLocalValue(issue.dueDate));
-                  setIsEditingDueDate(true);
-                }}
+                onOpen={() => setIsDuePickerOpen(true)}
               >
                 {(() => {
                   const label = readDueLabel(issue.dueDate);
@@ -1204,6 +1268,10 @@ export const TaskBoardDetail = ({
                         display: 'inline-flex',
                         fontWeight: overdue ? 600 : 400,
                         gap: 4,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       <IconCalendarEvent
@@ -1214,12 +1282,39 @@ export const TaskBoardDetail = ({
                             : TASK_TOKENS.textTertiary
                         }
                       />
-                      {label}
+                      <span
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {label}
+                      </span>
                     </span>
                   );
                 })()}
               </DetailReadButton>
-            )}
+              {isDuePickerOpen && (
+                // Right-aligned flush with the modal's right edge like every
+                // other Details dropdown: the 264px card against the 170px
+                // value column needs -72 to land 8px inside the dialog border.
+                <twenty-overlay
+                  offsetX={-72}
+                  offsetY={28}
+                  onClose={() => setIsDuePickerOpen(false)}
+                >
+                  <TaskDueDatePicker
+                    value={
+                      typeof issue.dueDate === 'string' ? issue.dueDate : null
+                    }
+                    onDone={saveDueDate}
+                    onClear={clearDueDate}
+                    onClose={() => setIsDuePickerOpen(false)}
+                  />
+                </twenty-overlay>
+              )}
+            </div>
           </TaskFieldRow>
           )}
           </div>
@@ -1338,6 +1433,8 @@ export const TaskBoardDetail = ({
                 }
                 ownerName={null}
                 onOpen={() => onSelectIssue(data.parentIssue?.id ?? issueId)}
+                onUnlink={detachParent}
+                unlinkLabel={t('Remove parent link')}
               />
             </div>
           )}
@@ -1419,7 +1516,7 @@ const TaskBoardDetailFrame = ({
         maxWidth: '100%',
         minHeight: 0,
         position: 'relative',
-        width: 'min(1080px, calc(100vw - 64px))',
+        width: 'min(1280px, calc(100vw - 48px))',
         zIndex: 61,
       }}
     >
@@ -1428,7 +1525,15 @@ const TaskBoardDetailFrame = ({
   </div>
 );
 
-const SectionHeading = ({ label, count }: { label: string; count?: number }) => (
+// Shared with the record page's unified left column so both read as the same
+// Jira-style sections rather than drifting apart one edit at a time.
+export const SectionHeading = ({
+  label,
+  count,
+}: {
+  label: string;
+  count?: number;
+}) => (
   <h3
     style={{
       color: TASK_TOKENS.textTertiary,
@@ -1446,8 +1551,8 @@ const SectionHeading = ({ label, count }: { label: string; count?: number }) => 
 );
 
 // A Details value as Twenty draws one: no box on the row, just the value over
-// a tint on hover. Clicking swaps in the real editor (a TaskTextInput, a
-// TaskDateTimeInput, a picker), so the panel reads like the host's own field
+// a tint on hover. Clicking swaps in the real editor (a TaskTextInput, the due
+// date picker), so the panel reads like the host's own field
 // list instead of a column of browser boxes.
 const DetailReadButton = ({
   label,
@@ -1500,11 +1605,13 @@ const LabelPicker = ({
   isOpen,
   onOpenChange,
   onChange,
+  overlayOffsetX = -4,
 }: {
   selected: string[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onChange: (labels: string[]) => void;
+  overlayOffsetX?: number;
 }) => {
   const [search, setSearch] = useState('');
   const term = search.trim().toLowerCase();
@@ -1553,7 +1660,7 @@ const LabelPicker = ({
         )}
       </button>
       {isOpen && (
-        <twenty-overlay offsetY={-4} offsetX={-4} onClose={() => onOpenChange(false)}>
+        <twenty-overlay offsetY={-4} offsetX={overlayOffsetX} onClose={() => onOpenChange(false)}>
           <div
             style={{
               background: TASK_TOKENS.background,

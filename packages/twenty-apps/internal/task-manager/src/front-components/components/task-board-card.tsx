@@ -31,6 +31,7 @@ type TaskBoardCardProps = {
   assigneeAvatarUrl?: string | null;
   isDone: boolean;
   isSelected: boolean;
+  isDragging: boolean;
   onOpen: () => void;
   onMove: (statusId: string) => void;
   onDelete: () => void;
@@ -112,6 +113,7 @@ export const TaskBoardCard = ({
   assigneeAvatarUrl,
   isDone,
   isSelected,
+  isDragging,
   onOpen,
   onMove,
   onDelete,
@@ -139,8 +141,21 @@ export const TaskBoardCard = ({
     <div
       draggable
       onDragStart={(event) => {
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', issue.id);
+        // The sandbox proxy carries no dataTransfer, so the card id travels
+        // on component state (onDragStartCard) instead — dataTransfer is a
+        // best-effort extra for real browsers, never a requirement. Touching
+        // it unguarded throws inside the handler, and the host turns every
+        // such throw into its red banner plus an error toast.
+        try {
+          event.dataTransfer?.setData('text/plain', issue.id);
+
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+          }
+        } catch {
+          // Sandbox proxy: state carries the payload.
+        }
+
         onDragStartCard();
       }}
       onDragEnd={onDragEndCard}
@@ -149,14 +164,15 @@ export const TaskBoardCard = ({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         background: TASK_TOKENS.background,
-        border: `1px solid ${isSelected ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
+        border: `1px solid ${isSelected ? TASK_TOKENS.accent : isDone ? readTagColor('green').text : TASK_TOKENS.border}`,
         borderRadius: TASK_TOKENS.radius,
-        boxShadow: isHovered ? TASK_TOKENS.shadowLight : 'none',
+        boxShadow: isHovered && !isDragging ? TASK_TOKENS.shadowLight : 'none',
         boxSizing: 'border-box',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         gap: 6,
+        opacity: isDragging ? 0.4 : 1,
         padding: '8px 10px',
         position: 'relative',
         width: '100%',
@@ -210,11 +226,19 @@ export const TaskBoardCard = ({
         >
           {issue.issueKey ?? ''}
         </span>
+        {isDone && (
+          <span
+            title={t('Done')}
+            style={{ display: 'inline-flex', flexShrink: 0 }}
+          >
+            <IconCheck size={14} color={readTagColor('green').text} />
+          </span>
+        )}
       </div>
 
       <span
         style={{
-          color: TASK_TOKENS.textPrimary,
+          color: isDone ? TASK_TOKENS.textTertiary : TASK_TOKENS.textPrimary,
           display: '-webkit-box',
           fontFamily: TASK_TOKENS.fontFamily,
           fontSize: 13,
@@ -222,6 +246,7 @@ export const TaskBoardCard = ({
           maxHeight: 36,
           overflow: 'hidden',
           overflowWrap: 'anywhere',
+          textDecoration: isDone ? 'line-through' : 'none',
           WebkitBoxOrient: 'vertical',
           WebkitLineClamp: 2,
         }}

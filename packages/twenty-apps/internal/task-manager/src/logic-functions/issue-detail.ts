@@ -14,6 +14,7 @@ import {
 import { ISSUE_DETAIL_ROUTE_PATH } from '../constants/route-paths';
 import { ISSUE_DETAIL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
+import { listGrantedAppIds } from '../utils/list-granted-app-ids.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { requireString } from './utils/require-string.util';
@@ -91,8 +92,10 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
 
     // The Subtasks widget: the parent row and the children rows, oldest first.
     // Scoped like everything else on this page, so a linked issue outside the
-    // caller's apps simply does not come back.
-    const [parentIssue, childIssues] = await Promise.all([
+    // caller's apps simply does not come back. The project's app travels along
+    // so the assignee options below resolve in this same round trip instead of
+    // a second one after the panel learns the project id.
+    const [parentIssue, childIssues, projectResult] = await Promise.all([
       parentId === null
         ? Promise.resolve(null)
         : listScopedRecords({
@@ -108,14 +111,34 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
         selection: LINKED_ISSUE_SELECTION,
         orderBy: [{ createdAt: 'AscNullsLast' }],
       }),
+      typeof issue.projectId === 'string'
+        ? client.query({
+            projects: {
+              __args: { filter: { id: { eq: issue.projectId } }, first: 1 },
+              edges: { node: { id: true, appId: true } },
+            },
+          })
+        : Promise.resolve(null),
     ]);
+
+    const projectAppId =
+      (projectResult?.projects as
+        | Connection<{ appId?: string | null }>
+        | undefined)?.edges?.[0]?.node?.appId ?? null;
 
     // Options for the relation pickers the app draws itself, narrowed to the
     // issue's own project. The host's FIELDS widget cannot narrow them: it
     // queries the target object with the viewer's token, so the row-level
     // predicate trims them to the caller's apps and no further, and an app has
-    // no way to declare a filter on a relation field.
-    const [sprints, epics] =
+    // no way to declare a filter on a relation field. The assignee options
+    // ride the same round trip: members holding a grant on the project's app,
+    // which is the rule the write path enforces, surfaced ahead of time so a
+    // picker cannot produce a choice the write would reject.
+    const canListMembers =
+      typeof projectAppId === 'string' &&
+      (scope.canBypassAppScope ||
+        listGrantedAppIds(scope.grantsByAppId, 'read').includes(projectAppId));
+    const [sprints, epics, grantedMemberIds] =
       typeof issue.projectId === 'string'
         ? await Promise.all([
             listScopedRecords({
@@ -132,8 +155,18 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
               selection: EPIC_SELECTION,
               orderBy: [{ position: 'AscNullsLast' }],
             }),
+            canListMembers
+              ? listScopedRecords<{ memberId: string }>({
+                  client,
+                  pluralName: 'appAccesses',
+                  filter: { appId: { eq: projectAppId } },
+                  selection: { id: true, memberId: true },
+                }).then((grants) => [
+                  ...new Set(grants.map((grant) => grant.memberId)),
+                ])
+              : Promise.resolve([] as string[]),
           ])
-        : [[], []];
+        : [[], [], []];
 
     // Oldest first: the feed reads top-down, creation then each change.
     const issueHistories = await listScopedRecords<{
@@ -156,6 +189,21 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
             pluralName: 'merchants',
             filter: { id: { in: merchantIds } },
             selection: MERCHANT_SELECTION,
+          });
+
+    const assignableMembers =
+      grantedMemberIds.length === 0
+        ? []
+        : await listScopedRecords({
+            client,
+            pluralName: 'workspaceMembers',
+            filter: { id: { in: grantedMemberIds } },
+            selection: {
+              id: true,
+              name: { firstName: true, lastName: true },
+              userEmail: true,
+              avatarUrl: true,
+            },
           });
 
     // Names for every member the panel has to label: comment authors, worklog
@@ -202,6 +250,7 @@ const handler = async (event: RoutePayload<IssueDetailBody>) =>
       sprints,
       epics,
       members,
+      assignableMembers,
       parentIssue,
       childIssues,
       // Who is asking. The panel decides which edit and delete controls to
@@ -215,7 +264,7 @@ export default defineLogicFunction({
   universalIdentifier: ISSUE_DETAIL_LOGIC_FUNCTION_UID,
   name: 'issue-detail',
   description:
-    'Route: one issue with its comments, worklogs, history, merchant links, parent and children, and project statuses.',
+    'Route: one issue with its comments, worklogs, history, merchant links, parent and children, project statuses, and members assignable to it.',
   timeoutSeconds: 60,
   httpRouteTriggerSettings: {
     path: ISSUE_DETAIL_ROUTE_PATH,

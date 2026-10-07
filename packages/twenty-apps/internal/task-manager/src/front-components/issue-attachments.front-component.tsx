@@ -1,9 +1,11 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
 import { t, useRecordId } from 'twenty-sdk/front-component';
+import { IconPaperclip } from 'twenty-ui/icon';
 
 import { ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
-import { TASK_EMPTY_FEED_STYLE } from './components/task-control-styles';
 import { TaskAttachmentRow } from './components/task-attachment-row';
+import { TaskEmptyState } from './components/task-empty-state';
+import { TaskSkeletonBar } from './components/task-skeleton';
 import { TaskMessage } from './components/task-message';
 import { TASK_TOKENS } from './components/task-tokens';
 import { useIssueDetail } from './hooks/use-issue-detail';
@@ -21,7 +23,34 @@ const IssueAttachments = () => {
   }
 
   if (isLoading && data.issue === null) {
-    return null;
+    return (
+      <section
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: TASK_TOKENS.fontFamily,
+          gap: 4,
+          height: '100%',
+          minHeight: 0,
+          overflowY: 'auto',
+          width: '100%',
+        }}
+      >
+        <TaskSkeletonBar
+          height={40}
+          background={TASK_TOKENS.backgroundSecondary}
+          radius={TASK_TOKENS.radius}
+          style={{ border: `1px solid ${TASK_TOKENS.borderLight}` }}
+        />
+        <TaskSkeletonBar
+          height={40}
+          width="70%"
+          background={TASK_TOKENS.backgroundSecondary}
+          radius={TASK_TOKENS.radius}
+          style={{ border: `1px solid ${TASK_TOKENS.borderLight}` }}
+        />
+      </section>
+    );
   }
 
   if (data.issue === null) {
@@ -47,7 +76,13 @@ const IssueAttachments = () => {
       }}
     >
       {data.attachments.length === 0 ? (
-        <div style={TASK_EMPTY_FEED_STYLE}>{t('No attachments yet.')}</div>
+        <TaskEmptyState
+          icon={<IconPaperclip size={16} />}
+          title={t('No attachments yet')}
+          description={t(
+            'Files attached to this issue will appear here for quick access.',
+          )}
+        />
       ) : (
         data.attachments.map((row) => (
           <TaskAttachmentRow key={row.fileId} row={row} />

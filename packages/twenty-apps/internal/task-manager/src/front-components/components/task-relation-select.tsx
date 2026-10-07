@@ -38,6 +38,12 @@ type TaskRelationSelectProps = {
   // first and an editor second: the pencil is what changes the value.
   onOpenRecord?: () => void;
   isDisabled?: boolean;
+  // Shifts the card left of its anchor. The host only clamps overlays to the
+  // viewport, so a left-aligned 202px card in the modal's right-hand Details
+  // panel spills past the modal border onto the backdrop. A negative offset
+  // right-aligns it back inside; the default keeps the option list over the
+  // chip just clicked.
+  overlayOffsetX?: number;
 };
 
 // What RecordInlineCellContainer gives a row: a 24px label line and a value
@@ -78,6 +84,7 @@ export const TaskRelationSelect = ({
   onOpenChange,
   onOpenRecord,
   isDisabled = false,
+  overlayOffsetX = -OVERLAY_INSET,
 }: TaskRelationSelectProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
@@ -182,7 +189,7 @@ export const TaskRelationSelect = ({
 
         {isOpen && (
           <twenty-overlay
-            offsetX={-OVERLAY_INSET}
+            offsetX={overlayOffsetX}
             offsetY={-OVERLAY_INSET}
             onClose={close}
           >

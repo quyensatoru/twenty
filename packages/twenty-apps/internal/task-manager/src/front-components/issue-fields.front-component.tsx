@@ -20,6 +20,7 @@ import { TaskFieldRow } from './components/task-field-row';
 import { TaskMerchantField } from './components/task-merchant-field';
 import { TaskMessage } from './components/task-message';
 import { TaskRecordChip } from './components/task-record-chip';
+import { TaskSkeletonFieldRow } from './components/task-skeleton';
 import {
   type TaskRelationOption,
   TaskRelationSelect,
@@ -27,7 +28,6 @@ import {
 import { TaskStatusLine } from './components/task-status-line';
 import { TaskTag } from './components/task-tag';
 import { TASK_TOKENS } from './components/task-tokens';
-import { useAssignableMembers } from './hooks/use-assignable-members';
 import { type MemberRow, useIssueDetail } from './hooks/use-issue-detail';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
@@ -78,7 +78,9 @@ const IssueFields = () => {
 
   const projectId =
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
-  const assignableMembers = useAssignableMembers(projectId);
+  // Assignee options ride the detail payload itself, so the panel paints in
+  // one round trip instead of waiting on a second route after this one.
+  const assignableMembers = data.assignableMembers;
 
   const update = async (body: Record<string, unknown>) => {
     if (issueId === null || isSavingRef.current) {
@@ -139,7 +141,28 @@ const IssueFields = () => {
   }
 
   if (isLoading && data.issue === null) {
-    return null;
+    return (
+      <section
+        style={{
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: TASK_TOKENS.fontFamily,
+          gap: 8,
+          height: '100%',
+          minHeight: 0,
+          overflowY: 'auto',
+          width: '100%',
+        }}
+      >
+        <TaskSkeletonFieldRow valueWidth={35} />
+        <TaskSkeletonFieldRow valueWidth={55} />
+        <TaskSkeletonFieldRow valueWidth={50} />
+        <TaskSkeletonFieldRow valueWidth={30} />
+        <TaskSkeletonFieldRow valueWidth={40} />
+        <TaskSkeletonFieldRow valueWidth={60} />
+      </section>
+    );
   }
 
   if (data.issue === null) {

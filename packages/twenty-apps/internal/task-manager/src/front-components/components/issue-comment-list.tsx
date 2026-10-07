@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconArrowBackUp, IconPencil, IconTrash } from 'twenty-ui/icon';
+import {
+  IconArrowBackUp,
+  IconMessage,
+  IconPencil,
+  IconTrash,
+} from 'twenty-ui/icon';
 
 import { readRichTextPlainValue } from '../../utils/read-rich-text-plain-value.util';
 import {
@@ -12,12 +17,13 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
 import { TaskCopyLinkButton } from './task-copy-link-button';
-import { TASK_COMPOSER_BOX_STYLE, TASK_EMPTY_FEED_STYLE } from './task-control-styles';
+import { TASK_COMPOSER_BOX_STYLE } from './task-control-styles';
 import {
   FEED_BODY_INDENT,
   FEED_INLINE_INSET,
   TaskFeedItem,
 } from './task-feed-item';
+import { TaskEmptyState } from './task-empty-state';
 import { TaskIconButton } from './task-icon-button';
 import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSortToggle } from './task-sort-toggle';
@@ -362,9 +368,18 @@ export const IssueCommentList = ({
       </div>
 
       {comments.length === 0 ? (
-        <div style={{ ...TASK_EMPTY_FEED_STYLE, margin: `0 ${ROW_INLINE_PADDING}px` }}>
-          {t('No comments yet.')}
-        </div>
+        <TaskEmptyState
+          icon={<IconMessage size={16} />}
+          title={t('No comments yet')}
+          description={t(
+            'Start the conversation — ask a question, share an update or leave feedback.',
+          )}
+          // Indented to the composer box it sits under, so the two read as
+          // one column instead of two widths stacked on each other.
+          style={{
+            margin: `0 ${ROW_INLINE_PADDING}px 0 ${ROW_INLINE_PADDING + FEED_BODY_INDENT}px`,
+          }}
+        />
       ) : (
         <div
           style={{

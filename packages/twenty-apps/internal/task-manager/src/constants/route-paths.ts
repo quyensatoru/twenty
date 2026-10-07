@@ -31,7 +31,6 @@ export const SYNC_APP_SCOPE_MIRROR_ROUTE_PATH =
 export const CREATE_PROJECT_BOARD_VIEW_ROUTE_PATH =
   '/task-manager/create-project-board-view';
 
-export const LIST_MEMBERS_ROUTE_PATH = '/task-manager/list-members';
 export const SEARCH_MERCHANTS_ROUTE_PATH = '/task-manager/search-merchants';
 export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
 
