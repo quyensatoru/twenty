@@ -45,6 +45,19 @@ export const applySerializedEventTransferredFiles = (
     return;
   }
 
+  // A host component's upload arrives as a plain Event, which has no detail
+  // of its own, while the SDK contract reads `event.detail.files`.
+  if (eventData.type === 'upload') {
+    Object.defineProperty(event, 'detail', {
+      value: { files: buildFileListLike(files) },
+      configurable: true,
+      enumerable: true,
+      writable: true,
+    });
+
+    return;
+  }
+
   if (eventData.type === 'drop') {
     event.dataTransfer = {
       files: buildFileListLike(files),

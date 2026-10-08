@@ -47,4 +47,17 @@ describe('applySerializedEventTransferredFiles', () => {
     expect(dataTransfer.types).toEqual(['Files']);
     expect((dataTransfer.files as SerializedFileData[])[0]).toEqual(FILE);
   });
+
+  it('should put the files on detail for an editor upload', () => {
+    const event = new Event('upload') as unknown as Record<string, unknown>;
+
+    applySerializedEventTransferredFiles(event, {
+      type: 'upload',
+      files: [FILE],
+    });
+
+    const detail = event.detail as { files: SerializedFileData[] };
+
+    expect(detail.files[0]).toEqual(FILE);
+  });
 });
