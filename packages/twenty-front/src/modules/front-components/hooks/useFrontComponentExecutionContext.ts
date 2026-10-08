@@ -462,6 +462,7 @@ export const useFrontComponentExecutionContext = ({
     // it renders on (a board deep link, for example) without knowing the
     // workspace-specific identifiers inside that path.
     locationPathname: location.pathname,
+    isMobile,
     // The host is always configured with APP_LOCALES, so this is a valid AppLocale.
     locale: i18n.locale as AppLocale,
   };

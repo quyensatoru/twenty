@@ -36,6 +36,12 @@ export type FrontComponentExecutionContext = {
    * is the only way it can link back to exactly the page it renders on.
    */
   locationPathname?: string;
+  /**
+   * Whether the host renders its mobile layout (viewport below twenty-ui's
+   * MOBILE_VIEWPORT). A front component's worker has no window to measure and
+   * cannot ship a media query, so this is how it adapts its own layout.
+   */
+  isMobile?: boolean;
   /** Set when the component renders an AI chat tool call */
   toolCall?: FrontComponentToolCall;
 };
