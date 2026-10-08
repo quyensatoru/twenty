@@ -12,9 +12,10 @@ import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type EpicSummariesBody = { projectId?: string };
 
-// Progress for the epic panel, apart from the board read so the board never
-// waits on it: two counts per epic, side by side. A project's epics number in
-// the tens, which keeps this cheaper than reading every issue's status.
+// Progress for the epic panel, over the epic's own issues and not their
+// subtasks, as Jira counts an epic. Apart from the board read so the board
+// never waits on it: two counts per epic, side by side. A project's epics
+// number in the tens, which keeps this cheaper than reading every status.
 const handler = async (event: RoutePayload<EpicSummariesBody>) =>
   runScopedRoute(async ({ client, scope }) => {
     const projectId = requireString(event.body?.projectId, 'projectId');
@@ -40,11 +41,15 @@ const handler = async (event: RoutePayload<EpicSummariesBody>) =>
     const summaries: EpicSummary[] = await Promise.all(
       epics.map(async (epic) => {
         const [totalCount, doneCount] = await Promise.all([
-          countIssues(client, { epicId: { eq: epic.id } }),
+          countIssues(client, {
+            epicId: { eq: epic.id },
+            parentId: { is: 'NULL' },
+          }),
           doneStatusIds.length === 0
             ? Promise.resolve(0)
             : countIssues(client, {
                 epicId: { eq: epic.id },
+                parentId: { is: 'NULL' },
                 statusId: { in: doneStatusIds },
               }),
         ]);

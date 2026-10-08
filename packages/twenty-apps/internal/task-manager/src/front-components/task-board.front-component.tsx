@@ -323,12 +323,17 @@ const TaskBoard = () => {
     setIsOnlyMine(!isOnlyMine);
   };
 
+  // A subtask has no epic of its own in Jira: a subtask card dropped on an
+  // epic plans its parent there, and the server carries the epic down.
   const assignIssueToEpic = async (issueId: string, epicId: string) => {
     setDraggingIssueId(null);
 
+    const parentId = board?.issues.find((issue) => issue.id === issueId)
+      ?.parentId;
+
     try {
       await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
-        issueId,
+        issueId: typeof parentId === 'string' ? parentId : issueId,
         data: { epicId },
       });
       refreshBoard();
@@ -861,6 +866,8 @@ const TaskBoard = () => {
               setComposerStatusId={setComposerStatusId}
               newIssueSprintId={newIssueSprintId}
               newIssueEpicId={newIssueEpicId}
+              draggingIssueId={draggingIssueId}
+              setDraggingIssueId={setDraggingIssueId}
               loadError={loadError}
               boardPath={boardPath}
               inset={pageInset}

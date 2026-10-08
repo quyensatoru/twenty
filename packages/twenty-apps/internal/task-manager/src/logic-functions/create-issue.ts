@@ -10,6 +10,7 @@ import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.
 import { createIssueWithReservedKey } from './utils/create-issue-with-reserved-key.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
 import { assertIssuePlanningTargets } from './utils/assert-issue-planning-targets.util';
+import { fetchIssuePlanning } from './utils/issue-planning.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -42,6 +43,14 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
       projectId,
       targets: buildIssueRelationTargets({ ...data, merchantIds }),
     });
+
+    // A subtask is planned wherever its parent is, as in Jira.
+    if (typeof data.parentId === 'string') {
+      const parentPlanning = await fetchIssuePlanning(client, data.parentId);
+
+      data.sprintId = parentPlanning?.sprintId ?? null;
+      data.epicId = parentPlanning?.epicId ?? null;
+    }
 
     await assertIssuePlanningTargets({
       client,

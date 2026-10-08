@@ -160,6 +160,9 @@ export const IssueDetailsPanel = ({
   const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
 
   const isReadOnly = !detail.canWrite;
+  // A subtask is planned wherever its parent is, as in Jira: its sprint and
+  // epic show the parent's and change only through the parent.
+  const isPlanningReadOnly = isReadOnly || typeof issue.parentId === 'string';
   const hiddenFields = detail.issueViewSettings.hiddenDetailFields;
   const isShown = (key: IssueDetailFieldKey) => !hiddenFields.includes(key);
 
@@ -508,6 +511,7 @@ export const IssueDetailsPanel = ({
               ariaLabel={t('Sprint')}
               placeholder={t('Sprint')}
               {...buildOpenProps('sprint')}
+              isReadOnly={isPlanningReadOnly}
               emptyOptionLabel={t('No sprint')}
               value={issue.sprintId ?? null}
               {...buildOpenRecordProps('sprint', issue.sprintId)}
@@ -531,6 +535,7 @@ export const IssueDetailsPanel = ({
               ariaLabel={t('Epic')}
               placeholder={t('Epic')}
               {...buildOpenProps('epic')}
+              isReadOnly={isPlanningReadOnly}
               emptyOptionLabel={t('No epic')}
               value={issue.epicId ?? null}
               {...buildOpenRecordProps('epic', issue.epicId)}

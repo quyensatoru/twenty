@@ -138,6 +138,9 @@ type TaskBoardViewProps = {
   // it does not vanish from the filtered board the moment it is created.
   newIssueSprintId: string | null;
   newIssueEpicId: string | null;
+  // Shared with the epic panel, which takes a card dropped on an epic.
+  draggingIssueId: string | null;
+  setDraggingIssueId: (issueId: string | null) => void;
   loadError: string | null;
   boardPath: string | null;
   // The page's side padding, narrower on a phone.
@@ -168,11 +171,12 @@ export const TaskBoardView = ({
   setComposerStatusId,
   newIssueSprintId,
   newIssueEpicId,
+  draggingIssueId,
+  setDraggingIssueId,
   loadError,
   boardPath,
   inset,
 }: TaskBoardViewProps) => {
-  const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   // A column being dragged by its header, and the column it would land on.
   // Kept apart from the card drag: both use the same drop zones.
   const [draggingStatusId, setDraggingStatusId] = useState<string | null>(

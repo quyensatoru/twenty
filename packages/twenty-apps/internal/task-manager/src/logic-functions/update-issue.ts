@@ -11,6 +11,12 @@ import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util
 import { assertIssuePlanningTargets } from './utils/assert-issue-planning-targets.util';
 import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
+import {
+  applyPlanningToSubtasks,
+  fetchIssuePlanning,
+  pickPlanningChanges,
+  SUBTASK_PLANNING_MESSAGE,
+} from './utils/issue-planning.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
 import { requireString } from './utils/require-string.util';
 import { reserveProjectIssueNumbers } from './utils/reserve-project-issue-numbers.util';
@@ -74,6 +80,33 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
       });
     }
 
+    // Jira's rule: a subtask has no sprint or epic of its own. Changing its
+    // parent re-homes it to the new parent's, and a direct change is refused.
+    const isParentChange = Object.prototype.hasOwnProperty.call(
+      data,
+      'parentId',
+    );
+    const requestedPlanning = pickPlanningChanges(data);
+    const isPlanningChange = Object.keys(requestedPlanning).length > 0;
+    const parentId = isParentChange
+      ? typeof data.parentId === 'string'
+        ? data.parentId
+        : null
+      : isPlanningChange
+        ? await fetchRecordColumn(client, 'issues', issueId, 'parentId')
+        : null;
+
+    if (parentId !== null) {
+      if (!isParentChange) {
+        throw new Error(SUBTASK_PLANNING_MESSAGE);
+      }
+
+      const parentPlanning = await fetchIssuePlanning(client, parentId);
+
+      data.sprintId = parentPlanning?.sprintId ?? null;
+      data.epicId = parentPlanning?.epicId ?? null;
+    }
+
     if (typeof data.sprintId === 'string' || typeof data.epicId === 'string') {
       await assertIssuePlanningTargets({
         client,
@@ -117,6 +150,14 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
 
     if (merchantIds !== undefined) {
       await linkIssueMerchants({ client, issueId, merchantIds });
+    }
+
+    if (parentId === null && isPlanningChange) {
+      await applyPlanningToSubtasks({
+        client,
+        parentId: issueId,
+        changes: requestedPlanning,
+      });
     }
 
     return { issue: result?.updateIssue };
