@@ -47,11 +47,12 @@ import { DIALOG_POPUP_PROP_DESCRIPTIONS } from './dialogPopupPropDescriptions';
 import { DIALOG_TITLE_PROP_DESCRIPTIONS } from './dialogTitlePropDescriptions';
 import { DROPDOWN_PART_PROP_DESCRIPTIONS } from './dropdownPartPropDescriptions';
 import { HEADING_PROP_DESCRIPTIONS } from './headingPropDescriptions';
-import { HORIZONTAL_SEPARATOR_PROP_DESCRIPTIONS } from './horizontalSeparatorPropDescriptions';
+import { SEPARATOR_PROP_DESCRIPTIONS } from './separatorPropDescriptions';
 import { ICON_BUTTON_PROP_DESCRIPTIONS } from './iconButtonPropDescriptions';
 import { LIGHT_BUTTON_PROP_DESCRIPTIONS } from './lightButtonPropDescriptions';
 import { LIGHT_ICON_BUTTON_PROP_DESCRIPTIONS } from './lightIconButtonPropDescriptions';
 import { LOADER_PROP_DESCRIPTIONS } from './loaderPropDescriptions';
+import { SKELETON_PROP_DESCRIPTIONS } from './skeletonPropDescriptions';
 import { OVERFLOWING_TEXT_WITH_TOOLTIP_PROP_DESCRIPTIONS } from './overflowingTextWithTooltipPropDescriptions';
 import { PILL_PROP_DESCRIPTIONS } from './pillPropDescriptions';
 import { PROGRESS_BAR_PROP_DESCRIPTIONS } from './progressBarPropDescriptions';
@@ -65,7 +66,7 @@ import { TAG_PROP_DESCRIPTIONS } from './tagPropDescriptions';
 import { DIRECTION_PROVIDER_PROP_DESCRIPTIONS } from './directionProviderPropDescriptions';
 import { TOOLTIP_PART_PROP_DESCRIPTIONS } from './tooltipPartPropDescriptions';
 import { TOOLTIP_PROP_DESCRIPTIONS } from './tooltipPropDescriptions';
-import { VISIBILITY_HIDDEN_PROP_DESCRIPTIONS } from './visibilityHiddenPropDescriptions';
+import { VISUALLY_HIDDEN_PROP_DESCRIPTIONS } from './visuallyHiddenPropDescriptions';
 
 export const DOCUMENTED_COMPONENTS = [
   {
@@ -116,11 +117,11 @@ export const DOCUMENTED_COMPONENTS = [
     },
   },
   {
-    name: 'VisibilityHidden',
-    source: 'primitives/accessibility/components/VisibilityHidden.tsx',
+    name: 'VisuallyHidden',
+    source: 'primitives/accessibility/components/VisuallyHidden.tsx',
     entryPoint: 'twenty-ui/primitives/accessibility',
-    slug: 'accessibility/visibility-hidden',
-    propDescriptions: VISIBILITY_HIDDEN_PROP_DESCRIPTIONS,
+    slug: 'accessibility/visually-hidden',
+    propDescriptions: VISUALLY_HIDDEN_PROP_DESCRIPTIONS,
   },
   {
     name: 'ColorSample',
@@ -142,6 +143,9 @@ export const DOCUMENTED_COMPONENTS = [
     entryPoint: 'twenty-ui/primitives/feedback',
     slug: 'feedback/banner',
     propDescriptions: BANNER_PROP_DESCRIPTIONS,
+    propDefaults: { color: 'status palette', status: 'info', variant: 'solid' },
+    parts: ['Action'],
+    partPropDescriptions: { Action: BUTTON_PROP_DESCRIPTIONS },
   },
   {
     name: 'Loader',
@@ -149,6 +153,13 @@ export const DOCUMENTED_COMPONENTS = [
     entryPoint: 'twenty-ui/primitives/feedback',
     slug: 'feedback/loader',
     propDescriptions: LOADER_PROP_DESCRIPTIONS,
+  },
+  {
+    name: 'Skeleton',
+    source: 'primitives/feedback/Skeleton/Skeleton.tsx',
+    entryPoint: 'twenty-ui/primitives/feedback',
+    slug: 'feedback/skeleton',
+    propDescriptions: SKELETON_PROP_DESCRIPTIONS,
   },
   {
     name: 'ProgressBar',
@@ -172,11 +183,11 @@ export const DOCUMENTED_COMPONENTS = [
     propDescriptions: COLLAPSIBLE_PROP_DESCRIPTIONS,
   },
   {
-    name: 'HorizontalSeparator',
-    source: 'primitives/layout/HorizontalSeparator/HorizontalSeparator.tsx',
+    name: 'Separator',
+    source: 'primitives/layout/Separator/Separator.tsx',
     entryPoint: 'twenty-ui/primitives/layout',
-    slug: 'layout/horizontal-separator',
-    propDescriptions: HORIZONTAL_SEPARATOR_PROP_DESCRIPTIONS,
+    slug: 'layout/separator',
+    propDescriptions: SEPARATOR_PROP_DESCRIPTIONS,
   },
   {
     name: 'ResizeHandle',
@@ -184,7 +195,15 @@ export const DOCUMENTED_COMPONENTS = [
     entryPoint: 'twenty-ui/primitives/layout',
     slug: 'layout/resize-handle',
     propDescriptions: RESIZE_HANDLE_PROP_DESCRIPTIONS,
-    propDefaults: { defaultValue: '150', min: '50', max: '500', step: '10' },
+    propDefaults: {
+      axis: 'y without edge',
+      defaultValue: '150',
+      dragThreshold: '5 with edge; 0 otherwise',
+      min: '50',
+      max: '500',
+      placement: 'edge with edge; inline otherwise',
+      step: '10',
+    },
   },
   {
     name: 'DirectionProvider',
@@ -433,7 +452,16 @@ export const DOCUMENTED_COMPONENTS = [
     source: 'primitives/surfaces/Tooltip/Tooltip.tsx',
     entryPoint: 'twenty-ui/primitives/surfaces',
     slug: 'surfaces/tooltip',
-    parts: ['Root', 'Trigger', 'Popup', 'Content', 'Provider'],
+    parts: [
+      'Root',
+      'Trigger',
+      'Portal',
+      'Positioner',
+      'Popup',
+      'Arrow',
+      'Viewport',
+      'Provider',
+    ],
     propDescriptions: TOOLTIP_PROP_DESCRIPTIONS,
     propDefaults: { sideOffset: '10' },
     partPropDescriptions: TOOLTIP_PART_PROP_DESCRIPTIONS,
@@ -633,6 +661,16 @@ export const DOCUMENTED_COMPONENTS = [
     entryPoint: 'twenty-ui/components/feedback',
     slug: 'components/feedback/inline-banner',
     propDescriptions: INLINE_BANNER_PROP_DESCRIPTIONS,
+    parts: ['Action'],
+    partPropDescriptions: { Action: BUTTON_PROP_DESCRIPTIONS },
+    propDefaults: {
+      color: 'status palette',
+      status: 'info',
+      variant: 'soft',
+      layout: 'standard',
+      embedded: 'false',
+      icon: 'decorative information icon',
+    },
   },
   {
     name: 'ToastProvider',

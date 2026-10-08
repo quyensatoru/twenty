@@ -138,6 +138,13 @@ export class AiAgentWorkflowAction implements WorkflowAction {
         }),
       });
 
+    const agentExecutionContext = buildWorkflowAgentRunExecutionContext({
+      executionContext,
+      turnCreatedBy:
+        await this.workflowAgentConversationService.findTurnCreatedBy(runInfo),
+    });
+    const resolvedPrompt = resolveInput(prompt, context) as string | undefined;
+
     const { threadId, outcome, summary } = await this.agentRunnerService.run({
       workspaceId,
       conversation,
@@ -150,10 +157,14 @@ export class AiAgentWorkflowAction implements WorkflowAction {
         isApplicationBound: isDefined(application),
       }),
       agent,
-      prompt: (resolveInput(prompt, context) as string | undefined) ?? null,
-      executionContext: buildWorkflowAgentRunExecutionContext(executionContext),
-      resolveCreatedBy: () =>
-        this.workflowAgentConversationService.findTurnCreatedBy(runInfo),
+      prompt: isDefined(resolvedPrompt)
+        ? {
+            messages: [{ role: 'user', content: resolvedPrompt }],
+            senderUserWorkspaceId: agentExecutionContext.userWorkspaceId,
+            senderApplicationId: null,
+          }
+        : null,
+      executionContext: agentExecutionContext,
     });
 
     await this.workflowRunStepLogService.setAiAgentStepLog({

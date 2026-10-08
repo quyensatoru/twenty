@@ -31,6 +31,8 @@ import { MetricsKeys } from 'src/engine/core-modules/metrics/types/metrics-keys.
 import { type WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { AgentMessageRole } from 'src/engine/metadata-modules/ai/ai-history/enums/agent-message-role.enum';
 import { AgentMessageStatus } from 'src/engine/metadata-modules/ai/ai-history/enums/agent-message-status.enum';
+import { AgentRunConversationService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-run-conversation.service';
+import { AgentRunSuspensionService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-run-suspension.service';
 import { isToolOutputAwaitedByCaller } from 'src/engine/metadata-modules/ai/ai-agent-execution/utils/is-tool-output-awaited-by-caller.util';
 import { mapDBPartsToUIMessageParts } from 'src/engine/metadata-modules/ai/ai-history/utils/map-db-parts-to-ui-message-parts.util';
 import { type BrowsingContextType } from 'src/engine/metadata-modules/ai/ai-agent/types/browsing-context.type';
@@ -42,6 +44,7 @@ import { AgentChatEventPublisherService } from 'src/engine/metadata-modules/ai/a
 import { AgentChatStreamHeartbeatService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat-stream-heartbeat.service';
 import { AgentChatService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat.service';
 import { AgentChatThreadService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat-thread.service';
+import { AgentChatThreadLifecycleService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat-thread-lifecycle.service';
 import { AiChatFileAttachment } from 'src/engine/metadata-modules/ai/ai-chat/types/ai-chat-file-attachment.type';
 import { formatErrorWithCause } from 'src/engine/metadata-modules/ai/ai-chat/utils/format-error-with-cause.util';
 import { mapErrorToStreamError } from 'src/engine/metadata-modules/ai/ai-history/utils/map-error-to-stream-error.util';
@@ -93,6 +96,9 @@ export class AgentChatStreamingService {
     @InjectAgentHistoryRepository('agentMessagePart')
     private readonly messagePartRepository: AgentHistoryRepository<AgentMessagePartWorkspaceEntity>,
     private readonly turnRecorderService: AgentTurnRecorderService,
+    private readonly agentRunSuspensionService: AgentRunSuspensionService,
+    private readonly agentRunConversationService: AgentRunConversationService,
+    private readonly threadLifecycleService: AgentChatThreadLifecycleService,
   ) {}
 
   async tryClaimStream({
@@ -120,7 +126,17 @@ export class AgentChatStreamingService {
     return true;
   }
 
-  async streamAgentChat({
+  // a message that lands while a run goes on in the conversation would be read by that run once it
+  // goes on after a wait, so it is let in only between runs
+  streamAgentChat(options: StreamAgentChatOptions) {
+    return this.agentRunConversationService.withThreadLockForMessage({
+      workspaceId: options.workspace.id,
+      threadId: options.thread.id,
+      work: () => this.startOrQueueMessage(options),
+    });
+  }
+
+  private async startOrQueueMessage({
     thread,
     userWorkspaceId,
     workspaceMemberId,
@@ -628,22 +644,33 @@ export class AgentChatStreamingService {
   }): Promise<void> {
     const messageId = thread.pendingQuestionMessageId;
 
+    if (
+      isDefined(messageId) &&
+      (await this.isAwaitingCaller({ messageId, workspaceId }))
+    ) {
+      throw new AiException(
+        'This conversation is waiting on an answer to the run that asked',
+        AiExceptionCode.THREAD_AWAITING_ANSWER,
+      );
+    }
+
+    // a run waiting on an event or a duration asks nothing, yet reads the conversation when it goes on
+    await this.agentRunSuspensionService.assertConversationNotSuspended({
+      workspaceId,
+      threadId: thread.id,
+    });
+
     if (!isDefined(messageId)) {
       return;
     }
 
-    if (await this.isAwaitingCaller({ messageId, workspaceId })) {
-      throw new AiException(
-        'This conversation is waiting on an answer to the run that asked',
-        AiExceptionCode.THREAD_AWAITING_CALLER_INPUT,
-      );
-    }
-
-    await this.agentChatService.closePendingToolCalls({
+    // the member moved on from the question, which ends the turn that asked it
+    await this.threadLifecycleService.closePendingQuestion({
+      workspaceId,
       threadId: thread.id,
       messageId,
-      workspaceId,
-      where: { activeStreamId: IsNull() },
+      activeStreamId: null,
+      turnStatus: AgentTurnStatus.COMPLETED,
     });
   }
 

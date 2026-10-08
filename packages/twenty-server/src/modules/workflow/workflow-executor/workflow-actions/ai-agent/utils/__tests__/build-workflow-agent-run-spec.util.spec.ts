@@ -23,7 +23,7 @@ const buildStep = (
   }) as WorkflowAiAgentAction;
 
 describe('buildWorkflowAgentRunSpec', () => {
-  it('lets the agent wait but not ask without human input instructions', () => {
+  it('keeps the agent from asking without human input instructions', () => {
     const spec = buildWorkflowAgentRunSpec({
       step: buildStep({
         prompt: 'Draft the quote',
@@ -38,8 +38,6 @@ describe('buildWorkflowAgentRunSpec', () => {
       instructions: null,
       capabilities: {
         canAskHumans: false,
-        canProposeToolCalls: false,
-        canWait: true,
       },
     });
     expect(spec).not.toHaveProperty('additionalExcludedToolNames');
@@ -57,8 +55,6 @@ describe('buildWorkflowAgentRunSpec', () => {
     expect(spec.agentId).toBe('agent-id');
     expect(spec.capabilities).toEqual({
       canAskHumans: true,
-      canProposeToolCalls: true,
-      canWait: true,
     });
     expect(spec.instructions).toMatch(/Ask before choosing a plan\.$/);
   });

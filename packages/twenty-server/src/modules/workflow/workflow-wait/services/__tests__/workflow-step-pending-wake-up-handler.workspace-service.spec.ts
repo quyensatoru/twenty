@@ -1,6 +1,5 @@
 import { StepStatus } from 'twenty-shared/workflow';
 
-import { PendingWakeUpEventRecordService } from 'src/engine/core-modules/pending-wake-up/services/pending-wake-up-event-record.service';
 import { PendingWakeUpOwnerHandlerRegistryService } from 'src/engine/core-modules/pending-wake-up/services/pending-wake-up-owner-handler-registry.service';
 import { PendingWakeUpResolverService } from 'src/engine/core-modules/pending-wake-up/services/pending-wake-up-resolver.service';
 import { WorkflowRunStatus } from 'src/modules/workflow/common/standard-objects/workflow-run.workspace-entity';
@@ -33,12 +32,14 @@ const buildService = ({
   storedWait = STORED_WAIT,
   runStatus = WorkflowRunStatus.RUNNING,
   stepStatus = StepStatus.PENDING,
+  stepError,
   readableRecords = [READABLE_RECORD],
   isRecordReadFailing = false,
 }: {
   storedWait?: object | null;
   runStatus?: WorkflowRunStatus;
   stepStatus?: StepStatus;
+  stepError?: string;
   readableRecords?: object[];
   isRecordReadFailing?: boolean;
 } = {}) => {
@@ -52,7 +53,7 @@ const buildService = ({
       status: runStatus,
       state: {
         flow: { steps: [{ id: STEP_ID, type: 'WAIT_FOR_EVENT' }] },
-        stepInfos: { [STEP_ID]: { status: stepStatus } },
+        stepInfos: { [STEP_ID]: { status: stepStatus, error: stepError } },
       },
     }),
     updateStepInfoIfPending: jest
@@ -86,13 +87,13 @@ const buildService = ({
     registry,
     workflowRunWorkspaceService as never,
     workflowExecutionContextService as never,
-    new PendingWakeUpEventRecordService(findRecordsService as never),
     messageQueueService as never,
   ).onModuleInit();
 
   const service = new PendingWakeUpResolverService(
     pendingWakeUpService as never,
     registry,
+    findRecordsService as never,
   );
 
   return {
@@ -294,6 +295,23 @@ describe('WorkflowStepPendingWakeUpHandlerWorkspaceService', () => {
     await service.resolve({ workspaceId: WORKSPACE_ID, wakeUpId: WAIT_ID });
 
     expect(pendingWakeUpService.claim).toHaveBeenCalled();
+    expect(messageQueueService.add).not.toHaveBeenCalled();
+  });
+
+  it('removes the wait of a step that now waits on a retry without resuming it', async () => {
+    const {
+      service,
+      pendingWakeUpService,
+      workflowRunWorkspaceService,
+      messageQueueService,
+    } = buildService({ stepError: 'Step failed' });
+
+    await service.resolve({ workspaceId: WORKSPACE_ID, wakeUpId: WAIT_ID });
+
+    expect(pendingWakeUpService.claim).toHaveBeenCalled();
+    expect(
+      workflowRunWorkspaceService.updateStepInfoIfPending,
+    ).not.toHaveBeenCalled();
     expect(messageQueueService.add).not.toHaveBeenCalled();
   });
 
