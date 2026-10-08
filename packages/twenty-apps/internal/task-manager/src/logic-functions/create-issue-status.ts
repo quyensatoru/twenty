@@ -4,7 +4,9 @@ import { ISSUE_STATUS_SELECTION } from '../constants/record-selections';
 import { CREATE_ISSUE_STATUS_ROUTE_PATH } from '../constants/route-paths';
 import { CREATE_ISSUE_STATUS_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type Connection } from '../types/connection';
-import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
+import { readNewIssueStatusInput } from '../utils/read-new-issue-status-input.util';
+import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
+import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -22,13 +24,23 @@ type CreateIssueStatusBody = {
 const handler = async (event: RoutePayload<CreateIssueStatusBody>) =>
   runScopedRoute(async ({ client, scope }) => {
     const projectId = requireString(event.body?.projectId, 'projectId');
-    const name = requireString(event.body?.name, 'name');
+    const { name, category, color } = readNewIssueStatusInput(
+      event.body ?? {},
+    );
 
-    await assertAppScopeWriteAccess({
+    // A new status is a new column on everyone's board, so it is a view edit
+    // like reordering the columns: the role's "Manage Views" decides, not a
+    // write grant on the app. Seeing the project is still required.
+    if (!scope.canManageViews) {
+      throw new AppScopePermissionDeniedError();
+    }
+
+    await assertRecordInScope({
       client,
       scope,
-      objectNameSingular: 'issueStatus',
-      foreignKeyValue: projectId,
+      objectNameSingular: 'project',
+      recordId: projectId,
+      operation: 'read',
     });
 
     // Written in the same mutation that creates the row: a row-level
@@ -63,12 +75,8 @@ const handler = async (event: RoutePayload<CreateIssueStatusBody>) =>
             name,
             appId,
             position: nextPosition + 1,
-            ...(event.body?.color === undefined
-              ? {}
-              : { color: event.body.color }),
-            ...(event.body?.category === undefined
-              ? {}
-              : { category: event.body.category }),
+            color,
+            category,
           },
         },
         ...ISSUE_STATUS_SELECTION,

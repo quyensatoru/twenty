@@ -22,6 +22,7 @@ import {
 import {
   BOARD_COLUMN_ISSUES_ROUTE_PATH,
   CREATE_ISSUE_ROUTE_PATH,
+  CREATE_ISSUE_STATUS_ROUTE_PATH,
   DELETE_ISSUE_ROUTE_PATH,
   REORDER_ISSUE_STATUSES_ROUTE_PATH,
   TASK_BOARD_ROUTE_PATH,
@@ -42,6 +43,7 @@ import {
   type TaskBoardAssigneeOption,
   UNASSIGNED_ASSIGNEE_VALUE,
 } from './components/task-board-assignee-filter';
+import { TaskBoardAddStatus } from './components/task-board-add-status';
 import { TaskBoardCard } from './components/task-board-card';
 import { TaskBoardDetail } from './components/task-board-detail';
 import { TaskBoardSelect } from './components/task-board-select';
@@ -659,6 +661,35 @@ const TaskBoard = () => {
           : { ...current, issueStatuses: previousStatuses },
       );
       void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+    }
+  };
+
+  // Not optimistic: the column needs the id the server gives the status, and
+  // the board reload brings it in at the position the server picked.
+  const createStatus = async (input: {
+    name: string;
+    category: string;
+    color: string;
+  }): Promise<boolean> => {
+    const activeProjectId = board?.activeProjectId ?? null;
+
+    if (activeProjectId === null) {
+      return false;
+    }
+
+    try {
+      await postAppRoute(CREATE_ISSUE_STATUS_ROUTE_PATH, {
+        projectId: activeProjectId,
+        ...input,
+      });
+      refreshBoard();
+      void enqueueSnackbar({ message: t('Status added.'), variant: 'success' });
+
+      return true;
+    } catch (error) {
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+
+      return false;
     }
   };
 
@@ -1599,6 +1630,11 @@ const TaskBoard = () => {
             </section>
           );
         })}
+        {/* A new column is a change to everyone's board, so it follows the
+            role's "Manage Views" like the column order and the card fields. */}
+        {board.canManageViews && board.activeProjectId !== null && (
+          <TaskBoardAddStatus onCreate={createStatus} />
+        )}
       </div>
 
       <div style={{ flexShrink: 0, padding: '0 20px' }}>

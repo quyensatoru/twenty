@@ -1,5 +1,7 @@
 import { type CSSProperties } from 'react';
 
+import { ISSUE_STATUS_COLOR_OPTIONS } from '../../constants/issue-status-color-options';
+
 // Twenty's own CSS variables, so every screen follows light and dark mode. The
 // fallbacks only matter when a page renders outside a Twenty host.
 export const TASK_TOKENS = {
@@ -73,7 +75,29 @@ export const TAG_COLORS: Record<string, { text: string; background: string }> = 
   pink: { text: '#db2777', background: 'rgba(219,39,119,0.12)' },
 };
 
+const THEME_COLOR_NAMES = new Set<string>(
+  ISSUE_STATUS_COLOR_OPTIONS.map((option) => option.color),
+);
+
+// The colours above keep their own pairs, which the rest of the app was drawn
+// with. Any other colour of Twenty's palette (a status can be ruby, plum,
+// amber...) takes Twenty's own tag pair from the theme, so it follows dark
+// mode, instead of collapsing to grey.
 export const readTagColor = (
   color: string | null | undefined,
-): { text: string; background: string } =>
-  TAG_COLORS[(color ?? 'gray').toLowerCase()] ?? TAG_COLORS.gray;
+): { text: string; background: string } => {
+  const key = (color ?? 'gray').toLowerCase();
+
+  if (key in TAG_COLORS) {
+    return TAG_COLORS[key];
+  }
+
+  if (THEME_COLOR_NAMES.has(key)) {
+    return {
+      text: `var(--t-tag-text-${key}, ${TAG_COLORS.gray.text})`,
+      background: `var(--t-tag-background-${key}, ${TAG_COLORS.gray.background})`,
+    };
+  }
+
+  return TAG_COLORS.gray;
+};
