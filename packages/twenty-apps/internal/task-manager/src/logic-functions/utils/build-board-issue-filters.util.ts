@@ -11,6 +11,8 @@ export type BoardIssueQuery = {
   projectId: string;
   // undefined = every sprint, null = backlog (no sprint), string = one sprint.
   sprintId: string | null | undefined;
+  // undefined = every epic, null = no epic, string = one epic.
+  epicId: string | null | undefined;
   // Member ids, optionally with BOARD_UNASSIGNED_ASSIGNEE. Empty = everyone.
   assigneeIds: readonly string[];
   issueType: string | null;
@@ -44,6 +46,7 @@ const buildAssigneeFilter = (assigneeIds: readonly string[]): IssueFilter => {
 export const buildBoardScopeFilter = ({
   projectId,
   sprintId,
+  epicId,
   assigneeIds,
   issueType,
 }: BoardIssueQuery): IssueFilter => ({
@@ -53,6 +56,11 @@ export const buildBoardScopeFilter = ({
     : sprintId === null
       ? { sprintId: { is: 'NULL' } }
       : { sprintId: { eq: sprintId } }),
+  ...(epicId === undefined
+    ? {}
+    : epicId === null
+      ? { epicId: { is: 'NULL' } }
+      : { epicId: { eq: epicId } }),
   ...buildAssigneeFilter(assigneeIds),
   ...(issueType === null ? {} : { issueType: { eq: issueType } }),
 });

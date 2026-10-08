@@ -47,6 +47,8 @@ export const ISSUE_SEARCH_SELECTION = {
   assigneeId: true,
   reporterId: true,
   epicId: true,
+  parentId: true,
+  position: true,
   updatedAt: true,
 } as const;
 
@@ -97,6 +99,7 @@ export const SPRINT_SELECTION = {
 export const EPIC_SELECTION = {
   id: true,
   name: true,
+  color: true,
   assigneeId: true,
   projectId: true,
   position: true,

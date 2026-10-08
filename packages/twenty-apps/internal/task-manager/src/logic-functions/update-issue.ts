@@ -8,6 +8,7 @@ import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-ac
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { assertRelationTargetAppScope } from './app-scope/assert-relation-target-app-scope.util';
 import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
+import { assertIssuePlanningTargets } from './utils/assert-issue-planning-targets.util';
 import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
@@ -70,6 +71,17 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
         objectNameSingular: 'issue',
         projectId: effectiveProjectId,
         targets: relationTargets,
+      });
+    }
+
+    if (typeof data.sprintId === 'string' || typeof data.epicId === 'string') {
+      await assertIssuePlanningTargets({
+        client,
+        projectId:
+          projectId ??
+          (await fetchRecordColumn(client, 'issues', issueId, 'projectId')),
+        sprintId: data.sprintId,
+        epicId: data.epicId,
       });
     }
 

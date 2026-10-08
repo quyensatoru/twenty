@@ -13,11 +13,21 @@ const CUTOFF = '2026-09-23T12:00:00.000Z';
 const BASE_QUERY = {
   projectId: 'p1',
   sprintId: undefined,
+  epicId: undefined,
   assigneeIds: [],
   issueType: null,
 };
 
 describe('buildBoardScopeFilter', () => {
+  it('adds the epic scope', () => {
+    expect(
+      buildBoardScopeFilter({ ...BASE_QUERY, epicId: null }).epicId,
+    ).toEqual({ is: 'NULL' });
+    expect(
+      buildBoardScopeFilter({ ...BASE_QUERY, epicId: 'e1' }).epicId,
+    ).toEqual({ eq: 'e1' });
+  });
+
   it('scopes to the project alone by default', () => {
     expect(buildBoardScopeFilter(BASE_QUERY)).toEqual({
       projectId: { eq: 'p1' },

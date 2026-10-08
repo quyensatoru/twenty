@@ -83,6 +83,7 @@ export const SPRINT_ISSUES_FIELD_UID = '6c883b2e-192a-4ccc-aa18-b8845b49ebaf';
 
 export const EPIC_OBJECT_UID = '4aef1443-d2b0-42a9-9ce9-f08891b93430';
 export const EPIC_NAME_FIELD_UID = 'ede3b828-7820-4f7e-a698-ea8ab024ca8b';
+export const EPIC_COLOR_FIELD_UID = 'b7aa53e9-bbae-427d-aa8d-4b5a9422df79';
 export const EPIC_ASSIGNEE_FIELD_UID = 'b5b99d32-cff8-4b09-b8a5-671104ccd7a6';
 export const EPIC_PROJECT_FIELD_UID = '6d21b491-e9a0-46b2-8714-731bf3ad008d';
 export const EPIC_ISSUES_FIELD_UID = 'e879d34e-d571-4cf7-a80c-6c9b9618748e';
@@ -613,3 +614,20 @@ export const TASK_BOARD_LOGIC_FUNCTION_UID =
   '8ea7f77e-e6cd-4580-8bdc-8ac58ffc9e56';
 export const BOARD_COLUMN_ISSUES_LOGIC_FUNCTION_UID =
   '2b1dd369-1c28-4fa3-b78a-6ecd2418fd5d';
+
+// Sprint and epic planning on the board: the backlog, the sprint lifecycle and
+// the epic panel.
+export const START_SPRINT_LOGIC_FUNCTION_UID =
+  'db7970fd-2f5f-4282-9e1b-cba3281e2e1c';
+export const DELETE_SPRINT_LOGIC_FUNCTION_UID =
+  'f49a5452-0d3d-435b-8a60-a2015aed2242';
+export const RANK_ISSUE_LOGIC_FUNCTION_UID =
+  '021094a7-225d-4da9-84aa-93c2aba46345';
+export const DELETE_EPIC_LOGIC_FUNCTION_UID =
+  '6bd7839e-cce7-4336-b85a-a0acb014a0ba';
+export const EPIC_SUMMARIES_LOGIC_FUNCTION_UID =
+  '6a626fc2-1958-44cf-8653-420078051f1d';
+export const BACKLOG_LOGIC_FUNCTION_UID =
+  '799e79fd-4153-45e6-87ec-8cbf5db68a07';
+export const BACKLOG_SECTION_ISSUES_LOGIC_FUNCTION_UID =
+  '32f31c95-37f5-4324-9996-e16c5e2b3ec2';

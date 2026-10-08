@@ -9,6 +9,7 @@ import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util
 import { buildIssueRelationTargets } from './utils/build-issue-relation-targets.util';
 import { createIssueWithReservedKey } from './utils/create-issue-with-reserved-key.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
+import { assertIssuePlanningTargets } from './utils/assert-issue-planning-targets.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -40,6 +41,13 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
       objectNameSingular: 'issue',
       projectId,
       targets: buildIssueRelationTargets({ ...data, merchantIds }),
+    });
+
+    await assertIssuePlanningTargets({
+      client,
+      projectId,
+      sprintId: data.sprintId,
+      epicId: data.epicId,
     });
 
     // An issue reports itself to whoever filed it unless the payload says

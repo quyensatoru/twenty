@@ -17,6 +17,8 @@ export type BoardIssue = {
   assigneeId?: string | null;
   reporterId?: string | null;
   epicId?: string | null;
+  parentId?: string | null;
+  position?: number | null;
 };
 
 export type BoardProject = {
@@ -39,13 +41,34 @@ export type BoardSprint = {
   id: string;
   name?: string | null;
   state?: string | null;
+  goal?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  completeDate?: string | null;
   position?: number | null;
 };
 
 export type BoardEpic = {
   id: string;
   name?: string | null;
+  color?: string | null;
+  assigneeId?: string | null;
+  position?: number | null;
 };
+
+// Progress of one epic for the epic panel: issues in a DONE-category status
+// over all its issues.
+export type EpicSummary = {
+  epicId: string;
+  doneCount: number;
+  totalCount: number;
+};
+
+export type BoardViewMode = 'board' | 'backlog';
+
+// The page's side padding. The host frame already adds a strip on the left,
+// beside the sidebar, so the left one is smaller to look the same.
+export type PageInset = { left: number; right: number };
 
 // Names a card has to label: the members behind its assignee and reporter
 // ids. Field-for-field compatible with MemberRow in
@@ -71,6 +94,8 @@ export type BoardData = {
   activeProjectId: string | null;
   issueStatuses: BoardStatus[];
   sprints: BoardSprint[];
+  // The project's ACTIVE sprint, whatever the sprint filter shows.
+  activeSprintId: string | null;
   epics: BoardEpic[];
   // The first page of every column, then whatever scrolling has added.
   issues: BoardIssue[];

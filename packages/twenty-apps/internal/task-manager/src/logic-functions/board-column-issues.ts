@@ -10,8 +10,10 @@ import {
   buildBoardScopeFilter,
 } from './utils/build-board-issue-filters.util';
 import { fetchIssuePage } from './utils/fetch-issue-page.util';
+import { findActiveSprintId } from './utils/find-active-sprint-id.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
 import {
+  applyActiveSprint,
   type BoardIssueQueryBody,
   readBoardIssueQuery,
 } from './utils/read-board-issue-query.util';
@@ -68,7 +70,13 @@ const handler = async (event: RoutePayload<BoardColumnIssuesBody>) =>
       isDoneStatus = status.category === 'DONE';
     }
 
-    const query = readBoardIssueQuery(projectId, event.body);
+    const requestedQuery = readBoardIssueQuery(projectId, event.body);
+    const query = applyActiveSprint(
+      requestedQuery,
+      requestedQuery.isActiveSprintRequested
+        ? await findActiveSprintId({ client, projectId })
+        : null,
+    );
     const page = await fetchIssuePage({
       client,
       filter: buildBoardColumnFilter({

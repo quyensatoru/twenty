@@ -12,9 +12,13 @@ export const UPDATE_PROJECT_ROUTE_PATH = '/task-manager/update-project';
 export const CREATE_SPRINT_ROUTE_PATH = '/task-manager/create-sprint';
 export const UPDATE_SPRINT_ROUTE_PATH = '/task-manager/update-sprint';
 export const COMPLETE_SPRINT_ROUTE_PATH = '/task-manager/complete-sprint';
+export const START_SPRINT_ROUTE_PATH = '/task-manager/start-sprint';
+export const DELETE_SPRINT_ROUTE_PATH = '/task-manager/delete-sprint';
 
 export const CREATE_EPIC_ROUTE_PATH = '/task-manager/create-epic';
 export const UPDATE_EPIC_ROUTE_PATH = '/task-manager/update-epic';
+export const DELETE_EPIC_ROUTE_PATH = '/task-manager/delete-epic';
+export const EPIC_SUMMARIES_ROUTE_PATH = '/task-manager/epic-summaries';
 
 export const CREATE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/create-issue-status';
 export const DELETE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/delete-issue-status';
@@ -41,6 +45,10 @@ export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
 export const TASK_BOARD_ROUTE_PATH = '/task-manager/task-board';
 export const BOARD_COLUMN_ISSUES_ROUTE_PATH =
   '/task-manager/board-column-issues';
+export const BACKLOG_ROUTE_PATH = '/task-manager/backlog';
+export const BACKLOG_SECTION_ISSUES_ROUTE_PATH =
+  '/task-manager/backlog-section-issues';
+export const RANK_ISSUE_ROUTE_PATH = '/task-manager/rank-issue';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
 

@@ -36,6 +36,7 @@ type TaskBoardCardProps = {
   assigneeName: string | null;
   assigneeAvatarUrl?: string | null;
   epicName: string | null;
+  epicColor: string | null;
   sprintName: string | null;
   reporterName: string | null;
   reporterAvatarUrl?: string | null;
@@ -58,7 +59,7 @@ type TaskBoardCardProps = {
 // Jira draws the type as a small glyph in the option's own colour: a green
 // bookmark for a story, a blue tick for a task, a red bug, a grey subtask
 // glyph. Reproduced rather than imported — no host component draws it.
-const IssueTypeGlyph = ({ issueType }: { issueType: string | null }) => {
+export const IssueTypeGlyph = ({ issueType }: { issueType: string | null }) => {
   const option = ISSUE_TYPE_OPTIONS.find(
     (candidate) => candidate.value === issueType,
   );
@@ -116,7 +117,7 @@ const readIsOverdue = (
 
 // The unassigned slot keeps its place in the footer, so every card lines up
 // and "nobody owns this" reads at a glance, the way Jira draws it.
-const UnassignedAvatar = ({ size }: { size: number }) => (
+export const UnassignedAvatar = ({ size }: { size: number }) => (
   <span
     title={t('Unassigned')}
     style={{
@@ -149,6 +150,7 @@ export const TaskBoardCard = ({
   assigneeName,
   assigneeAvatarUrl,
   epicName,
+  epicColor,
   sprintName,
   reporterName,
   reporterAvatarUrl,
@@ -269,7 +271,7 @@ export const TaskBoardCard = ({
         {hasTags && (
           <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {shownEpicName !== null && (
-              <TaskTag color="purple">{shownEpicName}</TaskTag>
+              <TaskTag color={epicColor ?? 'purple'}>{shownEpicName}</TaskTag>
             )}
             {shownSprintName !== null && (
               <TaskTag color="sky">{shownSprintName}</TaskTag>

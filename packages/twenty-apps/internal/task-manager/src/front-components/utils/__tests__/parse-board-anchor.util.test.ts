@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseBoardIssueAnchor } from '../parse-board-anchor.util';
+import {
+  parseBoardIssueAnchor,
+  parseBoardViewAnchor,
+} from '../parse-board-anchor.util';
 
 describe('parseBoardIssueAnchor', () => {
   it('reads an issue anchor', () => {
@@ -20,5 +23,18 @@ describe('parseBoardIssueAnchor', () => {
 
   it('returns nothing for a prefix with no id behind it', () => {
     expect(parseBoardIssueAnchor('issue-')).toBeNull();
+  });
+});
+
+describe('parseBoardViewAnchor', () => {
+  it('reads the backlog and board fragments', () => {
+    expect(parseBoardViewAnchor('#backlog')).toBe('backlog');
+    expect(parseBoardViewAnchor(' #board')).toBe('board');
+  });
+
+  it('leaves the view to the stored choice otherwise', () => {
+    expect(parseBoardViewAnchor('#issue-1')).toBeNull();
+    expect(parseBoardViewAnchor('')).toBeNull();
+    expect(parseBoardViewAnchor(undefined)).toBeNull();
   });
 });

@@ -5,37 +5,29 @@ import {
   t,
   useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
-import {
-  IconCheck,
-  IconFilterOff,
-  IconGripVertical,
-  IconPlus,
-  IconX,
-} from 'twenty-ui/icon';
+import { IconFilterOff, IconPlus, IconStack2 } from 'twenty-ui/icon';
 
-import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../constants/board-done-issue-visible-days';
+import { BOARD_ACTIVE_SPRINT } from '../constants/board-active-sprint';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
   ISSUE_CARD_FIELDS,
   type IssueCardFieldKey,
 } from '../constants/issue-view-fields';
 import {
-  BOARD_COLUMN_ISSUES_ROUTE_PATH,
-  CREATE_ISSUE_ROUTE_PATH,
-  CREATE_ISSUE_STATUS_ROUTE_PATH,
-  DELETE_ISSUE_ROUTE_PATH,
-  REORDER_ISSUE_STATUSES_ROUTE_PATH,
   TASK_BOARD_ROUTE_PATH,
   UPDATE_ISSUE_ROUTE_PATH,
   UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH,
 } from '../constants/route-paths';
 import { TASK_BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
+import { BACKLOG_SECTION_KEY } from '../types/backlog';
 import {
-  type BoardColumnIssuesResponse,
-  type BoardColumnPage,
   type BoardData,
+  type BoardEpic,
   type BoardIssue,
   type BoardMember,
+  type BoardSprint,
+  type BoardViewMode,
+  type PageInset,
 } from '../types/task-board';
 import { readIssueViewSettings } from '../utils/read-issue-view-settings.util';
 import {
@@ -43,121 +35,69 @@ import {
   type TaskBoardAssigneeOption,
   UNASSIGNED_ASSIGNEE_VALUE,
 } from './components/task-board-assignee-filter';
-import { TaskBoardAddStatus } from './components/task-board-add-status';
-import { TaskBoardCard } from './components/task-board-card';
-import { TaskBoardDetail } from './components/task-board-detail';
+import { TaskBacklogView } from './components/task-backlog-view';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
+import { NO_STATUS_VALUE, TaskBoardView } from './components/task-board-view';
 import { TaskButton } from './components/task-button';
+import { TaskCompleteSprintDialog } from './components/task-complete-sprint-dialog';
+import { type EpicFilter, TaskEpicPanel } from './components/task-epic-panel';
 import { TaskFieldsMenu } from './components/task-fields-menu';
 import { TaskFilterToggle } from './components/task-filter-toggle';
-import { TaskIconButton } from './components/task-icon-button';
 import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
-import { TaskStatusLine } from './components/task-status-line';
-import { TaskTextInput } from './components/task-text-input';
+import { TaskSprintDialog } from './components/task-sprint-dialog';
 import {
-  readTagColor,
-  TASK_CIRCLE_STYLE,
-  TASK_THIN_SCROLLBAR_STYLE,
-  TASK_TOKENS,
-} from './components/task-tokens';
+  TaskNoActiveSprintBanner,
+  TaskSprintHeader,
+} from './components/task-sprint-header';
+import { readTagColor, TASK_TOKENS } from './components/task-tokens';
+import { TaskViewSwitch } from './components/task-view-switch';
+import { useIsMobile } from './hooks/use-is-mobile';
 import {
-  clampColumnWidth,
-  COLUMN_DEFAULT_WIDTH,
-  parseColumnWidth,
-} from './utils/column-widths.util';
-import { moveIdOnto } from './utils/move-id-onto.util';
-import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
+  parseBoardIssueAnchor,
+  parseBoardViewAnchor,
+} from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
 import { readMemberName } from './utils/read-member-name.util';
+import { summarizeBoardProgress } from './utils/summarize-board-progress.util';
 
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
-const NO_STATUS_VALUE = 'NO_STATUS';
-const COLUMN_WIDTH_STORAGE_KEY = 'task-board.column-width';
+const ACTIVE_SPRINT_VALUE = BOARD_ACTIVE_SPRINT;
 const PROJECT_STORAGE_KEY = 'task-board.project-id';
-// How close to a column's bottom its next page is fetched: a little ahead, so
-// the reader does not hit the end before the cards are there.
-const LAZY_LOAD_THRESHOLD_PX = 400;
-
-const readColumnKey = (statusId: string | null | undefined) =>
-  typeof statusId === 'string' ? statusId : NO_STATUS_VALUE;
-
-// Shifts one column's total, for the optimistic moves and deletes: the totals
-// are the server's, and a card leaving or arriving changes them before it
-// answers again.
-const shiftColumnTotal = (
-  columnPages: Record<string, BoardColumnPage>,
-  columnKey: string,
-  delta: number,
-): Record<string, BoardColumnPage> => {
-  const page = columnPages[columnKey];
-
-  return page === undefined
-    ? columnPages
-    : {
-        ...columnPages,
-        [columnKey]: {
-          ...page,
-          totalCount: Math.max(0, page.totalCount + delta),
-        },
-      };
-};
+const VIEW_STORAGE_KEY = 'task-board.view';
+const EPIC_PANEL_STORAGE_KEY = 'task-board.epic-panel-open';
 
 // The sandbox's localStorage is seeded from the host before the first render,
-// so this reads synchronously. Guarded anyway: a store that is missing or
+// so these read synchronously. Guarded anyway: a store that is missing or
 // full must never take the board down with it.
-const readStoredColumnWidth = (): number => {
+const readStoredValue = (key: string): string | null => {
   try {
-    return parseColumnWidth(localStorage.getItem(COLUMN_WIDTH_STORAGE_KEY));
-  } catch {
-    return COLUMN_DEFAULT_WIDTH;
-  }
-};
+    const value = localStorage.getItem(key);
 
-const storeColumnWidth = (columnWidth: number) => {
-  try {
-    localStorage.setItem(COLUMN_WIDTH_STORAGE_KEY, String(columnWidth));
-  } catch {
-    // The width is a convenience: losing it only costs the reader a drag.
-  }
-};
-
-// The project the reader last looked at, so the board does not open on the
-// alphabetically first project — in production also the heaviest one. The
-// route falls back to a visible project if this one is no longer visible.
-const readStoredProjectId = (): string | null => {
-  try {
-    const projectId = localStorage.getItem(PROJECT_STORAGE_KEY);
-
-    return projectId === null || projectId === '' ? null : projectId;
+    return value === null || value === '' ? null : value;
   } catch {
     return null;
   }
 };
 
-const storeProjectId = (projectId: string) => {
+const storeValue = (key: string, value: string) => {
   try {
-    localStorage.setItem(PROJECT_STORAGE_KEY, projectId);
+    localStorage.setItem(key, value);
   } catch {
-    // A convenience only: the board still opens, on the default project.
+    // A convenience only: the board still opens, on its defaults.
   }
 };
 
-// The column whose edge is held, and where it sits: every column takes the
-// same width, so the held edge moves (index + 1) times the width change.
-type ColumnResize = {
-  statusId: string;
-  columnIndex: number;
-  startX: number;
-  startWidth: number;
-};
+const readStoredView = (): BoardViewMode =>
+  readStoredValue(VIEW_STORAGE_KEY) === 'backlog' ? 'backlog' : 'board';
 
-// The Jira-style board: one column per project status, cards filtered by
-// sprint, search, owner and type, drag-and-drop between columns, inline create
-// per column, and the issue detail as a drawer over the board.
+// The Jira-style planning page: one project at a time, seen as its Backlog
+// (sprints and backlog as ranked lists) or its Board (the active sprint as
+// status columns), with the epic panel beside either and the issue detail as
+// a drawer. Filters, project and open issue survive switching views.
 //
 // Everything here is app-drawn — plain elements, TASK_TOKENS and twenty-ui
 // icons only. No host widget is used: a host board would be one shared view
@@ -172,6 +112,7 @@ const TaskBoard = () => {
   const locationHash = useFrontComponentExecutionContext(
     (context) => (context as { locationHash?: string }).locationHash ?? '',
   );
+  const isMobile = useIsMobile();
   const boardPath = useFrontComponentExecutionContext((context) => {
     const pathname = (context as { locationPathname?: string })
       .locationPathname;
@@ -181,8 +122,17 @@ const TaskBoard = () => {
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState<string | null>(
-    readStoredProjectId,
+  // The project the reader last looked at, so the board does not open on the
+  // alphabetically first project — in production also the heaviest one. The
+  // route falls back to a visible project if this one is no longer visible.
+  const [projectId, setProjectId] = useState<string | null>(() =>
+    readStoredValue(PROJECT_STORAGE_KEY),
+  );
+  const [view, setView] = useState<BoardViewMode>(
+    () => parseBoardViewAnchor(locationHash) ?? readStoredView(),
+  );
+  const [isEpicPanelOpen, setIsEpicPanelOpen] = useState(
+    () => readStoredValue(EPIC_PANEL_STORAGE_KEY) === 'true',
   );
   const [shouldIncludeOlderDone, setShouldIncludeOlderDone] = useState(false);
   const [loadingColumnKeys, setLoadingColumnKeys] = useState<string[]>([]);
@@ -192,11 +142,11 @@ const TaskBoard = () => {
   const boardGenerationRef = useRef(0);
   // oxlint-disable-next-line twenty/no-state-useref
   const cardFieldsWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const [sprintFilter, setSprintFilter] = useState<string>(ALL_VALUE);
+  // Like a Jira board, the board opens on the active sprint.
+  const [sprintFilter, setSprintFilter] = useState<string>(ACTIVE_SPRINT_VALUE);
+  const [epicFilter, setEpicFilter] = useState<EpicFilter>(undefined);
   const [search, setSearch] = useState('');
-  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
-    [],
-  );
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [isOnlyMine, setIsOnlyMine] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
   // A board deep link decides the opening modal, so a pasted link lands on
@@ -205,35 +155,17 @@ const TaskBoard = () => {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(
     parseBoardIssueAnchor(locationHash),
   );
-  const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
-  // A column being dragged by its header, and the column it would land on.
-  // Kept apart from the card drag: both use the same drop zones.
-  const [draggingStatusId, setDraggingStatusId] = useState<string | null>(
-    null,
-  );
-  const [statusDropTargetId, setStatusDropTargetId] = useState<string | null>(
-    null,
-  );
-  const [hoveredHeaderId, setHoveredHeaderId] = useState<string | null>(null);
-  const [columnWidth, setColumnWidth] = useState<number>(
-    readStoredColumnWidth,
-  );
-  const [columnResize, setColumnResize] = useState<ColumnResize | null>(null);
-  const [hoveredResizeId, setHoveredResizeId] = useState<string | null>(null);
-  const [dropTargetStatusId, setDropTargetStatusId] = useState<string | null>(
-    null,
-  );
   const [composerStatusId, setComposerStatusId] = useState<string | null>(null);
-  const [composerTitle, setComposerTitle] = useState('');
-  const [composerType, setComposerType] = useState<string>('TASK');
-  // Bumped after each create: the title field only takes an outside reset on
-  // remount (see useStableFieldValue), and the composer stays open for the
-  // next title the way Jira's inline create does.
-  const [composerKey, setComposerKey] = useState(0);
-  const [isCreating, setIsCreating] = useState(false);
-  const [hoveredCreateColumnId, setHoveredCreateColumnId] = useState<
-    string | null
-  >(null);
+  const [composerSectionKey, setComposerSectionKey] = useState<string | null>(
+    null,
+  );
+  // A backlog row in flight, shared with the epic panel's drop targets.
+  const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
+  const [sprintDialogSprint, setSprintDialogSprint] =
+    useState<BoardSprint | null>(null);
+  const [completingSprint, setCompletingSprint] = useState<BoardSprint | null>(
+    null,
+  );
   const [refreshKey, setRefreshKey] = useState(0);
 
   const sprintId =
@@ -256,14 +188,24 @@ const TaskBoard = () => {
   );
   const issueTypeFilter = typeFilter === ALL_VALUE ? null : typeFilter;
 
-  const boardQueryBody = useMemo(
+  // The filters the two views share. The backlog has no sprint filter: its
+  // sections are the sprints.
+  const sharedQueryBody = useMemo(
     () => ({
-      ...(sprintId === undefined ? {} : { sprintId }),
+      ...(epicFilter === undefined ? {} : { epicId: epicFilter }),
       assigneeIds: assigneeFilterIds,
       issueType: issueTypeFilter,
+    }),
+    [epicFilter, assigneeFilterIds, issueTypeFilter],
+  );
+
+  const boardQueryBody = useMemo(
+    () => ({
+      ...sharedQueryBody,
+      ...(sprintId === undefined ? {} : { sprintId }),
       includeOlderDone: shouldIncludeOlderDone,
     }),
-    [sprintId, assigneeFilterIds, issueTypeFilter, shouldIncludeOlderDone],
+    [sharedQueryBody, sprintId, shouldIncludeOlderDone],
   );
 
   const loadBoard = useCallback(async () => {
@@ -271,13 +213,13 @@ const TaskBoard = () => {
     setLoadingColumnKeys([]);
 
     try {
-      const result = await postAppRoute<
-        BoardData & { success: true }
-      >(
+      const result = await postAppRoute<BoardData & { success: true }>(
         TASK_BOARD_ROUTE_PATH,
         {
           ...(projectId === null ? {} : { projectId }),
           ...boardQueryBody,
+          // The backlog reads its own sections; the columns would be wasted.
+          includeIssues: view === 'board',
         },
       );
 
@@ -286,6 +228,7 @@ const TaskBoard = () => {
         activeProjectId: result.activeProjectId ?? null,
         issueStatuses: result.issueStatuses ?? [],
         sprints: result.sprints ?? [],
+        activeSprintId: result.activeSprintId ?? null,
         epics: result.epics ?? [],
         issues: result.issues ?? [],
         columnPages: result.columnPages ?? {},
@@ -301,7 +244,7 @@ const TaskBoard = () => {
     } catch (error) {
       setLoadError(readErrorText(error));
     }
-  }, [projectId, boardQueryBody]);
+  }, [projectId, boardQueryBody, view]);
 
   useEffect(() => {
     const load = async () => {
@@ -314,6 +257,20 @@ const TaskBoard = () => {
   }, [loadBoard, refreshKey]);
 
   const refreshBoard = () => setRefreshKey((key) => key + 1);
+
+  const changeView = (nextView: BoardViewMode) => {
+    setView(nextView);
+    storeValue(VIEW_STORAGE_KEY, nextView);
+    setComposerStatusId(null);
+    setComposerSectionKey(null);
+  };
+
+  const toggleEpicPanel = () => {
+    const nextIsOpen = !isEpicPanelOpen;
+
+    setIsEpicPanelOpen(nextIsOpen);
+    storeValue(EPIC_PANEL_STORAGE_KEY, String(nextIsOpen));
+  };
 
   // A global-search pick jumps the board to the result's project (when it is
   // a project on screen) and opens its modal. The typed query is cleared: it
@@ -334,14 +291,16 @@ const TaskBoard = () => {
 
   const isFiltered =
     search.trim() !== '' ||
-    sprintFilter !== ALL_VALUE ||
+    sprintFilter !== ACTIVE_SPRINT_VALUE ||
+    epicFilter !== undefined ||
     selectedAssigneeIds.length > 0 ||
     isOnlyMine ||
     typeFilter !== ALL_VALUE;
 
   const resetFilters = () => {
     setSearch('');
-    setSprintFilter(ALL_VALUE);
+    setSprintFilter(ACTIVE_SPRINT_VALUE);
+    setEpicFilter(undefined);
     setSelectedAssigneeIds([]);
     setIsOnlyMine(false);
     setTypeFilter(ALL_VALUE);
@@ -364,6 +323,20 @@ const TaskBoard = () => {
     setIsOnlyMine(!isOnlyMine);
   };
 
+  const assignIssueToEpic = async (issueId: string, epicId: string) => {
+    setDraggingIssueId(null);
+
+    try {
+      await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
+        issueId,
+        data: { epicId },
+      });
+      refreshBoard();
+    } catch (error) {
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+    }
+  };
+
   const membersById = useMemo(
     () =>
       new Map<string, BoardMember>(
@@ -383,21 +356,22 @@ const TaskBoard = () => {
     [board],
   );
 
-  const hiddenCardFields = useMemo(
+  const epicsById = useMemo(
     () =>
-      readIssueViewSettings(
-        board?.projects.find((project) => project.id === board.activeProjectId)
-          ?.issueViewSettings,
-      ).hiddenCardFields,
+      new Map<string, BoardEpic>(
+        (board?.epics ?? []).map((epic) => [epic.id, epic]),
+      ),
     [board],
   );
 
-  const epicNamesById = useMemo(
+  const activeProject = board?.projects.find(
+    (project) => project.id === board.activeProjectId,
+  );
+
+  const hiddenCardFields = useMemo(
     () =>
-      new Map(
-        (board?.epics ?? []).map((epic) => [epic.id, epic.name ?? epic.id]),
-      ),
-    [board],
+      readIssueViewSettings(activeProject?.issueViewSettings).hiddenCardFields,
+    [activeProject],
   );
 
   // Faces for the quick filter: everyone who can work on the project, so the
@@ -438,260 +412,6 @@ const TaskBoard = () => {
       ),
     [statuses],
   );
-
-  // The header search never narrows the columns: it only feeds the global
-  // results popover (jump-to-issue), so typing never rearranges the board
-  // under the pointer. The filters above already narrowed what was loaded.
-  const issuesByStatus = useMemo(() => {
-    const grouped = new Map<string, BoardIssue[]>();
-
-    for (const issue of board?.issues ?? []) {
-      const key = readColumnKey(issue.statusId);
-
-      grouped.set(key, [...(grouped.get(key) ?? []), issue]);
-    }
-
-    return grouped;
-  }, [board]);
-
-  // A column's real size is the server's count, not the cards loaded so far.
-  const readColumnTotal = (columnKey: string) =>
-    board?.columnPages[columnKey]?.totalCount ??
-    (issuesByStatus.get(columnKey) ?? []).length;
-
-  // Flat card order across columns, for the drawer's previous / next stepping.
-  const navIssueIds = useMemo(() => {
-    const ordered: string[] = [];
-
-    for (const status of statuses) {
-      for (const issue of issuesByStatus.get(status.id) ?? []) {
-        ordered.push(issue.id);
-      }
-    }
-
-    for (const issue of issuesByStatus.get(NO_STATUS_VALUE) ?? []) {
-      ordered.push(issue.id);
-    }
-
-    return ordered;
-  }, [statuses, issuesByStatus]);
-
-  const totalIssueCount = [...statuses.map((status) => status.id), NO_STATUS_VALUE]
-    .map(readColumnTotal)
-    .reduce((sum, count) => sum + count, 0);
-  const doneCount = [...doneStatusIds]
-    .map(readColumnTotal)
-    .reduce((sum, count) => sum + count, 0);
-  const progressPercent =
-    totalIssueCount === 0 ? 0 : Math.round((doneCount / totalIssueCount) * 100);
-
-  // Optimistic like the record page's status picker: the card sits in its new
-  // column before the server confirms it, and a failed write puts everything
-  // back with a toast rather than leaving the board lying.
-  const moveIssue = async (issueId: string, statusId: string | null) => {
-    if (board === null) {
-      return;
-    }
-
-    const previousIssues = board.issues;
-    const previousColumnPages = board.columnPages;
-    const targetStatusId =
-      statusId === NO_STATUS_VALUE ? null : (statusId as string);
-    const fromColumnKey = readColumnKey(
-      board.issues.find((issue) => issue.id === issueId)?.statusId,
-    );
-    const toColumnKey = readColumnKey(targetStatusId);
-
-    setDropTargetStatusId(null);
-    setDraggingIssueId(null);
-
-    if (fromColumnKey === toColumnKey) {
-      return;
-    }
-
-    setBoard({
-      ...board,
-      issues: board.issues.map((issue) =>
-        issue.id === issueId
-          ? { ...issue, statusId: targetStatusId }
-          : issue,
-      ),
-      columnPages: shiftColumnTotal(
-        shiftColumnTotal(board.columnPages, fromColumnKey, -1),
-        toColumnKey,
-        1,
-      ),
-    });
-
-    try {
-      await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
-        issueId,
-        data: { statusId: targetStatusId },
-      });
-    } catch (error) {
-      setBoard({
-        ...board,
-        issues: previousIssues,
-        columnPages: previousColumnPages,
-      });
-      const message = readErrorText(error);
-      void enqueueSnackbar({ message, variant: 'error' });
-    }
-  };
-
-  // Optimistic like the move above: the card leaves at once, and a failed
-  // write puts everything back. An open modal of the same issue closes with
-  // it — its record is gone — and stays closed when the write fails, while
-  // the card comes back.
-  const deleteIssue = async (issueId: string) => {
-    if (board === null) {
-      return;
-    }
-
-    const previousIssues = board.issues;
-    const previousColumnPages = board.columnPages;
-
-    setBoard({
-      ...board,
-      issues: board.issues.filter((issue) => issue.id !== issueId),
-      columnPages: shiftColumnTotal(
-        board.columnPages,
-        readColumnKey(
-          board.issues.find((issue) => issue.id === issueId)?.statusId,
-        ),
-        -1,
-      ),
-    });
-
-    if (selectedIssueId === issueId) {
-      setSelectedIssueId(null);
-    }
-
-    try {
-      await postAppRoute(DELETE_ISSUE_ROUTE_PATH, { issueId });
-      void enqueueSnackbar({
-        message: t('Issue deleted.'),
-        variant: 'success',
-      });
-    } catch (error) {
-      setBoard({
-        ...board,
-        issues: previousIssues,
-        columnPages: previousColumnPages,
-      });
-      void enqueueSnackbar({
-        message: readErrorText(error),
-        variant: 'error',
-      });
-    }
-  };
-
-  const createIssue = async () => {
-    const title = composerTitle.trim();
-    const activeProjectId = board?.activeProjectId ?? null;
-
-    if (title === '' || activeProjectId === null || composerStatusId === null) {
-      return;
-    }
-
-    setIsCreating(true);
-
-    try {
-      await postAppRoute(CREATE_ISSUE_ROUTE_PATH, {
-        projectId: activeProjectId,
-        data: {
-          title,
-          issueType: composerType,
-          statusId:
-            composerStatusId === NO_STATUS_VALUE ? null : composerStatusId,
-        },
-      });
-      setComposerTitle('');
-      setComposerKey((key) => key + 1);
-      refreshBoard();
-      void enqueueSnackbar({ message: t('Issue created.'), variant: 'success' });
-    } catch (error) {
-      void enqueueSnackbar({
-        message: readErrorText(error),
-        variant: 'error',
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  // Optimistic like moveIssue: the columns swap at once, and a refused write
-  // (no grant, or statuses changed elsewhere) puts the old order back.
-  const reorderStatuses = async (movedId: string, targetId: string) => {
-    setDraggingStatusId(null);
-    setStatusDropTargetId(null);
-
-    const activeProjectId = board?.activeProjectId ?? null;
-
-    if (board === null || activeProjectId === null) {
-      return;
-    }
-
-    const orderedIds = statuses.map((status) => status.id);
-    const nextIds = moveIdOnto(orderedIds, movedId, targetId);
-
-    if (nextIds === orderedIds) {
-      return;
-    }
-
-    const previousStatuses = board.issueStatuses;
-
-    setBoard({
-      ...board,
-      issueStatuses: board.issueStatuses.map((status) => ({
-        ...status,
-        position: nextIds.indexOf(status.id),
-      })),
-    });
-
-    try {
-      await postAppRoute(REORDER_ISSUE_STATUSES_ROUTE_PATH, {
-        projectId: activeProjectId,
-        issueStatusIds: nextIds,
-      });
-    } catch (error) {
-      setBoard((current) =>
-        current === null
-          ? current
-          : { ...current, issueStatuses: previousStatuses },
-      );
-      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
-    }
-  };
-
-  // Not optimistic: the column needs the id the server gives the status, and
-  // the board reload brings it in at the position the server picked.
-  const createStatus = async (input: {
-    name: string;
-    category: string;
-    color: string;
-  }): Promise<boolean> => {
-    const activeProjectId = board?.activeProjectId ?? null;
-
-    if (activeProjectId === null) {
-      return false;
-    }
-
-    try {
-      await postAppRoute(CREATE_ISSUE_STATUS_ROUTE_PATH, {
-        projectId: activeProjectId,
-        ...input,
-      });
-      refreshBoard();
-      void enqueueSnackbar({ message: t('Status added.'), variant: 'success' });
-
-      return true;
-    } catch (error) {
-      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
-
-      return false;
-    }
-  };
 
   // Optimistic too: the cards change at once, and a refused write puts the
   // project's previous settings back.
@@ -742,133 +462,25 @@ const TaskBoard = () => {
     );
   };
 
-  // The next page of one column, as it is scrolled near its end. One request
-  // per column at a time, so a burst of scroll events fetches one page.
-  const loadMoreColumn = async (columnKey: string) => {
-    const page = board?.columnPages[columnKey];
-    const activeProjectId = board?.activeProjectId ?? null;
-
-    if (
-      page === undefined ||
-      activeProjectId === null ||
-      !page.hasNextPage ||
-      page.endCursor === null ||
-      loadingColumnKeys.includes(columnKey)
-    ) {
-      return;
-    }
-
-    const generation = boardGenerationRef.current;
-
-    setLoadingColumnKeys((current) => [...current, columnKey]);
-
-    try {
-      const result = await postAppRoute<
-        BoardColumnIssuesResponse & { success: true }
-      >(BOARD_COLUMN_ISSUES_ROUTE_PATH, {
-        ...boardQueryBody,
-        projectId: activeProjectId,
-        statusId: columnKey === NO_STATUS_VALUE ? null : columnKey,
-        after: page.endCursor,
-      });
-
-      if (generation !== boardGenerationRef.current) {
-        return;
-      }
-
-      setBoard((current) => {
-        if (current === null) {
-          return current;
-        }
-
-        // A card moved into this column by hand can come back in its pages.
-        const loadedIds = new Set(current.issues.map((issue) => issue.id));
-        const knownMemberIds = new Set(
-          current.members.map((member) => member.id),
-        );
-
-        return {
-          ...current,
-          issues: [
-            ...current.issues,
-            ...(result.issues ?? []).filter(
-              (issue) => !loadedIds.has(issue.id),
-            ),
-          ],
-          members: [
-            ...current.members,
-            ...(result.members ?? []).filter(
-              (member) => !knownMemberIds.has(member.id),
-            ),
-          ],
-          columnPages: {
-            ...current.columnPages,
-            [columnKey]: {
-              totalCount: result.totalCount,
-              endCursor: result.endCursor,
-              hasNextPage: result.hasNextPage,
-            },
-          },
-        };
-      });
-    } catch (error) {
-      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
-    } finally {
-      setLoadingColumnKeys((current) =>
-        current.filter((key) => key !== columnKey),
-      );
-    }
+  const closeSprintDialogsAndRefresh = () => {
+    setSprintDialogSprint(null);
+    setCompletingSprint(null);
+    refreshBoard();
   };
 
-  // No window listener reaches the sandbox, so a resize follows the pointer
-  // through the columns strip itself, and ends when the button comes up
-  // there or the pointer leaves the strip. Dividing by the columns up to the
-  // held one keeps that edge under the pointer while all of them grow.
-  const readResizedWidth = (resize: ColumnResize, clientX: number) =>
-    clampColumnWidth(
-      resize.startWidth + (clientX - resize.startX) / (resize.columnIndex + 1),
-    );
-
-  const updateColumnResize = (clientX: number) => {
-    if (columnResize === null) {
-      return;
-    }
-
-    setColumnWidth(readResizedWidth(columnResize, clientX));
-  };
-
-  const endColumnResize = (clientX: number) => {
-    if (columnResize === null) {
-      return;
-    }
-
-    const width = readResizedWidth(columnResize, clientX);
-
-    setColumnResize(null);
-    setColumnWidth(width);
-    storeColumnWidth(width);
-  };
-
-  const resetColumnWidth = () => {
-    setColumnWidth(COLUMN_DEFAULT_WIDTH);
-    storeColumnWidth(COLUMN_DEFAULT_WIDTH);
-  };
-
-  const closeComposer = () => {
-    setComposerStatusId(null);
-    setComposerTitle('');
-  };
-
-  const statusOptions = statuses.map((status) => ({
-    value: status.id,
-    label: status.name ?? status.id,
-    color: status.color,
-  }));
+  const pageInset: PageInset = isMobile
+    ? { left: 12, right: 12 }
+    : { left: 12, right: 20 };
 
   if (isLoading && board === null) {
     return (
       <TaskBoardFrame>
-        <TaskBoardSkeleton />
+        <TaskBoardSkeleton
+          view={view}
+          isMobile={isMobile}
+          isEpicPanelOpen={isEpicPanelOpen}
+          inset={pageInset}
+        />
       </TaskBoardFrame>
     );
   }
@@ -888,32 +500,49 @@ const TaskBoard = () => {
     return (
       <TaskBoardFrame>
         <TaskMessage
-          text={t('No project is available to you yet. Ask for access to a Shopify app first.')}
+          text={t(
+            'No project is available to you yet. Ask for access to a Shopify app first.',
+          )}
         />
       </TaskBoardFrame>
     );
   }
 
-  const columns =
-    statuses.length === 0
-      ? [{ id: NO_STATUS_VALUE, name: t('Issues'), color: 'gray' as string | null }]
-      : [
-          ...statuses.map((status) => ({
-            id: status.id,
-            name: status.name ?? status.id,
-            color: status.color ?? null,
-          })),
-          ...(readColumnTotal(NO_STATUS_VALUE) > 0
-            ? [{ id: NO_STATUS_VALUE, name: t('No status'), color: 'gray' as string | null }]
-            : []),
-        ];
+  const activeSprint = board.sprints.find(
+    (sprint) => sprint.id === board.activeSprintId,
+  );
+  const isShowingActiveSprint =
+    view === 'board' &&
+    sprintFilter === ACTIVE_SPRINT_VALUE &&
+    activeSprint !== undefined;
+  // A card created on the board joins what the board is showing, so it does
+  // not vanish from a sprint or epic board the moment it exists.
+  const newIssueSprintId =
+    sprintFilter === ACTIVE_SPRINT_VALUE
+      ? (activeSprint?.id ?? null)
+      : sprintFilter === ALL_VALUE || sprintFilter === BACKLOG_VALUE
+        ? null
+        : sprintFilter;
+  const newIssueEpicId = typeof epicFilter === 'string' ? epicFilter : null;
+  const progress = summarizeBoardProgress({
+    columnPages: board.columnPages,
+    columnKeys: [...statuses.map((status) => status.id), NO_STATUS_VALUE],
+    doneStatusIds,
+  });
 
-  // One toggle for the whole window, on the first done column: the count
-  // covers every done status, so a second copy would only repeat it.
-  const olderDoneToggleColumnId =
-    shouldIncludeOlderDone || board.hiddenDoneIssueCount > 0
-      ? (columns.find((column) => doneStatusIds.has(column.id))?.id ?? null)
-      : null;
+  // On a phone the epic panel takes the whole page, like a screen of its own,
+  // since there is no room beside the view for it.
+  const isEpicPanelFullScreen = isMobile && isEpicPanelOpen;
+
+  const openCreateIssue = () => {
+    if (view === 'backlog') {
+      setComposerSectionKey(BACKLOG_SECTION_KEY);
+
+      return;
+    }
+
+    setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
+  };
 
   return (
     <TaskBoardFrame>
@@ -924,78 +553,92 @@ const TaskBoard = () => {
           flexDirection: 'column',
           flexShrink: 0,
           gap: 10,
-          padding: '12px 20px 12px 20px',
+          padding: `12px ${pageInset.right}px 12px ${pageInset.left}px`,
         }}
       >
         <div
-          style={{
-            alignItems: 'center',
-            columnGap: 16,
-            display: 'grid',
-            // Equal outer tracks keep the search centred on the board itself,
-            // whatever the pickers on the left and the button on the right
-            // measure; max-content stops either side from being squeezed.
-            gridTemplateColumns:
-              'minmax(max-content, 1fr) minmax(240px, 560px) minmax(max-content, 1fr)',
-          }}
+          style={
+            isMobile
+              ? { display: 'flex', flexDirection: 'column', gap: 8 }
+              : {
+                  alignItems: 'center',
+                  columnGap: 16,
+                  display: 'grid',
+                  // Equal outer tracks keep the search centred on the board
+                  // itself, whatever the pickers on the left and the button
+                  // on the right measure; max-content stops either side
+                  // from being squeezed.
+                  gridTemplateColumns:
+                    'minmax(max-content, 1fr) minmax(240px, 560px) minmax(max-content, 1fr)',
+                }
+          }
         >
           <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-            <TaskBoardSelect
-              ariaLabel={t('Project')}
-              width={190}
-              value={projectId ?? board.activeProjectId ?? ''}
-              options={board.projects.map((project) => ({
-                value: project.id,
-                label:
-                  typeof project.key === 'string' && project.key !== ''
-                    ? `${project.name ?? project.id} (${project.key})`
-                    : (project.name ?? project.id),
-              }))}
-              onChange={(value) => {
-                setProjectId(value);
-                storeProjectId(value);
-                setSelectedIssueId(null);
-                setComposerStatusId(null);
-                setSelectedAssigneeIds([]);
-                setShouldIncludeOlderDone(false);
+            {/* On a phone the picker takes what the switch and the create
+                button leave, and no more: a 100% child would push them off
+                the screen. */}
+            <div
+              style={{
+                display: 'flex',
+                flex: isMobile ? '1 1 0' : '0 0 auto',
+                minWidth: 0,
               }}
-            />
-            <TaskBoardSelect
-              ariaLabel={t('Sprint')}
-              width={150}
-              value={sprintFilter}
-              options={[
-                { value: ALL_VALUE, label: t('All sprints') },
-                { value: BACKLOG_VALUE, label: t('Backlog') },
-                ...board.sprints.map((sprint) => ({
-                  value: sprint.id,
+            >
+              <TaskBoardSelect
+                ariaLabel={t('Project')}
+                width={isMobile ? '100%' : 190}
+                value={projectId ?? board.activeProjectId ?? ''}
+                options={board.projects.map((project) => ({
+                  value: project.id,
                   label:
-                    sprint.state === 'ACTIVE'
-                      ? `${sprint.name ?? sprint.id} · ${t('Active')}`
-                      : (sprint.name ?? sprint.id),
-                })),
-              ]}
-              onChange={(value) => setSprintFilter(value)}
+                    typeof project.key === 'string' && project.key !== ''
+                      ? `${project.name ?? project.id} (${project.key})`
+                      : (project.name ?? project.id),
+                }))}
+                onChange={(value) => {
+                  setProjectId(value);
+                  storeValue(PROJECT_STORAGE_KEY, value);
+                  setSelectedIssueId(null);
+                  setComposerStatusId(null);
+                  setComposerSectionKey(null);
+                  setSelectedAssigneeIds([]);
+                  setSprintFilter(ACTIVE_SPRINT_VALUE);
+                  setEpicFilter(undefined);
+                  setShouldIncludeOlderDone(false);
+                }}
+              />
+            </div>
+            <TaskViewSwitch
+              value={view}
+              onChange={changeView}
+              isCompact={isMobile}
             />
+            {isMobile && board.canWrite && (
+              <TaskButton
+                variant="primary"
+                title={t('Create issue')}
+                isDisabled={view === 'board' && statuses.length === 0}
+                onClick={openCreateIssue}
+              >
+                <IconPlus size={14} />
+              </TaskButton>
+            )}
           </div>
           <TaskIssueSearch
             value={search}
             onChange={setSearch}
             onSelectIssue={selectSearchResult}
             isShortcutEnabled={selectedIssueId === null}
-            maxWidth={560}
-            size="large"
+            maxWidth={isMobile ? '100%' : 560}
+            size={isMobile ? 'medium' : 'large'}
             placeholder={t('Search issues by key or title…')}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            {board.canWrite && (
+            {!isMobile && board.canWrite && (
               <TaskButton
                 variant="primary"
-                isDisabled={statuses.length === 0}
-                onClick={() => {
-                  setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
-                  setComposerTitle('');
-                }}
+                isDisabled={view === 'board' && statuses.length === 0}
+                onClick={openCreateIssue}
               >
                 <IconPlus size={14} />
                 {t('Create issue')}
@@ -1012,6 +655,13 @@ const TaskBoard = () => {
             minHeight: 32,
           }}
         >
+          <TaskButton
+            variant={isEpicPanelOpen ? 'primary' : 'secondary'}
+            onClick={toggleEpicPanel}
+          >
+            <IconStack2 size={14} />
+            {t('Epics')}
+          </TaskButton>
           <TaskBoardAssigneeFilter
             options={assigneeOptions}
             selectedIds={selectedAssigneeIds}
@@ -1038,6 +688,35 @@ const TaskBoard = () => {
             ]}
             onChange={(value) => setTypeFilter(value)}
           />
+          {view === 'board' && !isShowingActiveSprint && (
+            <TaskBoardSelect
+              ariaLabel={t('Sprint')}
+              width={170}
+              value={
+                sprintFilter === ACTIVE_SPRINT_VALUE &&
+                activeSprint === undefined
+                  ? ALL_VALUE
+                  : sprintFilter
+              }
+              options={[
+                ...(activeSprint === undefined
+                  ? []
+                  : [
+                      { value: ACTIVE_SPRINT_VALUE, label: t('Active sprint') },
+                    ]),
+                { value: ALL_VALUE, label: t('All sprints') },
+                { value: BACKLOG_VALUE, label: t('Backlog') },
+                ...board.sprints.map((sprint) => ({
+                  value: sprint.id,
+                  label:
+                    sprint.state === 'ACTIVE'
+                      ? `${sprint.name ?? sprint.id} · ${t('Active')}`
+                      : (sprint.name ?? sprint.id),
+                })),
+              ]}
+              onChange={(value) => setSprintFilter(value)}
+            />
+          )}
           {isFiltered && (
             <TaskButton variant="ghost" onClick={resetFilters}>
               <IconFilterOff size={14} />
@@ -1045,54 +724,56 @@ const TaskBoard = () => {
             </TaskButton>
           )}
           <span style={{ flex: 1 }} />
-          <span
-            style={{
-              alignItems: 'center',
-              color: TASK_TOKENS.textTertiary,
-              display: 'inline-flex',
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 12,
-              gap: 10,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <span>
-              {totalIssueCount === 1
-                ? `1 ${t('issue')}`
-                : `${totalIssueCount} ${t('issues')}`}
-            </span>
+          {view === 'board' && !isMobile && (
             <span
-              title={`${progressPercent}%`}
-              style={{ alignItems: 'center', display: 'inline-flex', gap: 8 }}
+              style={{
+                alignItems: 'center',
+                color: TASK_TOKENS.textTertiary,
+                display: 'inline-flex',
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 12,
+                gap: 10,
+                whiteSpace: 'nowrap',
+              }}
             >
-              <span style={{ color: TASK_TOKENS.textSecondary }}>
-                {`${doneCount} / ${totalIssueCount} ${t('done')}`}
+              <span>
+                {progress.totalCount === 1
+                  ? `1 ${t('issue')}`
+                  : `${progress.totalCount} ${t('issues')}`}
               </span>
               <span
-                style={{
-                  background: TASK_TOKENS.backgroundTertiary,
-                  borderRadius: 4,
-                  display: 'inline-flex',
-                  height: 6,
-                  overflow: 'hidden',
-                  width: 120,
-                }}
+                title={`${progress.percent}%`}
+                style={{ alignItems: 'center', display: 'inline-flex', gap: 8 }}
               >
+                <span style={{ color: TASK_TOKENS.textSecondary }}>
+                  {`${progress.doneCount} / ${progress.totalCount} ${t('done')}`}
+                </span>
                 <span
                   style={{
-                    background: readTagColor('green').text,
-                    display: 'block',
-                    height: '100%',
-                    width: `${progressPercent}%`,
+                    background: TASK_TOKENS.backgroundTertiary,
+                    borderRadius: 4,
+                    display: 'inline-flex',
+                    height: 6,
+                    overflow: 'hidden',
+                    width: 120,
                   }}
-                />
-              </span>
-              <span style={{ fontWeight: 600, minWidth: 32 }}>
-                {`${progressPercent}%`}
+                >
+                  <span
+                    style={{
+                      background: readTagColor('green').text,
+                      display: 'block',
+                      height: '100%',
+                      width: `${progress.percent}%`,
+                    }}
+                  />
+                </span>
+                <span style={{ fontWeight: 600, minWidth: 32 }}>
+                  {`${progress.percent}%`}
+                </span>
               </span>
             </span>
-          </span>
-          {board.canManageViews && (
+          )}
+          {view === 'board' && !isMobile && board.canManageViews && (
             <TaskFieldsMenu
               label={t('Card fields')}
               fields={ISSUE_CARD_FIELDS}
@@ -1103,605 +784,145 @@ const TaskBoard = () => {
         </div>
       </div>
 
-      <div
-        onMouseMove={(event) => updateColumnResize(event.clientX)}
-        onMouseUp={(event) => endColumnResize(event.clientX)}
-        onMouseLeave={(event) => endColumnResize(event.clientX)}
-        style={{
-          // Each column is as tall as its cards, as on Jira, and only a full
-          // one reaches the board's height and scrolls inside it.
-          alignItems: 'flex-start',
-          cursor: columnResize === null ? 'auto' : 'col-resize',
-          display: 'flex',
-          flex: 1,
-          gap: 12,
-          minHeight: 0,
-          overflowX: 'auto',
-          ...TASK_THIN_SCROLLBAR_STYLE,
-          padding: '0 20px 20px 20px',
-          // A resize drag would otherwise sweep a text selection across
-          // every card it passes.
-          userSelect: columnResize === null ? 'auto' : 'none',
-        }}
-      >
-        {columns.map((column, columnIndex) => {
-          const cards = issuesByStatus.get(column.id) ?? [];
-          const columnPage = board.columnPages[column.id];
-          const columnTotal = readColumnTotal(column.id);
-          const remainingCardCount = Math.max(0, columnTotal - cards.length);
-          const hasMoreCards = columnPage?.hasNextPage === true;
-          const isColumnLoading = loadingColumnKeys.includes(column.id);
-          const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
-          const isDropTarget = dropTargetStatusId === column.id;
-          // Column order is a view everyone on the project shares, so it
-          // follows the role's "Manage Views", not a write grant on the app.
-          const isReorderable =
-            column.id !== NO_STATUS_VALUE && board.canManageViews;
-          const isColumnDragged = draggingStatusId === column.id;
-          // Which edge the dragged column will land against, so the bar shows
-          // the slot it takes rather than just the column it is over.
-          const columnDropSide =
-            draggingStatusId === null || statusDropTargetId !== column.id
-              ? null
-              : columns.findIndex((candidate) => candidate.id === draggingStatusId) <
-                  columns.findIndex((candidate) => candidate.id === column.id)
-                ? 'right'
-                : 'left';
+      {view === 'board' &&
+        sprintFilter === ACTIVE_SPRINT_VALUE &&
+        (activeSprint === undefined ? (
+          <TaskNoActiveSprintBanner
+            inset={pageInset}
+            onOpenBacklog={() => changeView('backlog')}
+          />
+        ) : (
+          <TaskSprintHeader
+            inset={pageInset}
+            sprint={activeSprint}
+            canWrite={board.canWrite}
+            onComplete={() => setCompletingSprint(activeSprint)}
+            onEdit={() => setSprintDialogSprint(activeSprint)}
+            onViewAllIssues={() => setSprintFilter(ALL_VALUE)}
+          />
+        ))}
 
-          return (
-            <section
-              key={column.id}
-              onDragOver={(event) => {
-                if (draggingStatusId !== null) {
-                  // Not preventing the default is what marks this column as
-                  // no drop target: the uncategorised column and the dragged
-                  // one itself.
-                  if (isReorderable && !isColumnDragged) {
-                    event.preventDefault();
-                    setStatusDropTargetId(column.id);
-                  }
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {isEpicPanelOpen && board.activeProjectId !== null && (
+          <TaskEpicPanel
+            isFullScreen={isEpicPanelFullScreen}
+            inset={pageInset}
+            projectId={board.activeProjectId}
+            epics={board.epics}
+            epicFilter={epicFilter}
+            onEpicFilterChange={(nextEpicFilter) => {
+              setEpicFilter(nextEpicFilter);
 
-                  return;
-                }
-
-                event.preventDefault();
-
-                // Guarded like the card's dragstart: the sandbox proxy has no
-                // dataTransfer, and an unguarded write throws into the host's
-                // error banner on every hover.
-                if (event.dataTransfer) {
-                  event.dataTransfer.dropEffect = 'move';
-                }
-
-                setDropTargetStatusId(column.id);
-              }}
-              onDragLeave={() => {
-                setDropTargetStatusId((current) =>
-                  current === column.id ? null : current,
-                );
-                setStatusDropTargetId((current) =>
-                  current === column.id ? null : current,
-                );
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-
-                if (draggingStatusId !== null) {
-                  if (isReorderable && !isColumnDragged) {
-                    void reorderStatuses(draggingStatusId, column.id);
-                  }
-
-                  return;
-                }
-
-                // Without dataTransfer the payload falls back to the card's
-                // own dragstart state, which the board already tracks for the
-                // drag ghost — so dropping works in the sandbox too.
-                const payload = event.dataTransfer?.getData('text/plain') ?? '';
-                const issueId =
-                  payload !== '' ? payload : draggingIssueId;
-
-                if (issueId !== null && issueId !== '') {
-                  void moveIssue(issueId, column.id);
-                }
-              }}
-              style={{
-                background: isDropTarget
-                  ? TASK_TOKENS.accentSoft
-                  : TASK_TOKENS.backgroundSecondary,
-                border: `1px solid ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderLight}`,
-                borderRadius: TASK_TOKENS.radius,
-                boxShadow:
-                  columnDropSide === 'left'
-                    ? `inset 3px 0 0 ${TASK_TOKENS.accent}`
-                    : columnDropSide === 'right'
-                      ? `inset -3px 0 0 ${TASK_TOKENS.accent}`
-                      : 'none',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                flexShrink: 0,
-                maxHeight: '100%',
-                minHeight: 0,
-                opacity: isColumnDragged ? 0.5 : 1,
-                position: 'relative',
-                width: columnWidth,
-              }}
-            >
-              {/* Sits in the gap to the next column, so it never covers a
-                  card's own controls. A sibling of the header, not inside it:
-                  the header is draggable, and a press here must not start a
-                  column move. */}
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label={t('Resize column')}
-                title={t('Drag to resize · Double-click to reset')}
-                onMouseDown={(event) =>
-                  setColumnResize({
-                    statusId: column.id,
-                    columnIndex,
-                    startX: event.clientX,
-                    startWidth: columnWidth,
-                  })
-                }
-                onDoubleClick={resetColumnWidth}
-                onMouseEnter={() => setHoveredResizeId(column.id)}
-                onMouseLeave={() => setHoveredResizeId(null)}
-                style={{
-                  bottom: 0,
-                  cursor: 'col-resize',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  position: 'absolute',
-                  right: -10,
-                  top: 0,
-                  // The strip only stops selecting once the resize state has
-                  // rendered; a press that starts here must not begin one.
-                  userSelect: 'none',
-                  width: 8,
-                  zIndex: 2,
-                }}
-              >
-                <span
-                  style={{
-                    background:
-                      columnResize?.statusId === column.id
-                        ? TASK_TOKENS.accent
-                        : hoveredResizeId === column.id &&
-                            columnResize === null
-                          ? TASK_TOKENS.borderStrong
-                          : 'transparent',
-                    borderRadius: 1,
-                    height: '100%',
-                    width: 2,
-                  }}
-                />
-              </div>
-              <header
-                draggable={isReorderable}
-                title={isReorderable ? t('Drag to reorder columns') : undefined}
-                onMouseEnter={() => setHoveredHeaderId(column.id)}
-                onMouseLeave={() => setHoveredHeaderId(null)}
-                onDragStart={(event) => {
-                  // Same guard as the card's dragstart: the sandbox proxy has
-                  // no dataTransfer, and state carries the drag regardless.
-                  try {
-                    event.dataTransfer?.setData('text/plain', column.name);
-
-                    if (event.dataTransfer) {
-                      event.dataTransfer.effectAllowed = 'move';
-                    }
-                  } catch {
-                    // Sandbox proxy: state carries the payload.
-                  }
-
-                  setDraggingStatusId(column.id);
-                }}
-                onDragEnd={() => {
-                  setDraggingStatusId(null);
-                  setStatusDropTargetId(null);
-                }}
-                style={{
-                  alignItems: 'center',
-                  cursor: isReorderable ? 'grab' : 'default',
-                  display: 'flex',
-                  flexShrink: 0,
-                  gap: 8,
-                  padding: '12px 12px 8px 6px',
-                }}
-              >
-                {/* Room held whether shown or not, so the title never shifts
-                    when the grip appears under the pointer. */}
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    flexShrink: 0,
-                    marginRight: -4,
-                    visibility:
-                      isReorderable && hoveredHeaderId === column.id
-                        ? 'visible'
-                        : 'hidden',
-                  }}
-                >
-                  <IconGripVertical size={14} color={TASK_TOKENS.textTertiary} />
-                </span>
-                <span
-                  style={{
-                    background: readTagColor(column.color).text,
-                    ...TASK_CIRCLE_STYLE,
-                    flexShrink: 0,
-                    height: 8,
-                    width: 8,
-                  }}
-                />
-                <span
-                  style={{
-                    color: TASK_TOKENS.textSecondary,
-                    flex: 1,
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: 0.3,
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    textTransform: 'uppercase',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {column.name}
-                </span>
-                {doneStatusIds.has(column.id) && (
-                  <span title={t('Done')} style={{ display: 'inline-flex', flexShrink: 0 }}>
-                    <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
-                  </span>
-                )}
-                <span
-                  style={{
-                    background: TASK_TOKENS.backgroundTertiary,
-                    borderRadius: TASK_TOKENS.radiusSmall,
-                    color: TASK_TOKENS.textSecondary,
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 11,
-                    lineHeight: '16px',
-                    minWidth: 16,
-                    padding: '0 4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  {columnTotal}
-                </span>
-              </header>
-
-              <div
-                onScroll={(event) => {
-                  if (!hasMoreCards) {
-                    return;
-                  }
-
-                  // scrollTop rides the event; the heights come from the
-                  // host's geometry snapshots, a frame behind at most, which
-                  // the threshold absorbs. A zero height means not measured
-                  // yet, never "at the bottom".
-                  const scroller = event.currentTarget;
-                  const distanceToBottom =
-                    scroller.scrollHeight -
-                    scroller.clientHeight -
-                    scroller.scrollTop;
-
-                  if (
-                    scroller.scrollHeight > 0 &&
-                    distanceToBottom < LAZY_LOAD_THRESHOLD_PX
-                  ) {
-                    void loadMoreColumn(column.id);
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // Content-sized, shrinking (and scrolling) only once the
-                  // column hits the board's height with the create control
-                  // still pinned under it.
-                  flex: '0 1 auto',
-                  gap: 8,
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  ...TASK_THIN_SCROLLBAR_STYLE,
-                  padding: '4px 8px 8px 8px',
-                }}
-              >
-                {cards.length === 0 && draggingIssueId !== null && (
-                  <span
-                    style={{
-                      border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
-                      borderRadius: TASK_TOKENS.radius,
-                      color: isDropTarget
-                        ? TASK_TOKENS.accent
-                        : TASK_TOKENS.textTertiary,
-                      flexShrink: 0,
-                      fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 12,
-                      padding: '16px 8px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {t('Drop here')}
-                  </span>
-                )}
-                {cards.map((issue) => (
-                  <TaskBoardCard
-                    key={issue.id}
-                    issue={issue}
-                    statusOptions={statusOptions}
-                    assigneeName={
-                      issue.assigneeId === null ||
-                      issue.assigneeId === undefined
-                        ? null
-                        : readMemberName(
-                            membersById,
-                            issue.assigneeId,
-                            t('Unknown'),
-                          )
-                    }
-                    assigneeAvatarUrl={
-                      membersById.get(issue.assigneeId ?? '')?.avatarUrl
-                    }
-                    epicName={
-                      typeof issue.epicId === 'string'
-                        ? (epicNamesById.get(issue.epicId) ?? null)
-                        : null
-                    }
-                    sprintName={
-                      typeof issue.sprintId === 'string'
-                        ? (sprintNamesById.get(issue.sprintId) ?? null)
-                        : null
-                    }
-                    reporterName={
-                      typeof issue.reporterId === 'string'
-                        ? readMemberName(
-                            membersById,
-                            issue.reporterId,
-                            t('Unknown'),
-                          )
-                        : null
-                    }
-                    reporterAvatarUrl={
-                      membersById.get(issue.reporterId ?? '')?.avatarUrl
-                    }
-                    hiddenFields={hiddenCardFields}
-                    isDone={doneStatusIds.has(issue.statusId ?? '')}
-                    isSelected={selectedIssueId === issue.id}
-                    isDragging={draggingIssueId === issue.id}
-                    canMove={board.canWrite}
-                    canDelete={board.canSoftDelete}
-                    onOpen={() => setSelectedIssueId(issue.id)}
-                    onMove={(statusId) => void moveIssue(issue.id, statusId)}
-                    onDelete={() => void deleteIssue(issue.id)}
-                    onDragStartCard={() => setDraggingIssueId(issue.id)}
-                    onDragEndCard={() => {
-                      setDraggingIssueId(null);
-                      setDropTargetStatusId(null);
-                    }}
-                  />
-                ))}
-
-                {/* Scrolling near the bottom fetches the next page. The line
-                    is a click target too, for a reader on a keyboard or a
-                    column the host has not measured yet. */}
-                {hasMoreCards && (
-                  <button
-                    type="button"
-                    disabled={isColumnLoading}
-                    onClick={() => void loadMoreColumn(column.id)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: TASK_TOKENS.textTertiary,
-                      cursor: isColumnLoading ? 'default' : 'pointer',
-                      flexShrink: 0,
-                      fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 12,
-                      padding: '6px 0',
-                    }}
-                  >
-                    {isColumnLoading
-                      ? t('Loading…')
-                      : t('{count} more issues', { count: remainingCardCount })}
-                  </button>
-                )}
-
-                {isOlderDoneToggleColumn &&
-                  (shouldIncludeOlderDone ? (
-                    <TaskColumnFooterButton
-                      onClick={() => setShouldIncludeOlderDone(false)}
-                    >
-                      {t('Hide done issues older than {days} days', {
-                        days: BOARD_DONE_ISSUE_VISIBLE_DAYS,
-                      })}
-                    </TaskColumnFooterButton>
-                  ) : (
-                    <TaskColumnFooterButton
-                      onClick={() => setShouldIncludeOlderDone(true)}
-                    >
-                      {t('Show {count} older done issues', {
-                        count: board.hiddenDoneIssueCount,
-                      })}
-                    </TaskColumnFooterButton>
-                  ))}
-
-              </div>
-
-              {/* Pinned under the cards rather than after the last one, so
-                  creating in a long column never means scrolling to its end. */}
-              {board.canWrite && (
-                <div style={{ flexShrink: 0, padding: '0 8px 8px 8px' }}>
-                  {composerStatusId === column.id ? (
-                    <div
-                      style={{
-                        background: TASK_TOKENS.background,
-                        border: `1px solid ${TASK_TOKENS.accent}`,
-                        borderRadius: TASK_TOKENS.radius,
-                        boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flexShrink: 0,
-                        gap: 8,
-                        padding: 8,
-                      }}
-                    >
-                      <TaskTextInput
-                        key={composerKey}
-                        ariaLabel={t('Issue title')}
-                        placeholder={t('What needs to be done?')}
-                        shouldAutoFocus
-                        value={composerTitle}
-                        onChange={setComposerTitle}
-                        onEnter={createIssue}
-                        onEscape={closeComposer}
-                      />
-                      <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
-                        <TaskBoardSelect
-                          ariaLabel={t('Issue type')}
-                          width={112}
-                          value={composerType}
-                          options={ISSUE_TYPE_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label,
-                            color: option.color,
-                          }))}
-                          onChange={setComposerType}
-                        />
-                        <span style={{ flex: 1 }} />
-                        <TaskIconButton label={t('Cancel')} onClick={closeComposer}>
-                          <IconX size={14} />
-                        </TaskIconButton>
-                        <TaskButton
-                          size="small"
-                          variant="primary"
-                          title={t('Create (Enter)')}
-                          isDisabled={composerTitle.trim() === '' || isCreating}
-                          onClick={createIssue}
-                        >
-                          {t('Create')}
-                        </TaskButton>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setComposerStatusId(column.id);
-                        setComposerTitle('');
-                      }}
-                      onMouseEnter={() => setHoveredCreateColumnId(column.id)}
-                      onMouseLeave={() => setHoveredCreateColumnId(null)}
-                      style={{
-                        alignItems: 'center',
-                        background:
-                          hoveredCreateColumnId === column.id
-                            ? TASK_TOKENS.backgroundHover
-                            : 'transparent',
-                        border: 'none',
-                        borderRadius: TASK_TOKENS.radiusSmall,
-                        color:
-                          hoveredCreateColumnId === column.id
-                            ? TASK_TOKENS.textSecondary
-                            : TASK_TOKENS.textTertiary,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexShrink: 0,
-                        fontFamily: TASK_TOKENS.fontFamily,
-                        fontSize: 13,
-                        gap: 6,
-                        justifyContent: 'flex-start',
-                        minHeight: 32,
-                        padding: '0 8px',
-                        width: '100%',
-                      }}
-                    >
-                      <IconPlus size={14} />
-                      {t('Create issue')}
-                    </button>
-                  )}
-                </div>
-              )}
-            </section>
-          );
-        })}
-        {/* A new column is a change to everyone's board, so it follows the
-            role's "Manage Views" like the column order and the card fields. */}
-        {board.canManageViews && board.activeProjectId !== null && (
-          <TaskBoardAddStatus onCreate={createStatus} />
+              // Full screen, the panel hides what the filter changes.
+              if (isEpicPanelFullScreen) {
+                toggleEpicPanel();
+              }
+            }}
+            canWrite={board.canWrite}
+            canSoftDelete={board.canSoftDelete}
+            refreshKey={refreshKey}
+            refreshBoard={refreshBoard}
+            draggingIssueId={draggingIssueId}
+            onAssignIssueToEpic={(issueId, epicId) =>
+              void assignIssueToEpic(issueId, epicId)
+            }
+            onClose={toggleEpicPanel}
+          />
         )}
+        <div
+          style={{
+            display: isEpicPanelFullScreen ? 'none' : 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            minHeight: 0,
+            minWidth: 0,
+          }}
+        >
+          {view === 'board' ? (
+            <TaskBoardView
+              board={board}
+              setBoard={setBoard}
+              boardQueryBody={boardQueryBody}
+              boardGenerationRef={boardGenerationRef}
+              loadingColumnKeys={loadingColumnKeys}
+              setLoadingColumnKeys={setLoadingColumnKeys}
+              statuses={statuses}
+              doneStatusIds={doneStatusIds}
+              membersById={membersById}
+              epicsById={epicsById}
+              sprintNamesById={sprintNamesById}
+              hiddenCardFields={hiddenCardFields}
+              selectedIssueId={selectedIssueId}
+              setSelectedIssueId={setSelectedIssueId}
+              refreshBoard={refreshBoard}
+              shouldIncludeOlderDone={shouldIncludeOlderDone}
+              setShouldIncludeOlderDone={setShouldIncludeOlderDone}
+              composerStatusId={composerStatusId}
+              setComposerStatusId={setComposerStatusId}
+              newIssueSprintId={newIssueSprintId}
+              newIssueEpicId={newIssueEpicId}
+              loadError={loadError}
+              boardPath={boardPath}
+              inset={pageInset}
+            />
+          ) : (
+            board.activeProjectId !== null && (
+              <TaskBacklogView
+                projectId={board.activeProjectId}
+                projectKey={activeProject?.key ?? null}
+                allSprints={board.sprints}
+                statuses={statuses}
+                doneStatusIds={doneStatusIds}
+                epicsById={epicsById}
+                queryBody={sharedQueryBody}
+                newIssueEpicId={newIssueEpicId}
+                canWrite={board.canWrite}
+                canSoftDelete={board.canSoftDelete}
+                refreshKey={refreshKey}
+                refreshBoard={refreshBoard}
+                selectedIssueId={selectedIssueId}
+                setSelectedIssueId={setSelectedIssueId}
+                draggingIssueId={draggingIssueId}
+                setDraggingIssueId={setDraggingIssueId}
+                composerSectionKey={composerSectionKey}
+                setComposerSectionKey={setComposerSectionKey}
+                boardPath={boardPath}
+                isMobile={isMobile}
+                inset={pageInset}
+              />
+            )
+          )}
+        </div>
       </div>
 
-      <div style={{ flexShrink: 0, padding: '0 20px' }}>
-        <TaskStatusLine text={loadError} tone="danger" />
-      </div>
-
-      {selectedIssueId !== null && (
-        // Through the host's <twenty-overlay>, not inline: its children
-        // portal to the document body, outside the page-layout scroll
-        // wrapper whose `container-type: size` traps every inline
-        // `position: fixed` inside the content box. See TaskBoardDetailFrame.
-        //
-        // Deliberately WITHOUT onClose: this overlay wraps the whole modal,
-        // and the host closes an overlay on any pointerdown outside it —
-        // including inside a NESTED overlay's portal, which is where every
-        // dropdown in the modal lives. With onClose, picking a status or
-        // ticking a checkbox would dismiss the modal itself. Outside-close
-        // is the backdrop's own onClick below, and Escape is handled on the
-        // dialog, so nothing is lost.
+      {sprintDialogSprint !== null && (
         <twenty-overlay>
-          <TaskBoardDetail
-            issueId={selectedIssueId}
-            navIssueIds={navIssueIds}
-            onSelectIssue={setSelectedIssueId}
-            onClose={() => setSelectedIssueId(null)}
-            boardPath={boardPath}
-            onCardChanged={refreshBoard}
+          <TaskSprintDialog
+            mode="edit"
+            sprint={sprintDialogSprint}
+            issueCount={progress.totalCount}
+            onClose={() => setSprintDialogSprint(null)}
+            onSaved={closeSprintDialogsAndRefresh}
+          />
+        </twenty-overlay>
+      )}
+
+      {completingSprint !== null && (
+        <twenty-overlay>
+          <TaskCompleteSprintDialog
+            sprint={completingSprint}
+            futureSprints={board.sprints.filter(
+              (sprint) =>
+                sprint.id !== completingSprint.id &&
+                sprint.state !== 'ACTIVE' &&
+                sprint.state !== 'CLOSED',
+            )}
+            onClose={() => setCompletingSprint(null)}
+            onCompleted={closeSprintDialogsAndRefresh}
           />
         </twenty-overlay>
       )}
     </TaskBoardFrame>
-  );
-};
-
-// A quiet full-width link at the foot of a column: more cards, or the older
-// done issues. Hover is state-driven, as everywhere in this app.
-const TaskColumnFooterButton = ({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: isHovered ? TASK_TOKENS.backgroundHover : 'transparent',
-        border: `1px dashed ${TASK_TOKENS.border}`,
-        borderRadius: TASK_TOKENS.radiusSmall,
-        color: isHovered ? TASK_TOKENS.textPrimary : TASK_TOKENS.textSecondary,
-        cursor: 'pointer',
-        flexShrink: 0,
-        fontFamily: TASK_TOKENS.fontFamily,
-        fontSize: 12,
-        minHeight: 30,
-        padding: '0 8px',
-        width: '100%',
-      }}
-    >
-      {children}
-    </button>
   );
 };
 
@@ -1729,6 +950,6 @@ export default defineFrontComponent({
   universalIdentifier: TASK_BOARD_FRONT_COMPONENT_UID,
   name: 'task-board',
   description:
-    'Jira-style board: one column per project status, drag-and-drop, inline create and the issue detail as a drawer.',
+    'Jira-style planning page: backlog with sprints, the active sprint board, an epic panel and the issue detail as a drawer.',
   component: TaskBoard,
 });

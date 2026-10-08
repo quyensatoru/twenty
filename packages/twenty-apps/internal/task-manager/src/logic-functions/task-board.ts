@@ -9,8 +9,6 @@ import {
 } from '../constants/record-selections';
 import { TASK_BOARD_ROUTE_PATH } from '../constants/route-paths';
 import { TASK_BOARD_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
-import { type ApiClient } from '../types/api-client';
-import { type Connection } from '../types/connection';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
 import { hasAppGrant } from './app-scope/has-app-grant.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
@@ -19,40 +17,35 @@ import {
   buildBoardHiddenDoneFilter,
   buildBoardScopeFilter,
 } from './utils/build-board-issue-filters.util';
+import { countIssues } from './utils/count-issues.util';
 import { fetchIssuePage } from './utils/fetch-issue-page.util';
 import { listAppMembers } from './utils/list-app-members.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import {
+  applyActiveSprint,
   type BoardIssueQueryBody,
   readBoardIssueQuery,
 } from './utils/read-board-issue-query.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
-type TaskBoardBody = BoardIssueQueryBody & { projectId?: string };
+type TaskBoardBody = BoardIssueQueryBody & {
+  projectId?: string;
+  // False for the backlog view: it reads its own sections, and the board's
+  // columns would only be paid for and thrown away.
+  includeIssues?: boolean;
+};
 
 // The key a column's page travels under: its status id, or this for the
 // issues with no status.
 const NO_STATUS_COLUMN_KEY = 'NO_STATUS';
-
-// A count, not a read: the board only says how many older done issues there
-// are until the reader asks to see them.
-const countIssues = async (
-  client: ApiClient,
-  filter: Record<string, unknown>,
-): Promise<number> => {
-  const result = await client.query({
-    issues: { __args: { filter, first: 1 }, totalCount: true },
-  });
-
-  return (result?.issues as Connection<unknown> | undefined)?.totalCount ?? 0;
-};
 
 const EMPTY_BOARD = {
   projects: [],
   activeProjectId: null,
   issueStatuses: [],
   sprints: [],
+  activeSprintId: null,
   epics: [],
   issues: [],
   columnPages: {},
@@ -114,8 +107,8 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
         ) as { appId?: string | null } | undefined
       )?.appId ?? null;
 
-    const query = readBoardIssueQuery(activeProjectId, event.body);
-    const scopeFilter = buildBoardScopeFilter(query);
+    const requestedQuery = readBoardIssueQuery(activeProjectId, event.body);
+    const shouldIncludeIssues = event.body?.includeIssues !== false;
     const now = new Date();
 
     const [issueStatuses, sprints, epics, assignableMembers] =
@@ -127,7 +120,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
           selection: ISSUE_STATUS_SELECTION,
           orderBy: [{ position: 'AscNullsLast' }],
         }),
-        listScopedRecords({
+        listScopedRecords<{ id: string; state?: string | null }>({
           client,
           pluralName: 'sprints',
           filter: { projectId: { eq: activeProjectId } },
@@ -148,17 +141,24 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
           : listAppMembers({ client, appId: activeProjectAppId }),
       ]);
 
+    const activeSprintId =
+      sprints.find((sprint) => sprint.state === 'ACTIVE')?.id ?? null;
+    const query = applyActiveSprint(requestedQuery, activeSprintId);
+    const scopeFilter = buildBoardScopeFilter(query);
+
     // Statuses first, issues second: which statuses count as done decides
     // each column's filter. Then one first page per column, side by side, so
     // a column only ever costs what fits on screen until it is scrolled.
-    const columns = [
-      ...issueStatuses.map((status) => ({
-        key: status.id,
-        statusId: status.id as string | null,
-        isDoneStatus: status.category === 'DONE',
-      })),
-      { key: NO_STATUS_COLUMN_KEY, statusId: null, isDoneStatus: false },
-    ];
+    const columns = shouldIncludeIssues
+      ? [
+          ...issueStatuses.map((status) => ({
+            key: status.id,
+            statusId: status.id as string | null,
+            isDoneStatus: status.category === 'DONE',
+          })),
+          { key: NO_STATUS_COLUMN_KEY, statusId: null, isDoneStatus: false },
+        ]
+      : [];
     const hiddenDoneFilter = buildBoardHiddenDoneFilter({
       scopeFilter,
       doneStatusIds: issueStatuses
@@ -184,7 +184,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
           }),
         ),
       ),
-      hiddenDoneFilter === null
+      hiddenDoneFilter === null || !shouldIncludeIssues
         ? Promise.resolve(0)
         : countIssues(client, hiddenDoneFilter),
     ]);
@@ -212,6 +212,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       activeProjectId,
       issueStatuses,
       sprints,
+      activeSprintId,
       epics,
       issues,
       columnPages,

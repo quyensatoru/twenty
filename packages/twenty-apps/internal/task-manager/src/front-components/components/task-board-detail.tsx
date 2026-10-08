@@ -23,6 +23,7 @@ import {
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { buildBoardIssueUrl } from '../utils/build-record-url.util';
 import { useHiddenDetailFields } from '../hooks/use-hidden-detail-fields';
+import { useIsMobile } from '../hooks/use-is-mobile';
 import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
@@ -83,6 +84,7 @@ export const TaskBoardDetail = ({
   onCardChanged,
 }: TaskBoardDetailProps) => {
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
+  const isMobile = useIsMobile();
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   // Field values just picked, shown before the server confirms them, the way
@@ -238,15 +240,15 @@ export const TaskBoardDetail = ({
 
   if (isLoading && data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
-        <TaskBoardDetailSkeleton />
+      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
+        <TaskBoardDetailSkeleton isMobile={isMobile} />
       </TaskBoardDetailFrame>
     );
   }
 
   if (data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
+      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
         <TaskMessage
           text={loadError ?? t('This issue is not available to you.')}
           tone={loadError === null ? 'neutral' : 'danger'}
@@ -427,14 +429,14 @@ export const TaskBoardDetail = ({
   // Detaching the parent clears this issue's own pointer. Only an unlink —
   // deleting the parent record itself is never offered from its child.
   return (
-    <TaskBoardDetailFrame onClose={onClose} focusKey={issueId}>
+    <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
       <div
         style={{
           alignItems: 'center',
           borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
           display: 'flex',
-          gap: 8,
-          padding: '16px 20px 12px 20px',
+          gap: isMobile ? 4 : 8,
+          padding: isMobile ? '12px 12px 8px 16px' : '16px 20px 12px 20px',
         }}
       >
         <TaskTag color={typeOption?.color ?? 'blue'}>
@@ -446,6 +448,7 @@ export const TaskBoardDetail = ({
             fontFamily: TASK_TOKENS.fontFamily,
             fontSize: 13,
             fontWeight: 600,
+            whiteSpace: 'nowrap',
           }}
         >
           {issue.issueKey ?? ''}
@@ -488,17 +491,30 @@ export const TaskBoardDetail = ({
         </TaskIconButton>
       </div>
 
-      <div style={{ display: 'flex', gap: 20, minHeight: 0, flex: 1, padding: '12px 20px 20px 20px' }}>
+      {/* On a phone the two columns stack, Details under the content as in
+          Jira's mobile issue view, and the whole body scrolls as one. */}
+      <div
+        style={{
+          display: 'flex',
+          flex: 1,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 20,
+          minHeight: 0,
+          overflowY: isMobile ? 'auto' : 'visible',
+          ...(isMobile ? TASK_THIN_SCROLLBAR_STYLE : {}),
+          padding: isMobile ? '12px 16px 16px 16px' : '12px 20px 20px 20px',
+        }}
+      >
         <div
           style={{
             display: 'flex',
-            flex: 1,
+            flex: isMobile ? '0 0 auto' : 1,
             flexDirection: 'column',
             gap: 16,
             minHeight: 0,
             minWidth: 0,
-            overflowY: 'auto',
-            ...TASK_THIN_SCROLLBAR_STYLE,
+            overflowY: isMobile ? 'visible' : 'auto',
+            ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
           }}
         >
           {isEditingTitle ? (
@@ -815,7 +831,14 @@ export const TaskBoardDetail = ({
 
         <aside
           style={{
-            borderLeft: `1px solid ${TASK_TOKENS.borderLight}`,
+            // Longhands only: the side that carries the rule changes with
+            // the layout, and React drops a longhand beside a shorthand.
+            borderLeft: isMobile
+              ? 'none'
+              : `1px solid ${TASK_TOKENS.borderLight}`,
+            borderTop: isMobile
+              ? `1px solid ${TASK_TOKENS.borderLight}`
+              : 'none',
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
@@ -824,10 +847,11 @@ export const TaskBoardDetail = ({
             minHeight: 0,
             minWidth: 0,
             overflowX: 'hidden',
-            overflowY: 'auto',
-            ...TASK_THIN_SCROLLBAR_STYLE,
-            paddingLeft: 16,
-            width: 320,
+            overflowY: isMobile ? 'visible' : 'auto',
+            ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
+            paddingLeft: isMobile ? 0 : 16,
+            paddingTop: isMobile ? 16 : 0,
+            width: isMobile ? '100%' : 320,
           }}
         >
           <IssueDetailsPanel
@@ -867,10 +891,13 @@ const TaskBoardDetailFrame = ({
   children,
   onClose,
   focusKey,
+  isMobile,
 }: {
   children: React.ReactNode;
   onClose: () => void;
   focusKey: string;
+  // A phone gets the whole screen, as Jira's mobile issue view does.
+  isMobile: boolean;
 }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
@@ -889,7 +916,7 @@ const TaskBoardDetailFrame = ({
       display: 'flex',
       inset: 0,
       justifyContent: 'center',
-      padding: 32,
+      padding: isMobile ? 0 : 32,
       position: 'fixed',
       zIndex: 60,
     }}
@@ -921,17 +948,17 @@ const TaskBoardDetailFrame = ({
       style={{
         background: TASK_TOKENS.background,
         border: `1px solid ${TASK_TOKENS.borderLight}`,
-        borderRadius: 12,
+        borderRadius: isMobile ? 0 : 12,
         boxShadow: TASK_TOKENS.shadowStrong,
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: TASK_TOKENS.fontFamily,
-        height: 'min(860px, calc(100vh - 64px))',
+        height: isMobile ? '100%' : 'min(860px, calc(100vh - 64px))',
         maxWidth: '100%',
         minHeight: 0,
         position: 'relative',
-        width: 'min(1280px, calc(100vw - 48px))',
+        width: isMobile ? '100%' : 'min(1280px, calc(100vw - 48px))',
         zIndex: 61,
       }}
     >

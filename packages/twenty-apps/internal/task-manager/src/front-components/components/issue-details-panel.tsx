@@ -513,7 +513,12 @@ export const IssueDetailsPanel = ({
               {...buildOpenRecordProps('sprint', issue.sprintId)}
               options={buildTagOptions({
                 emptyLabel: t('No sprint'),
-                rows: detail.sprints,
+                // A closed sprint is history, as in Jira: it can only stay
+                // the issue's sprint, not be picked again.
+                rows: detail.sprints.filter(
+                  (sprint) =>
+                    sprint.state !== 'CLOSED' || sprint.id === issue.sprintId,
+                ),
                 color: 'purple',
               })}
               onChange={(sprintId) => setRelation('sprintId', sprintId)}
