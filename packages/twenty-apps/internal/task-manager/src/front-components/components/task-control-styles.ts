@@ -1,3 +1,5 @@
+import { type CSSProperties } from 'react';
+
 import { TASK_TOKENS } from './task-tokens';
 
 // Twenty's text-field look (twenty-ui Input), reproduced with its CSS
@@ -19,6 +21,25 @@ export const getTaskControlStyle = (isFocused: boolean) =>
     transition: 'border-color 0.1s ease, box-shadow 0.1s ease',
     width: '100%',
   }) as const;
+
+// The open state of a read-first rich text editor. The host editor already
+// draws its frame from Twenty's theme variables, so this recolours that frame
+// rather than drawing a second one around it: a wrapper border never matches
+// the host's radius and leaves a grey corner inside the accent one. No halo
+// either, the scrolling column it sits in clips it.
+export const TASK_EDITING_RICH_TEXT_FRAME_STYLE = {
+  '--t-border-color-medium': TASK_TOKENS.accent,
+} as CSSProperties;
+
+// The host editor's 1px frame plus its 8px inset, which it drops when read
+// only. Reading with the same offset keeps the text still when Save toggles
+// the editor back to read only.
+export const TASK_RICH_TEXT_READING_PADDING = 9;
+
+// A description's editing box, and its reading box too: the same floor in both
+// states keeps the page under it still when Save closes the editor, so only
+// the Save / Cancel row comes and goes.
+export const TASK_DESCRIPTION_MIN_HEIGHT = 180;
 
 // A bordered box for composers, so the one control that takes input reads as
 // an input and the rows below it read as content. Rows carry no border of

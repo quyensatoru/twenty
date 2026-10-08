@@ -1,3 +1,6 @@
+import { useCallback, useRef } from 'react';
+
+import { type RichTextUploadEvent } from '../../types/front-component-host-elements';
 import { useRichTextUploads } from '../hooks/use-rich-text-uploads';
 
 type TaskRichTextEditorProps = {
@@ -43,6 +46,47 @@ export const TaskRichTextEditor = ({
 }: TaskRichTextEditorProps) => {
   const { resolvedUploads, handleUpload } = useRichTextUploads(issueId);
 
+  // The element keeps the first handler it was given for an event and does
+  // not reliably take a newer one, so a closure from a read-only render (no
+  // onChange) went on answering after the editor opened: typing never reached
+  // the draft, and Cancel then had no older value to put back. The handlers
+  // are therefore fixed for the element's lifetime and read the current
+  // callbacks through this ref.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const callbacksRef = useRef({
+    onChange,
+    onBlur,
+    handleUpload,
+    value,
+    isReadOnly,
+  });
+  callbacksRef.current = { onChange, onBlur, handleUpload, value, isReadOnly };
+
+  const handleChange = useCallback((event: { target: { value: string } }) => {
+    const current = callbacksRef.current;
+
+    // Turning read-only makes BlockNote drop its trailing empty block, and the
+    // change that reports arrives after Cancel has already put the old value
+    // back. The event pipeline writes its text onto the element, which the
+    // host takes as the new value, so the discarded edit would stay on screen
+    // and be saved by the next Save. A read-only editor shows what this side
+    // says, so the value is written back.
+    if (current.isReadOnly) {
+      if (event.target.value !== current.value) {
+        event.target.value = current.value;
+      }
+
+      return;
+    }
+
+    current.onChange?.(event.target.value);
+  }, []);
+  const handleBlur = useCallback(() => callbacksRef.current.onBlur?.(), []);
+  const handleUploadEvent = useCallback(
+    (event: RichTextUploadEvent) => callbacksRef.current.handleUpload(event),
+    [],
+  );
+
   return (
     <div
       style={{
@@ -64,9 +108,9 @@ export const TaskRichTextEditor = ({
         placeholder={placeholder}
         isReadOnly={isReadOnly}
         resolvedUploads={resolvedUploads}
-        onChange={(event) => onChange?.(event.target.value)}
-        onBlur={() => onBlur?.()}
-        onUpload={handleUpload}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onUpload={handleUploadEvent}
       />
     </div>
   );

@@ -12,6 +12,12 @@ import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { UPDATE_ISSUE_ROUTE_PATH } from '../../constants/route-paths';
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { DescriptionEmptyBox } from './task-description-empty-box';
+import { TaskButton } from './task-button';
+import {
+  TASK_EDITING_RICH_TEXT_FRAME_STYLE,
+  TASK_DESCRIPTION_MIN_HEIGHT,
+  TASK_RICH_TEXT_READING_PADDING,
+} from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
 import { TaskMessage } from './task-message';
 import { TaskRichTextEditor } from './task-rich-text-editor';
@@ -24,15 +30,6 @@ import { buildRecordUrl } from '../utils/build-record-url.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
-
-// Long enough that a normal typing burst is one write, short enough that a
-// pause of a sentence already has the text on the server.
-const SAVE_DEBOUNCE_MS = 700;
-
-// A paragraph-sized editing surface even when the prose is empty: the unified
-// column has no fixed height, so without a floor the editor opens one line
-// tall. Matches the board modal's description box.
-const DESCRIPTION_EDITOR_MIN_HEIGHT = 180;
 
 // One frame for the loaded state.
 const DescriptionFrame = ({ children }: { children: ReactNode }) => (
@@ -72,8 +69,9 @@ const DescriptionBody = ({ children }: { children: ReactNode }) => (
 // Read-first, like Jira and Linear: the description sits on the page as plain
 // prose with no box of its own, and a click turns it into a focused editing
 // surface with an accent ring. Markdown is the storage format, never the
-// reading format, and saving stays on the debounce plus the blur flush below,
-// which also returns the panel to its reading state.
+// reading format. Like the comment editor it saves only on Save, never on
+// blur: the editor blurs as the pointer goes down on Cancel, so a blur save
+// would store the very text Cancel is meant to throw away.
 //
 // Entering edit mode mounts the editor, so the click that opens it cannot also
 // place the caret: positioning the cursor takes a second click. Autofocus is
@@ -95,41 +93,30 @@ const DescriptionBody = ({ children }: { children: ReactNode }) => (
 export const IssueDescription = () => {
   const issueId = useRecordId();
   const { data, isLoading, loadError } = useIssueDetail(issueId);
+  // What the page shows as saved. Set the moment Save is pressed, ahead of
+  // the write, so leaving the editor never waits on the server.
   const [draft, setDraft] = useState<string | null>(null);
+  // What the open editor holds. Kept apart from `draft` so Cancel can drop it.
+  const [editDraft, setEditDraft] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
-  const pendingMarkdownRef = useRef<string | null>(null);
-  // oxlint-disable-next-line twenty/no-state-useref
-  const debounceHandleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // oxlint-disable-next-line twenty/no-state-useref
   const saveChainRef = useRef<Promise<void>>(Promise.resolve());
+  // oxlint-disable-next-line twenty/no-state-useref
+  const currentIssueIdRef = useRef(issueId);
+  currentIssueIdRef.current = issueId;
 
   const storedMarkdown = data.issue?.description?.markdown ?? '';
 
-  const cancelScheduledSave = () => {
-    if (debounceHandleRef.current !== null) {
-      clearTimeout(debounceHandleRef.current);
-      debounceHandleRef.current = null;
-    }
-  };
-
   useEffect(() => {
-    cancelScheduledSave();
-    pendingMarkdownRef.current = null;
     setDraft(null);
+    setEditDraft('');
     setIsEditing(false);
-    setIsSaving(false);
     setSaveError(null);
   }, [issueId]);
 
-  // A pending debounce must not outlive the panel, or it writes after the user
-  // has moved on to another record.
-  useEffect(() => cancelScheduledSave, []);
-
-  const persist = async (markdown: string) => {
+  const persist = async (markdown: string, previousMarkdown: string) => {
     if (issueId === null) {
       return;
     }
@@ -141,56 +128,48 @@ export const IssueDescription = () => {
       });
       setSaveError(null);
     } catch (error) {
-      // Reported through the host's own toast as well as the status line: a
-      // save that fails must still be visible after the panel has returned to
-      // its reading state, and a failure is the only thing here worth
-      // interrupting anyone for. The draft is left untouched, so the text the
-      // save failed on is still in the box and the next keystroke retries it.
+      // Reported through the host's own toast as well as the status line: the
+      // panel has already returned to its reading state, and a failure is the
+      // only thing here worth interrupting anyone for.
       const message = readErrorText(error);
       setSaveError(message);
-      await enqueueSnackbar({
+      void enqueueSnackbar({
         message,
         variant: 'error',
       });
+
+      // The page goes back to what is really stored, and the editor reopens
+      // on the text that failed so it can be retried.
+      if (currentIssueIdRef.current === issueId) {
+        setDraft(previousMarkdown);
+        setEditDraft(markdown);
+        setIsEditing(true);
+      }
     }
+  };
+
+  const startEditing = (currentMarkdown: string) => {
+    setEditDraft(currentMarkdown);
+    setIsEditing(true);
   };
 
   // Writes are chained rather than fired in parallel: two updates of the same
   // field in flight at once would land in whatever order the server finished
-  // them, not the order they were typed.
-  const flushSave = (): Promise<void> => {
-    cancelScheduledSave();
+  // them, not the order they were saved.
+  const saveEdit = (currentMarkdown: string) => {
+    setIsEditing(false);
 
-    const markdown = pendingMarkdownRef.current;
-
-    if (markdown === null) {
-      return saveChainRef.current;
+    if (editDraft === currentMarkdown) {
+      return;
     }
 
-    pendingMarkdownRef.current = null;
-    saveChainRef.current = saveChainRef.current
-      .then(() => persist(markdown))
-      .then(() => {
-        // Cleared only when nothing newer is waiting: a keystroke that landed
-        // mid-write schedules its own debounce, which owns the line now.
-        if (pendingMarkdownRef.current === null) {
-          setIsSaving(false);
-        }
-      });
+    const markdown = editDraft;
 
-    return saveChainRef.current;
-  };
-
-  const handleDraftChange = (nextMarkdown: string) => {
-    setDraft(nextMarkdown);
-    setIsSaving(true);
+    setDraft(markdown);
     setSaveError(null);
-    pendingMarkdownRef.current = nextMarkdown;
-    cancelScheduledSave();
-    debounceHandleRef.current = setTimeout(() => {
-      debounceHandleRef.current = null;
-      void flushSave();
-    }, SAVE_DEBOUNCE_MS);
+    saveChainRef.current = saveChainRef.current.then(() =>
+      persist(markdown, currentMarkdown),
+    );
   };
 
   // The record's own URL, like the modal's board deep link: the widget header
@@ -332,34 +311,7 @@ export const IssueDescription = () => {
           so the editor itself runs on the host side and this component only
           passes the markdown down and takes the edited markdown back. */}
       <DescriptionBody>
-        {isEditing ? (
-          <div
-            style={{
-              background: TASK_TOKENS.background,
-              border: `1px solid ${TASK_TOKENS.accent}`,
-              borderRadius: TASK_TOKENS.radius,
-              boxShadow: `0 0 0 3px ${TASK_TOKENS.accentSoft}`,
-              boxSizing: 'border-box',
-              display: 'flex',
-              flex: 1,
-              minHeight: 0,
-              width: '100%',
-            }}
-          >
-            <TaskRichTextEditor
-              value={currentMarkdown}
-              onChange={handleDraftChange}
-              onBlur={() => {
-                void flushSave();
-                setIsEditing(false);
-              }}
-              placeholder={t('Describe the issue…')}
-              shouldFillHeight
-              minHeight={DESCRIPTION_EDITOR_MIN_HEIGHT}
-              issueId={issueId}
-            />
-          </div>
-        ) : !data.canWrite ? (
+        {!data.canWrite ? (
           <div
             style={{
               boxSizing: 'border-box',
@@ -379,43 +331,102 @@ export const IssueDescription = () => {
           </div>
         ) : (
           <div
-            role="button"
-            tabIndex={0}
-            title={t('Edit')}
-            onClick={() => setIsEditing(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                setIsEditing(true);
-              }
-            }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
             style={{
-              background: isHovered
-                ? TASK_TOKENS.backgroundHover
-                : 'transparent',
-              borderRadius: TASK_TOKENS.radius,
-              boxSizing: 'border-box',
-              cursor: 'text',
+              display: 'flex',
               flex: 1,
+              flexDirection: 'column',
+              gap: 6,
               minHeight: 0,
-              padding: isEmpty ? 0 : '4px 8px',
               width: '100%',
             }}
           >
-            {isEmpty ? (
-              <DescriptionEmptyBox />
-            ) : (
-              <TaskRichTextEditor value={currentMarkdown} isReadOnly />
+            {/* One editor for both states, switched by isReadOnly: swapping a
+                read-only copy in on Save mounts a fresh host editor that paints
+                empty for a frame before it is seeded, which reads as a flash.
+                The reading padding puts the text exactly where the editing
+                frame's border and inset put it, so nothing moves either.
+                Event props are passed as undefined rather than left out: the
+                remote element wrapper never removes a listener whose prop
+                disappears, and Save would bubble into a stale startEditing.
+                Mousedown, not click: right after Save the read-only editor
+                still holds BlockNote's trailing empty block, the first press
+                on it removes it, and with the pressed node gone the browser
+                fires no click at all. */}
+            <div
+              role={isEditing ? undefined : 'button'}
+              tabIndex={isEditing ? undefined : 0}
+              title={isEditing ? undefined : t('Edit')}
+              onMouseDown={
+                isEditing ? undefined : () => startEditing(currentMarkdown)
+              }
+              onKeyDown={
+                isEditing
+                  ? undefined
+                  : (event) => {
+                      if (event.key === 'Enter') {
+                        startEditing(currentMarkdown);
+                      }
+                    }
+              }
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={{
+                ...(isEditing ? TASK_EDITING_RICH_TEXT_FRAME_STYLE : {}),
+                background:
+                  !isEditing && isHovered
+                    ? TASK_TOKENS.backgroundHover
+                    : 'transparent',
+                borderRadius: TASK_TOKENS.radiusSmall,
+                boxSizing: 'border-box',
+                cursor: isEditing ? 'auto' : 'text',
+                display: 'flex',
+                flex: 1,
+                minHeight:
+                  isEditing || isEmpty ? 0 : TASK_DESCRIPTION_MIN_HEIGHT,
+                padding:
+                  isEditing || isEmpty ? 0 : TASK_RICH_TEXT_READING_PADDING,
+                width: '100%',
+              }}
+            >
+              {!isEditing && isEmpty ? (
+                <DescriptionEmptyBox />
+              ) : (
+                <TaskRichTextEditor
+                  value={isEditing ? editDraft : currentMarkdown}
+                  onChange={isEditing ? setEditDraft : undefined}
+                  isReadOnly={!isEditing}
+                  placeholder={t('Describe the issue…')}
+                  shouldFillHeight={isEditing}
+                  minHeight={
+                    isEditing ? TASK_DESCRIPTION_MIN_HEIGHT : undefined
+                  }
+                  issueId={issueId}
+                />
+              )}
+            </div>
+            {isEditing && (
+              <div style={{ display: 'flex', flexShrink: 0, gap: 6 }}>
+                <TaskButton
+                  variant="primary"
+                  size="small"
+                  onClick={() => saveEdit(currentMarkdown)}
+                >
+                  {t('Save')}
+                </TaskButton>
+                <TaskButton size="small" onClick={() => setIsEditing(false)}>
+                  {t('Cancel')}
+                </TaskButton>
+              </div>
             )}
           </div>
         )}
       </DescriptionBody>
-      {/* Always in the layout: a line appearing only on failure would push the
-          prose, and autosave with no feedback reads as broken. */}
+      {/* Failures only, no "Saving...": the page already shows the saved text
+          the moment Save is pressed, and a line that blinks in and out for the
+          length of the request reads as the page flashing. */}
       <div style={{ paddingTop: 8 }}>
         <TaskStatusLine
-          text={saveError ?? (isSaving ? t('Saving...') : null)}
+          text={saveError}
           tone={saveError === null ? 'muted' : 'danger'}
         />
       </div>

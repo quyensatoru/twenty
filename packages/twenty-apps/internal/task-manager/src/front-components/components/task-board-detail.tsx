@@ -33,6 +33,12 @@ import { IssueDetailsPanel } from './issue-details-panel';
 import { IssueHistoryList } from './issue-history-list';
 import { IssueWorklogList } from './issue-worklog-list';
 import { DescriptionEmptyBox } from './task-description-empty-box';
+import { TaskButton } from './task-button';
+import {
+  TASK_EDITING_RICH_TEXT_FRAME_STYLE,
+  TASK_DESCRIPTION_MIN_HEIGHT,
+  TASK_RICH_TEXT_READING_PADDING,
+} from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
 import { TaskIssueSearch } from './task-issue-search';
 import { TaskMessage } from './task-message';
@@ -100,6 +106,7 @@ export const TaskBoardDetail = ({
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState<string | null>(null);
+  const [isDescriptionHovered, setIsDescriptionHovered] = useState(false);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   // Mirrors the description draft synchronously (see saveDescription below).
   // A ref, not state: it is written on every keystroke and must never
@@ -256,39 +263,65 @@ export const TaskBoardDetail = ({
   const storedDescription = issue.description?.markdown ?? '';
   const currentDescription = descriptionDraft ?? storedDescription;
 
-  // Read-first like the record page: click to edit, click anywhere outside
-  // to save and return to view. Blur carries the ref mirror rather than the
-  // state draft: the last keystroke's setState may not have flushed when the
-  // blur handler runs, and saving a stale closure would unwrite it.
-  // Not through update(): a failed save keeps the editor open with the draft
-  // intact, so the text is still there to retry — update() would already have
-  // reloaded and wiped it.
+  // Read-first like the record page: click to edit, Save or Cancel to return
+  // to view. Never saved on blur: the editor blurs as the pointer goes down on
+  // Cancel, so a blur save would store the text Cancel is meant to discard.
+  // Save carries the ref mirror rather than the state draft: the last
+  // keystroke's setState may not have flushed yet, and saving a stale closure
+  // would unwrite it.
+  // Returns to view at once and keeps showing what was saved. Not through
+  // update(): a failed save reopens the editor with the draft intact, so the
+  // text is still there to retry — update() would already have reloaded and
+  // wiped it.
   const saveDescription = async (markdown: string) => {
+    setIsEditingDescription(false);
+
     if (markdown === storedDescription) {
-      setIsEditingDescription(false);
       setDescriptionDraft(null);
 
       return;
     }
 
-    setIsSaving(true);
+    setDescriptionDraft(markdown);
 
+    // No "Saving..." and no swap to the re-read text: the saved text is on
+    // screen already, a status line blinking for the length of the request
+    // reads as the modal flashing, and the server's copy of the markdown can
+    // differ in whitespace, which would make the editor redraw every block.
+    // The draft stays until the modal moves to another issue.
     try {
       await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
         issueId,
         data: { description: buildRichTextValue(markdown) },
       });
       setActionError(null);
-      setDescriptionDraft(null);
-      setIsEditingDescription(false);
-      await reload();
+
+      if (currentIssueIdRef.current === issueId) {
+        await reload();
+      }
     } catch (error) {
       const message = readErrorText(error);
       setActionError(message);
       void enqueueSnackbar({ message, variant: 'error' });
-    } finally {
-      setIsSaving(false);
+
+      if (currentIssueIdRef.current === issueId) {
+        setIsEditingDescription(true);
+      }
     }
+  };
+
+  // Seeded from what is on screen, not the stored value: during a save the
+  // stored value is still the old text.
+  const startEditingDescription = () => {
+    setDescriptionDraft(currentDescription);
+    pendingDescriptionRef.current = currentDescription;
+    setIsEditingDescription(true);
+  };
+
+  const cancelEditingDescription = () => {
+    pendingDescriptionRef.current = null;
+    setDescriptionDraft(null);
+    setIsEditingDescription(false);
   };
 
   // The board deep link: opening it lands on the board with this issue's
@@ -521,35 +554,7 @@ export const TaskBoardDetail = ({
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <SectionHeading label={t('Description')} />
-            {isEditingDescription ? (
-              <div
-                style={{
-                  background: TASK_TOKENS.background,
-                  border: `1px solid ${TASK_TOKENS.accent}`,
-                  borderRadius: TASK_TOKENS.radius,
-                  boxShadow: `0 0 0 3px ${TASK_TOKENS.accentSoft}`,
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  width: '100%',
-                }}
-              >
-                <TaskRichTextEditor
-                    value={currentDescription}
-                    onChange={(next) => {
-                      setDescriptionDraft(next);
-                      pendingDescriptionRef.current = next;
-                    }}
-                    onBlur={() =>
-                      void saveDescription(
-                        pendingDescriptionRef.current ?? currentDescription,
-                      )
-                    }
-                    placeholder={t('Describe the issue…')}
-                    minHeight={180}
-                    issueId={issueId}
-                  />
-              </div>
-            ) : !data.canWrite ? (
+            {!data.canWrite ? (
               currentDescription.trim() === '' ? (
                 <span
                   style={{
@@ -566,29 +571,101 @@ export const TaskBoardDetail = ({
                 </div>
               )
             ) : (
-              <div
-                role="button"
-                tabIndex={0}
-                title={t('Edit')}
-                onClick={() => {
-                  setDescriptionDraft(storedDescription);
-                  pendingDescriptionRef.current = storedDescription;
-                  setIsEditingDescription(true);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    setDescriptionDraft(storedDescription);
-                    pendingDescriptionRef.current = storedDescription;
-                    setIsEditingDescription(true);
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {/* One editor for both states, switched by isReadOnly: swapping
+                    a read-only copy in on Save mounts a fresh host editor that
+                    paints empty for a frame before it is seeded, which reads as
+                    a flash. The reading padding puts the text exactly where the
+                    editing frame's border and inset put it. Event props are
+                    passed as undefined rather than left out: the remote element
+                    wrapper never removes a listener whose prop disappears, and
+                    Save would bubble into a stale startEditingDescription.
+                    Mousedown, not click: right after Save the read-only editor
+                    still holds BlockNote's trailing empty block, the first
+                    press on it removes it, and with the pressed node gone the
+                    browser fires no click at all. */}
+                <div
+                  role={isEditingDescription ? undefined : 'button'}
+                  tabIndex={isEditingDescription ? undefined : 0}
+                  title={isEditingDescription ? undefined : t('Edit')}
+                  onMouseDown={
+                    isEditingDescription ? undefined : startEditingDescription
                   }
-                }}
-                style={{ cursor: 'text', minHeight: 120 }}
-              >
-                {currentDescription.trim() === '' ? (
-                  <DescriptionEmptyBox />
-                ) : (
-                  <div style={{ padding: '4px 8px' }}>
-                    <TaskRichTextEditor value={currentDescription} isReadOnly />
+                  onKeyDown={
+                    isEditingDescription
+                      ? undefined
+                      : (event) => {
+                          if (event.key === 'Enter') {
+                            startEditingDescription();
+                          }
+                        }
+                  }
+                  onMouseEnter={() => setIsDescriptionHovered(true)}
+                  onMouseLeave={() => setIsDescriptionHovered(false)}
+                  style={{
+                    ...(isEditingDescription
+                      ? TASK_EDITING_RICH_TEXT_FRAME_STYLE
+                      : {}),
+                    background:
+                      !isEditingDescription && isDescriptionHovered
+                        ? TASK_TOKENS.backgroundHover
+                        : 'transparent',
+                    borderRadius: TASK_TOKENS.radiusSmall,
+                    boxSizing: 'border-box',
+                    cursor: isEditingDescription ? 'auto' : 'text',
+                    display: 'flex',
+                    minHeight: isEditingDescription
+                      ? undefined
+                      : currentDescription.trim() === ''
+                        ? 120
+                        : TASK_DESCRIPTION_MIN_HEIGHT,
+                    padding:
+                      isEditingDescription || currentDescription.trim() === ''
+                        ? 0
+                        : TASK_RICH_TEXT_READING_PADDING,
+                    width: '100%',
+                  }}
+                >
+                  {!isEditingDescription && currentDescription.trim() === '' ? (
+                    <DescriptionEmptyBox />
+                  ) : (
+                    <TaskRichTextEditor
+                      value={currentDescription}
+                      onChange={
+                        isEditingDescription
+                          ? (next) => {
+                              setDescriptionDraft(next);
+                              pendingDescriptionRef.current = next;
+                            }
+                          : undefined
+                      }
+                      isReadOnly={!isEditingDescription}
+                      placeholder={t('Describe the issue…')}
+                      minHeight={
+                        isEditingDescription
+                          ? TASK_DESCRIPTION_MIN_HEIGHT
+                          : undefined
+                      }
+                      issueId={issueId}
+                    />
+                  )}
+                </div>
+                {isEditingDescription && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <TaskButton
+                      variant="primary"
+                      size="small"
+                      onClick={() =>
+                        void saveDescription(
+                          pendingDescriptionRef.current ?? currentDescription,
+                        )
+                      }
+                    >
+                      {t('Save')}
+                    </TaskButton>
+                    <TaskButton size="small" onClick={cancelEditingDescription}>
+                      {t('Cancel')}
+                    </TaskButton>
                   </div>
                 )}
               </div>
