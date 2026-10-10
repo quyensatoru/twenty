@@ -11,7 +11,7 @@ import {
   t,
   useRecordId,
 } from 'twenty-sdk/front-component';
-import { IconLink } from 'twenty-ui/icon';
+import { IconEdit, IconLink } from 'twenty-ui/icon';
 
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
@@ -222,7 +222,7 @@ export const IssueDescription = () => {
   const currentMarkdownRef = useRef(currentMarkdown);
   currentMarkdownRef.current = currentMarkdown;
 
-  const handleStartEditingMouseDown = useCallback(() => {
+  const handleStartEditing = useCallback(() => {
     if (isEditingRef.current) {
       return;
     }
@@ -237,9 +237,9 @@ export const IssueDescription = () => {
         return;
       }
 
-      handleStartEditingMouseDown();
+      handleStartEditing();
     },
-    [handleStartEditingMouseDown],
+    [handleStartEditing],
   );
 
   if (issueId === null) {
@@ -324,6 +324,11 @@ export const IssueDescription = () => {
           <TaskTag color={priorityOption.color}>{priorityOption.label}</TaskTag>
         )}
         <span style={{ flex: 1 }} />
+        {data.canWrite && !isEditing && !isEmpty && (
+          <TaskIconButton label={t('Edit')} onClick={handleStartEditing}>
+            <IconEdit size={14} />
+          </TaskIconButton>
+        )}
         <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
           <IconLink size={14} />
         </TaskIconButton>
@@ -379,26 +384,8 @@ export const IssueDescription = () => {
               width: '100%',
             }}
           >
-            {/* One editor for both states, switched by isReadOnly: swapping a
-                read-only copy in on Save mounts a fresh host editor that paints
-                empty for a frame before it is seeded, which reads as a flash.
-                The reading padding puts the text exactly where the editing
-                frame's border and inset put it, so nothing moves either.
-                Event props are passed as undefined rather than left out: the
-                remote element wrapper never removes a listener whose prop
-                disappears, and Save would bubble into a stale startEditing —
-                handleStartEditingMouseDown/KeyDown guard against exactly that
-                by checking isEditingRef instead of trusting the prop swap.
-                Mousedown, not click: right after Save the read-only editor
-                still holds BlockNote's trailing empty block, the first press
-                on it removes it, and with the pressed node gone the browser
-                fires no click at all. */}
+            {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
             <div
-              role={isEditing ? undefined : 'button'}
-              tabIndex={isEditing ? undefined : 0}
-              title={isEditing ? undefined : t('Edit')}
-              onMouseDown={isEditing ? undefined : handleStartEditingMouseDown}
-              onKeyDown={isEditing ? undefined : handleStartEditingKeyDown}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               style={{
@@ -409,7 +396,7 @@ export const IssueDescription = () => {
                     : 'transparent',
                 borderRadius: TASK_TOKENS.radiusSmall,
                 boxSizing: 'border-box',
-                cursor: isEditing ? 'auto' : 'text',
+                cursor: isEditing ? 'auto' : 'default',
                 display: 'flex',
                 flex: 1,
                 minHeight:
@@ -420,7 +407,16 @@ export const IssueDescription = () => {
               }}
             >
               {!isEditing && isEmpty ? (
-                <DescriptionEmptyBox />
+                <div
+                  role="button"
+                  tabIndex={0}
+                  title={t('Edit')}
+                  onMouseDown={handleStartEditing}
+                  onKeyDown={handleStartEditingKeyDown}
+                  style={{ cursor: 'text', width: '100%' }}
+                >
+                  <DescriptionEmptyBox />
+                </div>
               ) : (
                 <TaskRichTextEditor
                   value={isEditing ? editDraft : currentMarkdown}

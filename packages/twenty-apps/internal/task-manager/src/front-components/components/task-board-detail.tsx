@@ -4,6 +4,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconExternalLink,
+  IconEdit,
   IconLink,
   IconX,
 } from 'twenty-ui/icon';
@@ -585,7 +586,14 @@ export const TaskBoardDetail = ({
           )}
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <SectionHeading label={t('Description')} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SectionHeading label={t('Description')} />
+              {data.canWrite && !isEditingDescription && currentDescription.trim() !== '' && (
+                <TaskIconButton label={t('Edit')} onClick={startEditingDescription}>
+                  <IconEdit size={14} />
+                </TaskIconButton>
+              )}
+            </div>
             {!data.canWrite ? (
               currentDescription.trim() === '' ? (
                 <span
@@ -604,34 +612,8 @@ export const TaskBoardDetail = ({
               )
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {/* One editor for both states, switched by isReadOnly: swapping
-                    a read-only copy in on Save mounts a fresh host editor that
-                    paints empty for a frame before it is seeded, which reads as
-                    a flash. The reading padding puts the text exactly where the
-                    editing frame's border and inset put it. Event props are
-                    passed as undefined rather than left out: the remote element
-                    wrapper never removes a listener whose prop disappears, and
-                    Save would bubble into a stale startEditingDescription.
-                    Mousedown, not click: right after Save the read-only editor
-                    still holds BlockNote's trailing empty block, the first
-                    press on it removes it, and with the pressed node gone the
-                    browser fires no click at all. */}
+                {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
                 <div
-                  role={isEditingDescription ? undefined : 'button'}
-                  tabIndex={isEditingDescription ? undefined : 0}
-                  title={isEditingDescription ? undefined : t('Edit')}
-                  onMouseDown={
-                    isEditingDescription ? undefined : startEditingDescription
-                  }
-                  onKeyDown={
-                    isEditingDescription
-                      ? undefined
-                      : (event) => {
-                          if (event.key === 'Enter') {
-                            startEditingDescription();
-                          }
-                        }
-                  }
                   onMouseEnter={() => setIsDescriptionHovered(true)}
                   onMouseLeave={() => setIsDescriptionHovered(false)}
                   style={{
@@ -644,7 +626,7 @@ export const TaskBoardDetail = ({
                         : 'transparent',
                     borderRadius: TASK_TOKENS.radiusSmall,
                     boxSizing: 'border-box',
-                    cursor: isEditingDescription ? 'auto' : 'text',
+                    cursor: isEditingDescription ? 'auto' : 'default',
                     display: 'flex',
                     minHeight: isEditingDescription
                       ? undefined
@@ -659,7 +641,20 @@ export const TaskBoardDetail = ({
                   }}
                 >
                   {!isEditingDescription && currentDescription.trim() === '' ? (
-                    <DescriptionEmptyBox />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      title={t('Edit')}
+                      onMouseDown={startEditingDescription}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          startEditingDescription();
+                        }
+                      }}
+                      style={{ cursor: 'text', width: '100%' }}
+                    >
+                      <DescriptionEmptyBox />
+                    </div>
                   ) : (
                     <TaskRichTextEditor
                       value={currentDescription}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { getByRole } from '@testing-library/dom';
+import { getByRole, isInaccessible } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -54,7 +54,40 @@ const detail = {
 };
 
 describe('issue description loading', () => {
-  it('opens preview links in a new tab without entering edit mode', async () => {
+  it('keeps the formatted document in the same host editor across preview, edit and cancel', async () => {
+    const user = userEvent.setup();
+    const markdown =
+      '# Release\n\n| Step | Status |\n| --- | --- |\n| **Build** | *Done* |\n\n> Quoted\n\n- item\n\n```ts\nconst count = 1;\n```\n\nSee https://example.com';
+    const previewMarkdown =
+      '# Release\n\n| Step | Status |\n| --- | --- |\n| **Build** | *Done* |\n\n> Quoted\n\n- item\n\n```ts\nconst count = 1;\n```\n\nSee [https://example.com](https://example.com)';
+
+    await act(async () => root.render(createElement(IssueDescription)));
+    await act(async () =>
+      resolveDetail({
+        ...detail,
+        issue: { ...detail.issue, description: { markdown } },
+      }),
+    );
+
+    const editor = container.querySelector('twenty-rich-text-editor');
+
+    expect(editor?.getAttribute('value')).toBe(previewMarkdown);
+    expect(isInaccessible(editor as HTMLElement)).toBe(false);
+
+    await act(async () =>
+      user.click(getByRole(container, 'button', { name: 'Edit' })),
+    );
+    expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
+    expect(editor?.getAttribute('value')).toBe(markdown);
+
+    await act(async () =>
+      user.click(getByRole(container, 'button', { name: 'Cancel' })),
+    );
+    expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
+    expect(editor?.getAttribute('value')).toBe(previewMarkdown);
+  });
+
+  it('does not enter edit mode when a click bubbles from the read-only host editor', async () => {
     const user = userEvent.setup();
 
     await act(async () => root.render(createElement(IssueDescription)));
@@ -68,24 +101,25 @@ describe('issue description loading', () => {
       }),
     );
 
-    const link = getByRole(container, 'link', {
-      name: 'https://example.com/details',
-    });
+    const editor = container.querySelector('twenty-rich-text-editor');
 
-    expect(link.getAttribute('href')).toBe('https://example.com/details');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    if (editor === null) {
+      throw new Error('Description editor is missing');
+    }
 
-    await act(async () => user.click(link));
+    await act(async () => user.click(editor));
     expect(container.textContent).not.toContain('Save');
 
     await act(async () => {
-      link.focus();
+      editor.setAttribute('tabindex', '0');
+      (editor as HTMLElement).focus();
       await user.keyboard('{Enter}');
     });
     expect(container.textContent).not.toContain('Save');
 
-    await act(async () => user.click(getByRole(container, 'paragraph')));
+    await act(async () =>
+      user.click(getByRole(container, 'button', { name: 'Edit' })),
+    );
     expect(getByRole(container, 'button', { name: 'Save' })).toBeDefined();
   });
 
