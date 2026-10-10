@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 
 import { type RichTextUploadEvent } from '../../types/front-component-host-elements';
 import { useRichTextUploads } from '../hooks/use-rich-text-uploads';
+import { TaskRichTextPreview } from './task-rich-text-preview';
 
 type TaskRichTextEditorProps = {
   value: string;
@@ -60,7 +61,13 @@ export const TaskRichTextEditor = ({
     value,
     isReadOnly,
   });
-  callbacksRef.current = { onChange, onBlur, handleUpload, value, isReadOnly };
+  callbacksRef.current = {
+    onChange,
+    onBlur,
+    handleUpload,
+    value,
+    isReadOnly,
+  };
 
   const handleChange = useCallback((event: { target: { value: string } }) => {
     const current = callbacksRef.current;
@@ -111,15 +118,19 @@ export const TaskRichTextEditor = ({
             : { minHeight: minHeight ?? COMPOSER_MIN_HEIGHT }),
       }}
     >
-      <twenty-rich-text-editor
-        value={value}
-        placeholder={placeholder}
-        isReadOnly={isReadOnly}
-        resolvedUploads={resolvedUploads}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onUpload={handleUploadEvent}
-      />
+      {isReadOnly && <TaskRichTextPreview value={value} />}
+      {/* Keeping the host editor mounted preserves its edit session on Save/Cancel. */}
+      <div style={{ display: isReadOnly ? 'none' : 'flex', width: '100%' }}>
+        <twenty-rich-text-editor
+          value={value}
+          placeholder={placeholder}
+          isReadOnly={isReadOnly}
+          resolvedUploads={resolvedUploads}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onUpload={handleUploadEvent}
+        />
+      </div>
     </div>
   );
 };

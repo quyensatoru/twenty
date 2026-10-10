@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { getByRole } from '@testing-library/dom';
+import userEvent from '@testing-library/user-event';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,6 +54,41 @@ const detail = {
 };
 
 describe('issue description loading', () => {
+  it('opens preview links in a new tab without entering edit mode', async () => {
+    const user = userEvent.setup();
+
+    await act(async () => root.render(createElement(IssueDescription)));
+    await act(async () =>
+      resolveDetail({
+        ...detail,
+        issue: {
+          ...detail.issue,
+          description: { markdown: 'See https://example.com/details' },
+        },
+      }),
+    );
+
+    const link = getByRole(container, 'link', {
+      name: 'https://example.com/details',
+    });
+
+    expect(link.getAttribute('href')).toBe('https://example.com/details');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+
+    await act(async () => user.click(link));
+    expect(container.textContent).not.toContain('Save');
+
+    await act(async () => {
+      link.focus();
+      await user.keyboard('{Enter}');
+    });
+    expect(container.textContent).not.toContain('Save');
+
+    await act(async () => user.click(getByRole(container, 'paragraph')));
+    expect(getByRole(container, 'button', { name: 'Save' })).toBeDefined();
+  });
+
   it('renders an editable description after the initial request completes', async () => {
     await act(async () => root.render(createElement(IssueDescription)));
     expect(container.textContent).not.toContain('OPS-4');
