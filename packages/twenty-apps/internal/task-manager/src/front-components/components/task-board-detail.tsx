@@ -116,6 +116,17 @@ export const TaskBoardDetail = ({
   // early loading returns would shift the hook order between renders.
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingDescriptionRef = useRef<string | null>(null);
+  // The remote element wrapper can go on answering with the mousedown/keydown
+  // handler it was given on an earlier render even after the prop is set back
+  // to undefined for the editing render, so Enter bubbling up from BlockNote
+  // can still reach a startEditingDescription closure captured before editing
+  // began — restarting the edit mid-keystroke and wiping pendingDescriptionRef
+  // back to the pre-edit text. isEditingDescription itself can't guard this: a
+  // stale handler closes over the value it had when it was captured, never the
+  // current one, so only a ref read inside the handler sees the real state.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const isEditingDescriptionRef = useRef(isEditingDescription);
+  isEditingDescriptionRef.current = isEditingDescription;
 
   // The drawer stays mounted while stepping between cards, so every transient
   // edit state resets with the issue — otherwise one card's draft leaks into
@@ -313,8 +324,15 @@ export const TaskBoardDetail = ({
   };
 
   // Seeded from what is on screen, not the stored value: during a save the
-  // stored value is still the old text.
+  // stored value is still the old text. Guarded against a stale handler
+  // calling this mid-edit (see isEditingDescriptionRef above) — without this
+  // check, Enter bubbling up from the editor would reopen editing on the
+  // pre-edit text, wiping pendingDescriptionRef's in-progress draft.
   const startEditingDescription = () => {
+    if (isEditingDescriptionRef.current) {
+      return;
+    }
+
     setDescriptionDraft(currentDescription);
     pendingDescriptionRef.current = currentDescription;
     setIsEditingDescription(true);
