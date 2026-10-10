@@ -11,7 +11,7 @@ import {
   t,
   useRecordId,
 } from 'twenty-sdk/front-component';
-import { IconEdit, IconLink } from 'twenty-ui/icon';
+import { IconLink } from 'twenty-ui/icon';
 
 import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
@@ -324,11 +324,6 @@ export const IssueDescription = () => {
           <TaskTag color={priorityOption.color}>{priorityOption.label}</TaskTag>
         )}
         <span style={{ flex: 1 }} />
-        {data.canWrite && !isEditing && !isEmpty && (
-          <TaskIconButton label={t('Edit')} onClick={handleStartEditing}>
-            <IconEdit size={14} />
-          </TaskIconButton>
-        )}
         <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
           <IconLink size={14} />
         </TaskIconButton>
@@ -386,6 +381,11 @@ export const IssueDescription = () => {
           >
             {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
             <div
+              role={isEditing ? undefined : 'button'}
+              tabIndex={isEditing ? undefined : 0}
+              title={isEditing ? undefined : t('Edit')}
+              onMouseDown={isEditing ? undefined : handleStartEditing}
+              onKeyDown={isEditing ? undefined : handleStartEditingKeyDown}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               style={{
@@ -396,7 +396,7 @@ export const IssueDescription = () => {
                     : 'transparent',
                 borderRadius: TASK_TOKENS.radiusSmall,
                 boxSizing: 'border-box',
-                cursor: isEditing ? 'auto' : 'default',
+                cursor: isEditing ? 'auto' : 'text',
                 display: 'flex',
                 flex: 1,
                 minHeight:
@@ -407,16 +407,7 @@ export const IssueDescription = () => {
               }}
             >
               {!isEditing && isEmpty ? (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  title={t('Edit')}
-                  onMouseDown={handleStartEditing}
-                  onKeyDown={handleStartEditingKeyDown}
-                  style={{ cursor: 'text', width: '100%' }}
-                >
-                  <DescriptionEmptyBox />
-                </div>
+                <DescriptionEmptyBox />
               ) : (
                 <TaskRichTextEditor
                   value={isEditing ? editDraft : currentMarkdown}

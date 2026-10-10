@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { getByRole, isInaccessible } from '@testing-library/dom';
+import { getByRole, getByText, isInaccessible } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -54,13 +54,10 @@ const detail = {
 };
 
 describe('issue description loading', () => {
-  it('keeps the formatted document in the same host editor across preview, edit and cancel', async () => {
+  it('preserves the formatted preview and the host edit session across edit and cancel', async () => {
     const user = userEvent.setup();
     const markdown =
       '# Release\n\n| Step | Status |\n| --- | --- |\n| **Build** | *Done* |\n\n> Quoted\n\n- item\n\n```ts\nconst count = 1;\n```\n\nSee https://example.com';
-    const previewMarkdown =
-      '# Release\n\n| Step | Status |\n| --- | --- |\n| **Build** | *Done* |\n\n> Quoted\n\n- item\n\n```ts\nconst count = 1;\n```\n\nSee [https://example.com](https://example.com)';
-
     await act(async () => root.render(createElement(IssueDescription)));
     await act(async () =>
       resolveDetail({
@@ -71,11 +68,12 @@ describe('issue description loading', () => {
 
     const editor = container.querySelector('twenty-rich-text-editor');
 
-    expect(editor?.getAttribute('value')).toBe(previewMarkdown);
-    expect(isInaccessible(editor as HTMLElement)).toBe(false);
+    expect(editor?.getAttribute('value')).toBe(markdown);
+    expect(getByRole(container, 'table')).toBeDefined();
+    expect(isInaccessible(editor as HTMLElement)).toBe(true);
 
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Edit' })),
+      user.click(getByRole(container, 'heading', { name: 'Release' })),
     );
     expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
     expect(editor?.getAttribute('value')).toBe(markdown);
@@ -84,10 +82,11 @@ describe('issue description loading', () => {
       user.click(getByRole(container, 'button', { name: 'Cancel' })),
     );
     expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
-    expect(editor?.getAttribute('value')).toBe(previewMarkdown);
+    expect(editor?.getAttribute('value')).toBe(markdown);
+    expect(getByRole(container, 'table')).toBeDefined();
   });
 
-  it('does not enter edit mode when a click bubbles from the read-only host editor', async () => {
+  it('keeps links in preview and enters edit when clicking other content', async () => {
     const user = userEvent.setup();
 
     await act(async () => root.render(createElement(IssueDescription)));
@@ -101,24 +100,18 @@ describe('issue description loading', () => {
       }),
     );
 
-    const editor = container.querySelector('twenty-rich-text-editor');
-
-    if (editor === null) {
-      throw new Error('Description editor is missing');
-    }
-
-    await act(async () => user.click(editor));
+    const link = getByRole(container, 'link', {
+      name: 'https://example.com/details',
+    });
+    await act(async () => user.click(link));
     expect(container.textContent).not.toContain('Save');
-
     await act(async () => {
-      editor.setAttribute('tabindex', '0');
-      (editor as HTMLElement).focus();
+      link.focus();
       await user.keyboard('{Enter}');
     });
     expect(container.textContent).not.toContain('Save');
-
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Edit' })),
+      user.click(getByText(container, 'See', { exact: false, selector: 'p' })),
     );
     expect(getByRole(container, 'button', { name: 'Save' })).toBeDefined();
   });

@@ -4,7 +4,6 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconExternalLink,
-  IconEdit,
   IconLink,
   IconX,
 } from 'twenty-ui/icon';
@@ -117,6 +116,9 @@ export const TaskBoardDetail = ({
   // early loading returns would shift the hook order between renders.
   // oxlint-disable-next-line twenty/no-state-useref
   const pendingDescriptionRef = useRef<string | null>(null);
+  // The remote preview container retains its first event handler across edits.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const currentDescriptionRef = useRef('');
   // The remote element wrapper can go on answering with the mousedown/keydown
   // handler it was given on an earlier render even after the prop is set back
   // to undefined for the editing render, so Enter bubbling up from BlockNote
@@ -276,6 +278,7 @@ export const TaskBoardDetail = ({
   const currentTitle = titleDraft ?? issue.title ?? '';
   const storedDescription = issue.description?.markdown ?? '';
   const currentDescription = descriptionDraft ?? storedDescription;
+  currentDescriptionRef.current = currentDescription;
 
   // Read-first like the record page: click to edit, Save or Cancel to return
   // to view. Never saved on blur: the editor blurs as the pointer goes down on
@@ -334,8 +337,8 @@ export const TaskBoardDetail = ({
       return;
     }
 
-    setDescriptionDraft(currentDescription);
-    pendingDescriptionRef.current = currentDescription;
+    setDescriptionDraft(currentDescriptionRef.current);
+    pendingDescriptionRef.current = currentDescriptionRef.current;
     setIsEditingDescription(true);
   };
 
@@ -586,14 +589,7 @@ export const TaskBoardDetail = ({
           )}
 
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <SectionHeading label={t('Description')} />
-              {data.canWrite && !isEditingDescription && currentDescription.trim() !== '' && (
-                <TaskIconButton label={t('Edit')} onClick={startEditingDescription}>
-                  <IconEdit size={14} />
-                </TaskIconButton>
-              )}
-            </div>
+            <SectionHeading label={t('Description')} />
             {!data.canWrite ? (
               currentDescription.trim() === '' ? (
                 <span
@@ -614,6 +610,15 @@ export const TaskBoardDetail = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
                 <div
+                  role={isEditingDescription ? undefined : 'button'}
+                  tabIndex={isEditingDescription ? undefined : 0}
+                  title={isEditingDescription ? undefined : t('Edit')}
+                  onMouseDown={isEditingDescription ? undefined : startEditingDescription}
+                  onKeyDown={isEditingDescription ? undefined : (event) => {
+                    if (event.key === 'Enter') {
+                      startEditingDescription();
+                    }
+                  }}
                   onMouseEnter={() => setIsDescriptionHovered(true)}
                   onMouseLeave={() => setIsDescriptionHovered(false)}
                   style={{
@@ -626,7 +631,7 @@ export const TaskBoardDetail = ({
                         : 'transparent',
                     borderRadius: TASK_TOKENS.radiusSmall,
                     boxSizing: 'border-box',
-                    cursor: isEditingDescription ? 'auto' : 'default',
+                    cursor: isEditingDescription ? 'auto' : 'text',
                     display: 'flex',
                     minHeight: isEditingDescription
                       ? undefined
@@ -641,20 +646,7 @@ export const TaskBoardDetail = ({
                   }}
                 >
                   {!isEditingDescription && currentDescription.trim() === '' ? (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      title={t('Edit')}
-                      onMouseDown={startEditingDescription}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          startEditingDescription();
-                        }
-                      }}
-                      style={{ cursor: 'text', width: '100%' }}
-                    >
-                      <DescriptionEmptyBox />
-                    </div>
+                    <DescriptionEmptyBox />
                   ) : (
                     <TaskRichTextEditor
                       value={currentDescription}
