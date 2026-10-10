@@ -86,14 +86,25 @@ export const FrontComponentRichTextEditor = ({
 }: FrontComponentRichTextEditorProps) => {
   const colorScheme = useThemeColorScheme();
 
-  // Markdown this editor produced itself must never be parsed back in: a round
-  // trip through blocks rewrites the source and would move the caret on every
-  // keystroke.
+  // A value change that arrives mid-session — no Save, Cancel, or read-only
+  // toggle since the last reseed — can only legitimately be an echo of this
+  // editor's own typing: the live BlockNote document already shows whatever
+  // the user actually typed, so there is no external content left to apply.
+  // The host/guest round trip can echo a keystroke late, out of order, or
+  // duplicated (and has been observed to occasionally echo back a bare empty
+  // string that this editor never emitted), so once anything has been typed
+  // this effect no longer trusts a mid-session value change at all — it
+  // forces a reseed only at a genuine session boundary (entering/leaving edit
+  // mode) or for the very first, pristine value. Reseeding on an untrusted
+  // mid-session echo would silently overwrite live, correct, in-progress text
+  // with a stale or bogus one.
   // Not state: these are read inside BlockNote's own change callback and must
   // never schedule a render of their own, or every keystroke would remount the
   // editor.
   // oxlint-disable-next-line twenty/no-state-useref
-  const lastEmittedMarkdownRef = useRef<string | null>(null);
+  const isReadOnlyRef = useRef(isReadOnly);
+  // oxlint-disable-next-line twenty/no-state-useref
+  const hasEmittedSinceSeedRef = useRef(false);
   // oxlint-disable-next-line twenty/no-state-useref
   const seededMarkdownRoundTripRef = useRef<string | null>(null);
   // oxlint-disable-next-line twenty/no-state-useref
@@ -137,11 +148,15 @@ export const FrontComponentRichTextEditor = ({
   });
 
   useEffect(() => {
-    if (value === lastEmittedMarkdownRef.current) {
+    const isSessionBoundary = isReadOnlyRef.current !== isReadOnly;
+
+    isReadOnlyRef.current = isReadOnly;
+
+    if (!isSessionBoundary && hasEmittedSinceSeedRef.current) {
       return;
     }
 
-    lastEmittedMarkdownRef.current = value;
+    hasEmittedSinceSeedRef.current = false;
 
     const blocks = editor.tryParseMarkdownToBlocks(value);
 
@@ -157,7 +172,7 @@ export const FrontComponentRichTextEditor = ({
     seededMarkdownRoundTripRef.current = editor.blocksToMarkdownLossy(
       editor.document,
     );
-  }, [editor, value]);
+  }, [editor, value, isReadOnly]);
 
   const handleChange = (): void => {
     // Seeding the editor fires onChange as well, synchronously inside the
@@ -182,7 +197,7 @@ export const FrontComponentRichTextEditor = ({
       return;
     }
 
-    lastEmittedMarkdownRef.current = markdown;
+    hasEmittedSinceSeedRef.current = true;
     onChange(markdown);
   };
 

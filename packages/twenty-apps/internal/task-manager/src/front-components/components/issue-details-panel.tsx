@@ -630,8 +630,8 @@ export const IssueDetailsPanel = ({
                     : '')
                 }
                 onChange={setPointsDraft}
-                onEnter={() => savePoints(pointsDraft)}
-                onBlur={() => savePoints(pointsDraft)}
+                onEnter={savePoints}
+                onBlur={savePoints}
               />
             ) : (
               <DetailReadButton
@@ -822,8 +822,8 @@ export const IssueDetailsPanel = ({
               value={estimateDraft ?? ''}
               suffix={t('min')}
               onChange={setEstimateDraft}
-              onEnter={() => saveEstimate(estimateDraft)}
-              onBlur={() => saveEstimate(estimateDraft)}
+              onEnter={saveEstimate}
+              onBlur={saveEstimate}
             />
           ) : (
             <div

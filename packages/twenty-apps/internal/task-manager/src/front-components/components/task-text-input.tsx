@@ -12,9 +12,9 @@ type TaskTextInputProps = {
   type?: 'text' | 'number' | 'date' | 'datetime-local';
   prefixIcon?: ReactNode;
   suffix?: ReactNode;
-  onEnter?: () => void;
+  onEnter?: (value: string) => void;
   onEscape?: () => void;
-  onBlur?: () => void;
+  onBlur?: (value: string) => void;
   shouldAutoFocus?: boolean;
   width?: number | string;
   height?: number;
@@ -68,13 +68,18 @@ export const TaskTextInput = ({
         value={fieldValue}
         placeholder={placeholder}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => {
+        onBlur={(event) => {
           setIsFocused(false);
-          onBlur?.();
+          // Reads the field's own live value rather than the caller's
+          // mirrored state: that state is fed by onChange on a separate,
+          // asynchronous round trip to the host, and a blur fired right after
+          // the last keystroke can beat it there, saving text one character
+          // short.
+          onBlur?.(event.target.value);
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
-            onEnter?.();
+            onEnter?.(event.currentTarget.value);
           } else if (event.key === 'Escape' && onEscape !== undefined) {
             // Keeps a surrounding modal open: Escape cancels this field only.
             event.stopPropagation();

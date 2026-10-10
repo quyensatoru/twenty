@@ -523,19 +523,17 @@ export const TaskBoardDetail = ({
               value={currentTitle}
               shouldAutoFocus
               onChange={setTitleDraft}
-              onEnter={() => {
+              onEnter={(value) => {
                 setIsEditingTitle(false);
                 setTitleDraft(null);
-                void update({ data: { title: currentTitle } }, { refreshBoard: true });
+                void update({ data: { title: value } }, { refreshBoard: true });
               }}
-              onBlur={() => {
+              onBlur={(value) => {
                 setIsEditingTitle(false);
+                setTitleDraft(null);
 
-                if (currentTitle !== (issue.title ?? '')) {
-                  setTitleDraft(null);
-                  void update({ data: { title: currentTitle } }, { refreshBoard: true });
-                } else {
-                  setTitleDraft(null);
+                if (value !== (issue.title ?? '')) {
+                  void update({ data: { title: value } }, { refreshBoard: true });
                 }
               }}
             />

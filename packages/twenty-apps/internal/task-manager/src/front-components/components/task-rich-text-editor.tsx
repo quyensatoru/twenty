@@ -79,6 +79,14 @@ export const TaskRichTextEditor = ({
       return;
     }
 
+    // A structural edit (Enter splitting a block, for one) can fire a second,
+    // bridge-native change event alongside the host's own reported value, and
+    // that one carries no `value` at all. Forwarding it would wipe the draft
+    // with `undefined` a keystroke after it arrived correctly.
+    if (typeof event.target.value !== 'string') {
+      return;
+    }
+
     current.onChange?.(event.target.value);
   }, []);
   const handleBlur = useCallback(() => callbacksRef.current.onBlur?.(), []);

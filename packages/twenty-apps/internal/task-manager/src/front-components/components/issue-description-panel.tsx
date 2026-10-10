@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
   copyToClipboard,
   enqueueSnackbar,
@@ -236,6 +236,41 @@ export const IssueDescription = () => {
   const currentMarkdown = draft ?? storedMarkdown;
   const isEmpty = currentMarkdown.trim() === '';
 
+  // The remote element wrapper can go on answering with the mousedown/keydown
+  // handler it was given on an earlier render even after the prop is set back
+  // to undefined for the editing render, so Enter bubbling up from BlockNote
+  // (or a stray mousedown on this box) can still reach a startEditing closure
+  // captured before editing began — restarting the edit mid-keystroke and
+  // wiping everything typed since. The handler is therefore fixed for the
+  // element's lifetime and reads current state through a ref, so a stale call
+  // is a no-op instead of a silent reset.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const isEditingRef = useRef(isEditing);
+  isEditingRef.current = isEditing;
+  // oxlint-disable-next-line twenty/no-state-useref
+  const currentMarkdownRef = useRef(currentMarkdown);
+  currentMarkdownRef.current = currentMarkdown;
+
+  const handleStartEditingMouseDown = useCallback(() => {
+    if (isEditingRef.current) {
+      return;
+    }
+
+    startEditing(currentMarkdownRef.current);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleStartEditingKeyDown = useCallback(
+    (event: { key: string }) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      handleStartEditingMouseDown();
+    },
+    [handleStartEditingMouseDown],
+  );
+
   // The Jira top line, so the page carries the issue's state above its prose
   // instead of leaving that to the Details column alone. Everything here is
   // read-only: the pickers live in Details, and duplicating them would offer
@@ -347,7 +382,9 @@ export const IssueDescription = () => {
                 frame's border and inset put it, so nothing moves either.
                 Event props are passed as undefined rather than left out: the
                 remote element wrapper never removes a listener whose prop
-                disappears, and Save would bubble into a stale startEditing.
+                disappears, and Save would bubble into a stale startEditing —
+                handleStartEditingMouseDown/KeyDown guard against exactly that
+                by checking isEditingRef instead of trusting the prop swap.
                 Mousedown, not click: right after Save the read-only editor
                 still holds BlockNote's trailing empty block, the first press
                 on it removes it, and with the pressed node gone the browser
@@ -357,17 +394,9 @@ export const IssueDescription = () => {
               tabIndex={isEditing ? undefined : 0}
               title={isEditing ? undefined : t('Edit')}
               onMouseDown={
-                isEditing ? undefined : () => startEditing(currentMarkdown)
+                isEditing ? undefined : handleStartEditingMouseDown
               }
-              onKeyDown={
-                isEditing
-                  ? undefined
-                  : (event) => {
-                      if (event.key === 'Enter') {
-                        startEditing(currentMarkdown);
-                      }
-                    }
-              }
+              onKeyDown={isEditing ? undefined : handleStartEditingKeyDown}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               style={{
