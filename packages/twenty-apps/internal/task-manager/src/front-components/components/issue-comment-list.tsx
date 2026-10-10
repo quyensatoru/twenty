@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
   IconArrowBackUp,
@@ -79,11 +79,52 @@ export const IssueCommentList = ({
   const [draft, setDraft] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
+  // What Save last sent for a comment, shown ahead of the server. onUpdate
+  // only starts the write and a full issue reload after it — without this,
+  // Save's own switch back to the read view would show the pre-edit text
+  // again until that reload lands.
+  const [commentOverridesById, setCommentOverridesById] = useState<
+    Record<string, string>
+  >({});
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
     null,
   );
   const [replyDraft, setReplyDraft] = useState('');
   const [isNewestFirst, setIsNewestFirst] = useState(true);
+
+  // Drops an override once the reload it was standing in for lands and
+  // agrees with it, and any whose comment is gone (deleted, or this moved to
+  // another issue) — otherwise a stale local copy would outlive the record it
+  // was covering for.
+  useEffect(() => {
+    setCommentOverridesById((previous) => {
+      if (Object.keys(previous).length === 0) {
+        return previous;
+      }
+
+      const commentsById = new Map(
+        comments.map((comment) => [comment.id, comment]),
+      );
+      let hasChanged = false;
+      const next: Record<string, string> = {};
+
+      for (const [commentId, overrideMarkdown] of Object.entries(previous)) {
+        const comment = commentsById.get(commentId);
+        const isSettled =
+          comment === undefined ||
+          readRichTextPlainValue(comment.bodyV2) === overrideMarkdown;
+
+        if (isSettled) {
+          hasChanged = true;
+          continue;
+        }
+
+        next[commentId] = overrideMarkdown;
+      }
+
+      return hasChanged ? next : previous;
+    });
+  }, [comments]);
 
   const currentMemberName = readMemberName(
     membersById,
@@ -220,7 +261,10 @@ export const IssueCommentList = ({
                   isDisabled={isBusy}
                   onClick={() => {
                     setEditingCommentId(comment.id);
-                    setEditDraft(readRichTextPlainValue(comment.bodyV2));
+                    setEditDraft(
+                      commentOverridesById[comment.id] ??
+                        readRichTextPlainValue(comment.bodyV2),
+                    );
                   }}
                 >
                   <IconPencil size={14} />
@@ -289,7 +333,13 @@ export const IssueCommentList = ({
                 size="small"
                 isDisabled={isBusy || editDraft.trim() === ''}
                 onClick={() => {
-                  onUpdate(comment.id, editDraft.trim());
+                  const markdown = editDraft.trim();
+
+                  setCommentOverridesById((previous) => ({
+                    ...previous,
+                    [comment.id]: markdown,
+                  }));
+                  onUpdate(comment.id, markdown);
                   setEditingCommentId(null);
                 }}
               >
@@ -305,7 +355,10 @@ export const IssueCommentList = ({
           </div>
         ) : (
           <TaskRichTextEditor
-            value={readRichTextPlainValue(comment.bodyV2)}
+            value={
+              commentOverridesById[comment.id] ??
+              readRichTextPlainValue(comment.bodyV2)
+            }
             isReadOnly
           />
         )}
