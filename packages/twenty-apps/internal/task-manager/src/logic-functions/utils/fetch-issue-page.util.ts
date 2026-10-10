@@ -1,3 +1,4 @@
+import { attachDevelopmentSummaries } from './attach-development-summaries.util';
 import { ISSUE_SEARCH_SELECTION } from '../../constants/record-selections';
 import { type ApiClient } from '../../types/api-client';
 import { type IssueRow } from '../../types/task-manager-rows';
@@ -46,7 +47,10 @@ export const fetchIssuePage = async ({
   const connection = result?.issues as IssuePageConnection | undefined;
 
   return {
-    issues: (connection?.edges ?? []).map((edge) => edge.node),
+    issues: await attachDevelopmentSummaries(
+      client,
+      (connection?.edges ?? []).map((edge) => edge.node),
+    ),
     endCursor: connection?.pageInfo?.endCursor ?? null,
     hasNextPage: connection?.pageInfo?.hasNextPage === true,
     totalCount: connection?.totalCount ?? 0,

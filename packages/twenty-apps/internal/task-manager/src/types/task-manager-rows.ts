@@ -1,3 +1,5 @@
+import { type IssueDevelopmentSummary } from './issue-development-summary';
+
 export type ProjectRow = {
   id: string;
   name?: string | null;
@@ -31,6 +33,7 @@ export type EpicRow = {
 };
 
 export type IssueRow = {
+  developmentSummary?: IssueDevelopmentSummary;
   id: string;
   title?: string | null;
   description?: { blocknote?: string | null; markdown?: string | null } | null;
@@ -56,10 +59,12 @@ export type IssueRow = {
   // `attachments` is taken: the engine provisions a system RELATION of that
   // name on every created object, and a caller field colliding on it
   // hard-fails validation — so a fresh install can never create it.
-  files?: readonly {
-    fileId?: string | null;
-    label?: string | null;
-    extension?: string | null;
-    url?: string | null;
-  }[] | null;
+  files?:
+    | readonly {
+        fileId?: string | null;
+        label?: string | null;
+        extension?: string | null;
+        url?: string | null;
+      }[]
+    | null;
 };

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { APP_SCOPE_PATH_BY_OBJECT } from '../../constants/app-scope-paths';
 import {
+  DEVELOPMENT_LINK_OBJECT_UID,
+  DEVELOPMENT_DELIVERY_OBJECT_UID,
   EPIC_OBJECT_UID,
   ISSUE_COMMENT_OBJECT_UID,
   ISSUE_MERCHANT_OBJECT_UID,
@@ -9,6 +11,7 @@ import {
   ISSUE_STATUS_OBJECT_UID,
   MERCHANT_OBJECT_UID,
   PROJECT_OBJECT_UID,
+  REPOSITORY_OBJECT_UID,
   SPRINT_OBJECT_UID,
   WORKLOG_OBJECT_UID,
 } from '../../constants/universal-identifiers';
@@ -24,6 +27,9 @@ const OBJECT_UID_BY_NAME: Record<string, string> = {
   issueComment: ISSUE_COMMENT_OBJECT_UID,
   worklog: WORKLOG_OBJECT_UID,
   issueMerchant: ISSUE_MERCHANT_OBJECT_UID,
+  repository: REPOSITORY_OBJECT_UID,
+  developmentLink: DEVELOPMENT_LINK_OBJECT_UID,
+  developmentDelivery: DEVELOPMENT_DELIVERY_OBJECT_UID,
 };
 
 const predicatedObjectUniversalIdentifiers = new Set(

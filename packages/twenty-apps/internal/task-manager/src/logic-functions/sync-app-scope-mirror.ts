@@ -21,14 +21,72 @@ type ProjectRow = { id: string; appId?: string | null };
 // mutation that writes its mirror. Order matters: issues take their app from
 // projects, and comments, worklogs take theirs from issues.
 const MIRROR_STEPS = [
-  { pluralName: 'issues', parentKey: 'projectId', parent: 'project', mutation: 'updateIssue' },
-  { pluralName: 'sprints', parentKey: 'projectId', parent: 'project', mutation: 'updateSprint' },
-  { pluralName: 'epics', parentKey: 'projectId', parent: 'project', mutation: 'updateEpic' },
-  { pluralName: 'issueStatuses', parentKey: 'projectId', parent: 'project', mutation: 'updateIssueStatus' },
-  { pluralName: 'issueComments', parentKey: 'issueId', parent: 'issue', mutation: 'updateIssueComment' },
-  { pluralName: 'worklogs', parentKey: 'issueId', parent: 'issue', mutation: 'updateWorklog' },
-  { pluralName: 'issueHistories', parentKey: 'issueId', parent: 'issue', mutation: 'updateIssueHistory' },
-  { pluralName: 'issueMerchants', parentKey: 'merchantId', parent: 'merchant', mutation: 'updateIssueMerchant' },
+  {
+    pluralName: 'issues',
+    parentKey: 'projectId',
+    parent: 'project',
+    mutation: 'updateIssue',
+  },
+  {
+    pluralName: 'sprints',
+    parentKey: 'projectId',
+    parent: 'project',
+    mutation: 'updateSprint',
+  },
+  {
+    pluralName: 'epics',
+    parentKey: 'projectId',
+    parent: 'project',
+    mutation: 'updateEpic',
+  },
+  {
+    pluralName: 'issueStatuses',
+    parentKey: 'projectId',
+    parent: 'project',
+    mutation: 'updateIssueStatus',
+  },
+  {
+    pluralName: 'issueComments',
+    parentKey: 'issueId',
+    parent: 'issue',
+    mutation: 'updateIssueComment',
+  },
+  {
+    pluralName: 'worklogs',
+    parentKey: 'issueId',
+    parent: 'issue',
+    mutation: 'updateWorklog',
+  },
+  {
+    pluralName: 'issueHistories',
+    parentKey: 'issueId',
+    parent: 'issue',
+    mutation: 'updateIssueHistory',
+  },
+  {
+    pluralName: 'issueMerchants',
+    parentKey: 'merchantId',
+    parent: 'merchant',
+    mutation: 'updateIssueMerchant',
+  },
+  {
+    pluralName: 'repositories',
+    parentKey: 'projectId',
+    parent: 'project',
+    mutation: 'updateRepository',
+  },
+  {
+    pluralName: 'developmentLinks',
+    parentKey: 'issueId',
+    parent: 'issue',
+    mutation: 'updateDevelopmentLink',
+  },
+  {
+    pluralName: 'developmentDeliveries',
+    parentKey: 'issueId',
+    parent: 'issue',
+    mutation: 'updateDevelopmentDelivery',
+  },
 ] as const;
 type MemberRow = { id: string; scopedAppIds?: string[] | null };
 

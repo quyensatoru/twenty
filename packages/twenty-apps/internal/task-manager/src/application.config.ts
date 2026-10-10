@@ -19,4 +19,42 @@ export default defineApplication({
       value: '',
     },
   },
+  // OAuth client credentials for the Development git integrations. The server
+  // administrator registers one OAuth App on GitHub and one on GitLab and
+  // fills these in on the application registration; users then connect their
+  // own git accounts under Settings → Applications → Task Manager.
+  serverVariables: {
+    GITHUB_CLIENT_ID: {
+      description: 'OAuth client ID of the GitHub OAuth App.',
+      isSecret: false,
+      isRequired: false,
+    },
+    GITHUB_CLIENT_SECRET: {
+      description: 'OAuth client secret of the GitHub OAuth App.',
+      isSecret: true,
+      isRequired: false,
+    },
+    GITLAB_CLIENT_ID: {
+      description: 'OAuth application ID of the GitLab OAuth application.',
+      isSecret: false,
+      isRequired: false,
+    },
+    GITLAB_CLIENT_SECRET: {
+      description: 'OAuth secret of the GitLab OAuth application.',
+      isSecret: true,
+      isRequired: false,
+    },
+    GITLAB_BASE_URL: {
+      description:
+        'Base URL of the GitLab instance (https://git.example.com, no trailing slash). Empty means gitlab.com.',
+      isSecret: false,
+      isRequired: false,
+    },
+    GITHUB_BASE_URL: {
+      description:
+        'Base URL of the GitHub instance (https://github.example.com, no trailing slash). Empty means github.com.',
+      isSecret: false,
+      isRequired: false,
+    },
+  },
 });

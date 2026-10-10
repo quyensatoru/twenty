@@ -1,8 +1,11 @@
+import { type IssueDevelopmentSummary } from './issue-development-summary';
+
 // Rows the task-board route returns, shaped for the Jira-style board page.
 // Narrower than IssueRow on purpose: a card renders key, title, type,
 // priority, points, due date, labels, epic, status and owner — never the rich text
 // body, which would multiply the payload once per row.
 export type BoardIssue = {
+  developmentSummary?: IssueDevelopmentSummary;
   id: string;
   title?: string | null;
   issueKey?: string | null;

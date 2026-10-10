@@ -7,10 +7,12 @@ import {
 import {
   COPY_ISSUE_LINK_COMMAND_MENU_ITEM_UID,
   ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID,
+  ISSUE_DEVELOPMENT_FRONT_COMPONENT_UID,
   ISSUE_FIELDS_FRONT_COMPONENT_UID,
   ISSUE_OBJECT_UID,
   ISSUE_RECORD_MAIN_FRONT_COMPONENT_UID,
   ISSUE_RECORD_PAGE_ATTACHMENTS_WIDGET_UID,
+  ISSUE_RECORD_PAGE_DEVELOPMENT_WIDGET_UID,
   ISSUE_RECORD_PAGE_FIELDS_TAB_UID,
   ISSUE_RECORD_PAGE_LAYOUT_UID,
   ISSUE_RECORD_PAGE_MAIN_WIDGET_UID,
@@ -36,8 +38,8 @@ import {
 // the grid switches to a single column whenever its CONTAINER is under 768px,
 // which the record side panel (320-600px) and the pinned left panel (348px)
 // always are, and there every widget keeps its row and drops to full width —
-// the main panel first, then Details, the field table and Attachments,
-// exactly as asked.
+// the main panel first, then Details, the field table, Attachments and
+// Development, exactly as asked.
 //
 // heightBehavior is not usable here: it only exists on a VERTICAL_LIST position
 // and normalizePageLayoutTabManifest rejects the manifest outright if a GRID
@@ -91,6 +93,9 @@ const MAIN_ROW_SPAN = 9 + 3 + 17;
 const DETAILS_ROW_SPAN = 12;
 // Two rows is two or three files before the inner scroll starts.
 const ATTACHMENTS_ROW_SPAN = 2;
+// Six rows: the counts, one group of rows and the key helpers before the
+// inner scroll starts. The repository setup lives collapsed inside.
+const DEVELOPMENT_ROW_SPAN = 6;
 
 const MAIN_COLUMN_SPAN = 8;
 const SIDE_COLUMN_SPAN = 4;
@@ -151,8 +156,7 @@ export default definePageLayout({
           },
           configuration: {
             configurationType: 'FRONT_COMPONENT',
-            frontComponentUniversalIdentifier:
-              ISSUE_FIELDS_FRONT_COMPONENT_UID,
+            frontComponentUniversalIdentifier: ISSUE_FIELDS_FRONT_COMPONENT_UID,
           },
         },
         {
@@ -170,6 +174,23 @@ export default definePageLayout({
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:
               ISSUE_ATTACHMENTS_FRONT_COMPONENT_UID,
+          },
+        },
+        {
+          universalIdentifier: ISSUE_RECORD_PAGE_DEVELOPMENT_WIDGET_UID,
+          title: 'Development',
+          type: 'FRONT_COMPONENT',
+          position: {
+            layoutMode: PageLayoutTabLayoutMode.GRID,
+            row: DETAILS_ROW_SPAN + ATTACHMENTS_ROW_SPAN,
+            column: MAIN_COLUMN_SPAN,
+            rowSpan: DEVELOPMENT_ROW_SPAN,
+            columnSpan: SIDE_COLUMN_SPAN,
+          },
+          configuration: {
+            configurationType: 'FRONT_COMPONENT',
+            frontComponentUniversalIdentifier:
+              ISSUE_DEVELOPMENT_FRONT_COMPONENT_UID,
           },
         },
       ],

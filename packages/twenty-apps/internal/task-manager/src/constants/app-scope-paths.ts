@@ -29,6 +29,9 @@ export const APP_SCOPE_PATH_BY_OBJECT: Record<
   issueComment: ['issue', 'project'],
   worklog: ['issue', 'project'],
   issueMerchant: ['merchant'],
+  repository: ['project'],
+  developmentLink: ['issue', 'project'],
+  developmentDelivery: ['issue', 'project'],
 };
 
 // Plural GraphQL collection name of each hop target, so a walk can fetch the
@@ -45,6 +48,9 @@ export const PLURAL_NAME_BY_OBJECT: Record<string, string> = {
   issueComment: 'issueComments',
   worklog: 'worklogs',
   issueMerchant: 'issueMerchants',
+  repository: 'repositories',
+  developmentLink: 'developmentLinks',
+  developmentDelivery: 'developmentDeliveries',
 };
 
 // Object a relation field name points at, for the objects this app scopes.
@@ -52,6 +58,7 @@ export const HOP_TARGET_BY_FIELD_NAME: Record<string, string> = {
   project: 'project',
   issue: 'issue',
   merchant: 'merchant',
+  repository: 'repository',
   app: 'app',
 };
 

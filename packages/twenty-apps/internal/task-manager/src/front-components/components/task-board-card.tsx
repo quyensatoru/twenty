@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
   IconAlertCircle,
+  IconGitBranch,
+  IconGitCommit,
+  IconArrowMerge,
+  IconCircleX,
   IconBookmark,
   IconCalendarEvent,
   IconCheck,
@@ -184,7 +188,9 @@ export const TaskBoardCard = ({
   const shownSprintName = isShown('sprint') ? sprintName : null;
   const shownLabels = isShown('labels') ? labelOptions : [];
   const hasTags =
-    shownEpicName !== null || shownSprintName !== null || shownLabels.length > 0;
+    shownEpicName !== null ||
+    shownSprintName !== null ||
+    shownLabels.length > 0;
 
   return (
     <div
@@ -341,8 +347,55 @@ export const TaskBoardCard = ({
             {issue.issueKey ?? ''}
           </span>
           {isDone && (
-            <span title={t('Done')} style={{ display: 'inline-flex', flexShrink: 0 }}>
-              <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
+            <span
+              title={t('Done')}
+              style={{ display: 'inline-flex', flexShrink: 0 }}
+            >
+              <IconCheck
+                size={14}
+                color={readTagColor('green').text}
+                stroke={2.5}
+              />
+            </span>
+          )}
+          {issue.developmentSummary !== undefined && (
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
+            >
+              {issue.developmentSummary.branchCount > 0 && (
+                <span title={t('Branches')}>
+                  <IconGitBranch size={12} />
+                  {issue.developmentSummary.branchCount}
+                </span>
+              )}
+              {issue.developmentSummary.commitCount > 0 && (
+                <span title={t('Commits')}>
+                  <IconGitCommit size={12} />
+                  {issue.developmentSummary.commitCount}
+                </span>
+              )}
+              {issue.developmentSummary.openPullRequestCount > 0 && (
+                <span title={t('Open pull requests')}>
+                  <IconArrowMerge size={12} />
+                  {issue.developmentSummary.openPullRequestCount}
+                </span>
+              )}
+              {issue.developmentSummary.successfulProductionDeploymentCount >
+                0 && (
+                <span title={t('Deployed to production')}>
+                  <IconCheck
+                    size={12}
+                    color={readTagColor('green').text}
+                  />
+                </span>
+              )}
+              {issue.developmentSummary.failedBuildCount +
+                issue.developmentSummary.failedDeploymentCount >
+                0 && (
+                <span title={t('Build or deployment failed')}>
+                  <IconCircleX size={12} color={readTagColor('red').text} />
+                </span>
+              )}
             </span>
           )}
           {isShown('dueDate') && dueLabel !== null && (
@@ -399,7 +452,9 @@ export const TaskBoardCard = ({
               {issue.storyPoints}
             </span>
           )}
-          {isShown('priority') && <TaskPriorityGlyph priority={issue.priority} />}
+          {isShown('priority') && (
+            <TaskPriorityGlyph priority={issue.priority} />
+          )}
           {/* Smaller and first: the reporter is context, the assignee is who
               the card belongs to. */}
           {isShown('reporter') && reporterName !== null && (
@@ -438,176 +493,180 @@ export const TaskBoardCard = ({
           top: 6,
         }}
       >
-          <button
-            type="button"
-            aria-label={t('Card actions')}
-            title={t('Card actions')}
-            onClick={() => setIsMoveOpen(!isMoveOpen)}
-            style={{
-              alignItems: 'center',
-              background: TASK_TOKENS.background,
-              border: `1px solid ${TASK_TOKENS.borderLight}`,
-              borderRadius: TASK_TOKENS.radiusExtraSmall,
-              boxShadow: TASK_TOKENS.shadowLight,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              padding: 2,
+        <button
+          type="button"
+          aria-label={t('Card actions')}
+          title={t('Card actions')}
+          onClick={() => setIsMoveOpen(!isMoveOpen)}
+          style={{
+            alignItems: 'center',
+            background: TASK_TOKENS.background,
+            border: `1px solid ${TASK_TOKENS.borderLight}`,
+            borderRadius: TASK_TOKENS.radiusExtraSmall,
+            boxShadow: TASK_TOKENS.shadowLight,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            padding: 2,
+          }}
+        >
+          <IconDotsVertical size={14} color={TASK_TOKENS.textTertiary} />
+        </button>
+        {isMoveOpen && (
+          <twenty-overlay
+            offsetX={-180}
+            offsetY={20}
+            onClose={() => {
+              setIsMoveOpen(false);
+              setIsConfirmingDelete(false);
             }}
           >
-            <IconDotsVertical size={14} color={TASK_TOKENS.textTertiary} />
-          </button>
-          {isMoveOpen && (
-            <twenty-overlay
-              offsetX={-180}
-              offsetY={20}
-              onClose={() => {
-                setIsMoveOpen(false);
-                setIsConfirmingDelete(false);
+            <div
+              role="menu"
+              style={{
+                background: TASK_TOKENS.background,
+                border: `1px solid ${TASK_TOKENS.border}`,
+                borderRadius: TASK_TOKENS.radiusSmall,
+                boxShadow: TASK_TOKENS.shadowStrong,
+                boxSizing: 'border-box',
+                maxHeight: 280,
+                overflowY: 'auto',
+                ...TASK_THIN_SCROLLBAR_STYLE,
+                padding: 4,
+                width: 200,
               }}
             >
-              <div
-                role="menu"
-                style={{
-                  background: TASK_TOKENS.background,
-                  border: `1px solid ${TASK_TOKENS.border}`,
-                  borderRadius: TASK_TOKENS.radiusSmall,
-                  boxShadow: TASK_TOKENS.shadowStrong,
-                  boxSizing: 'border-box',
-                  maxHeight: 280,
-                  overflowY: 'auto',
-                  ...TASK_THIN_SCROLLBAR_STYLE,
-                  padding: 4,
-                  width: 200,
-                }}
-              >
-                {canMove && (
-                  <>
-                    <span
-                      style={{
-                        color: TASK_TOKENS.textTertiary,
-                        display: 'block',
-                        fontFamily: TASK_TOKENS.fontFamily,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: '6px 8px 4px 8px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {t('Move to')}
-                    </span>
-                    {statusOptions.map((status) => (
-                      <button
-                        key={status.value}
-                        type="button"
-                        role="menuitem"
-                        onMouseEnter={() => setHoveredStatus(status.value)}
-                        onMouseLeave={() => setHoveredStatus(null)}
-                        onClick={() => {
-                          onMove(status.value);
-                          setIsMoveOpen(false);
-                        }}
-                        style={{
-                          alignItems: 'center',
-                          background:
-                            hoveredStatus === status.value
-                              ? TASK_TOKENS.backgroundHover
-                              : 'transparent',
-                          border: 'none',
-                          borderRadius: TASK_TOKENS.radiusSmall,
-                          color: TASK_TOKENS.textPrimary,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          fontFamily: TASK_TOKENS.fontFamily,
-                          fontSize: 13,
-                          gap: 8,
-                          minHeight: 32,
-                          padding: '0 8px',
-                          textAlign: 'left',
-                          width: '100%',
-                        }}
-                      >
-                        <span
-                          style={{
-                            background: readTagColor(status.color).text,
-                            ...TASK_CIRCLE_STYLE,
-                            flexShrink: 0,
-                            height: 8,
-                            width: 8,
-                          }}
-                        />
-                        <span
-                          style={{
-                            flex: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {status.label}
-                        </span>
-                        {status.value === issue.statusId && (
-                          <IconCheck size={14} color={TASK_TOKENS.accent} />
-                        )}
-                      </button>
-                    ))}
-                  </>
-                )}
-                {canMove && canDelete && (
-                  <div
+              {canMove && (
+                <>
+                  <span
                     style={{
-                      background: TASK_TOKENS.borderLight,
-                      height: 1,
-                      margin: '4px 0',
-                      width: '100%',
-                    }}
-                  />
-                )}
-                {canDelete && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      if (isConfirmingDelete) {
-                        onDelete();
-                        setIsConfirmingDelete(false);
-                        setIsMoveOpen(false);
-                      } else {
-                        setIsConfirmingDelete(true);
-                      }
-                    }}
-                    style={{
-                      alignItems: 'center',
-                      background: isConfirmingDelete
-                        ? TASK_TOKENS.red
-                        : 'transparent',
-                      border: 'none',
-                      borderRadius: TASK_TOKENS.radiusSmall,
-                      color: isConfirmingDelete
-                        ? '#ffffff'
-                        : TASK_TOKENS.textDanger,
-                      cursor: 'pointer',
-                      display: 'flex',
+                      color: TASK_TOKENS.textTertiary,
+                      display: 'block',
                       fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 13,
-                      fontWeight: isConfirmingDelete ? 600 : 400,
-                      gap: 8,
-                      minHeight: 32,
-                      padding: '0 8px',
-                      textAlign: 'left',
-                      width: '100%',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '6px 8px 4px 8px',
+                      textTransform: 'uppercase',
                     }}
                   >
-                    <IconTrash
-                      size={14}
-                      color={isConfirmingDelete ? '#ffffff' : TASK_TOKENS.textDanger}
-                    />
-                    {isConfirmingDelete ? t('Confirm delete?') : t('Delete issue')}
-                  </button>
-                )}
-              </div>
-            </twenty-overlay>
-          )}
-        </span>
+                    {t('Move to')}
+                  </span>
+                  {statusOptions.map((status) => (
+                    <button
+                      key={status.value}
+                      type="button"
+                      role="menuitem"
+                      onMouseEnter={() => setHoveredStatus(status.value)}
+                      onMouseLeave={() => setHoveredStatus(null)}
+                      onClick={() => {
+                        onMove(status.value);
+                        setIsMoveOpen(false);
+                      }}
+                      style={{
+                        alignItems: 'center',
+                        background:
+                          hoveredStatus === status.value
+                            ? TASK_TOKENS.backgroundHover
+                            : 'transparent',
+                        border: 'none',
+                        borderRadius: TASK_TOKENS.radiusSmall,
+                        color: TASK_TOKENS.textPrimary,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        fontFamily: TASK_TOKENS.fontFamily,
+                        fontSize: 13,
+                        gap: 8,
+                        minHeight: 32,
+                        padding: '0 8px',
+                        textAlign: 'left',
+                        width: '100%',
+                      }}
+                    >
+                      <span
+                        style={{
+                          background: readTagColor(status.color).text,
+                          ...TASK_CIRCLE_STYLE,
+                          flexShrink: 0,
+                          height: 8,
+                          width: 8,
+                        }}
+                      />
+                      <span
+                        style={{
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {status.label}
+                      </span>
+                      {status.value === issue.statusId && (
+                        <IconCheck size={14} color={TASK_TOKENS.accent} />
+                      )}
+                    </button>
+                  ))}
+                </>
+              )}
+              {canMove && canDelete && (
+                <div
+                  style={{
+                    background: TASK_TOKENS.borderLight,
+                    height: 1,
+                    margin: '4px 0',
+                    width: '100%',
+                  }}
+                />
+              )}
+              {canDelete && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    if (isConfirmingDelete) {
+                      onDelete();
+                      setIsConfirmingDelete(false);
+                      setIsMoveOpen(false);
+                    } else {
+                      setIsConfirmingDelete(true);
+                    }
+                  }}
+                  style={{
+                    alignItems: 'center',
+                    background: isConfirmingDelete
+                      ? TASK_TOKENS.red
+                      : 'transparent',
+                    border: 'none',
+                    borderRadius: TASK_TOKENS.radiusSmall,
+                    color: isConfirmingDelete
+                      ? '#ffffff'
+                      : TASK_TOKENS.textDanger,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    fontFamily: TASK_TOKENS.fontFamily,
+                    fontSize: 13,
+                    fontWeight: isConfirmingDelete ? 600 : 400,
+                    gap: 8,
+                    minHeight: 32,
+                    padding: '0 8px',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                >
+                  <IconTrash
+                    size={14}
+                    color={
+                      isConfirmingDelete ? '#ffffff' : TASK_TOKENS.textDanger
+                    }
+                  />
+                  {isConfirmingDelete
+                    ? t('Confirm delete?')
+                    : t('Delete issue')}
+                </button>
+              )}
+            </div>
+          </twenty-overlay>
+        )}
+      </span>
     </div>
   );
 };

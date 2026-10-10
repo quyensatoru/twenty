@@ -5,6 +5,12 @@ import {
 
 import {
   APP_SCOPED_MEMBER_ROLE_UID,
+  DEVELOPMENT_LINK_APP_FIELD_UID,
+  DEVELOPMENT_LINK_APP_SCOPE_PREDICATE_UID,
+  DEVELOPMENT_LINK_OBJECT_UID,
+  DEVELOPMENT_DELIVERY_OBJECT_UID,
+  DEVELOPMENT_DELIVERY_APP_FIELD_UID,
+  DEVELOPMENT_DELIVERY_APP_SCOPE_PREDICATE_UID,
   EPIC_APP_FIELD_UID,
   EPIC_APP_SCOPE_PREDICATE_UID,
   EPIC_OBJECT_UID,
@@ -29,6 +35,9 @@ import {
   PROJECT_APP_FIELD_UID,
   PROJECT_APP_SCOPE_PREDICATE_UID,
   PROJECT_OBJECT_UID,
+  REPOSITORY_APP_FIELD_UID,
+  REPOSITORY_APP_SCOPE_PREDICATE_UID,
+  REPOSITORY_OBJECT_UID,
   SPRINT_APP_FIELD_UID,
   SPRINT_APP_SCOPE_PREDICATE_UID,
   SPRINT_OBJECT_UID,
@@ -116,8 +125,22 @@ export default defineRole({
     { objectUniversalIdentifier: WORKLOG_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: ISSUE_MERCHANT_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: ISSUE_HISTORY_OBJECT_UID, ...scopedWrite },
+    { objectUniversalIdentifier: REPOSITORY_OBJECT_UID, ...scopedWrite },
+    { objectUniversalIdentifier: DEVELOPMENT_LINK_OBJECT_UID, ...scopedWrite },
+    {
+      objectUniversalIdentifier: DEVELOPMENT_DELIVERY_OBJECT_UID,
+      canReadObjectRecords: true,
+      canUpdateObjectRecords: false,
+      canSoftDeleteObjectRecords: false,
+      canDestroyObjectRecords: false,
+    },
   ],
   rowLevelPermissionPredicates: [
+    buildAppScopePredicate({
+      universalIdentifier: DEVELOPMENT_DELIVERY_APP_SCOPE_PREDICATE_UID,
+      objectUniversalIdentifier: DEVELOPMENT_DELIVERY_OBJECT_UID,
+      fieldUniversalIdentifier: DEVELOPMENT_DELIVERY_APP_FIELD_UID,
+    }),
     buildAppScopePredicate({
       universalIdentifier: ISSUE_APP_SCOPE_PREDICATE_UID,
       objectUniversalIdentifier: ISSUE_OBJECT_UID,
@@ -162,6 +185,16 @@ export default defineRole({
       universalIdentifier: ISSUE_HISTORY_APP_SCOPE_PREDICATE_UID,
       objectUniversalIdentifier: ISSUE_HISTORY_OBJECT_UID,
       fieldUniversalIdentifier: ISSUE_HISTORY_APP_FIELD_UID,
+    }),
+    buildAppScopePredicate({
+      universalIdentifier: REPOSITORY_APP_SCOPE_PREDICATE_UID,
+      objectUniversalIdentifier: REPOSITORY_OBJECT_UID,
+      fieldUniversalIdentifier: REPOSITORY_APP_FIELD_UID,
+    }),
+    buildAppScopePredicate({
+      universalIdentifier: DEVELOPMENT_LINK_APP_SCOPE_PREDICATE_UID,
+      objectUniversalIdentifier: DEVELOPMENT_LINK_OBJECT_UID,
+      fieldUniversalIdentifier: DEVELOPMENT_LINK_APP_FIELD_UID,
     }),
     // `merchant` and its `app` field both belong to customer-support. A
     // predicate names them by identifier, and validation runs over the whole

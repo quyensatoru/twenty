@@ -35,8 +35,7 @@ export const APP_ACCESS_PERMISSIONS_FIELD_UID =
 // because it still owns fields ON that object — the app relation and the
 // issue junction — the same way merchant-email-campaigns owns its own.
 export const MERCHANT_OBJECT_UID = '5d9a58bd-983c-4ca4-9f0a-b53cdec4cfca';
-export const MERCHANT_ISSUES_FIELD_UID =
-  'bbdb64fd-f399-45b0-bf07-8c913e52ed73';
+export const MERCHANT_ISSUES_FIELD_UID = 'bbdb64fd-f399-45b0-bf07-8c913e52ed73';
 // `merchant.app` moved to customer-support with the object. Referenced, never
 // redeclared: the member role scopes merchants by it, and a predicate names a
 // field by identifier whoever owns it.
@@ -60,8 +59,7 @@ export const PROJECT_CATEGORY_FIELD_UID =
   '427396a5-36d1-4b9c-ba7b-29667191a578';
 export const PROJECT_LEAD_FIELD_UID = 'e5e2b42e-4568-4498-96e6-9a35546ac1f9';
 export const PROJECT_APP_FIELD_UID = 'c4dc0e3e-edcf-4b84-8673-f1a3e69d6bb9';
-export const PROJECT_SPRINTS_FIELD_UID =
-  'a980d736-d31e-473e-a599-7702d6f53c22';
+export const PROJECT_SPRINTS_FIELD_UID = 'a980d736-d31e-473e-a599-7702d6f53c22';
 export const PROJECT_ISSUES_FIELD_UID = '8ef104d2-8d9f-436b-8764-7d1b07b65e8d';
 export const PROJECT_EPICS_FIELD_UID = 'f36c7cb9-591d-4edd-8e21-89e2f3872779';
 export const PROJECT_ISSUE_STATUSES_FIELD_UID =
@@ -73,8 +71,7 @@ export const SPRINT_STATE_FIELD_UID = '529c560f-5953-4113-a67b-06b67167ea85';
 export const SPRINT_GOAL_FIELD_UID = '47e4562e-7d9d-4ac8-bda5-bf0cbca9863a';
 export const SPRINT_START_DATE_FIELD_UID =
   '78eb74f1-6246-470e-bc7e-cc6991721756';
-export const SPRINT_END_DATE_FIELD_UID =
-  'f98825ea-49e8-4dcc-9d81-88cccbf42a85';
+export const SPRINT_END_DATE_FIELD_UID = 'f98825ea-49e8-4dcc-9d81-88cccbf42a85';
 export const SPRINT_COMPLETE_DATE_FIELD_UID =
   'a1896ecc-77e8-4e13-8b47-732bf3dcaf72';
 export const SPRINT_OWNER_FIELD_UID = '3d1fb297-a26d-4261-90d1-e831822f491c';
@@ -122,8 +119,7 @@ export const ISSUE_TIME_SPENT_MINUTES_FIELD_UID =
   '6f89e0b5-df29-46cc-92f9-17ef18c7b247';
 export const ISSUE_ASSIGNEE_FIELD_UID = 'e73c84a8-d843-4029-8d87-6ce1506b09cd';
 export const ISSUE_REPORTER_FIELD_UID = 'a7b3391d-bbb2-4913-8b48-42190b5f950c';
-export const ISSUE_MERCHANTS_FIELD_UID =
-  '4c7b2f4a-f668-4f5c-ab30-52e5127aa1db';
+export const ISSUE_MERCHANTS_FIELD_UID = '4c7b2f4a-f668-4f5c-ab30-52e5127aa1db';
 // `createdAt` is engine-derived, so it is never declared in issue.object.ts
 // and the engine computes its identifier from (application, object, name). It
 // is written out here rather than recomputed, because the logic-function
@@ -144,8 +140,7 @@ export const ISSUE_WORKLOGS_FIELD_UID = '2e5f8197-da23-4336-84d7-495101b0ceba';
 export const ISSUE_ATTACHMENTS_FIELD_UID =
   '43fa7568-bd3f-4434-9fee-6c6bf75dc489';
 
-export const ISSUE_MERCHANT_OBJECT_UID =
-  'a469cd28-a0f7-4132-8f5d-d89fa044f516';
+export const ISSUE_MERCHANT_OBJECT_UID = 'a469cd28-a0f7-4132-8f5d-d89fa044f516';
 export const ISSUE_MERCHANT_ISSUE_FIELD_UID =
   '146b6f20-9357-43be-8149-1d94968e5530';
 export const ISSUE_MERCHANT_MERCHANT_FIELD_UID =
@@ -218,17 +213,14 @@ export const APP_ACCESS_MEMBER_ID_INDEX_UID =
   '781c730c-4540-41ec-8dd9-74dae7520dce';
 export const APP_ACCESS_APP_ID_INDEX_UID =
   '561123c4-af46-4ecb-ab4e-8889c7236b2b';
-export const PROJECT_LEAD_ID_INDEX_UID =
-  'c57bc5a8-1475-418e-ad82-2641bfc6f6a7';
+export const PROJECT_LEAD_ID_INDEX_UID = 'c57bc5a8-1475-418e-ad82-2641bfc6f6a7';
 export const PROJECT_APP_ID_INDEX_UID = '4ddfeef7-afb4-4d24-b2a5-d7a44da5a37b';
-export const SPRINT_OWNER_ID_INDEX_UID =
-  '18fd19f9-03d1-44de-830a-31b60bc0f16a';
+export const SPRINT_OWNER_ID_INDEX_UID = '18fd19f9-03d1-44de-830a-31b60bc0f16a';
 export const SPRINT_PROJECT_ID_INDEX_UID =
   'f56963a7-0c8a-440e-8087-d4995473a62c';
 export const EPIC_ASSIGNEE_ID_INDEX_UID =
   '2bb103c0-fc1a-45e9-924e-7ebc072f897a';
-export const EPIC_PROJECT_ID_INDEX_UID =
-  '6191217a-a13b-4a4f-9e54-45c7343f1e65';
+export const EPIC_PROJECT_ID_INDEX_UID = '6191217a-a13b-4a4f-9e54-45c7343f1e65';
 export const ISSUE_STATUS_PROJECT_ID_INDEX_UID =
   '194eb3e9-808d-4d7b-a5e7-506378d0fdf0';
 export const ISSUE_ASSIGNEE_ID_INDEX_UID =
@@ -237,11 +229,9 @@ export const ISSUE_REPORTER_ID_INDEX_UID =
   'db480adb-fdcd-4792-a658-4dd9391bc683';
 export const ISSUE_PROJECT_ID_INDEX_UID =
   '8a2c3728-f10a-4f47-8d72-9a373044f8b7';
-export const ISSUE_SPRINT_ID_INDEX_UID =
-  '7e8773bb-0a48-4562-8fde-dff731d6db71';
+export const ISSUE_SPRINT_ID_INDEX_UID = '7e8773bb-0a48-4562-8fde-dff731d6db71';
 export const ISSUE_EPIC_ID_INDEX_UID = 'aa9f5d42-57e4-4088-bc58-85152a313318';
-export const ISSUE_PARENT_ID_INDEX_UID =
-  '0f908335-064f-43c1-951d-eef07bac75a0';
+export const ISSUE_PARENT_ID_INDEX_UID = '0f908335-064f-43c1-951d-eef07bac75a0';
 export const ISSUE_MERCHANT_ISSUE_ID_INDEX_UID =
   'c02503bc-259a-4118-9e3d-4fc9747b154b';
 export const ISSUE_MERCHANT_UNIQUE_INDEX_UID =
@@ -319,8 +309,7 @@ export const ALL_ISSUE_COMMENTS_VIEW_UID =
   '97333006-46a5-4628-b3cb-d08acf7a3953';
 export const ALL_WORKLOGS_VIEW_UID = '0470a4ad-84a1-4825-a8b6-872bd32bb71f';
 export const ALL_APPS_VIEW_UID = '0d449895-a053-49ff-926a-1c0450543e09';
-export const ALL_APP_ACCESSES_VIEW_UID =
-  'a25e1d47-7b3d-4ae1-afe3-48c6326a25b0';
+export const ALL_APP_ACCESSES_VIEW_UID = 'a25e1d47-7b3d-4ae1-afe3-48c6326a25b0';
 
 // Navigation.
 export const TASK_MANAGER_FOLDER_NAV_ITEM_UID =
@@ -328,8 +317,7 @@ export const TASK_MANAGER_FOLDER_NAV_ITEM_UID =
 export const PROJECTS_NAV_ITEM_UID = 'df0304b5-36e3-4f7d-b787-9a5b54a44951';
 export const SPRINTS_NAV_ITEM_UID = '28187522-2df6-4a0e-a856-7828dd81f3e2';
 export const APPS_NAV_ITEM_UID = 'c8ff4ad2-edc4-4d62-ada9-561dcbbb36f9';
-export const APP_ACCESSES_NAV_ITEM_UID =
-  '7ec0097c-c929-441a-9ede-0a428281c1c0';
+export const APP_ACCESSES_NAV_ITEM_UID = '7ec0097c-c929-441a-9ede-0a428281c1c0';
 
 // Row-level app-scope prototype. The engine can only compare a field ON the
 // record being read, so `issue.app` mirrors what `issue -> project -> app`
@@ -369,23 +357,30 @@ export const EPIC_APP_FIELD_UID = '0c0740cf-13ee-4f1e-9d57-bd63edfbd2a5';
 export const APP_EPICS_FIELD_UID = '4f68081a-afca-4eda-8166-235abfbc0523';
 export const EPIC_APP_SCOPE_PREDICATE_UID =
   '3f8386c9-9ecc-4528-9eb5-b353a43d695e';
-export const ISSUE_STATUS_APP_FIELD_UID = 'bdf54eee-fffe-49d5-8252-25e1bcb8a7bb';
-export const APP_ISSUE_STATUSS_FIELD_UID = '4d4c5bd3-cb22-4a2e-80f6-74aaba3d056c';
+export const ISSUE_STATUS_APP_FIELD_UID =
+  'bdf54eee-fffe-49d5-8252-25e1bcb8a7bb';
+export const APP_ISSUE_STATUSS_FIELD_UID =
+  '4d4c5bd3-cb22-4a2e-80f6-74aaba3d056c';
 export const ISSUE_STATUS_APP_SCOPE_PREDICATE_UID =
   'f9926678-00a0-4e72-bd63-47abbc19251a';
-export const ISSUE_COMMENT_APP_FIELD_UID = '3b10b502-38ff-4939-a367-9428cf4de9fa';
-export const APP_ISSUE_COMMENTS_FIELD_UID = '63daa720-3e7b-4f72-921a-deaa481d22bc';
+export const ISSUE_COMMENT_APP_FIELD_UID =
+  '3b10b502-38ff-4939-a367-9428cf4de9fa';
+export const APP_ISSUE_COMMENTS_FIELD_UID =
+  '63daa720-3e7b-4f72-921a-deaa481d22bc';
 export const ISSUE_COMMENT_APP_SCOPE_PREDICATE_UID =
   '48479697-ee86-4098-88f2-0843ba0502b9';
 export const WORKLOG_APP_FIELD_UID = '5f771578-d39f-4959-b912-c260353e6aec';
 export const APP_WORKLOGS_FIELD_UID = '8a38c776-6d7c-4ad2-8bba-32963449e22e';
 export const WORKLOG_APP_SCOPE_PREDICATE_UID =
   '28ee62c8-8231-4acd-a8ca-23a2769615de';
-export const ISSUE_MERCHANT_APP_FIELD_UID = 'ff71b19f-bdc5-4ced-9814-abea9597ee0e';
-export const APP_ISSUE_MERCHANTS_FIELD_UID = '2948910b-62eb-4745-88ca-61165219c6d7';
+export const ISSUE_MERCHANT_APP_FIELD_UID =
+  'ff71b19f-bdc5-4ced-9814-abea9597ee0e';
+export const APP_ISSUE_MERCHANTS_FIELD_UID =
+  '2948910b-62eb-4745-88ca-61165219c6d7';
 export const ISSUE_MERCHANT_APP_SCOPE_PREDICATE_UID =
   '8a21df95-d0d0-4093-be34-b714bcfee7b3';
-export const ISSUE_HISTORY_APP_FIELD_UID = 'aace7eab-2509-43a6-ab71-5ed02bbc65b6';
+export const ISSUE_HISTORY_APP_FIELD_UID =
+  'aace7eab-2509-43a6-ab71-5ed02bbc65b6';
 export const APP_ISSUE_HISTORIES_FIELD_UID =
   '510f038a-dc6c-4081-a969-1c97b4094325';
 export const ISSUE_HISTORY_APP_SCOPE_PREDICATE_UID =
@@ -413,7 +408,7 @@ export const ISSUE_RECORD_PAGE_FIELDS_TAB_UID =
 // editor has nothing to write to — see src/views/issue-record-page-fields.view.ts.
 export const ISSUE_RECORD_PAGE_DESCRIPTION_WIDGET_UID =
   '21f425f4-489a-4920-a42a-64085f6fafb5';
-  '21f425f4-489a-4920-a42a-64085f6fafb5';
+('21f425f4-489a-4920-a42a-64085f6fafb5');
 export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =
   '2a707f35-232e-431c-9468-58913cbbcf67';
 // Comments and worklogs are a front component, not a RECORD_TABLE widget: a
@@ -422,8 +417,7 @@ export const ISSUE_DESCRIPTION_FRONT_COMPONENT_UID =
 // exactly the step that makes app-scope real (DEPLOY.md 4.1). Writing through
 // the app's routes is also what keeps the worklog time-tracking recomputation
 // and the comment author rule applied.
-export const ISSUE_ACTIVITY_WIDGET_UID =
-  'afee41f0-1817-4d9f-8e2d-3a5e735190df';
+export const ISSUE_ACTIVITY_WIDGET_UID = 'afee41f0-1817-4d9f-8e2d-3a5e735190df';
 export const ISSUE_ACTIVITY_FRONT_COMPONENT_UID =
   'd2889eec-e50b-4a8d-8d60-32cd43980a07';
 // No Files or Timeline widget identifiers: both widgets resolve through morph
@@ -511,8 +505,7 @@ export const SEARCH_ISSUES_LOGIC_FUNCTION_UID =
 // opened nothing. Declared here instead, the same shape as the issue page.
 export const APP_RECORD_PAGE_LAYOUT_UID =
   '76a60b8a-2d9c-40a1-9f8e-915eafabdb4e';
-export const APP_RECORD_PAGE_TAB_UID =
-  '924bd58b-3298-442d-ac69-7a228918e30b';
+export const APP_RECORD_PAGE_TAB_UID = '924bd58b-3298-442d-ac69-7a228918e30b';
 export const APP_RECORD_PAGE_FIELDS_WIDGET_UID =
   'df4f0afb-1278-459b-b05b-350836a3abb3';
 export const APP_RECORD_PAGE_FIELDS_VIEW_UID =
@@ -631,3 +624,144 @@ export const BACKLOG_LOGIC_FUNCTION_UID =
   '799e79fd-4153-45e6-87ec-8cbf5db68a07';
 export const BACKLOG_SECTION_ISSUES_LOGIC_FUNCTION_UID =
   '32f31c95-37f5-4324-9996-e16c5e2b3ec2';
+
+// Development panel, Jira-style: repositories linked to a project and the
+// branch / commit / pull-request links resolved onto issues by issue key.
+// Brand new identifiers, never in the fork.
+export const REPOSITORY_OBJECT_UID = '7dd49f3b-467d-438b-85b6-c20ce349cec8';
+export const DEVELOPMENT_LINK_OBJECT_UID =
+  '90a07424-eb35-4546-a8f6-8db694332900';
+export const REPOSITORY_NAME_FIELD_UID = 'b4fe1bef-c923-4f8d-9951-f5bdda0a0c42';
+export const REPOSITORY_PROVIDER_FIELD_UID =
+  'c574c24b-7a4e-4383-a8ab-aabd925ffe7e';
+export const REPOSITORY_SLUG_FIELD_UID = '8a226ae4-429a-4773-a7fc-6c5f3f26c49c';
+export const REPOSITORY_REMOTE_URL_FIELD_UID =
+  'f29ff5d2-719d-4221-96b3-40508ac9a27e';
+export const REPOSITORY_IS_ACTIVE_FIELD_UID =
+  'b859a201-1b97-4a66-bc5c-791bd01fabe3';
+export const REPOSITORY_CONNECTION_ID_FIELD_UID =
+  '9dfdd207-726a-4d72-b9b5-cd911f235580';
+export const REPOSITORY_EXTERNAL_ID_FIELD_UID =
+  '4c00da34-b25d-4a96-8ef7-9c94e1487461';
+export const REPOSITORY_BASE_URL_FIELD_UID =
+  'ad04eaf3-a360-45a2-b5fa-a3fd171dab20';
+export const REPOSITORY_PROJECT_FIELD_UID =
+  '1e006018-8173-4663-b9d6-2b7a94cf9a52';
+export const REPOSITORY_APP_FIELD_UID = 'b663e180-edab-411f-9bf6-f7abc103556c';
+export const PROJECT_REPOSITORIES_FIELD_UID =
+  '740221f9-cab5-4dff-aacc-956ff5d134b7';
+export const APP_REPOSITORIES_FIELD_UID =
+  'a4c9c9ff-99a9-4768-bed2-6dfb2cd75ed6';
+export const REPOSITORY_DEVELOPMENT_LINKS_FIELD_UID =
+  '1f6809e4-72f6-4398-8d6b-20f94e98bd75';
+export const DEVELOPMENT_LINK_TYPE_FIELD_UID =
+  '2ec2e2a3-3ee0-4613-a388-466c3c0cea2e';
+export const DEVELOPMENT_LINK_TITLE_FIELD_UID =
+  '68d9164f-28fe-4b72-8d54-a09779e6740f';
+export const DEVELOPMENT_LINK_URL_FIELD_UID =
+  '05fbabdc-e4d7-4abd-844b-4d91a24596ff';
+export const DEVELOPMENT_LINK_STATUS_FIELD_UID =
+  'a9a69f95-5e2d-4677-a9f0-023d795e9413';
+export const DEVELOPMENT_LINK_EXTERNAL_ID_FIELD_UID =
+  '036607fc-54c5-45a1-b93a-29a0f53598dc';
+export const DEVELOPMENT_LINK_AUTHOR_NAME_FIELD_UID =
+  'd32842ca-6592-4db7-875a-b53e03d4ef8f';
+export const DEVELOPMENT_LINK_ISSUE_FIELD_UID =
+  '2bc1578c-cda4-42d5-94be-03076d0f1f5a';
+export const DEVELOPMENT_LINK_REPOSITORY_FIELD_UID =
+  'a494a46d-948d-4613-a474-303371e88c67';
+export const DEVELOPMENT_LINK_APP_FIELD_UID =
+  'af884983-e9c3-4644-84e4-43e52421f03a';
+export const ISSUE_DEVELOPMENT_LINKS_FIELD_UID =
+  '6a377b80-aeb3-43e9-9418-9e95e06fc9fa';
+export const APP_DEVELOPMENT_LINKS_FIELD_UID =
+  '50dfbe2a-2077-4015-a57e-7535a528d9b9';
+export const REPOSITORY_PROJECT_ID_INDEX_UID =
+  'dac6d711-d7ff-4718-9930-ead3d5fc967b';
+export const REPOSITORY_PROJECT_ID_INDEX_FIELD_UID =
+  'f3b28590-61c2-4325-ae3c-79c2f1713409';
+export const DEVELOPMENT_LINK_ISSUE_ID_INDEX_UID =
+  'baaffd40-5af7-4c40-9e9e-aea008c4b07e';
+export const DEVELOPMENT_LINK_ISSUE_ID_INDEX_FIELD_UID =
+  '6817eb23-fe55-4e48-b56e-a32246989977';
+export const REPOSITORY_APP_SCOPE_PREDICATE_UID =
+  '4a0c937f-efc2-4379-9a24-2d5b337724eb';
+export const DEVELOPMENT_LINK_APP_SCOPE_PREDICATE_UID =
+  'ab6a90bc-f937-48e6-92e6-d0e2f3ef0516';
+export const DEVELOPMENT_LINKS_LOGIC_FUNCTION_UID =
+  'e2c9d2e0-2aea-4e68-bdbe-a758650f190b';
+export const LIST_GIT_REPOSITORIES_LOGIC_FUNCTION_UID =
+  '33f3b49f-40cb-41cd-8078-4e95d2cf549b';
+export const CREATE_REPOSITORY_LOGIC_FUNCTION_UID =
+  'da5039ad-b817-4fbb-ba81-fc16b56bcd2b';
+export const UPDATE_REPOSITORY_LOGIC_FUNCTION_UID =
+  '7c324098-800e-4398-8b33-ced67eb51453';
+export const DELETE_REPOSITORY_LOGIC_FUNCTION_UID =
+  'fa8ce19e-769f-4b77-b1ff-2445fa6f882d';
+export const RESYNC_REPOSITORY_LOGIC_FUNCTION_UID =
+  '16edb153-fdf0-46bf-b69e-b59e005a90e4';
+export const GIT_ON_CONNECTION_LOGIC_FUNCTION_UID =
+  '7a402bff-c749-49f3-a59a-4a1baf8eb722';
+export const GIT_ON_DISCONNECT_LOGIC_FUNCTION_UID =
+  'f3ae9e0b-3314-4889-bffe-523306b1be2e';
+export const GIT_WEBHOOK_RESOLVER_LOGIC_FUNCTION_UID =
+  '86467b5e-f305-44c5-8ff8-b660ef9bc059';
+export const GIT_WEBHOOK_LOGIC_FUNCTION_UID =
+  'f5718e97-2f3b-46b0-bc6d-59cafec38f69';
+export const GIT_BACKFILL_LOGIC_FUNCTION_UID =
+  'bc7ae771-3cda-49e9-b15a-496cd0bc0873';
+export const ISSUE_DEVELOPMENT_FRONT_COMPONENT_UID =
+  'de34e3c1-960a-49fb-875c-c538798064e0';
+export const ISSUE_RECORD_PAGE_DEVELOPMENT_WIDGET_UID =
+  '979fcbf7-661d-4eb5-a3dc-90aca78a22e8';
+export const GITHUB_CONNECTION_PROVIDER_UID =
+  'b88ccb38-f3f2-4a5f-99ee-5b30ffd34b79';
+export const GITLAB_CONNECTION_PROVIDER_UID =
+  'a59f4ba3-b6f3-4259-b0f2-69bf6a947aa1';
+
+export const DEVELOPMENT_DELIVERY_OBJECT_UID =
+  '45408bd4-10e6-4948-a670-6b48b9c85f8a';
+export const DEVELOPMENT_DELIVERY_APP_FIELD_UID =
+  '5f1a7855-5fcc-4d66-95de-36476519d25c';
+export const DEVELOPMENT_DELIVERY_ISSUE_FIELD_UID =
+  '6963f2b4-9c46-4a2d-a442-b06598a3ad8d';
+export const DEVELOPMENT_DELIVERY_REPOSITORY_FIELD_UID =
+  '8c1fe17d-0511-497a-be94-bb74f02ea7f8';
+export const APP_DEVELOPMENT_DELIVERIES_FIELD_UID =
+  '80a29634-33cd-404a-a976-c925c5772f27';
+export const ISSUE_DEVELOPMENT_DELIVERIES_FIELD_UID =
+  '57ceaba5-c282-4292-9556-40d673d90bc0';
+export const REPOSITORY_DEVELOPMENT_DELIVERIES_FIELD_UID =
+  '0e7ef96c-701f-433f-a5a3-b17ca5467001';
+export const DEVELOPMENT_DELIVERY_APP_SCOPE_PREDICATE_UID =
+  '20406441-5227-497f-af77-d95d5ae0645e';
+export const DEVELOPMENT_DELIVERY_ISSUE_INDEX_UID =
+  'dfc8dcb3-065d-4961-92ea-6341e181046d';
+export const DEVELOPMENT_DELIVERY_ISSUE_INDEX_FIELD_UID =
+  '97562b29-d388-43cc-bddb-31f69736def5';
+export const DEVELOPMENT_DELIVERY_DELIVERY_TYPE_FIELD_UID =
+  'fd57f78b-2a63-4e40-959d-8d719a88792a';
+export const DEVELOPMENT_DELIVERY_EXTERNAL_ID_FIELD_UID =
+  '81d17760-73ca-49a1-8ad7-dc4fbcf227da';
+export const DEVELOPMENT_DELIVERY_EVENT_ID_FIELD_UID =
+  'd8049e3e-4df2-462b-a2da-173863692a09';
+export const DEVELOPMENT_DELIVERY_TITLE_FIELD_UID =
+  '6ffdac25-59d3-453f-a098-faada691b1a1';
+export const DEVELOPMENT_DELIVERY_STATUS_FIELD_UID =
+  'ed8a1511-9788-44fe-acde-134d45f9b595';
+export const DEVELOPMENT_DELIVERY_COMMIT_SHA_FIELD_UID =
+  '30457bec-e5b4-4923-9ad6-3b2ec2ab1a69';
+export const DEVELOPMENT_DELIVERY_BRANCH_NAME_FIELD_UID =
+  '5b0c03aa-36ad-4598-be93-8b981b580c9b';
+export const DEVELOPMENT_DELIVERY_PIPELINE_ID_FIELD_UID =
+  '0c6509b2-20f4-456f-8c72-e1ea1c72d03f';
+export const DEVELOPMENT_DELIVERY_ENVIRONMENT_NAME_FIELD_UID =
+  'a221190f-cea1-467f-94ef-192436d5b633';
+export const DEVELOPMENT_DELIVERY_ENVIRONMENT_TYPE_FIELD_UID =
+  'c7099098-874d-4001-94c6-7f1dc080310a';
+export const DEVELOPMENT_DELIVERY_OCCURRED_AT_FIELD_UID =
+  '12ac5d88-8ed5-45d1-9fed-a6c7c4266b1d';
+export const DEVELOPMENT_DELIVERY_STARTED_AT_FIELD_UID =
+  '7a41bd3a-dae6-44da-86b9-65c3bed3ab4a';
+export const DEVELOPMENT_DELIVERY_URL_FIELD_UID =
+  'bbe25908-0cff-4358-9010-42e33fb57d65';

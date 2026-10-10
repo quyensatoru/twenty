@@ -20,16 +20,21 @@ export const UPDATE_EPIC_ROUTE_PATH = '/task-manager/update-epic';
 export const DELETE_EPIC_ROUTE_PATH = '/task-manager/delete-epic';
 export const EPIC_SUMMARIES_ROUTE_PATH = '/task-manager/epic-summaries';
 
-export const CREATE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/create-issue-status';
-export const DELETE_ISSUE_STATUS_ROUTE_PATH = '/task-manager/delete-issue-status';
+export const CREATE_ISSUE_STATUS_ROUTE_PATH =
+  '/task-manager/create-issue-status';
+export const DELETE_ISSUE_STATUS_ROUTE_PATH =
+  '/task-manager/delete-issue-status';
 export const REORDER_ISSUE_STATUSES_ROUTE_PATH =
   '/task-manager/reorder-issue-statuses';
 export const UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH =
   '/task-manager/update-issue-view-settings';
 
-export const CREATE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/create-issue-comment';
-export const UPDATE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/update-issue-comment';
-export const DELETE_ISSUE_COMMENT_ROUTE_PATH = '/task-manager/delete-issue-comment';
+export const CREATE_ISSUE_COMMENT_ROUTE_PATH =
+  '/task-manager/create-issue-comment';
+export const UPDATE_ISSUE_COMMENT_ROUTE_PATH =
+  '/task-manager/update-issue-comment';
+export const DELETE_ISSUE_COMMENT_ROUTE_PATH =
+  '/task-manager/delete-issue-comment';
 
 export const CREATE_WORKLOG_ROUTE_PATH = '/task-manager/create-worklog';
 export const UPDATE_WORKLOG_ROUTE_PATH = '/task-manager/update-worklog';
@@ -51,6 +56,14 @@ export const BACKLOG_SECTION_ISSUES_ROUTE_PATH =
 export const RANK_ISSUE_ROUTE_PATH = '/task-manager/rank-issue';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';
+
+export const DEVELOPMENT_LINKS_ROUTE_PATH = '/task-manager/development-links';
+export const LIST_GIT_REPOSITORIES_ROUTE_PATH =
+  '/task-manager/list-git-repositories';
+export const CREATE_REPOSITORY_ROUTE_PATH = '/task-manager/create-repository';
+export const UPDATE_REPOSITORY_ROUTE_PATH = '/task-manager/update-repository';
+export const DELETE_REPOSITORY_ROUTE_PATH = '/task-manager/delete-repository';
+export const RESYNC_REPOSITORY_ROUTE_PATH = '/task-manager/resync-repository';
 
 export const MERCHANT_CUSTOM_SETTINGS_ROUTE_PATH =
   '/task-manager/merchant-custom-settings';

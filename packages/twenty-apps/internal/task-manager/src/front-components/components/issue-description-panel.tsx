@@ -1,4 +1,10 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   copyToClipboard,
   enqueueSnackbar,
@@ -195,41 +201,6 @@ export const IssueDescription = () => {
       );
   };
 
-  if (issueId === null) {
-    return <TaskMessage text={t('No issue selected.')} />;
-  }
-
-  if (isLoading && data.issue === null) {
-    return (
-      <DescriptionFrame>
-        <div style={{ display: 'flex', gap: 8, paddingBottom: 8 }}>
-          <TaskSkeletonBar
-            width={64}
-            height={22}
-            radius={TASK_TOKENS.radiusSmall}
-          />
-          <TaskSkeletonBar
-            width={56}
-            height={22}
-            radius={TASK_TOKENS.radiusSmall}
-          />
-        </div>
-        <DescriptionBody>
-          <TaskSkeletonLines widths={[92, 85, 68]} style={{ width: '100%' }} />
-        </DescriptionBody>
-      </DescriptionFrame>
-    );
-  }
-
-  if (data.issue === null) {
-    return (
-      <TaskMessage
-        text={loadError ?? t('This issue is not available to you.')}
-        tone={loadError === null ? 'neutral' : 'danger'}
-      />
-    );
-  }
-
   // The draft is never cleared except when the record changes: the detail
   // route is not refetched after a save, so the stored value stays stale and
   // falling back to it would visibly unwrite what was just saved.
@@ -270,6 +241,41 @@ export const IssueDescription = () => {
     },
     [handleStartEditingMouseDown],
   );
+
+  if (issueId === null) {
+    return <TaskMessage text={t('No issue selected.')} />;
+  }
+
+  if (isLoading && data.issue === null) {
+    return (
+      <DescriptionFrame>
+        <div style={{ display: 'flex', gap: 8, paddingBottom: 8 }}>
+          <TaskSkeletonBar
+            width={64}
+            height={22}
+            radius={TASK_TOKENS.radiusSmall}
+          />
+          <TaskSkeletonBar
+            width={56}
+            height={22}
+            radius={TASK_TOKENS.radiusSmall}
+          />
+        </div>
+        <DescriptionBody>
+          <TaskSkeletonLines widths={[92, 85, 68]} style={{ width: '100%' }} />
+        </DescriptionBody>
+      </DescriptionFrame>
+    );
+  }
+
+  if (data.issue === null) {
+    return (
+      <TaskMessage
+        text={loadError ?? t('This issue is not available to you.')}
+        tone={loadError === null ? 'neutral' : 'danger'}
+      />
+    );
+  }
 
   // The Jira top line, so the page carries the issue's state above its prose
   // instead of leaving that to the Details column alone. Everything here is
@@ -315,9 +321,7 @@ export const IssueDescription = () => {
           <TaskTag color={status.color}>{status.name}</TaskTag>
         )}
         {priorityOption !== undefined && (
-          <TaskTag color={priorityOption.color}>
-            {priorityOption.label}
-          </TaskTag>
+          <TaskTag color={priorityOption.color}>{priorityOption.label}</TaskTag>
         )}
         <span style={{ flex: 1 }} />
         <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
@@ -393,9 +397,7 @@ export const IssueDescription = () => {
               role={isEditing ? undefined : 'button'}
               tabIndex={isEditing ? undefined : 0}
               title={isEditing ? undefined : t('Edit')}
-              onMouseDown={
-                isEditing ? undefined : handleStartEditingMouseDown
-              }
+              onMouseDown={isEditing ? undefined : handleStartEditingMouseDown}
               onKeyDown={isEditing ? undefined : handleStartEditingKeyDown}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}

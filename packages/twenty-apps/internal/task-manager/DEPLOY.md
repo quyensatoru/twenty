@@ -4,8 +4,8 @@ App này không nằm trong build của server. Nó được đẩy lên một T
 `twenty`, từ một máy có source của app (máy dev hoặc runner CI). Server production không cần
 checkout repo.
 
-App sở hữu 12 object: `app`, `appAccess`, `merchant`, `project`, `sprint`, `epic`, `issueStatus`,
-`issue`, `issueMerchant`, `issueComment`, `worklog`, `issueHistory`. Không có app `bss-core` riêng — `app`,
+App sở hữu 14 object: `app`, `appAccess`, `merchant`, `project`, `sprint`, `epic`, `issueStatus`,
+`issue`, `issueMerchant`, `issueComment`, `worklog`, `issueHistory`, `repository`, `developmentLink`. Không có app `bss-core` riêng — `app`,
 `appAccess` và `merchant` thuộc về app này.
 
 **Nếu đang chuyển production từ nhánh fork sang `apps/zero-core`, đừng đọc file này trước.** Đọc
@@ -93,11 +93,11 @@ Việc phải làm thay vào đó là **tạo dữ liệu `app` và `appAccess`*
 
 App-scope được thực thi bằng **row-level permission predicate** của core, không phải trong route.
 App khai một role tên **Task Manager member** (`src/roles/app-scoped-member.role.ts`) mang mười
-predicate, mỗi object một cái:
+hai predicate, mỗi object một cái:
 
 ```
 project, merchant, issue, sprint, epic, issueStatus, issueComment, worklog, issueMerchant,
-issueHistory
+issueHistory, repository, developmentLink
 ```
 
 `merchant` là cái vào sau cùng, và nó từng là một lỗ thật: `APP_SCOPE_PATH_BY_OBJECT` coi merchant
@@ -649,6 +649,81 @@ lại URL từ `fileId`, chứ đừng cất URL đó đi dùng sau. Bản fork 
 Và lưu ý: trong schema production hiện tại, FILE **chỉ xuất hiện bên trong TOOL**. Tool chưa chạy
 được từ UI, nên đường FILE chỉ với tới được qua một field FILE ở cấp cao nhất — tới khi nút Run có
 mặt.
+
+### 5.15 Development: repository và git OAuth
+
+Trang issue có thêm widget **Development** (branch / commit / pull request nhóm theo loại, kiểu
+Jira): object `repository` (repo git của một project) và `developmentLink` (một dòng gắn vào
+issue). Cả hai đều mang mirror `app` và predicate trong role Task Manager member, nên tuân thủ
+app-scope như worklog và comment. Routes chạy dưới role runtime của app, vì vậy role đó cũng
+khai quyền trên cả hai object.
+
+Mọi link đều đi qua OAuth, không nhập tay:
+
+1. **Admin đăng ký OAuth App một lần**: một GitHub OAuth App (scopes `repo`, `read:user`,
+   `user:email`, callback `http(s)://<server>/auth/apps/callback`) và một GitLab OAuth
+   application (scopes `api`, `read_user`, cùng callback), rồi điền `GITHUB_CLIENT_ID/SECRET`,
+   `GITLAB_CLIENT_ID/SECRET` vào serverVariables của application registration. Chưa điền thì
+   mục Connections báo thiếu và không kết nối được.
+   Mỗi nền tảng chỉ có một provider (`github`, `gitlab`) và một cặp credential. Host
+   (gitlab.com hay self-hosted, github.com hay Enterprise) cấu hình bằng URL, mặc định public:
+   - Endpoints OAuth bắt buộc tĩnh trong manifest (SDK dùng nguyên xi), nên đọc từ env của máy
+     chạy apply: `export GITLAB_BASE_URL=https://git.example.com` (và `GITHUB_BASE_URL` nếu
+     dùng Enterprise) trước `twenty plan`/`apply`. Không export thì fallback public, nhìn thấy
+     trong plan diff. URL không nằm trong code.
+   - Mọi lệnh gọi API lúc chạy đọc `GITLAB_BASE_URL` / `GITHUB_BASE_URL` (serverVariables,
+     điền cùng URL ở tab Config), trống nghĩa là mặc định public. Mỗi dòng repository nhớ
+     base URL của chính nó nên đổi host sau không gãy link cũ.
+2. **User kết nối tài khoản git của mình**: Settings → Applications → Task Manager →
+   Connections → Connect GitHub/GitLab. Hook `git-on-connection` verify token; ngắt kết nối
+   chạy `git-on-disconnect` (gỡ provider webhooks, park repo inactive, giữ lại links).
+3. **Link repo vào project**: trong widget Development → Git repositories → chọn account →
+   chọn repo trong picker (đúng những gì OAuth thấy) → Link repository. Route này verify repo,
+   đăng ký provider webhook trỏ về app, lưu registration vào kv và enqueue job backfill
+   (`git-backfill`: branches, pull/MR và commits gần nhất).
+4. **Tự động về sau**: push và pull/merge-request events đi qua `git-webhook-resolver`
+   (public, định tuyến bằng query `connection` + `repository`) tới `git-webhook`, verify chữ ký
+   (GitHub HMAC-SHA256, GitLab token), quét issue key (`PROJ-123`) trong tên branch, commit
+   message và tiêu đề MR rồi upsert idempotent theo `(repository, issue, loại, externalId)`.
+
+### 5.16 CI và deployment
+
+Object `developmentDelivery` lưu lịch sử trạng thái build/deployment, tách khỏi branch/commit/PR.
+Mỗi event có repository, issue, mirror app, provider event id, SHA, pipeline, environment,
+status, thời gian provider và URL log. Role member chỉ đọc delivery; runtime ghi từ Git provider.
+Panel chọn event mới nhất theo thời gian provider, nên retry hay event đến muộn không ghi đè
+kết quả mới. Board card có summary branch/commit/PR và trạng thái CI/deploy production.
+
+Sau khi apply bản này, **bấm Resync cho từng repository cũ**. Job cập nhật webhook subscriptions
+(GitHub: push, pull_request, create, delete, workflow_run, deployment_status; GitLab: push,
+merge request, pipeline, deployment), rồi backfill dữ liệu. Hook cũ bị xóa được đăng ký lại.
+Repo thiếu quyền đăng ký webhook vẫn có thể sync thủ công; panel hiển thị lỗi live sync.
+Pause chặn webhook và backfill ở workspace đích; Resume rồi Resync để bù event đã bỏ qua.
+
+GitHub Actions cần khai báo `environment` trong job deploy hoặc công cụ CD cần tạo deployment
+và deployment status qua API. Một workflow chạy thành công chỉ tạo build; không được coi là
+đã deploy production. Với GitLab CI, job deploy cũng cần khai báo `environment`.
+
+Deployment lấy issue keys từ commit messages giữa lần deploy hiện tại và deployment thành công
+trước đó cùng environment, đã thành công trước khi lần deploy hiện tại bắt đầu. GitLab lấy
+tier từ environment API để nhận diện production cả khi tên environment tùy chỉnh. Build lấy keys từ head commit và PR/MR liên quan, cùng branch name.
+Các giới hạn backfill: 20 build/deployment gần nhất, tìm baseline trong 20 deployment gần nhất;
+khi không có baseline hoặc GitHub rollback/diverged, quét 100 commit gần nhất tại SHA đã deploy.
+CI API lỗi vẫn giữ các branch/PR/commit vừa sync và hiển thị lỗi delivery. GitHub comparison tối đa
+1000 commit; vượt giới hạn hoặc GitLab compare timeout thì báo lỗi sync để tránh báo đầy đủ giả.
+Lần sync đầu có thể liên kết các issue của những commit cũ trong cửa sổ 100 commit này.
+Đây là backfill có giới hạn, không phải nhập toàn bộ lịch sử repository.
+
+Panel poll mỗi 5 giây, hiển thị job queued/running, lần sync thành công cuối, lỗi và issue keys
+không tìm thấy. Request của issue cũ không được ghi dữ liệu lên issue mới. Sau khi schema apply,
+kiểm tra bằng một branch có issue key, một draft PR/MR, pipeline pass/fail và deployment staging/
+production. Chưa có event deployment thì panel hiển thị chưa nhận deployment, không suy ra từ PR merged.
+
+Các dòng development link từng bị ghi đè bởi PR trùng số giữa hai repo không thể phục hồi chỉ
+bằng đổi schema: Resync các repo để tạo lại liên kết thuộc mỗi repo trong cửa sổ backfill.
+
+Nguồn event: [GitHub webhooks](https://docs.github.com/en/webhooks/webhook-events-and-payloads/)
+và [GitLab webhook events](https://docs.gitlab.com/user/project/integrations/webhook_events/).
 
 ## 6. Kiểm tra sau deploy
 

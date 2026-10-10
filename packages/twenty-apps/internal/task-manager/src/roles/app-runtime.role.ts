@@ -8,6 +8,8 @@ import {
   APP_ACCESS_OBJECT_UID,
   APP_OBJECT_UID,
   APP_RUNTIME_ROLE_UID,
+  DEVELOPMENT_LINK_OBJECT_UID,
+  DEVELOPMENT_DELIVERY_OBJECT_UID,
   EPIC_OBJECT_UID,
   ISSUE_COMMENT_OBJECT_UID,
   ISSUE_HISTORY_OBJECT_UID,
@@ -16,6 +18,7 @@ import {
   ISSUE_STATUS_OBJECT_UID,
   MERCHANT_OBJECT_UID,
   PROJECT_OBJECT_UID,
+  REPOSITORY_OBJECT_UID,
   SPRINT_OBJECT_UID,
   WORKLOG_OBJECT_UID,
 } from '../constants/universal-identifiers';
@@ -83,6 +86,15 @@ export default defineApplicationRole({
     { objectUniversalIdentifier: SPRINT_OBJECT_UID, ...readWriteDelete },
     { objectUniversalIdentifier: WORKLOG_OBJECT_UID, ...readWriteDelete },
     { objectUniversalIdentifier: ISSUE_HISTORY_OBJECT_UID, ...readWriteDelete },
+    { objectUniversalIdentifier: REPOSITORY_OBJECT_UID, ...readWriteDelete },
+    {
+      objectUniversalIdentifier: DEVELOPMENT_DELIVERY_OBJECT_UID,
+      ...readWriteDelete,
+    },
+    {
+      objectUniversalIdentifier: DEVELOPMENT_LINK_OBJECT_UID,
+      ...readWriteDelete,
+    },
     {
       // Update, not readOnly: update-merchant-custom-settings writes
       // `customSettings` on an object customer-support owns. Deletion stays

@@ -151,3 +151,49 @@ export const MERCHANT_SELECTION = {
   name: true,
   appId: true,
 } as const;
+
+export const REPOSITORY_SELECTION = {
+  id: true,
+  name: true,
+  provider: true,
+  slug: true,
+  remoteUrl: true,
+  isActive: true,
+  connectionId: true,
+  externalId: true,
+  baseUrl: true,
+  projectId: true,
+  createdAt: true,
+} as const;
+
+export const DEVELOPMENT_LINK_SELECTION = {
+  id: true,
+  linkType: true,
+  title: true,
+  url: true,
+  status: true,
+  externalId: true,
+  authorName: true,
+  issueId: true,
+  repositoryId: true,
+  createdAt: true,
+} as const;
+
+export const DEVELOPMENT_DELIVERY_SELECTION = {
+  id: true,
+  issueId: true,
+  repositoryId: true,
+  deliveryType: true,
+  externalId: true,
+  eventId: true,
+  title: true,
+  status: true,
+  commitSha: true,
+  branchName: true,
+  pipelineId: true,
+  environmentName: true,
+  environmentType: true,
+  occurredAt: true,
+  startedAt: true,
+  url: true,
+} as const;
