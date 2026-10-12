@@ -80,8 +80,10 @@ Những quyết định cần nhớ trước khi sửa:
    không lỡ gửi cho toàn bộ merchant. `GraphQL filter` và kiểm tra trong bộ nhớ dùng chung
    `resolveAudienceDateCondition` nên luôn cho cùng kết quả.
    `installedAt`/`uninstalledAt` do app này định nghĩa nhưng **sync MIDA/BLOY phải ghi giá trị**
-   (kể cả backfill merchant cũ). `createdAt` không dùng thay được: ~38.8k merchant cũ có cùng
-   `createdAt` ngày 2026-07-31 là ngày backfill.
+   (kể cả backfill merchant cũ). Trong lúc chờ, "Added to CRM" (`createdAt`) dùng thay được
+   **khi mốc ngày nằm sau đợt backfill** (31/07 → khoảng 11/08/2026): merchant vào CRM trước mốc
+   thì chắc chắn đã cài trước mốc. Mốc trước đợt backfill thì sai, vì ngày backfill bị coi là
+   ngày cài. Đây là lần cài đầu: cài lại không tạo dòng mới.
 
 ## Soạn template: block hoặc HTML/CSS
 
@@ -100,6 +102,23 @@ làm mất gì.
   - HTML không có `{{unsubscribeUrl}}` thì footer huỷ đăng ký (sửa được chữ) được tự thêm cuối
     email; không template nào gửi đi mà thiếu link huỷ đăng ký.
   - Bản plain text được sinh từ HTML (link giữ URL trong ngoặc).
+
+### Biến ngày và điều kiện
+
+Mọi chỗ có `{{...}}` (subject, preview text, block, HTML, footer) đều hiểu thêm:
+
+- `{{daysSince <ngày>}}`, `{{daysUntil <ngày>}}`, `{{date <ngày>}}`. `<ngày>` là `installedAt`
+  (trống thì lấy `createdAt`), `uninstalledAt`, `addedToCrmAt`, `today` hoặc `event.<key>`, có
+  thể kèm `+14d`, `-1w`, `+1m`. Tính theo ngày UTC tròn lúc gửi; số hiển thị không âm.
+- `{{#if <điều kiện>}}...{{else}}...{{/if}}`, lồng được. Điều kiện: `<biểu thức> <op> <giá trị>`
+  với op `= != > >= < <=`, nối bằng `and`; chỉ ghi biểu thức nghĩa là "có giá trị". So chữ không
+  phân biệt hoa thường.
+- Block có thêm **Show if** (`showIf` trong `design`, cùng mô hình điều kiện). Chuyển block sang
+  HTML thì block có điều kiện được bọc `{{#if}}`.
+- Điều kiện không đọc được là **false** (ẩn nội dung). Lỗi cú pháp được báo ở editor; lúc gửi,
+  template lỗi làm email bị SKIPPED với lý do `Template error: ...`.
+- Điều kiện chạy trước kiểm tra `{{unsubscribeUrl}}`, nên link unsubscribe nằm trong nhánh bị ẩn
+  không được tính: footer vẫn được thêm.
 
 ## Đa ngôn ngữ
 

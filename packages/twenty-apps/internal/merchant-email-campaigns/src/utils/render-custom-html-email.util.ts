@@ -6,6 +6,7 @@ import { inlineEmailCss } from './inline-email-css.util';
 import { interpolateTemplate } from './interpolate-template.util';
 import { renderUnsubscribeFooterHtml } from './render-unsubscribe-footer-html.util';
 import { stripUnsafeHtml } from './strip-unsafe-html.util';
+import { renderTemplateSections } from './template-sections.util';
 
 const insertAfterOpeningTag = (html: string, tag: string, content: string) => {
   const match = html.match(new RegExp(`<${tag}\\b[^>]*>`, 'i'));
@@ -26,7 +27,8 @@ const insertBeforeClosingTag = (html: string, tag: string, content: string) => {
 // HTML mode: the author's markup is used as written. Merchant values are
 // escaped as they are interpolated, so a store name cannot inject markup. An
 // unsubscribe footer is appended unless the author placed {{unsubscribeUrl}}
-// themselves, so no template can go out without a way to opt out.
+// in what is actually rendered, so no email can go out without a way to opt
+// out.
 export const renderCustomHtmlEmail = ({
   design,
   subject,
@@ -38,7 +40,12 @@ export const renderCustomHtmlEmail = ({
   previewText: string;
   variables: TemplateVariables;
 }): string => {
-  const source = stripUnsafeHtml(design.html);
+  // Sections first: an unsubscribe link inside a hidden branch must not count
+  // as present, or the email would go out without one.
+  const source = renderTemplateSections(
+    stripUnsafeHtml(design.html),
+    variables,
+  );
   const body = interpolateTemplate(source, variables, escapeHtml);
   const isFullDocument = /<html\b/i.test(body);
   const title = escapeHtml(interpolateTemplate(subject, variables));

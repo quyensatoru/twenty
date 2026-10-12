@@ -2,9 +2,11 @@ import { type EmailDesign } from '../types/email-design';
 import { type TemplateVariables } from '../types/template-variables';
 import { escapeHtml } from './escape-html.util';
 import { interpolateTemplate } from './interpolate-template.util';
+import { isEmailBlockVisible } from './is-email-block-visible.util';
 import { renderEmailBlockHtml } from './render-email-block-html.util';
 import { renderInlineMarkup } from './render-inline-markup.util';
 import { sanitizeUrl } from './sanitize-url.util';
+import { serializeTemplateConditions } from './template-condition.util';
 
 // Block-mode layout. Table based with inline styles only: Outlook and Gmail
 // drop flexbox and are unreliable with <style>.
@@ -23,7 +25,15 @@ export const renderBlockEmailHtml = ({
   const width = Math.min(800, Math.max(320, settings.contentWidth));
   const fontFamily = escapeHtml(settings.fontFamily);
   const blocksHtml = design.blocks
-    .map((block) => renderEmailBlockHtml(block, settings, variables))
+    .map((block) => {
+      const html = renderEmailBlockHtml(block, settings, variables);
+
+      if (variables.preserveTokens === true && block.showIf?.length) {
+        return `{{#if ${serializeTemplateConditions(block.showIf)}}}${html}{{/if}}`;
+      }
+
+      return isEmailBlockVisible(block, variables) ? html : '';
+    })
     .join('');
   const footerText = renderInlineMarkup(
     interpolateTemplate(settings.footerText, variables),

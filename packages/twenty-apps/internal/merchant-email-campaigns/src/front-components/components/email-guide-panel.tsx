@@ -70,9 +70,7 @@ export const EmailGuidePanel = ({
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           }}
         >
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={stepHeader}>
               <span style={stepNumber}>1</span>
               <strong
@@ -87,9 +85,7 @@ export const EmailGuidePanel = ({
               )}
             </p>
           </div>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={stepHeader}>
               <span style={stepNumber}>2</span>
               <strong
@@ -104,9 +100,7 @@ export const EmailGuidePanel = ({
               )}
             </p>
           </div>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={stepHeader}>
               <span style={stepNumber}>3</span>
               <strong
@@ -274,6 +268,54 @@ export const EmailGuidePanel = ({
         <p style={sectionText}>
           {t(
             'Automations also carry what changed: {{event.oldShopifyPlan}} / {{event.newShopifyPlan}}, {{event.oldPricingPlan}} / {{event.newPricingPlan}}, {{event.oldEmail}} / {{event.newEmail}}.',
+          )}
+        </p>
+      </StudioPanel>
+
+      <StudioPanel title={t('Dates and conditions')}>
+        <p style={sectionText}>
+          {t(
+            'Day counts are worked out when each email is sent, in whole UTC days. Add +14d, -1w or +1m to shift a date. Install date uses the CRM creation date until the sync fills it.',
+          )}
+        </p>
+        <ul style={bulletList}>
+          {[
+            {
+              code: 'Used for {{daysSince installedAt}} days',
+              note: t('Days since the merchant installed the app'),
+            },
+            {
+              code: 'Trial ends {{date installedAt+14d}} ({{daysUntil installedAt+14d}} days left)',
+              note: t('Countdown to a date, here 14 days after install'),
+            },
+            {
+              code: '{{#if daysSince installedAt = 30}}One month with us!{{else}}Thanks for using us{{/if}}',
+              note: t('Show text only on day 30, something else otherwise'),
+            },
+            {
+              code: '{{#if pricingPlan = FREE and daysUntil installedAt+14d <= 3}}Upgrade now{{/if}}',
+              note: t('Combine conditions with "and"'),
+            },
+          ].map((example) => (
+            <li key={example.code} style={sectionText}>
+              <code
+                style={{
+                  background: STUDIO_TOKENS.backgroundTertiary,
+                  borderRadius: STUDIO_TOKENS.radiusSmall,
+                  color: STUDIO_TOKENS.textPrimary,
+                  fontSize: 12,
+                  padding: '2px 6px',
+                }}
+              >
+                {example.code}
+              </code>{' '}
+              {example.note}
+            </li>
+          ))}
+        </ul>
+        <p style={sectionText}>
+          {t(
+            'To hide a whole block, select it in the block editor and use Show if. Comparisons: = != > >= < <=; a condition that cannot be read hides its content.',
           )}
         </p>
       </StudioPanel>

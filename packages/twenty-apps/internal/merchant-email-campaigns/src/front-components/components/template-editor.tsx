@@ -6,8 +6,12 @@ import { type EmailBlock, type EmailBlockType } from '../../types/email-block';
 import { type EmailDesign } from '../../types/email-design';
 import { type EmailDesignMode } from '../../types/email-design-mode';
 import { type TemplateRow } from '../../types/template-row';
-import { buildSampleTemplateVariables } from '../../utils/build-sample-template-variables.util';
+import {
+  buildSampleTemplateVariables,
+  SAMPLE_DAYS_SINCE_INSTALL,
+} from '../../utils/build-sample-template-variables.util';
 import { convertBlocksToHtml } from '../../utils/convert-blocks-to-html.util';
+import { findTemplateErrors } from '../../utils/find-template-errors.util';
 import { interpolateTemplate } from '../../utils/interpolate-template.util';
 import { parseEmailDesign } from '../../utils/parse-email-design.util';
 import { renderEmailHtml } from '../../utils/render-email-html.util';
@@ -57,7 +61,17 @@ export const TemplateEditor = ({
   const [testRecipient, setTestRecipient] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
 
-  const sampleVariables = useMemo(() => buildSampleTemplateVariables(), []);
+  const [previewDaysSinceInstall, setPreviewDaysSinceInstall] = useState(
+    SAMPLE_DAYS_SINCE_INSTALL,
+  );
+
+  const sampleVariables = useMemo(
+    () =>
+      buildSampleTemplateVariables({
+        daysSinceInstall: previewDaysSinceInstall,
+      }),
+    [previewDaysSinceInstall],
+  );
   const previewSource = useMemo(
     () => ({ design, subject, previewText }),
     [design, subject, previewText],
@@ -66,6 +80,11 @@ export const TemplateEditor = ({
   const previewHtml = useMemo(
     () => renderEmailHtml({ ...previewInput, variables: sampleVariables }),
     [previewInput, sampleVariables],
+  );
+
+  const templateErrors = useMemo(
+    () => findTemplateErrors(previewInput),
+    [previewInput],
   );
 
   const selectedBlock =
@@ -151,6 +170,7 @@ export const TemplateEditor = ({
         subject,
         previewText,
         design,
+        sampleDaysSinceInstall: previewDaysSinceInstall,
       });
       enqueueSnackbar({
         message: t('Test email sent to {email}', { email: testRecipient }),
@@ -180,6 +200,27 @@ export const TemplateEditor = ({
 
   const preview = (
     <StudioPanel>
+      <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+        <span style={{ color: STUDIO_TOKENS.textTertiary, fontSize: 12 }}>
+          {t('Preview as installed')}
+        </span>
+        <div style={{ width: 72 }}>
+          <StudioTextInput
+            type="number"
+            value={String(previewDaysSinceInstall)}
+            onChange={(value) => {
+              const days = Number(value);
+
+              if (Number.isInteger(days) && days >= 0) {
+                setPreviewDaysSinceInstall(days);
+              }
+            }}
+          />
+        </div>
+        <span style={{ color: STUDIO_TOKENS.textTertiary, fontSize: 12 }}>
+          {t('days ago')}
+        </span>
+      </div>
       <EmailPreview
         html={previewHtml}
         subject={interpolateTemplate(subject, sampleVariables)}
@@ -293,6 +334,31 @@ export const TemplateEditor = ({
           )}
         </span>
       </StudioPanel>
+
+      {templateErrors.length === 0 ? null : (
+        <div
+          role="alert"
+          style={{
+            border: `1px solid ${STUDIO_TOKENS.textDanger}`,
+            borderRadius: STUDIO_TOKENS.radiusSmall,
+            color: STUDIO_TOKENS.textDanger,
+            display: 'flex',
+            flexDirection: 'column',
+            fontSize: 12,
+            gap: 2,
+            padding: '8px 10px',
+          }}
+        >
+          <strong>
+            {t(
+              'Fix these before sending; emails from this template are skipped until then.',
+            )}
+          </strong>
+          {templateErrors.map((error) => (
+            <span key={error}>{error}</span>
+          ))}
+        </div>
+      )}
 
       {design.mode === 'html' ? (
         <div

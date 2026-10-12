@@ -1,29 +1,45 @@
 import { type TemplateVariables } from '../types/template-variables';
+import { evaluateTemplateExpression } from './evaluate-template-expression.util';
+import { renderTemplateSections } from './template-sections.util';
 
-const VARIABLE_PATTERN = /\{\{\s*([a-zA-Z][\w.]*)\s*(?:\|([^}]*))?\}\}/g;
-const EVENT_PREFIX = 'event.';
+const VARIABLE_PATTERN =
+  /\{\{\s*(?![#/]|else\s*\}\})([^{}|]+?)\s*(?:\|([^}]*))?\}\}/g;
 
-const readVariable = (
+const renderExpression = (
+  expression: string,
   variables: TemplateVariables,
-  name: string,
-): string | undefined =>
-  name.startsWith(EVENT_PREFIX)
-    ? variables.eventProperties?.[name.slice(EVENT_PREFIX.length)]
-    : (variables as unknown as Record<string, string | undefined>)[name];
+): string => {
+  const value = evaluateTemplateExpression(expression, variables);
 
-// `{{name}}`, `{{name|fallback}}` or `{{event.key}}`. Unknown names render as
-// empty rather than leaking the raw placeholder into a customer's inbox.
+  switch (value.kind) {
+    case 'NUMBER':
+      return String(Math.max(0, value.value));
+    case 'TEXT':
+      return value.value;
+    default:
+      return '';
+  }
+};
+
+// `{{name}}`, `{{name|fallback}}`, `{{event.key}}`, `{{daysSince installedAt}}`
+// and `{{#if ...}}...{{else}}...{{/if}}`. Unknown names render as empty rather
+// than leaking the raw placeholder into a customer's inbox.
 export const interpolateTemplate = (
   template: string,
   variables: TemplateVariables,
   transformValue: (value: string) => string = (value) => value,
-): string =>
-  template.replace(VARIABLE_PATTERN, (_match, name: string, fallback) => {
-    const value = readVariable(variables, name);
-    const resolved =
-      typeof value === 'string' && value.trim() !== ''
-        ? value
-        : (fallback ?? '').trim();
+): string => {
+  if (variables.preserveTokens === true) {
+    return template;
+  }
 
-    return transformValue(resolved);
-  });
+  return renderTemplateSections(template, variables).replace(
+    VARIABLE_PATTERN,
+    (_match, expression: string, fallback) => {
+      const value = renderExpression(expression, variables);
+      const resolved = value.trim() !== '' ? value : (fallback ?? '').trim();
+
+      return transformValue(resolved);
+    },
+  );
+};

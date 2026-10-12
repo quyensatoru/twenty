@@ -6,6 +6,7 @@ import { sendOneEmail } from '../email-provider/send-one-email';
 import { type TemplateVariables } from '../types/template-variables';
 import { buildSampleTemplateVariables } from '../utils/build-sample-template-variables.util';
 import { buildTemplateVariables } from '../utils/build-template-variables.util';
+import { findTemplateErrors } from '../utils/find-template-errors.util';
 import { interpolateTemplate } from '../utils/interpolate-template.util';
 import { isValidEmail } from '../utils/is-valid-email.util';
 import { parseEmailDesign } from '../utils/parse-email-design.util';
@@ -25,6 +26,7 @@ type SendTestEmailBody = {
   merchantId?: string;
   fromEmail?: string;
   replyTo?: string;
+  sampleDaysSinceInstall?: number;
 };
 
 // Takes the design from the request rather than from the saved template, so
@@ -42,7 +44,23 @@ const handler = async (event: RoutePayload<SendTestEmailBody>) => {
       return { success: false, error: 'The template needs a subject.' };
     }
 
-    let variables: TemplateVariables = buildSampleTemplateVariables();
+    const design = parseEmailDesign(body.design);
+    const [templateError] = findTemplateErrors({
+      subject: body.subject,
+      previewText: body.previewText ?? '',
+      design,
+    });
+
+    if (templateError !== undefined) {
+      return { success: false, error: `Template error: ${templateError}` };
+    }
+
+    let variables: TemplateVariables = buildSampleTemplateVariables({
+      daysSinceInstall:
+        typeof body.sampleDaysSinceInstall === 'number'
+          ? body.sampleDaysSinceInstall
+          : undefined,
+    });
 
     if (body.merchantId) {
       const merchant = await fetchMerchant(createAppClient(), body.merchantId);
@@ -56,7 +74,6 @@ const handler = async (event: RoutePayload<SendTestEmailBody>) => {
       }
     }
 
-    const design = parseEmailDesign(body.design);
     const { from, replyTo } = resolveSender({
       fromEmail: body.fromEmail,
       replyTo: body.replyTo,

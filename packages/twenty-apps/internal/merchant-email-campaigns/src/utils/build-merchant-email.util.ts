@@ -2,6 +2,7 @@ import { type MerchantEmailBuildResult } from '../types/merchant-email-build-res
 import { type MerchantRow } from '../types/merchant-row';
 import { type TemplateRow } from '../types/template-row';
 import { buildTemplateVariables } from './build-template-variables.util';
+import { findTemplateErrors } from './find-template-errors.util';
 import { interpolateTemplate } from './interpolate-template.util';
 import { isValidEmail } from './is-valid-email.util';
 import { parseEmailDesign } from './parse-email-design.util';
@@ -55,6 +56,16 @@ export const buildMerchantEmail = ({
 
   if (subjectTemplate === '') {
     return { kind: 'SKIPPED', reason: 'Template has no subject', to };
+  }
+
+  const [templateError] = findTemplateErrors({
+    subject: subjectTemplate,
+    previewText: template.previewText ?? '',
+    design,
+  });
+
+  if (templateError !== undefined) {
+    return { kind: 'SKIPPED', reason: `Template error: ${templateError}`, to };
   }
 
   const subject = interpolateTemplate(subjectTemplate, variables).trim();

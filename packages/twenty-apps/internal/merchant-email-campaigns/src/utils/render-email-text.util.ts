@@ -2,6 +2,7 @@ import { type EmailDesign } from '../types/email-design';
 import { type TemplateVariables } from '../types/template-variables';
 import { htmlToText } from './html-to-text.util';
 import { interpolateTemplate } from './interpolate-template.util';
+import { isEmailBlockVisible } from './is-email-block-visible.util';
 import { renderCustomHtmlEmail } from './render-custom-html-email.util';
 import { stripInlineMarkup } from './strip-inline-markup.util';
 
@@ -23,7 +24,10 @@ export const renderEmailText = (
   }
 
   const interpolate = (value: string) => interpolateTemplate(value, variables);
-  const lines = design.blocks.flatMap((block) => {
+  const visibleBlocks = design.blocks.filter((block) =>
+    isEmailBlockVisible(block, variables),
+  );
+  const lines = visibleBlocks.flatMap((block) => {
     switch (block.type) {
       case 'heading':
       case 'text':

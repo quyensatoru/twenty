@@ -1,7 +1,11 @@
+import { type TemplateCondition } from './template-condition';
+
 export type EmailBlockAlign = 'left' | 'center' | 'right';
 
 export type EmailHeadingBlock = {
   id: string;
+  // Rendered only for merchants matching every condition.
+  showIf?: TemplateCondition[];
   type: 'heading';
   text: string;
   level: 1 | 2 | 3;
@@ -10,6 +14,7 @@ export type EmailHeadingBlock = {
 
 export type EmailTextBlock = {
   id: string;
+  showIf?: TemplateCondition[];
   type: 'text';
   text: string;
   align: EmailBlockAlign;
@@ -17,6 +22,7 @@ export type EmailTextBlock = {
 
 export type EmailButtonBlock = {
   id: string;
+  showIf?: TemplateCondition[];
   type: 'button';
   label: string;
   url: string;
@@ -27,6 +33,7 @@ export type EmailButtonBlock = {
 
 export type EmailImageBlock = {
   id: string;
+  showIf?: TemplateCondition[];
   type: 'image';
   src: string;
   alt: string;
@@ -37,12 +44,14 @@ export type EmailImageBlock = {
 
 export type EmailDividerBlock = {
   id: string;
+  showIf?: TemplateCondition[];
   type: 'divider';
   color: string;
 };
 
 export type EmailSpacerBlock = {
   id: string;
+  showIf?: TemplateCondition[];
   type: 'spacer';
   height: number;
 };

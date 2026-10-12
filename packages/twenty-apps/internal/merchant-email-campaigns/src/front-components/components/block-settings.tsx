@@ -2,6 +2,7 @@ import { t } from 'twenty-sdk/front-component';
 import { BLOCK_TYPE_LABELS } from '../../constants/block-type-labels';
 import { type EmailBlock } from '../../types/email-block';
 import { ALIGN_OPTIONS } from './align-options';
+import { BlockVisibilitySettings } from './block-visibility-settings';
 import { StudioColorInput } from './studio-color-input';
 import { StudioField } from './studio-field';
 import { StudioSegmentedControl } from './studio-segmented-control';
@@ -21,7 +22,7 @@ const readNumber = (value: string, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export const BlockSettings = ({ block, onChange }: BlockSettingsProps) => {
+const BlockFields = ({ block, onChange }: BlockSettingsProps) => {
   const title = (
     <h3
       style={{
@@ -241,3 +242,18 @@ export const BlockSettings = ({ block, onChange }: BlockSettingsProps) => {
       );
   }
 };
+
+export const BlockSettings = ({ block, onChange }: BlockSettingsProps) => (
+  <>
+    <BlockFields block={block} onChange={onChange} />
+    <BlockVisibilitySettings
+      conditions={block.showIf ?? []}
+      onChange={(showIf) =>
+        onChange({
+          ...block,
+          showIf: showIf.length === 0 ? undefined : showIf,
+        })
+      }
+    />
+  </>
+);

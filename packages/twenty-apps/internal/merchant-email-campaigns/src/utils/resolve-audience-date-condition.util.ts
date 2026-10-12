@@ -2,6 +2,7 @@ import {
   type AudienceDateCondition,
   type AudienceDateUnit,
 } from '../types/audience-filter';
+import { addUtcMonths } from './add-utc-months.util';
 
 export type ResolvedAudienceDateCondition =
   | { kind: 'RANGE'; gte: string | null; lt: string | null }
@@ -16,26 +17,13 @@ const subtractUnits = (
   amount: number,
   unit: AudienceDateUnit,
 ): Date => {
-  if (unit !== 'MONTH') {
-    return new Date(
-      now.getTime() - amount * (unit === 'WEEK' ? 7 : 1) * DAY_IN_MS,
-    );
+  if (unit === 'MONTH') {
+    return addUtcMonths(now, -amount);
   }
 
-  // Clamped so "1 month before March 31" is February 28, not March 3.
-  const target = new Date(now.getTime());
-  const day = target.getUTCDate();
-
-  target.setUTCDate(1);
-  target.setUTCMonth(target.getUTCMonth() - amount);
-
-  const daysInTargetMonth = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-
-  target.setUTCDate(Math.min(day, daysInTargetMonth));
-
-  return target;
+  return new Date(
+    now.getTime() - amount * (unit === 'WEEK' ? 7 : 1) * DAY_IN_MS,
+  );
 };
 
 const startOfUtcDay = (date: string) => new Date(`${date}T00:00:00.000Z`);

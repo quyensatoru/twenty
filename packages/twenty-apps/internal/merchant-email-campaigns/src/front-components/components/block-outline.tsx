@@ -84,12 +84,30 @@ export const BlockOutline = ({
             >
               <span
                 style={{
+                  alignItems: 'center',
                   color: STUDIO_TOKENS.textPrimary,
+                  display: 'flex',
                   fontSize: 12,
                   fontWeight: 600,
+                  gap: 6,
                 }}
               >
                 {t(BLOCK_TYPE_LABELS[block.type])}
+                {block.showIf?.length ? (
+                  <span
+                    title={t('Only shown to merchants matching its conditions')}
+                    style={{
+                      background: STUDIO_TOKENS.accentSoft,
+                      borderRadius: 4,
+                      color: STUDIO_TOKENS.accent,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: '1px 5px',
+                    }}
+                  >
+                    {t('Conditional')}
+                  </span>
+                ) : null}
               </span>
               <span
                 style={{

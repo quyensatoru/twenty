@@ -28,5 +28,12 @@ export const buildTemplateVariables = ({
     country: merchant.country ?? '',
     unsubscribeUrl,
     currentYear: String(now.getUTCFullYear()),
+    dates: {
+      // Until the sync fills installedAt, the CRM creation date stands in.
+      installedAt: merchant.installedAt || merchant.createdAt || null,
+      uninstalledAt: merchant.uninstalledAt || null,
+      addedToCrmAt: merchant.createdAt || null,
+    },
+    now: now.toISOString(),
   };
 };

@@ -1,7 +1,9 @@
 import { DEFAULT_EMAIL_DESIGN } from '../constants/default-email-design';
 import { type EmailBlock, type EmailBlockAlign } from '../types/email-block';
 import { type EmailDesign } from '../types/email-design';
+import { type TemplateCondition } from '../types/template-condition';
 import { safeJsonParse } from './safe-json-parse.util';
+import { TEMPLATE_CONDITION_OPERATORS } from './template-condition.util';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -17,7 +19,37 @@ const readNumber = (value: unknown, fallback: number): number =>
 const readAlign = (value: unknown): EmailBlockAlign =>
   value === 'center' || value === 'right' ? value : 'left';
 
-const parseBlock = (value: unknown, index: number): EmailBlock | null => {
+// A malformed entry is kept as an unreadable condition, which evaluates to
+// false: dropping it would show the block to merchants it was hidden from.
+const readShowIf = (value: unknown): TemplateCondition[] | undefined => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return undefined;
+  }
+
+  return value.map((item): TemplateCondition => {
+    if (
+      !isRecord(item) ||
+      typeof item.value !== 'string' ||
+      typeof item.compareTo !== 'string' ||
+      !TEMPLATE_CONDITION_OPERATORS.includes(
+        item.operator as TemplateCondition['operator'],
+      )
+    ) {
+      return { value: '', operator: '=', compareTo: '' };
+    }
+
+    return {
+      value: item.value,
+      operator: item.operator as TemplateCondition['operator'],
+      compareTo: item.compareTo,
+    };
+  });
+};
+
+const parseBlockContent = (
+  value: unknown,
+  index: number,
+): EmailBlock | null => {
   if (!isRecord(value)) {
     return null;
   }
@@ -70,6 +102,13 @@ const parseBlock = (value: unknown, index: number): EmailBlock | null => {
     default:
       return null;
   }
+};
+
+const parseBlock = (value: unknown, index: number): EmailBlock | null => {
+  const block = parseBlockContent(value, index);
+  const showIf = isRecord(value) ? readShowIf(value.showIf) : undefined;
+
+  return block === null || showIf === undefined ? block : { ...block, showIf };
 };
 
 // The design column is RAW_JSON anyone can edit from the record page, so it is

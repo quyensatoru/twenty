@@ -1,6 +1,8 @@
 import { t } from 'twenty-sdk/front-component';
 
 import {
+  TEMPLATE_CONDITION_SNIPPET,
+  TEMPLATE_DATE_EXPRESSION_DEFINITIONS,
   TEMPLATE_EVENT_PROPERTY_DEFINITIONS,
   TEMPLATE_VARIABLE_DEFINITIONS,
 } from '../../constants/template-variable-definitions';
@@ -24,6 +26,24 @@ export const VariableChips = ({ onInsert }: VariableChipsProps) => (
         {`+ ${t(definition.label)}`}
       </StudioTagButton>
     ))}
+    {TEMPLATE_DATE_EXPRESSION_DEFINITIONS.map((definition) => (
+      <StudioTagButton
+        key={definition.token}
+        tone="accent"
+        title={t('Example: {sample}', { sample: definition.sample })}
+        onClick={() => onInsert(definition.token)}
+      >
+        {`+ ${t(definition.label)}`}
+      </StudioTagButton>
+    ))}
+    <StudioTagButton
+      tone="accent"
+      isDashed
+      title={TEMPLATE_CONDITION_SNIPPET}
+      onClick={() => onInsert(TEMPLATE_CONDITION_SNIPPET)}
+    >
+      {`+ ${t('If…')}`}
+    </StudioTagButton>
     {TEMPLATE_EVENT_PROPERTY_DEFINITIONS.map((definition) => (
       <StudioTagButton
         key={definition.key}

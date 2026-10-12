@@ -1,7 +1,7 @@
-import { type TemplateVariables } from '../types/template-variables';
+import { type TemplateTextVariables } from '../types/template-variables';
 
 export const TEMPLATE_VARIABLE_DEFINITIONS: {
-  key: Exclude<keyof TemplateVariables, 'eventProperties'>;
+  key: keyof TemplateTextVariables;
   label: string;
   sample: string;
 }[] = [
@@ -63,3 +63,35 @@ export const TEMPLATE_EVENT_PROPERTY_DEFINITIONS: {
     sample: 'new@demo-store.com',
   },
 ];
+
+// Day counts and dates computed at send time; `+14d`, `-1w`, `+1m` shift the
+// date. installedAt falls back to the CRM creation date while it is empty.
+export const TEMPLATE_DATE_EXPRESSION_DEFINITIONS: {
+  token: string;
+  label: string;
+  sample: string;
+}[] = [
+  {
+    token: '{{daysSince installedAt}}',
+    label: 'Days since install',
+    sample: '9',
+  },
+  {
+    token: '{{date installedAt}}',
+    label: 'Install date',
+    sample: 'Oct 3, 2026',
+  },
+  {
+    token: '{{daysSince uninstalledAt}}',
+    label: 'Days since uninstall',
+    sample: '3',
+  },
+  {
+    token: '{{daysUntil installedAt+14d}}',
+    label: 'Trial ends in (14d)',
+    sample: '5',
+  },
+];
+
+export const TEMPLATE_CONDITION_SNIPPET =
+  '{{#if daysSince installedAt = 30}}...{{else}}...{{/if}}';
