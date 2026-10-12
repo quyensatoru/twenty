@@ -1,10 +1,25 @@
 import { type ApiClient } from '../../types/api-client';
 import { type DevelopmentDelivery } from '../../types/development-delivery';
 import { extractIssueKeys } from '../../utils/extract-issue-keys.util';
-import { resolveEffectiveAppId } from '../app-scope/resolve-effective-app-id.util';
-import { listScopedRecords } from './list-scoped-records.util';
+import {
+  chunkItems,
+  resolveIssueTargetsByKey,
+} from './resolve-issue-targets-by-key.util';
 import { getDevelopmentRecordId } from './upsert-development-links.util';
 
+const DELIVERY_WRITE_BATCH_SIZE = 100;
+
+const readDeliveryIssueKeys = (delivery: DevelopmentDelivery): string[] => [
+  ...new Set([
+    ...extractIssueKeys(delivery.text),
+    ...extractIssueKeys(delivery.branchName),
+    ...extractIssueKeys(delivery.title),
+  ]),
+];
+
+// Each event id is immutable, so its stable primary key plus `upsert` makes a
+// redelivered or concurrently retried event rewrite identical data instead of
+// failing, and the whole batch costs a handful of requests.
 export const saveDevelopmentDeliveries = async ({
   client,
   repositoryId,
@@ -14,34 +29,42 @@ export const saveDevelopmentDeliveries = async ({
   repositoryId: string;
   deliveries: DevelopmentDelivery[];
 }): Promise<number> => {
-  let saved = 0;
-  for (const delivery of deliveries) {
-    const keys = [
-      ...new Set([
-        ...extractIssueKeys(delivery.text),
-        ...extractIssueKeys(delivery.branchName),
-        ...extractIssueKeys(delivery.title),
-      ]),
-    ];
-    for (const issueKey of keys) {
-      const issues = await listScopedRecords<{ id: string }>({
-        client,
-        pluralName: 'issues',
-        filter: { issueKey: { eq: issueKey } },
-        selection: { id: true },
-        maxRecords: 1,
-      });
-      const issueId = issues[0]?.id;
-      if (issueId === undefined) continue;
+  const keysByDelivery = deliveries.map((delivery) => ({
+    delivery,
+    issueKeys: readDeliveryIssueKeys(delivery),
+  }));
+  const allIssueKeys = keysByDelivery.flatMap(({ issueKeys }) => issueKeys);
+
+  if (allIssueKeys.length === 0) {
+    return 0;
+  }
+
+  const targets = await resolveIssueTargetsByKey({
+    client,
+    issueKeys: allIssueKeys,
+  });
+
+  const rowsById = new Map<string, Record<string, unknown>>();
+
+  for (const { delivery, issueKeys } of keysByDelivery) {
+    for (const issueKey of issueKeys) {
+      const target = targets.get(issueKey);
+
+      if (target === undefined) {
+        continue;
+      }
+
       const id = getDevelopmentRecordId([
         'delivery',
         repositoryId,
-        issueId,
+        target.issueId,
         delivery.deliveryType,
         delivery.externalId,
         delivery.eventId,
       ]);
-      const data = {
+
+      rowsById.set(id, {
+        id,
         deliveryType: delivery.deliveryType,
         externalId: delivery.externalId,
         eventId: delivery.eventId,
@@ -55,39 +78,23 @@ export const saveDevelopmentDeliveries = async ({
         occurredAt: delivery.occurredAt,
         startedAt: delivery.startedAt,
         url: delivery.url,
-      };
-      try {
-        await client.mutation({
-          createDevelopmentDelivery: {
-            __args: {
-              data: {
-                ...data,
-                id,
-                repositoryId,
-                issueId,
-                appId: await resolveEffectiveAppId({
-                  client,
-                  objectNameSingular: 'developmentDelivery',
-                  immediateForeignKeyValue: issueId,
-                }),
-              },
-            },
-            id: true,
-          },
-        });
-      } catch (error) {
-        // Only an existing immutable event makes a failed insert a successful retry.
-        const existing = await listScopedRecords<{ id: string }>({
-          client,
-          pluralName: 'developmentDeliveries',
-          filter: { id: { eq: id } },
-          selection: { id: true },
-          maxRecords: 1,
-        });
-        if (existing.length === 0) throw error;
-      }
-      saved++;
+        repositoryId,
+        issueId: target.issueId,
+        appId: target.appId,
+      });
     }
   }
-  return saved;
+
+  const rows = [...rowsById.values()];
+
+  for (const batch of chunkItems(rows, DELIVERY_WRITE_BATCH_SIZE)) {
+    await client.mutation({
+      createDevelopmentDeliveries: {
+        __args: { data: batch, upsert: true },
+        id: true,
+      },
+    });
+  }
+
+  return rows.length;
 };

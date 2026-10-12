@@ -22,38 +22,36 @@ describe('delivery storage', () => {
   it('stores one immutable event per issue across concurrent retries', async () => {
     const rows = new Map<string, Record<string, unknown>>();
     const client = {
-      query: async (
-        selection: Record<
-          string,
-          { __args: { filter: { id?: { eq: string } } } }
-        >,
-      ) => {
+      query: async (selection: Record<string, unknown>) => {
         if (selection.issues)
           return {
             issues: {
-              edges: [{ node: { id: 'issue-1', projectId: 'project-1' } }],
+              edges: [
+                {
+                  node: {
+                    id: 'issue-1',
+                    issueKey: 'PROJ-1',
+                    projectId: 'project-1',
+                  },
+                },
+              ],
             },
           };
-        if (selection.projects)
-          return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
-        const id = selection.developmentDeliveries.__args.filter.id?.eq;
-        return {
-          developmentDeliveries: {
-            edges:
-              id !== undefined && rows.has(id) ? [{ node: rows.get(id) }] : [],
-          },
-        };
+        return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
       },
       mutation: async (
         selection: Record<
           string,
-          { __args: { data: Record<string, unknown> & { id: string } } }
+          { __args: { data: Record<string, unknown>[]; upsert?: boolean } }
         >,
       ) => {
-        const data = selection.createDevelopmentDelivery.__args.data;
-        if (rows.has(data.id)) throw new Error('duplicate key');
-        rows.set(data.id, data);
-        return { createDevelopmentDelivery: data };
+        const { data, upsert } = selection.createDevelopmentDeliveries.__args;
+        for (const row of data) {
+          const id = row.id as string;
+          if (rows.has(id) && upsert !== true) throw new Error('duplicate key');
+          rows.set(id, { ...rows.get(id), ...row });
+        }
+        return { createDevelopmentDeliveries: data };
       },
     };
     const options = { client, repositoryId: 'repo-1', deliveries: [delivery] };

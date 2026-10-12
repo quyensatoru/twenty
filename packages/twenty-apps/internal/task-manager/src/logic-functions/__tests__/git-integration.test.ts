@@ -70,12 +70,26 @@ describe('git integration', () => {
       async (
         selection: Record<
           string,
-          { __args: { filter: Record<string, { eq: string }> } }
+          {
+            __args: {
+              filter: Record<string, { eq?: string; in?: string[] }>;
+            };
+          }
         >,
       ) => {
         if (selection.issues)
           return {
-            issues: { edges: [{ node: { id: 'issue-1', appId: 'app-1' } }] },
+            issues: {
+              edges: [
+                {
+                  node: {
+                    id: 'issue-1',
+                    issueKey: 'PROJ-1',
+                    projectId: 'project-1',
+                  },
+                },
+              ],
+            },
           };
         if (selection.projects)
           return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
@@ -84,8 +98,10 @@ describe('git integration', () => {
           developmentLinks: {
             edges: records
               .filter((record) =>
-                Object.entries(filter).every(
-                  ([key, condition]) => record[key] === condition.eq,
+                Object.entries(filter).every(([key, condition]) =>
+                  condition.in === undefined
+                    ? record[key] === condition.eq
+                    : condition.in.includes(record[key] as string),
                 ),
               )
               .map((node) => ({ node })),
@@ -97,15 +113,19 @@ describe('git integration', () => {
       async (
         selection: Record<
           string,
-          { __args: { id?: string; data: Record<string, unknown> } }
+          {
+            __args: {
+              id?: string;
+              data: Record<string, unknown> | Record<string, unknown>[];
+            };
+          }
         >,
       ) => {
-        if (selection.createDevelopmentLink) {
-          records.push({
-            id: 'repo-two-pr',
-            ...selection.createDevelopmentLink.__args.data,
-          });
-          return { createDevelopmentLink: { id: 'repo-two-pr' } };
+        if (selection.createDevelopmentLinks) {
+          const rows = selection.createDevelopmentLinks.__args
+            .data as Record<string, unknown>[];
+          records.push(...rows);
+          return { createDevelopmentLinks: rows };
         }
         const { id, data } = selection.updateDevelopmentLink.__args;
         Object.assign(records.find((record) => record.id === id)!, data);
@@ -143,36 +163,40 @@ describe('git integration', () => {
 });
 
 describe('concurrent deliveries', () => {
-  it('retries an insert conflict against the same stable primary key', async () => {
-    let inserted: Record<string, unknown> | null = null;
-    let initialReads = 0;
+  it('converges concurrent inserts of one reference onto its stable primary key', async () => {
+    const rows = new Map<string, Record<string, unknown>>();
     const query = async (selection: Record<string, unknown>) => {
       if (selection.issues)
         return {
           issues: {
-            edges: [{ node: { id: 'issue-1', projectId: 'project-1' } }],
+            edges: [
+              {
+                node: {
+                  id: 'issue-1',
+                  issueKey: 'PROJ-1',
+                  projectId: 'project-1',
+                },
+              },
+            ],
           },
         };
       if (selection.projects)
         return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
-      initialReads++;
-      return {
-        developmentLinks: {
-          edges:
-            initialReads <= 2 || inserted === null ? [] : [{ node: inserted }],
-        },
-      };
+      return { developmentLinks: { edges: [] } };
     };
     const mutation = async (
-      selection: Record<string, { __args: { data: Record<string, unknown> } }>,
+      selection: Record<
+        string,
+        { __args: { data: Record<string, unknown>[]; upsert?: boolean } }
+      >,
     ) => {
-      if (selection.createDevelopmentLink) {
-        const data = selection.createDevelopmentLink.__args.data;
-        if (inserted !== null) throw new Error('duplicate key');
-        inserted = data;
-        return { createDevelopmentLink: data };
+      const { data, upsert } = selection.createDevelopmentLinks.__args;
+      for (const row of data) {
+        const id = row.id as string;
+        if (rows.has(id) && upsert !== true) throw new Error('duplicate key');
+        rows.set(id, { ...rows.get(id), ...row });
       }
-      return { updateDevelopmentLink: inserted };
+      return { createDevelopmentLinks: data };
     };
     const input = {
       client: { query, mutation },
@@ -185,9 +209,51 @@ describe('concurrent deliveries', () => {
       upsertDevelopmentReferences(input),
     ]);
     expect(results.every((result) => result.status === 'fulfilled')).toBe(true);
-    expect(inserted).toMatchObject({
+    expect(rows.size).toBe(1);
+    expect([...rows.values()][0]).toMatchObject({
       id: expect.stringMatching(/^[\da-f-]{36}$/),
+      issueId: 'issue-1',
+      appId: 'app-1',
     });
+  });
+});
+
+describe('rate limit budget', () => {
+  it('syncs hundreds of references in a bounded number of API requests', async () => {
+    let requests = 0;
+    const query = async (selection: Record<string, unknown>) => {
+      requests++;
+      if (selection.issues)
+        return {
+          issues: {
+            edges: ['PROJ-1', 'PROJ-2'].map((issueKey) => ({
+              node: { id: issueKey, issueKey, projectId: 'project-1' },
+            })),
+          },
+        };
+      if (selection.projects)
+        return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
+      return { developmentLinks: { edges: [] } };
+    };
+    const mutation = async () => {
+      requests++;
+      return {};
+    };
+    const outcome = await upsertDevelopmentReferences({
+      client: { query, mutation },
+      repositoryId: 'repo-1',
+      defaultRepositorySlug: 'repo',
+      references: Array.from({ length: 300 }, (_, index) => ({
+        kind: 'branch',
+        title: `feature/PROJ-${(index % 3) + 1}-${index}`,
+        externalId: `feature/PROJ-${(index % 3) + 1}-${index}`,
+      })),
+    });
+    expect(outcome).toMatchObject({
+      created: 200,
+      unknownIssueKeys: ['PROJ-3'],
+    });
+    expect(requests).toBeLessThanOrEqual(6);
   });
 });
 
@@ -313,7 +379,15 @@ describe('delivery webhook integration', () => {
         if (selection.issues)
           return {
             issues: {
-              edges: [{ node: { id: 'issue-1', projectId: 'project-1' } }],
+              edges: [
+                {
+                  node: {
+                    id: 'issue-1',
+                    issueKey: 'PROJ-1',
+                    projectId: 'project-1',
+                  },
+                },
+              ],
             },
           };
         if (selection.projects)
@@ -322,7 +396,7 @@ describe('delivery webhook integration', () => {
       },
     );
     runtime.mutation.mockResolvedValue({
-      createDevelopmentDelivery: { id: 'event-1' },
+      createDevelopmentDeliveries: [{ id: 'event-1' }],
     });
     const body = {
       repository: { id: 1 },
@@ -351,13 +425,15 @@ describe('delivery webhook integration', () => {
     expect(result).toMatchObject({ success: true, deliveries: 1 });
     expect(runtime.mutation).toHaveBeenCalledWith(
       expect.objectContaining({
-        createDevelopmentDelivery: expect.objectContaining({
+        createDevelopmentDeliveries: expect.objectContaining({
           __args: expect.objectContaining({
-            data: expect.objectContaining({
-              issueId: 'issue-1',
-              deliveryType: 'DEPLOYMENT',
-              status: 'SUCCESSFUL',
-            }),
+            data: [
+              expect.objectContaining({
+                issueId: 'issue-1',
+                deliveryType: 'DEPLOYMENT',
+                status: 'SUCCESSFUL',
+              }),
+            ],
           }),
         }),
       }),
@@ -379,11 +455,11 @@ describe('partial provider failures', () => {
     runtime.getConnection.mockResolvedValue({ accessToken: 'token' });
     runtime.query.mockImplementation(async (selection: Record<string, unknown>) => {
       if (selection.repositories) return { repositories: { edges: [{ node: { id: 'repo-1', isActive: true, provider: 'GITHUB', externalId: '1', slug: 'acme/repo', connectionId: 'account-1', baseUrl: 'https://api.github.com', remoteUrl: 'https://github.com/acme/repo' } }] } };
-      if (selection.issues) return { issues: { edges: [{ node: { id: 'issue-1', projectId: 'project-1' } }] } };
+      if (selection.issues) return { issues: { edges: [{ node: { id: 'issue-1', issueKey: 'PROJ-1', projectId: 'project-1' } }] } };
       if (selection.projects) return { projects: { edges: [{ node: { appId: 'app-1' } }] } };
       return { developmentLinks: { edges: [] } };
     });
-    runtime.mutation.mockResolvedValue({ createDevelopmentLink: { id: 'branch-1' } });
+    runtime.mutation.mockResolvedValue({ createDevelopmentLinks: [{ id: 'branch-1' }] });
     vi.stubGlobal('fetch', async (url: string) => {
       if (url.includes('/actions/runs')) return new Response('CI permission denied', { status: 403 });
       if (url.includes('/hooks')) return new Response(JSON.stringify({ id: 77 }));
@@ -391,6 +467,6 @@ describe('partial provider failures', () => {
       return new Response('[]');
     });
     await expect(gitBackfillHandler({ repositoryId: 'repo-1' })).rejects.toThrow('CI permission denied');
-    expect(runtime.mutation).toHaveBeenCalledWith(expect.objectContaining({ createDevelopmentLink: expect.objectContaining({ __args: expect.objectContaining({ data: expect.objectContaining({ externalId: 'PROJ-1-fix' }) }) }) }));
+    expect(runtime.mutation).toHaveBeenCalledWith(expect.objectContaining({ createDevelopmentLinks: expect.objectContaining({ __args: expect.objectContaining({ data: [expect.objectContaining({ externalId: 'PROJ-1-fix' })] }) }) }));
   });
 });
