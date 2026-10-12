@@ -339,12 +339,18 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           await assertNotCancelled();
           if (result.success && result.status === 'INVALID_REPLY') {
             invalidReplyCount += 1;
+            const replyPreview =
+              'replyPreview' in result ? (result.replyPreview ?? '') : '';
             if (invalidReplyCount > TASK_AI_MAX_INVALID_REPLIES)
               throw new Error(
-                'The AI model kept returning unreadable replies. Try again, or pick another Fast model in Settings → AI.',
+                `The AI model kept returning unreadable replies (last reply: ${replyPreview === '' ? 'empty' : JSON.stringify(replyPreview)}). Try again, or pick another Fast model in Settings → AI.`,
               );
+            // Gemini can end a turn as a malformed function call and return no
+            // text at all when the prompt talks about operations.
             turnMessages.push(
-              'Your previous reply could not be parsed. Reply again with only the JSON object {"operation":"...","argument":"..."}.',
+              replyPreview === ''
+                ? 'Your previous reply was empty. Reply as plain text, not as a function or tool call, with only the JSON object {"operation":"...","argument":"..."}.'
+                : 'Your previous reply could not be parsed. Reply again with only the JSON object {"operation":"...","argument":"..."}.',
             );
             continue;
           }

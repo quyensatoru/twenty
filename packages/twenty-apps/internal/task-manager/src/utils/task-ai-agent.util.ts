@@ -96,6 +96,9 @@ export const runTaskAiAgent = async ({ input }: { input: string }) => {
       status: 'INVALID_REPLY',
       error: 'The AI reply was not a valid JSON operation.',
       result: null,
+      replyPreview: isString(response?.text)
+        ? response.text.trim().slice(0, 120)
+        : '',
     };
   }
   if (!TASK_AI_OPERATIONS.includes(result.operation)) {

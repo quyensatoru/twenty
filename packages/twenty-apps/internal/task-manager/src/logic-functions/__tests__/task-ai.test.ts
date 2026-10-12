@@ -133,6 +133,7 @@ describe('private task code advice', () => {
       status: 'INVALID_REPLY',
       error: 'The AI reply was not a valid JSON operation.',
       result: null,
+      replyPreview: '{"operation":',
     });
     expect(await post(body)).toMatchObject({
       success: true,
@@ -151,9 +152,22 @@ describe('private task code advice', () => {
     });
     expect(await post(body)).toMatchObject({
       success: false,
-      error: expect.stringContaining('unreadable replies'),
+      error: expect.stringContaining('unreadable replies (last reply: empty)'),
     });
-    expect(runtime.runAgent).toHaveBeenCalledTimes(3);
+    expect(runtime.runAgent).toHaveBeenCalledTimes(4);
+  });
+  it('asks for plain text after an empty reply', async () => {
+    runtime.runAgent.mockResolvedValueOnce({
+      success: true,
+      status: 'INVALID_REPLY',
+      error: 'The AI reply was not a valid JSON operation.',
+      result: null,
+      replyPreview: '',
+    });
+    expect(await post(body)).toMatchObject({ success: true });
+    expect(runtime.runAgent.mock.calls[1][0].input).toContain(
+      'not as a function or tool call',
+    );
   });
   it('hands a failed read back to the model instead of failing the turn', async () => {
     runtime.runAgent.mockResolvedValueOnce({
