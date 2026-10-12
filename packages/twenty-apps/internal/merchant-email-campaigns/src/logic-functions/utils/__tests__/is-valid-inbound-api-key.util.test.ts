@@ -11,12 +11,11 @@ describe('isValidInboundApiKey', () => {
     expect(isValidInboundApiKey({ 'api-key': '' })).toBe(false);
   });
 
-  it('accepts the Brevo header, x-api-key and a bearer token', () => {
+  it('accepts the Brevo header and x-api-key', () => {
     process.env.INBOUND_EVENTS_API_KEY = 'secret';
 
     expect(isValidInboundApiKey({ 'api-key': 'secret' })).toBe(true);
     expect(isValidInboundApiKey({ 'x-api-key': 'secret' })).toBe(true);
-    expect(isValidInboundApiKey({ authorization: 'Bearer secret' })).toBe(true);
     expect(isValidInboundApiKey({ 'api-key': 'wrong' })).toBe(false);
   });
 });

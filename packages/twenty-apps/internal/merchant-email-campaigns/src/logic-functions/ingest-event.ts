@@ -106,7 +106,7 @@ export default defineLogicFunction({
     path: INGEST_EVENT_ROUTE_PATH,
     httpMethod: 'POST',
     isAuthRequired: false,
-    forwardedRequestHeaders: ['api-key', 'x-api-key', 'authorization'],
+    forwardedRequestHeaders: ['api-key', 'x-api-key'],
   },
   handler,
 });

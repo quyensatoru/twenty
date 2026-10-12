@@ -4,7 +4,8 @@ import { INBOUND_EVENTS_API_KEY_VARIABLE } from '../../constants/application-var
 
 const digest = (value: string) => createHash('sha256').update(value).digest();
 
-// Accepts Brevo's `api-key` header, or `x-api-key` / `Authorization: Bearer`.
+// Accepts Brevo's `api-key` header, or `x-api-key`. `Authorization` is not an
+// option: the server refuses to forward credential headers to a route.
 // Hashing both sides first gives equal-length buffers for timingSafeEqual.
 export const isValidInboundApiKey = (
   headers: Record<string, string | undefined>,
@@ -18,7 +19,6 @@ export const isValidInboundApiKey = (
   const provided = (
     headers['api-key'] ??
     headers['x-api-key'] ??
-    headers.authorization?.replace(/^Bearer\s+/i, '') ??
     ''
   ).trim();
 
