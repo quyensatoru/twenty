@@ -6,4 +6,5 @@ export const EMPTY_AUDIENCE_FILTER: AudienceFilter = {
   shopifyPlans: [],
   pricingPlans: [],
   countries: [],
+  dateConditions: [],
 };

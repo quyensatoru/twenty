@@ -8,7 +8,7 @@ type StudioTextInputProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: 'text' | 'email' | 'url' | 'number' | 'datetime-local';
+  type?: 'text' | 'email' | 'url' | 'number' | 'date' | 'datetime-local';
   suffix?: ReactNode;
   onEnter?: () => void;
   onBlur?: () => void;

@@ -15,4 +15,8 @@ export type MerchantRow = {
   contactName?: string | null;
   email?: { primaryEmail?: string | null } | null;
   emailUnsubscribed?: boolean | null;
+  emailUnsubscribedAt?: string | null;
+  createdAt?: string | null;
+  installedAt?: string | null;
+  uninstalledAt?: string | null;
 };

@@ -6,4 +6,8 @@ export const MERCHANT_BASE_SELECTION = {
   contactName: true,
   email: { primaryEmail: true },
   emailUnsubscribed: true,
+  emailUnsubscribedAt: true,
+  createdAt: true,
+  installedAt: true,
+  uninstalledAt: true,
 } as const;

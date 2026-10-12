@@ -1,13 +1,16 @@
 import { t } from 'twenty-sdk/front-component';
 import { useState } from 'react';
+import { IconPlus } from 'twenty-ui/icon';
 
 import { PREVIEW_AUDIENCE_ROUTE_PATH } from '../../constants/route-paths';
 import {
+  type AudienceDateCondition,
   type AudienceFilter,
   type InstallStatusFilter,
 } from '../../types/audience-filter';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { AudienceDateConditionRow } from './audience-date-condition-row';
 import { StudioButton } from './studio-button';
 import { StudioCheckbox } from './studio-checkbox';
 import { StudioChipInput } from './studio-chip-input';
@@ -30,6 +33,15 @@ const SHOPIFY_PLAN_SUGGESTIONS = [
   'STARTER',
   'DEVELOPMENT',
 ];
+
+const NEW_DATE_CONDITION: AudienceDateCondition = {
+  field: 'installedAt',
+  operator: 'IN_LAST',
+  amount: 30,
+  unit: 'DAY',
+  date: null,
+  endDate: null,
+};
 
 type AudiencePreview = {
   totalCount: number;
@@ -63,6 +75,23 @@ export const AudienceFilterEditor = ({
       appIds: filter.appIds.includes(appId)
         ? filter.appIds.filter((id) => id !== appId)
         : [...filter.appIds, appId],
+    });
+
+  const updateDateCondition = (
+    index: number,
+    dateCondition: AudienceDateCondition,
+  ) =>
+    update({
+      dateConditions: filter.dateConditions.map((current, currentIndex) =>
+        currentIndex === index ? dateCondition : current,
+      ),
+    });
+
+  const removeDateCondition = (index: number) =>
+    update({
+      dateConditions: filter.dateConditions.filter(
+        (_, currentIndex) => currentIndex !== index,
+      ),
     });
 
   const handlePreview = async () => {
@@ -150,6 +179,41 @@ export const AudienceFilterEditor = ({
           values={filter.countries}
           onChange={(countries) => update({ countries })}
         />
+      </StudioField>
+      <StudioField
+        label={t('Date conditions')}
+        hint={t(
+          'All conditions must match. Dates are in UTC; relative ones are worked out again on every send.',
+        )}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filter.dateConditions.map((dateCondition, index) => (
+            // Keyed on the count too, so removing a row remounts the rest
+            // instead of handing one row's typed input to its neighbour.
+            <AudienceDateConditionRow
+              key={`${filter.dateConditions.length}-${index}`}
+              condition={dateCondition}
+              onChange={(next) => updateDateCondition(index, next)}
+              onRemove={() => removeDateCondition(index)}
+            />
+          ))}
+          <div>
+            <StudioButton
+              variant="ghost"
+              startIcon={<IconPlus size={14} />}
+              onClick={() =>
+                update({
+                  dateConditions: [
+                    ...filter.dateConditions,
+                    NEW_DATE_CONDITION,
+                  ],
+                })
+              }
+            >
+              {t('Add date condition')}
+            </StudioButton>
+          </div>
+        </div>
       </StudioField>
       <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
         <StudioButton onClick={handlePreview} isDisabled={isLoadingPreview}>

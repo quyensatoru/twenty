@@ -75,6 +75,12 @@ yarn lint
 **Đổi dữ liệu kèm theo:** một số bản cần backfill dữ liệu đã có sau khi `apply`. Xem
 `MIGRATION.md` trước khi deploy bản mới; hiện đang có phần "event cố định → event động".
 
+**Ngày cài/gỡ app:** từ bản có điều kiện ngày trong audience, `apply` thêm hai field
+`installedAt`, `uninstalledAt` (DATE_TIME) vào `merchant`. App không tự điền: sync MIDA/BLOY phải
+ghi `installedAt` khi shop cài, `uninstalledAt` khi gỡ (và xoá về null khi cài lại nếu muốn
+"Ngày gỡ app trống" nghĩa là đang cài), đồng thời backfill cho merchant cũ. Trước khi sync làm
+xong, mọi campaign có điều kiện trên hai field này sẽ chỉ khớp merchant đã có giá trị.
+
 **Lần deploy sau:** lặp lại `plan` rồi `apply`. `apply` mặc định **xoá** entity không còn trong
 source. Nếu có ai đó tạo tay object/field trong namespace của app, thêm `--no-delete`. Lệnh sẽ hỏi
 xác nhận trước khi xoá; `--force` bỏ qua hỏi — chỉ dùng trong CI khi đã đọc kỹ output của `plan`.

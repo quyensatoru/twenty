@@ -11,7 +11,7 @@ Không sửa dòng nào trong `twenty-front` / `twenty-server` / `twenty-shared`
 | Gửi mail khi merchant cài app, gỡ app, đổi Shopify plan/app plan | Campaign loại **Automation**, chọn event `merchant.*` + delay (phút)       |
 | Gửi mail theo event tự đặt tên của app khác                 | Cùng loại **Automation**, gõ/chọn tên event; không có danh sách event cố định |
 | Gửi một lần cho một nhóm merchant                           | Campaign loại **Broadcast**, gửi ngay hoặc hẹn giờ                             |
-| Lọc audience theo app, trạng thái install, plan, quốc gia   | Bộ lọc audience trong Email Studio, nút **Estimate audience** đếm trước        |
+| Lọc audience theo app, trạng thái install, plan, quốc gia, ngày cài/gỡ app | Bộ lọc audience trong Email Studio (có điều kiện ngày), nút **Estimate audience** đếm trước |
 | Soạn email không cần biết HTML                              | Editor dạng block (heading, text, button, image, divider, spacer) + preview   |
 | Cá nhân hoá                                                 | Biến `{{storeName}}`, `{{contactName\|there}}`, `{{appName}}`, ...            |
 | Thử trước khi gửi                                           | Nút **Send test** gửi bản nháp hiện tại tới một địa chỉ                        |
@@ -40,7 +40,8 @@ merchantEvent                 (log mọi event app khác gửi sang, kể cả k
   name (= event_name đã chuẩn hoá), email, domain, properties (RAW_JSON), occurredAt
   status MATCHED | UNMATCHED, campaignsQueued, merchant ──> merchant
 
-merchant (đã có) + email (EMAILS), contactName, emailUnsubscribed, emailUnsubscribedAt
+merchant (đã có) + email (EMAILS), contactName, emailUnsubscribed, emailUnsubscribedAt,
+                   installedAt, uninstalledAt
 ```
 
 Những quyết định cần nhớ trước khi sửa:
@@ -71,6 +72,16 @@ Những quyết định cần nhớ trước khi sửa:
    tiếp. Pause/Cancel chỉ đổi status, lô kế tiếp tự dừng. Một lô mà **tất cả** đều FAILED (key
    sai, domain chưa verify) sẽ chuyển campaign sang PAUSED kèm `lastError`. Resume chạy lại từ
    đầu và bỏ qua địa chỉ đã gửi.
+8. **Điều kiện ngày trong audience** (`audienceFilter.dateConditions`, AND với nhau) lọc theo
+   `installedAt`, `uninstalledAt`, `createdAt`, `emailUnsubscribedAt`: trong N ngày/tuần/tháng
+   qua, cách đây hơn N, trước ngày, từ ngày, trong khoảng, trống/không trống. Ngày tính theo UTC.
+   Điều kiện tương đối được tính lại theo giờ hiện tại ở mỗi lô broadcast, mỗi job automation và
+   mỗi lần Estimate. Một điều kiện điền thiếu **không khớp merchant nào** thay vì bị bỏ qua, để
+   không lỡ gửi cho toàn bộ merchant. `GraphQL filter` và kiểm tra trong bộ nhớ dùng chung
+   `resolveAudienceDateCondition` nên luôn cho cùng kết quả.
+   `installedAt`/`uninstalledAt` do app này định nghĩa nhưng **sync MIDA/BLOY phải ghi giá trị**
+   (kể cả backfill merchant cũ). `createdAt` không dùng thay được: ~38.8k merchant cũ có cùng
+   `createdAt` ngày 2026-07-31 là ngày backfill.
 
 ## Soạn template: block hoặc HTML/CSS
 
