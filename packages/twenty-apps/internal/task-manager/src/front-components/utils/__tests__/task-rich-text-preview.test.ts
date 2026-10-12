@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TaskRichTextPreview } from '../../components/task-rich-text-preview';
+import { buildTaskMentionMarkdown } from '../task-mention-markdown.util';
 
 let root: Root;
 let container: HTMLDivElement;
@@ -34,6 +35,29 @@ const renderPreview = async (value: string, onMouseDown = vi.fn()) => {
 };
 
 describe('rich text preview', () => {
+  it('preserves special characters in highlighted member names', async () => {
+    await renderPreview(
+      buildTaskMentionMarkdown('alice', 'Alice [QA] <admin> *'),
+    );
+    const mention = getByText(container, '@Alice [QA] <admin> *');
+    expect(mention.tagName).toBe('SPAN');
+    expect(mention.style.backgroundColor).not.toBe('');
+  });
+
+  it('highlights a member mention separately from the text typed after it', async () => {
+    await renderPreview(
+      '[@Alice Smith](#task-mention-alice) please check this',
+    );
+    const mention = getByText(container, '@Alice Smith');
+    expect(mention.style.backgroundColor).not.toBe('');
+    expect(mention.style.color).not.toBe('');
+    expect(mention.textContent).toBe('@Alice Smith');
+    expect(mention.tagName).toBe('SPAN');
+    expect(mention.parentElement?.textContent).toBe(
+      '@Alice Smith please check this',
+    );
+  });
+
   it('preserves visible formatting even when host styles reset HTML defaults', async () => {
     await renderPreview(
       '# Release\n\n| Step | Status |\n| --- | --- |\n| **Build** | *Done* |\n\n> Quoted\n\n1. item\n\n- [x] checked\n\n~~removed~~\n\n```ts\nconst count = 1;\n```',

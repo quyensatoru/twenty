@@ -6,6 +6,12 @@ import { t } from 'twenty-sdk/front-component';
 import { type MemberRow } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { hasInsertedMentionTrigger } from '../utils/has-inserted-mention-trigger.util';
+import {
+  buildTaskMentionHref,
+  buildTaskMentionMarkdown,
+  stripTaskMentionMarkup,
+} from '../utils/task-mention-markdown.util';
 import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskButton } from './task-button';
 import { TASK_COMPOSER_BOX_STYLE } from './task-control-styles';
@@ -47,14 +53,20 @@ export const DiscussionComposer = ({
   const isMentionOpen = mentionMatch !== null && !isMentionMenuDismissed;
   const mentionPrefix =
     mentionMatch === null ? '' : draft.slice(0, mentionMatch.index);
-  const mentionParagraphs = mentionPrefix.split(/\n{2,}/);
+  const mentionParagraphs =
+    stripTaskMentionMarkup(mentionPrefix).split(/\n{2,}/);
   const selectMention = (member: MemberRow) => {
     const name = readMemberName(
       membersById,
       member.id,
       member.userEmail || t('Unknown'),
     );
-    setDraft(draft.replace(/@([^@\n]*)\n*$/, `@${name} `));
+    setDraft(
+      draft.replace(
+        /@([^@\n]*)\n*$/,
+        () => `${buildTaskMentionMarkdown(member.id, name)} `,
+      ),
+    );
     setEditorKey((previous) => previous + 1);
     setIsMentionMenuDismissed(true);
     setMentionedMemberIds((previous) => [...new Set([...previous, member.id])]);
@@ -94,8 +106,11 @@ export const DiscussionComposer = ({
           }
           isReadOnly={submission?.status === 'pending'}
           onChange={(value) => {
+            // A completed mention still contains @; only a new trigger should
+            // reopen the popover and move focus into its member search.
+            if (hasInsertedMentionTrigger(draft, value))
+              setIsMentionMenuDismissed(false);
             setDraft(value);
-            setIsMentionMenuDismissed(false);
             if (submission?.status !== 'pending') setSubmission(null);
           }}
         />
@@ -175,9 +190,7 @@ export const DiscussionComposer = ({
                     markdown: draft.trim(),
                     parentCommentId,
                     mentionMemberIds: mentionedMemberIds.filter((memberId) =>
-                      draft.includes(
-                        `@${readMemberName(membersById, memberId, '')}`,
-                      ),
+                      draft.includes(buildTaskMentionHref(memberId)),
                     ),
                     requestId:
                       typeof globalThis.crypto?.randomUUID === 'function'

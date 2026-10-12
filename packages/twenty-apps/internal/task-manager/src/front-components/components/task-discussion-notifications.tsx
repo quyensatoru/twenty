@@ -7,6 +7,7 @@ import { postAppRoute } from '../utils/post-app-route.util';
 import { buildIssueCommentUrl } from '../utils/build-record-url.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { stripTaskMentionMarkup } from '../utils/task-mention-markdown.util';
 import { TaskButton } from './task-button';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -152,7 +153,8 @@ export const TaskDiscussionNotifications = ({
                     commentId: notification.commentId,
                   })}
                 >
-                  {notification.body.trim() || t('Open discussion message')}
+                  {stripTaskMentionMarkup(notification.body.trim()) ||
+                    t('Open discussion message')}
                 </a>
                 {notification.readAt === null && (
                   <>

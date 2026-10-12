@@ -44,6 +44,27 @@ afterEach(async () => {
 });
 
 describe('discussion notifications', () => {
+  it('shows the member name without mention markup in notification text', async () => {
+    const user = userEvent.setup();
+    post.mockResolvedValue({
+      success: true,
+      notifications: [{
+        ...notification,
+        body: '[@Alice Smith](#task-mention-alice) please check this',
+      }],
+      unreadCount: 1,
+    });
+    await act(async () =>
+      root.render(createElement(TaskDiscussionNotifications)),
+    );
+    await act(async () =>
+      user.click(getByRole(container, 'button', { name: /Notifications.*1/ })),
+    );
+    expect(getByRole(container, 'link').textContent).toBe(
+      '@Alice Smith please check this',
+    );
+  });
+
   it('links empty notification bodies and marks read with an explicit separate action', async () => {
     const user = userEvent.setup();
     await act(async () =>

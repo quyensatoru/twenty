@@ -11,6 +11,7 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 import { TASK_TOKENS } from './task-tokens';
+import { TASK_MENTION_HREF_PREFIX } from '../utils/task-mention-markdown.util';
 
 type TaskRichTextPreviewProps = { value: string };
 
@@ -160,24 +161,38 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
         [rehypeSanitize, PREVIEW_HTML_SCHEMA],
       ]}
       components={{
-        a: ({ children, href, title }) => (
-          <a
-            href={href}
-            title={title}
-            target="_blank"
-            rel="noopener noreferrer"
-            onMouseDown={stopLinkEventPropagation}
-            onClick={stopLinkEventPropagation}
-            onKeyDown={stopLinkEventPropagation}
-            style={{
-              color: TASK_TOKENS.accent,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            {children}
-          </a>
-        ),
+        a: ({ children, href, title }) =>
+          href?.startsWith(TASK_MENTION_HREF_PREFIX) ? (
+            <span
+              style={{
+                color: TASK_TOKENS.accent,
+                backgroundColor: TASK_TOKENS.accentSoft,
+                borderRadius: TASK_TOKENS.radiusExtraSmall,
+                padding: '1px 4px',
+                fontWeight: 500,
+                boxDecorationBreak: 'clone',
+              }}
+            >
+              {children}
+            </span>
+          ) : (
+            <a
+              href={href}
+              title={title}
+              target="_blank"
+              rel="noopener noreferrer"
+              onMouseDown={stopLinkEventPropagation}
+              onClick={stopLinkEventPropagation}
+              onKeyDown={stopLinkEventPropagation}
+              style={{
+                color: TASK_TOKENS.accent,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              {children}
+            </a>
+          ),
         h1: ({ children }) => (
           <h1
             style={{ fontSize: '2em', fontWeight: 'bold', margin: '0 0 8px' }}

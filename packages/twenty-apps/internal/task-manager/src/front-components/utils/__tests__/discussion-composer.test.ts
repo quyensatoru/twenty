@@ -40,6 +40,58 @@ afterEach(async () => {
 });
 
 describe('discussion composer', () => {
+  it('keeps typing after a selected mention in the comment and opens a new mention only for another @', async () => {
+    const user = userEvent.setup();
+    const create = vi.fn().mockResolvedValue(undefined);
+    await act(async () =>
+      root.render(
+        createElement(DiscussionComposer, {
+          issueId: 'issue',
+          members: [
+            { id: 'alice', name: { firstName: 'Alice', lastName: 'Smith' } },
+            { id: 'bob', name: { firstName: 'Bob' } },
+          ],
+          onCreate: create,
+        }),
+      ),
+    );
+    await act(async () => user.type(getByRole(container, 'textbox'), '@'));
+    await act(async () =>
+      user.click(getByRole(container, 'option', { name: 'Alice Smith' })),
+    );
+    await act(async () =>
+      user.type(getByRole(container, 'textbox'), 'please check this'),
+    );
+    expect(queryByRole(container, 'listbox')).toBeNull();
+    expect((getByRole(container, 'textbox') as HTMLTextAreaElement).value).toBe(
+      '[@Alice Smith](#task-mention-alice) please check this',
+    );
+    await act(async () => user.type(getByRole(container, 'textbox'), ' @'));
+    getByRole(container, 'listbox');
+    await act(async () =>
+      user.click(getByRole(container, 'option', { name: 'Bob' })),
+    );
+    await act(async () =>
+      fireEvent.change(getByRole(container, 'textbox'), {
+        target: {
+          value:
+            '[@Alice Smith](#task-mention-alice)\n\nplease check this [@Bob](#task-mention-bob) \n\n',
+        },
+      }),
+    );
+    expect(queryByRole(container, 'listbox')).toBeNull();
+    await act(async () => user.type(getByRole(container, 'textbox'), ' too'));
+    expect(queryByRole(container, 'listbox')).toBeNull();
+    await act(async () =>
+      user.click(getByRole(container, 'button', { name: 'Comment' })),
+    );
+    expect(create.mock.calls[0][0]).toMatchObject({
+      markdown:
+        '[@Alice Smith](#task-mention-alice)\n\nplease check this [@Bob](#task-mention-bob) \n\n too',
+      mentionMemberIds: ['alice', 'bob'],
+    });
+  });
+
   it('retains failed drafts and retries with the same request identifier', async () => {
     const user = userEvent.setup();
     const create = vi
@@ -100,7 +152,9 @@ describe('discussion composer', () => {
       user.click(getByRole(container, 'button', { name: 'Comment' })),
     );
     expect(create.mock.calls[0][0].mentionMemberIds).toEqual(['alice']);
-    expect(create.mock.calls[0][0].markdown).toBe('Hi @Alice');
+    expect(create.mock.calls[0][0].markdown).toBe(
+      'Hi [@Alice](#task-mention-alice)',
+    );
   });
   it('recognizes a mention in markdown with trailing paragraph newlines', async () => {
     const user = userEvent.setup();
@@ -127,7 +181,7 @@ describe('discussion composer', () => {
       user.click(getByRole(container, 'button', { name: 'Comment' })),
     );
     expect(create.mock.calls[0][0]).toMatchObject({
-      markdown: 'Hi @Alice',
+      markdown: 'Hi [@Alice](#task-mention-alice)',
       mentionMemberIds: ['alice'],
     });
   });
@@ -183,7 +237,7 @@ describe('discussion composer', () => {
       user.click(getByRole(container, 'button', { name: 'Comment' })),
     );
     expect(create.mock.calls[0][0]).toMatchObject({
-      markdown: 'Hi @Alex',
+      markdown: 'Hi [@Alex](#task-mention-bob)',
       mentionMemberIds: ['bob'],
     });
   });
