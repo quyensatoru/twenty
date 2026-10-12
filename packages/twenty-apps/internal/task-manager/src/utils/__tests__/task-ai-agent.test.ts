@@ -47,6 +47,29 @@ describe('tool-free provider adapter', () => {
       });
     },
   );
+  it.each([
+    [
+      'raw newlines inside the answer string',
+      '{"operation":"answer","argument":"## Advice\nUse `parse()`\n- done"}',
+      '## Advice\nUse `parse()`\n- done',
+    ],
+    [
+      'unescaped quotes and code braces inside the answer string',
+      '{"operation":"answer","argument":"Call "parse" in function f() { return 1; }"}',
+      'Call "parse" in function f() { return 1; }',
+    ],
+    [
+      'a Markdown answer without the JSON envelope',
+      '## Advice\nThe parser lives in `src/parse.ts`.',
+      '## Advice\nThe parser lives in `src/parse.ts`.',
+    ],
+  ])('accepts %s as the answer', async (_, text, argument) => {
+    runtime.post.mockResolvedValue({ text });
+    expect(await runTaskAiAgent({ input: 'Question' })).toMatchObject({
+      status: 'COMPLETED',
+      result: { operation: 'answer', argument },
+    });
+  });
   it('retries one failed provider request before giving up', async () => {
     vi.useFakeTimers();
     try {
