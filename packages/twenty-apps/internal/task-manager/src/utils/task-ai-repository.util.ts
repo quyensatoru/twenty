@@ -76,9 +76,9 @@ export const openTaskAiRepository = async (
   if (
     String(remote.id) !== repository.externalId ||
     (provider === 'github'
-      ? remote.full_name?.toLowerCase()
-      : remote.path_with_namespace) !==
-      (provider === 'github' ? repository.slug.toLowerCase() : repository.slug)
+      ? remote.full_name
+      : remote.path_with_namespace
+    )?.toLowerCase() !== repository.slug.toLowerCase()
   ) {
     throw new Error(
       'Repository identity does not match its OAuth link. Reconnect it in Development.',

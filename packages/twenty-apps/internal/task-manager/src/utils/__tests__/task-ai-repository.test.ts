@@ -199,4 +199,30 @@ describe('configured enterprise hosts', () => {
       ),
     ).resolves.toMatchObject({ commit });
   });
+  it('matches GitLab paths with uppercase groups against the stored lowercase slug', async () => {
+    runtime.connection.mockResolvedValue({
+      providerName: 'gitlab',
+      accessToken: 'server-token',
+    });
+    runtime.read.mockImplementation(async ({ url }: { url: string }) =>
+      url.endsWith('/projects/12')
+        ? {
+            id: 12,
+            path_with_namespace: 'org/GROUP/repo',
+            default_branch: 'main',
+          }
+        : { id: commit },
+    );
+    await expect(
+      openTaskAiRepository(
+        {
+          ...repository,
+          provider: 'GITLAB',
+          slug: 'org/group/repo',
+          baseUrl: 'https://gitlab.com',
+        },
+        '',
+      ),
+    ).resolves.toMatchObject({ commit });
+  });
 });
