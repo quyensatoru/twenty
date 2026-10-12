@@ -99,8 +99,17 @@ export const IssueActivity = () => {
   >(anchor?.kind === 'worklog' ? 'worklogs' : 'comments');
 
   const membersById = useMemo(
-    () => buildMembersById(data.members, discussion.snapshot?.members),
-    [data.members, discussion.snapshot?.members],
+    () =>
+      buildMembersById(
+        data.members,
+        discussion.snapshot?.members,
+        discussion.snapshot?.participants,
+      ),
+    [
+      data.members,
+      discussion.snapshot?.members,
+      discussion.snapshot?.participants,
+    ],
   );
 
   const statusNameById = useMemo(() => {

@@ -28,6 +28,7 @@ export type DiscussionSnapshot = {
   reactions: DiscussionReaction[];
   readStates: DiscussionReadState[];
   members: MemberRow[];
+  participants?: MemberRow[];
   currentMemberId: string;
   canWrite: boolean;
   canSoftDelete: boolean;

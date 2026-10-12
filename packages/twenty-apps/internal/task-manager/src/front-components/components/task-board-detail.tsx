@@ -40,6 +40,7 @@ import { readMemberName } from '../utils/read-member-name.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
 import { useDiscussionState } from '../hooks/use-discussion-state';
 import { buildMembersById } from '../utils/build-members-by-id.util';
+import { isPlainPrimaryPress } from '../utils/is-plain-primary-press.util';
 import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueDetailsPanel } from './issue-details-panel';
@@ -162,8 +163,17 @@ export const TaskBoardDetail = ({
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
 
   const membersById = useMemo(
-    () => buildMembersById(data.members, discussion.snapshot?.members),
-    [data.members, discussion.snapshot?.members],
+    () =>
+      buildMembersById(
+        data.members,
+        discussion.snapshot?.members,
+        discussion.snapshot?.participants,
+      ),
+    [
+      data.members,
+      discussion.snapshot?.members,
+      discussion.snapshot?.participants,
+    ],
   );
 
   // Rows the link search must never offer: the issue itself, its current
@@ -646,7 +656,13 @@ export const TaskBoardDetail = ({
                   tabIndex={isEditingDescription ? undefined : 0}
                   title={isEditingDescription ? undefined : t('Edit')}
                   onMouseDown={
-                    isEditingDescription ? undefined : startEditingDescription
+                    isEditingDescription
+                      ? undefined
+                      : (event) => {
+                          if (isPlainPrimaryPress(event)) {
+                            startEditingDescription();
+                          }
+                        }
                   }
                   onKeyDown={
                     isEditingDescription

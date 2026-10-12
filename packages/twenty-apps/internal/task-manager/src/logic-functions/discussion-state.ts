@@ -48,6 +48,12 @@ const READ_STATE_SELECTION = {
   memberId: true,
   lastReadAt: true,
 } as const;
+const DISCUSSION_PARTICIPANT_SELECTION = {
+  id: true,
+  name: { firstName: true, lastName: true },
+  avatarUrl: true,
+  userEmail: true,
+} as const;
 const REACTION_SELECTION = {
   id: true,
   memberId: true,
@@ -135,7 +141,7 @@ const handler = async (event: RoutePayload<DiscussionBody>) =>
             edges: { cursor: true, node: ISSUE_COMMENT_SELECTION },
           },
         }),
-        listScopedRecords({
+        listScopedRecords<{ memberId: string }>({
           client,
           pluralName: 'issueReactions',
           filter: { issueId: { eq: issueId }, isActive: { eq: true } },
@@ -168,6 +174,31 @@ const handler = async (event: RoutePayload<DiscussionBody>) =>
         )
           readStatesByMember.set(checkpointKey, checkpoint);
       }
+      // Members only lists who may be mentioned. Anyone who can open the issue
+      // leaves read receipts and reactions, so their names are resolved too.
+      const memberIdsWithNames = new Set(members.map((member) => member.id));
+      const participantIds = [
+        ...new Set(
+          [
+            ...checkpoints.map((checkpoint) => checkpoint.memberId),
+            ...reactions.map((reaction) => reaction.memberId),
+            ...edges.map((edge) => edge.node.authorId),
+          ].filter(
+            (participantId): participantId is string =>
+              typeof participantId === 'string' &&
+              !memberIdsWithNames.has(participantId),
+          ),
+        ),
+      ];
+      const participants =
+        participantIds.length === 0
+          ? []
+          : await listScopedRecords({
+              client,
+              pluralName: 'workspaceMembers',
+              filter: { id: { in: participantIds } },
+              selection: DISCUSSION_PARTICIPANT_SELECTION,
+            });
       return {
         comments: edges.slice(0, DISCUSSION_PAGE_SIZE).map((edge) => edge.node),
         nextCursor:
@@ -177,6 +208,7 @@ const handler = async (event: RoutePayload<DiscussionBody>) =>
         reactions,
         readStates: [...readStatesByMember.values()],
         members,
+        participants,
         currentMemberId: memberId,
         canWrite: hasAppGrant(scope, appId, 'write'),
         canSoftDelete: hasAppGrant(scope, appId, 'softDelete'),

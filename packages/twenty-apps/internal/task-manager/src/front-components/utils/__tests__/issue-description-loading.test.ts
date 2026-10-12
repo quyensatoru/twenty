@@ -116,6 +116,37 @@ describe('issue description loading', () => {
     expect(getByRole(container, 'button', { name: 'Save' })).toBeDefined();
   });
 
+  it('keeps the preview on a right click or Control-click so images can be copied', async () => {
+    const user = userEvent.setup();
+
+    await act(async () => root.render(createElement(IssueDescription)));
+    await act(async () =>
+      resolveDetail({
+        ...detail,
+        issue: {
+          ...detail.issue,
+          description: {
+            markdown: 'Screenshot ![shot](https://example.com/a.png)',
+          },
+        },
+      }),
+    );
+
+    const image = getByRole(container, 'img', { name: 'shot' });
+    await act(async () =>
+      user.pointer({ keys: '[MouseRight]', target: image }),
+    );
+    expect(container.textContent).not.toContain('Save');
+    await act(async () => {
+      await user.keyboard('{Control>}');
+      await user.pointer({ keys: '[MouseLeft]', target: image });
+      await user.keyboard('{/Control}');
+    });
+    expect(container.textContent).not.toContain('Save');
+    await act(async () => user.click(image));
+    expect(getByRole(container, 'button', { name: 'Save' })).toBeDefined();
+  });
+
   it('renders an editable description after the initial request completes', async () => {
     await act(async () => root.render(createElement(IssueDescription)));
     expect(container.textContent).not.toContain('OPS-4');

@@ -36,6 +36,7 @@ import { buildRecordUrl } from '../utils/build-record-url.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
+import { isPlainPrimaryPress } from '../utils/is-plain-primary-press.util';
 
 // One frame for the loaded state.
 const DescriptionFrame = ({ children }: { children: ReactNode }) => (
@@ -231,6 +232,15 @@ export const IssueDescription = () => {
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleStartEditingMouseDown = useCallback(
+    (event: { button?: number; ctrlKey?: boolean }) => {
+      if (isPlainPrimaryPress(event)) {
+        handleStartEditing();
+      }
+    },
+    [handleStartEditing],
+  );
+
   const handleStartEditingKeyDown = useCallback(
     (event: { key: string }) => {
       if (event.key !== 'Enter') {
@@ -384,7 +394,7 @@ export const IssueDescription = () => {
               role={isEditing ? undefined : 'button'}
               tabIndex={isEditing ? undefined : 0}
               title={isEditing ? undefined : t('Edit')}
-              onMouseDown={isEditing ? undefined : handleStartEditing}
+              onMouseDown={isEditing ? undefined : handleStartEditingMouseDown}
               onKeyDown={isEditing ? undefined : handleStartEditingKeyDown}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}

@@ -366,6 +366,36 @@ describe('task discussion', () => {
       }),
     ).toMatchObject({ success: false });
   });
+  it('names readers without app access but keeps them out of mention candidates', async () => {
+    runtime.records.workspaceMembers.push({
+      id: 'member-3',
+      name: { firstName: 'Three' },
+    });
+    runtime.records.issueComments.push({
+      id: 'comment-1',
+      issueId: 'issue-1',
+      authorId: 'member-1',
+      createdAt: '2026-10-11T12:00:00Z',
+    });
+    runtime.records.issueReadStates.push({
+      id: 'read-1',
+      issueId: 'issue-1',
+      memberId: 'member-3',
+      commentId: 'comment-1',
+      lastReadAt: '2026-10-11T12:00:00Z',
+    });
+    const snapshot = await post(discussion, {
+      action: 'snapshot',
+      issueId: 'issue-1',
+    });
+    expect(snapshot).toMatchObject({
+      success: true,
+      participants: [{ id: 'member-3', name: { firstName: 'Three' } }],
+    });
+    expect(
+      (snapshot.members as { id: string }[]).map((member) => member.id),
+    ).not.toContain('member-3');
+  });
   it('records separate receipts for each viewed comment using message time', async () => {
     runtime.records.issueComments.push(
       { id: 'new', issueId: 'issue-1', createdAt: '2026-10-11T12:00:00Z' },
