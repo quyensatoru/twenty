@@ -46,6 +46,7 @@ const toDisplayedRichText = <TValue extends RichTextValue>(
 
 export type IssueCommentRow = {
   id: string;
+  requestId?: string | null;
   authorId?: string | null;
   parentCommentId?: string | null;
   createdAt?: string | null;

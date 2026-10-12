@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { isNonEmptyString } from '@sniptt/guards';
+
 import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 
 import { ISSUE_COMMENT_SELECTION } from '../constants/record-selections';
@@ -7,9 +10,23 @@ import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-ac
 import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
+import {
+  createDiscussionRowOnce,
+  type DiscussionComment,
+  listDiscussionMembers,
+  notifyDiscussionRecipients,
+  readDiscussionBody,
+  readDiscussionComment,
+  requireDiscussionMember,
+} from './utils/discussion-storage.util';
+import { getDevelopmentRecordId } from './utils/upsert-development-links.util';
+import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
+import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
 
 type CreateIssueCommentBody = {
   issueId?: string;
+  requestId?: string;
+  mentionMemberIds?: string[];
   parentCommentId?: string | null;
   bodyV2?: unknown;
 };
@@ -36,28 +53,66 @@ const handler = async (event: RoutePayload<CreateIssueCommentBody>) =>
       immediateForeignKeyValue: issueId,
     });
 
-    const result = await client.mutation({
-      createIssueComment: {
-        __args: {
-          data: {
-            issueId,
-            appId,
-            ...(event.body?.bodyV2 === undefined
-              ? {}
-              : { bodyV2: event.body.bodyV2 }),
-            ...(event.body?.parentCommentId === undefined
-              ? {}
-              : { parentCommentId: event.body.parentCommentId }),
-            ...(scope.workspaceMemberId === null
-              ? {}
-              : { authorId: scope.workspaceMemberId }),
-          },
-        },
-        ...ISSUE_COMMENT_SELECTION,
+    const authorId = requireDiscussionMember(scope);
+    if (appId === null) throw new AppScopePermissionDeniedError();
+    const markdown = readDiscussionBody(event.body?.bodyV2);
+    const requestId = event.body?.requestId ?? randomUUID();
+    if (!isNonEmptyString(requestId) || requestId.length > 128)
+      throw new Error('Invalid requestId.');
+    const mentionMemberIds = event.body?.mentionMemberIds ?? [];
+    if (
+      !Array.isArray(mentionMemberIds) ||
+      mentionMemberIds.length > 100 ||
+      mentionMemberIds.some((id) => !isNonEmptyString(id))
+    )
+      throw new Error('Invalid mentions.');
+    const members = await listDiscussionMembers(client, appId);
+    const memberIds = new Set(members.map((member) => member.id));
+    if (mentionMemberIds.some((id) => !memberIds.has(id)))
+      throw new AppScopePermissionDeniedError();
+    const parentCommentId = event.body?.parentCommentId;
+    const parent =
+      parentCommentId == null
+        ? null
+        : await readDiscussionComment(client, issueId, parentCommentId);
+    if (parent?.parentCommentId != null)
+      throw new Error('Reply to the original message instead.');
+    const comment = await createDiscussionRowOnce<DiscussionComment>({
+      client,
+      singularName: 'issueComment',
+      pluralName: 'issueComments',
+      data: {
+        id: getDevelopmentRecordId([
+          'discussion-comment',
+          issueId,
+          authorId,
+          requestId,
+        ]),
+        issueId,
+        appId,
+        authorId,
+        requestId,
+        mentionMemberIds: [...new Set(mentionMemberIds)],
+        bodyV2: buildRichTextValue(markdown),
+        parentCommentId: parentCommentId ?? null,
       },
+      selection: ISSUE_COMMENT_SELECTION,
     });
-
-    return { issueComment: result?.createIssueComment };
+    const savedParent =
+      comment.parentCommentId == null
+        ? null
+        : await readDiscussionComment(client, issueId, comment.parentCommentId);
+    await notifyDiscussionRecipients({
+      client,
+      scope,
+      appId,
+      comment,
+      recipients: [
+        ...(comment.mentionMemberIds ?? []),
+        ...(savedParent?.authorId == null ? [] : [savedParent.authorId]),
+      ],
+    });
+    return { issueComment: comment };
   });
 
 export default defineLogicFunction({

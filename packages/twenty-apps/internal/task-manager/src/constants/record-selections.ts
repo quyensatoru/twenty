@@ -106,7 +106,9 @@ export const EPIC_SELECTION = {
 } as const;
 
 export const ISSUE_COMMENT_SELECTION = {
+  requestId: true,
   id: true,
+  mentionMemberIds: true,
   issueId: true,
   // RICH_TEXT is composite: without naming the sub-fields the body comes back
   // absent and every comment renders blank.

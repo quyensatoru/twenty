@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AppPath, copyToClipboard, enqueueSnackbar, navigate, t } from 'twenty-sdk/front-component';
+import {
+  AppPath,
+  copyToClipboard,
+  enqueueSnackbar,
+  navigate,
+  t,
+} from 'twenty-sdk/front-component';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -24,11 +30,17 @@ import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util'
 import { buildBoardIssueUrl } from '../utils/build-record-url.util';
 import { useHiddenDetailFields } from '../hooks/use-hidden-detail-fields';
 import { useIsMobile } from '../hooks/use-is-mobile';
-import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
+import {
+  type IssueCommentRow,
+  type MemberRow,
+  useIssueDetail,
+} from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
+import { useDiscussionState } from '../hooks/use-discussion-state';
+import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueDetailsPanel } from './issue-details-panel';
 import { IssueHistoryList } from './issue-history-list';
@@ -84,15 +96,14 @@ export const TaskBoardDetail = ({
   onCardChanged,
 }: TaskBoardDetailProps) => {
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
+  const discussion = useDiscussionState(issueId);
   const isMobile = useIsMobile();
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   // Field values just picked, shown before the server confirms them, the way
   // the record page's Details widget does: saving re-runs the issue-detail
   // route, and a chip sitting on its old value until that returns is the lag.
-  const [pendingPatch, setPendingPatch] = useState<Record<string, unknown>>(
-    {},
-  );
+  const [pendingPatch, setPendingPatch] = useState<Record<string, unknown>>({});
   // Writes still in flight. The record is only re-read once the last one
   // lands: re-reading after each would paint a later pick back to its old
   // value while its own write is still on the wire.
@@ -102,7 +113,7 @@ export const TaskBoardDetail = ({
   const currentIssueIdRef = useRef(issueId);
   currentIssueIdRef.current = issueId;
   const [activityTab, setActivityTab] = useState<
-    'comments' | 'worklogs' | 'history'
+    'comments' | 'worklogs' | 'history' | 'ai'
   >('comments');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
@@ -151,7 +162,10 @@ export const TaskBoardDetail = ({
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
 
   const membersById = useMemo(
-    () => new Map<string, MemberRow>(data.members.map((member) => [member.id, member])),
+    () =>
+      new Map<string, MemberRow>(
+        data.members.map((member) => [member.id, member]),
+      ),
     [data.members],
   );
 
@@ -160,10 +174,7 @@ export const TaskBoardDetail = ({
   const unlinkableIds = useMemo(() => {
     const ids = new Set<string>([issueId]);
 
-    if (
-      data.parentIssue !== null &&
-      typeof data.parentIssue.id === 'string'
-    ) {
+    if (data.parentIssue !== null && typeof data.parentIssue.id === 'string') {
       ids.add(data.parentIssue.id);
     }
 
@@ -245,6 +256,7 @@ export const TaskBoardDetail = ({
       await action();
       setActionError(null);
       await reload();
+      await discussion.reload();
     } catch (error) {
       setActionError(readErrorText(error));
     } finally {
@@ -254,7 +266,11 @@ export const TaskBoardDetail = ({
 
   if (isLoading && data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
+      <TaskBoardDetailFrame
+        onClose={onClose}
+        focusKey={issueId}
+        isMobile={isMobile}
+      >
         <TaskBoardDetailSkeleton isMobile={isMobile} />
       </TaskBoardDetailFrame>
     );
@@ -262,7 +278,11 @@ export const TaskBoardDetail = ({
 
   if (data.issue === null) {
     return (
-      <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
+      <TaskBoardDetailFrame
+        onClose={onClose}
+        focusKey={issueId}
+        isMobile={isMobile}
+      >
         <TaskMessage
           text={loadError ?? t('This issue is not available to you.')}
           tone={loadError === null ? 'neutral' : 'danger'}
@@ -370,7 +390,8 @@ export const TaskBoardDetail = ({
       );
   };
 
-  const createSubtask = () => {    const title = subtaskDraft.trim();
+  const createSubtask = () => {
+    const title = subtaskDraft.trim();
 
     if (title === '' || projectId === null) {
       return;
@@ -451,7 +472,11 @@ export const TaskBoardDetail = ({
   // Detaching the parent clears this issue's own pointer. Only an unlink —
   // deleting the parent record itself is never offered from its child.
   return (
-    <TaskBoardDetailFrame onClose={onClose} focusKey={issueId} isMobile={isMobile}>
+    <TaskBoardDetailFrame
+      onClose={onClose}
+      focusKey={issueId}
+      isMobile={isMobile}
+    >
       <div
         style={{
           alignItems: 'center',
@@ -478,14 +503,18 @@ export const TaskBoardDetail = ({
         <span style={{ flex: 1 }} />
         <TaskIconButton
           label={t('Previous issue')}
-          onClick={() => previousIssueId !== undefined && onSelectIssue(previousIssueId)}
+          onClick={() =>
+            previousIssueId !== undefined && onSelectIssue(previousIssueId)
+          }
           isDisabled={previousIssueId === undefined}
         >
           <IconChevronLeft size={16} />
         </TaskIconButton>
         <TaskIconButton
           label={t('Next issue')}
-          onClick={() => nextIssueId !== undefined && onSelectIssue(nextIssueId)}
+          onClick={() =>
+            nextIssueId !== undefined && onSelectIssue(nextIssueId)
+          }
           isDisabled={nextIssueId === undefined}
         >
           <IconChevronRight size={16} />
@@ -504,7 +533,10 @@ export const TaskBoardDetail = ({
           <IconExternalLink size={16} />
         </TaskIconButton>
         {boardPath !== null && (
-          <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>
+          <TaskIconButton
+            label={t('Copy link to issue')}
+            onClick={copyIssueLink}
+          >
             <IconLink size={16} />
           </TaskIconButton>
         )}
@@ -555,7 +587,10 @@ export const TaskBoardDetail = ({
                 setTitleDraft(null);
 
                 if (value !== (issue.title ?? '')) {
-                  void update({ data: { title: value } }, { refreshBoard: true });
+                  void update(
+                    { data: { title: value } },
+                    { refreshBoard: true },
+                  );
                 }
               }}
             />
@@ -613,12 +648,18 @@ export const TaskBoardDetail = ({
                   role={isEditingDescription ? undefined : 'button'}
                   tabIndex={isEditingDescription ? undefined : 0}
                   title={isEditingDescription ? undefined : t('Edit')}
-                  onMouseDown={isEditingDescription ? undefined : startEditingDescription}
-                  onKeyDown={isEditingDescription ? undefined : (event) => {
-                    if (event.key === 'Enter') {
-                      startEditingDescription();
-                    }
-                  }}
+                  onMouseDown={
+                    isEditingDescription ? undefined : startEditingDescription
+                  }
+                  onKeyDown={
+                    isEditingDescription
+                      ? undefined
+                      : (event) => {
+                          if (event.key === 'Enter') {
+                            startEditingDescription();
+                          }
+                        }
+                  }
                   onMouseEnter={() => setIsDescriptionHovered(true)}
                   onMouseLeave={() => setIsDescriptionHovered(false)}
                   style={{
@@ -702,15 +743,22 @@ export const TaskBoardDetail = ({
                 row={child}
                 statusName={statusNameById.get(child.statusId ?? '') ?? null}
                 statusColor={
-                  data.issueStatuses.find((candidate) => candidate.id === child.statusId)?.color ??
-                  null
+                  data.issueStatuses.find(
+                    (candidate) => candidate.id === child.statusId,
+                  )?.color ?? null
                 }
                 ownerName={
                   child.assigneeId === null || child.assigneeId === undefined
                     ? null
-                    : readMemberName(membersById, child.assigneeId, t('Unknown'))
+                    : readMemberName(
+                        membersById,
+                        child.assigneeId,
+                        t('Unknown'),
+                      )
                 }
-                ownerAvatarUrl={membersById.get(child.assigneeId ?? '')?.avatarUrl}
+                ownerAvatarUrl={
+                  membersById.get(child.assigneeId ?? '')?.avatarUrl
+                }
                 onOpen={() => onSelectIssue(child.id)}
                 onUnlink={
                   data.canWrite ? () => unlinkSubtask(child.id) : undefined
@@ -739,50 +787,105 @@ export const TaskBoardDetail = ({
               value={activityTab}
               onChange={setActivityTab}
               tabs={[
-                { value: 'comments', label: t('Comments'), count: data.issueComments.length },
-                { value: 'worklogs', label: t('Worklogs'), count: data.worklogs.length },
+                {
+                  value: 'comments',
+                  label: t('Comments'),
+                  count:
+                    discussion.snapshot?.comments.length ??
+                    data.issueComments.length,
+                },
+                {
+                  value: 'worklogs',
+                  label: t('Worklogs'),
+                  count: data.worklogs.length,
+                },
                 { value: 'history', label: t('History') },
+                { value: 'ai', label: t('Ask AI') },
               ]}
             />
-            <TaskStatusLine text={actionError} tone="danger" />
+            <TaskStatusLine
+              text={actionError ?? discussion.error}
+              tone="danger"
+            />
             {activityTab === 'comments' ? (
-              <IssueCommentList
-                issueId={issueId}
-                baseUrl={readRecordPageBaseUrl()}
-                comments={data.issueComments}
-                membersById={membersById}
-                currentMemberId={data.currentWorkspaceMemberId}
-                highlightedCommentId={null}
-                canWrite={data.canWrite}
-                canSoftDelete={data.canSoftDelete}
-                isBusy={isSaving}
-                onCreate={(input) =>
-                  void runFeedAction(() =>
-                    postAppRoute(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
+              <>
+                {discussion.snapshot?.nextCursor && (
+                  <TaskButton
+                    variant="ghost"
+                    size="small"
+                    onClick={() => void discussion.loadEarlier()}
+                  >
+                    {t('Load earlier comments')}
+                  </TaskButton>
+                )}
+                <IssueCommentList
+                  key={issueId}
+                  issueId={issueId}
+                  baseUrl={readRecordPageBaseUrl()}
+                  comments={
+                    discussion.isPermissionDenied
+                      ? []
+                      : (discussion.snapshot?.comments ?? data.issueComments)
+                  }
+                  membersById={membersById}
+                  currentMemberId={
+                    discussion.snapshot?.currentMemberId ??
+                    data.currentWorkspaceMemberId
+                  }
+                  highlightedCommentId={null}
+                  canWrite={
+                    !discussion.isPermissionDenied &&
+                    (discussion.snapshot?.canWrite ?? data.canWrite)
+                  }
+                  canSoftDelete={
+                    !discussion.isPermissionDenied &&
+                    (discussion.snapshot?.canSoftDelete ?? data.canSoftDelete)
+                  }
+                  isBusy={isSaving}
+                  mentionMembers={
+                    discussion.snapshot?.members ?? data.assignableMembers
+                  }
+                  reactions={discussion.snapshot?.reactions}
+                  readStates={discussion.snapshot?.readStates}
+                  onReact={(commentId, emoji, active) =>
+                    void discussion
+                      .act('react', { commentId, emoji, active })
+                      .catch(() => undefined)
+                  }
+                  onRead={(commentId) => discussion.act('read', { commentId })}
+                  onCreate={async (input) => {
+                    const result = await postAppRoute<{
+                      issueComment: IssueCommentRow;
+                    }>(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
                       issueId,
                       bodyV2: buildRichTextValue(input.markdown),
+                      requestId: input.requestId,
+                      mentionMemberIds: input.mentionMemberIds,
                       ...(input.parentCommentId === undefined
                         ? {}
                         : { parentCommentId: input.parentCommentId }),
-                    }),
-                  )
-                }
-                onUpdate={(commentId, markdown) =>
-                  void runFeedAction(() =>
-                    postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
-                      issueCommentId: commentId,
-                      data: { bodyV2: buildRichTextValue(markdown) },
-                    }),
-                  )
-                }
-                onDelete={(commentId) =>
-                  void runFeedAction(() =>
-                    postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
-                      issueCommentId: commentId,
-                    }),
-                  )
-                }
-              />
+                    });
+                    void discussion.reload();
+                    void reload();
+                    return result.issueComment;
+                  }}
+                  onUpdate={(commentId, markdown) =>
+                    void runFeedAction(() =>
+                      postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
+                        issueCommentId: commentId,
+                        data: { bodyV2: buildRichTextValue(markdown) },
+                      }),
+                    )
+                  }
+                  onDelete={(commentId) =>
+                    void runFeedAction(() =>
+                      postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
+                        issueCommentId: commentId,
+                      }),
+                    )
+                  }
+                />
+              </>
             ) : activityTab === 'worklogs' ? (
               <IssueWorklogList
                 issueId={issueId}
@@ -822,13 +925,17 @@ export const TaskBoardDetail = ({
                   )
                 }
               />
-            ) : (
+            ) : activityTab === 'history' ? (
               <IssueHistoryList
                 histories={data.issueHistories}
                 membersById={membersById}
                 statusNameById={statusNameById}
               />
-            )}
+            ) : null}
+            <IssueAiActivityTab
+              issueId={issueId}
+              isActive={activityTab === 'ai'}
+            />
           </section>
         </div>
 
@@ -913,60 +1020,60 @@ const TaskBoardDetailFrame = ({
   }, [focusKey]);
 
   return (
-  <div
-    style={{
-      alignItems: 'center',
-      display: 'flex',
-      inset: 0,
-      justifyContent: 'center',
-      padding: isMobile ? 0 : 32,
-      position: 'fixed',
-      zIndex: 60,
-    }}
-  >
     <div
-      onClick={onClose}
       style={{
-        background: 'rgba(0,0,0,0.45)',
-        inset: 0,
-        position: 'fixed',
-      }}
-    />
-    <div
-      ref={dialogRef}
-      role="dialog"
-      aria-label={t('Issue detail')}
-      aria-modal="true"
-      tabIndex={-1}
-      onKeyDown={(event) => {
-        // The wrapping overlay carries no onClose (a nested dropdown's
-        // portal counts as "outside" to the host, so it would dismiss the
-        // modal on every pick) — Escape is handled here instead. A dropdown
-        // open above stops the event on the host side first, so Escape
-        // closes the topmost layer only, the way stacked modals behave.
-        if (event.key === 'Escape') {
-          onClose();
-        }
-      }}
-      style={{
-        background: TASK_TOKENS.background,
-        border: `1px solid ${TASK_TOKENS.borderLight}`,
-        borderRadius: isMobile ? 0 : 12,
-        boxShadow: TASK_TOKENS.shadowStrong,
-        boxSizing: 'border-box',
+        alignItems: 'center',
         display: 'flex',
-        flexDirection: 'column',
-        fontFamily: TASK_TOKENS.fontFamily,
-        height: isMobile ? '100%' : 'min(860px, calc(100vh - 64px))',
-        maxWidth: '100%',
-        minHeight: 0,
-        position: 'relative',
-        width: isMobile ? '100%' : 'min(1280px, calc(100vw - 48px))',
-        zIndex: 61,
+        inset: 0,
+        justifyContent: 'center',
+        padding: isMobile ? 0 : 32,
+        position: 'fixed',
+        zIndex: 60,
       }}
     >
-      {children}
+      <div
+        onClick={onClose}
+        style={{
+          background: 'rgba(0,0,0,0.45)',
+          inset: 0,
+          position: 'fixed',
+        }}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-label={t('Issue detail')}
+        aria-modal="true"
+        tabIndex={-1}
+        onKeyDown={(event) => {
+          // The wrapping overlay carries no onClose (a nested dropdown's
+          // portal counts as "outside" to the host, so it would dismiss the
+          // modal on every pick) — Escape is handled here instead. A dropdown
+          // open above stops the event on the host side first, so Escape
+          // closes the topmost layer only, the way stacked modals behave.
+          if (event.key === 'Escape') {
+            onClose();
+          }
+        }}
+        style={{
+          background: TASK_TOKENS.background,
+          border: `1px solid ${TASK_TOKENS.borderLight}`,
+          borderRadius: isMobile ? 0 : 12,
+          boxShadow: TASK_TOKENS.shadowStrong,
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: TASK_TOKENS.fontFamily,
+          height: isMobile ? '100%' : 'min(860px, calc(100vh - 64px))',
+          maxWidth: '100%',
+          minHeight: 0,
+          position: 'relative',
+          width: isMobile ? '100%' : 'min(1280px, calc(100vw - 48px))',
+          zIndex: 61,
+        }}
+      >
+        {children}
+      </div>
     </div>
-  </div>
   );
 };

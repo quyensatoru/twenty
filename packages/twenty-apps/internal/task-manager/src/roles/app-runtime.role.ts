@@ -1,3 +1,4 @@
+import { TASK_AI_RUN_LOCK_OBJECT_UID } from '../constants/task-ai-run-lock';
 import {
   defineApplicationRole,
   STANDARD_OBJECT_UNIVERSAL_IDENTIFIERS,
@@ -22,6 +23,12 @@ import {
   SPRINT_OBJECT_UID,
   WORKLOG_OBJECT_UID,
 } from '../constants/universal-identifiers';
+
+import {
+  ISSUE_REACTION_OBJECT_UID,
+  ISSUE_READ_STATE_OBJECT_UID,
+  ISSUE_NOTIFICATION_OBJECT_UID,
+} from '../constants/discussion';
 
 const readWriteDelete = {
   canReadObjectRecords: true,
@@ -70,10 +77,20 @@ export default defineApplicationRole({
   // Without it the trigger fails with "You do not have permission to create
   // workspace-level views" and a new project silently has no board.
   permissionFlagUniversalIdentifiers: [
+    SystemPermissionFlag.AI,
     SystemPermissionFlag.VIEWS,
     SystemPermissionFlag.WORKSPACE_MEMBERS,
   ],
   objectPermissions: [
+    ...[
+      ISSUE_REACTION_OBJECT_UID,
+      ISSUE_READ_STATE_OBJECT_UID,
+      ISSUE_NOTIFICATION_OBJECT_UID,
+      TASK_AI_RUN_LOCK_OBJECT_UID,
+    ].map((objectUniversalIdentifier) => ({
+      objectUniversalIdentifier,
+      ...readWriteDelete,
+    })),
     { objectUniversalIdentifier: PROJECT_OBJECT_UID, ...readWriteDelete },
     { objectUniversalIdentifier: ISSUE_OBJECT_UID, ...readWriteDelete },
     { objectUniversalIdentifier: ISSUE_STATUS_OBJECT_UID, ...readWriteDelete },

@@ -26,6 +26,18 @@ import {
 import { TaskEmptyState } from './task-empty-state';
 import { TaskIconButton } from './task-icon-button';
 import { TaskRichTextEditor } from './task-rich-text-editor';
+import {
+  DiscussionComposer,
+  type DiscussionCreateInput,
+} from './discussion-composer';
+import {
+  type DiscussionReaction,
+  type DiscussionReadState,
+} from '../hooks/use-discussion-state';
+import { useAutomaticCommentRead } from '../hooks/use-automatic-comment-read';
+import { useOptimisticDiscussionComments } from '../hooks/use-optimistic-discussion-comments';
+import { hasReadComment } from '../utils/has-read-comment.util';
+import { TaskCommentReactions } from './task-comment-reactions';
 import { TaskSortToggle } from './task-sort-toggle';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -41,7 +53,12 @@ type IssueCommentListProps = {
   canWrite: boolean;
   canSoftDelete: boolean;
   isBusy: boolean;
-  onCreate: (input: { markdown: string; parentCommentId?: string }) => void;
+  onCreate: (input: DiscussionCreateInput) => Promise<IssueCommentRow | void>;
+  mentionMembers?: MemberRow[];
+  reactions?: DiscussionReaction[];
+  readStates?: DiscussionReadState[];
+  onReact?: (commentId: string, emoji: string, active: boolean) => void;
+  onRead?: (commentId: string) => Promise<void> | void;
   onUpdate: (commentId: string, markdown: string) => void;
   onDelete: (commentId: string) => void;
 };
@@ -49,7 +66,6 @@ type IssueCommentListProps = {
 // One line at rest, growing with what is typed. The reference composer is a
 // single row — box and button side by side — rather than a paragraph-sized
 // box with its button on a line of its own underneath.
-const COMPOSER_MIN_HEIGHT = 40;
 // A reply is indented under the comment it answers rather than threaded into a
 // tree: one level is what the data carries (parentCommentId) and what a panel
 // this narrow can show without the text column collapsing.
@@ -73,10 +89,25 @@ export const IssueCommentList = ({
   canSoftDelete,
   isBusy,
   onCreate,
+  mentionMembers = [],
+  reactions = [],
+  readStates = [],
+  onReact,
+  onRead,
   onUpdate,
   onDelete,
 }: IssueCommentListProps) => {
-  const [draft, setDraft] = useState('');
+  const optimistic = useOptimisticDiscussionComments({
+    comments,
+    currentMemberId,
+    onCreate,
+  });
+  const registerVisibleComment = useAutomaticCommentRead({
+    comments,
+    currentMemberId,
+    readStates,
+    onRead,
+  });
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
   // What Save last sent for a comment, shown ahead of the server. onUpdate
@@ -89,8 +120,7 @@ export const IssueCommentList = ({
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
     null,
   );
-  const [replyDraft, setReplyDraft] = useState('');
-  const [isNewestFirst, setIsNewestFirst] = useState(true);
+  const [isNewestFirst, setIsNewestFirst] = useState(false);
 
   // Drops an override once the reload it was standing in for lands and
   // agrees with it, and any whose comment is gone (deleted, or this moved to
@@ -138,7 +168,7 @@ export const IssueCommentList = ({
     const repliesByParentId = new Map<string, IssueCommentRow[]>();
     const roots: IssueCommentRow[] = [];
 
-    for (const comment of comments) {
+    for (const comment of optimistic.comments) {
       const parentCommentId = comment.parentCommentId;
 
       if (typeof parentCommentId !== 'string') {
@@ -177,38 +207,32 @@ export const IssueCommentList = ({
           readCommentTimestamp(left) - readCommentTimestamp(right),
       ),
     }));
-  }, [comments, isNewestFirst]);
-
-  const submitDraft = () => {
-    if (draft.trim() === '') {
-      return;
-    }
-
-    onCreate({ markdown: draft.trim() });
-    setDraft('');
-  };
-
-  const submitReply = (parentCommentId: string) => {
-    if (replyDraft.trim() === '') {
-      return;
-    }
-
-    onCreate({ markdown: replyDraft.trim(), parentCommentId });
-    setReplyDraft('');
-    setReplyingToCommentId(null);
-  };
+  }, [optimistic.comments, isNewestFirst]);
 
   const renderComment = (comment: IssueCommentRow, isReply: boolean) => {
+    const delivery = optimistic.deliveryFor(comment);
+    const isPersisted = !comment.id.startsWith('pending-');
+    const readMemberIds = [
+      ...new Set(
+        readStates
+          .filter(
+            (state) =>
+              state.memberId !== comment.authorId &&
+              hasReadComment([state], state.memberId, comment),
+          )
+          .map((state) => state.memberId),
+      ),
+    ];
     const isEditing = editingCommentId === comment.id;
     // The route enforces the same rule; hiding the controls just stops the
     // UI from offering an action the server will refuse.
     const isOwnComment =
       currentMemberId !== null && comment.authorId === currentMemberId;
-    const canEdit = isOwnComment && canWrite;
-    const canDelete = isOwnComment && canSoftDelete;
+    const canEdit = isOwnComment && canWrite && isPersisted;
+    const canDelete = isOwnComment && canSoftDelete && isPersisted;
     // Replying to a reply would need a tree the data does not carry, so a
     // second level always answers the same root.
-    const canReply = !isReply && canWrite;
+    const canReply = !isReply && canWrite && isPersisted;
     const author =
       typeof comment.authorId === 'string'
         ? membersById.get(comment.authorId)
@@ -220,85 +244,154 @@ export const IssueCommentList = ({
     );
 
     return (
-      <TaskFeedItem
+      <div
         key={comment.id}
-        anchorId={`comment-${comment.id}`}
-        isHighlighted={comment.id === highlightedCommentId}
-        authorName={authorName}
-        authorEmail={author?.userEmail}
-        avatarUrl={author?.avatarUrl}
-        timestamp={comment.createdAt}
-        nameAction={
-          isEditing ? undefined : (
-            <TaskCopyLinkButton
-              url={buildIssueCommentUrl({
-                baseUrl,
-                issueId,
-                commentId: comment.id,
-              })}
-              label={t('Copy link to comment')}
-            />
-          )
-        }
-        actions={
-          isEditing || !(canReply || canEdit || canDelete) ? undefined : (
-            <>
-              {canReply && (
-                <TaskIconButton
-                  label={t('Reply')}
-                  isDisabled={isBusy}
-                  onClick={() => {
-                    setReplyingToCommentId(comment.id);
-                    setReplyDraft('');
-                  }}
-                >
-                  <IconArrowBackUp size={14} />
-                </TaskIconButton>
-              )}
-              {canEdit && (
-                <TaskIconButton
-                  label={t('Edit')}
-                  isDisabled={isBusy}
-                  onClick={() => {
-                    setEditingCommentId(comment.id);
-                    setEditDraft(
-                      commentOverridesById[comment.id] ??
-                        readRichTextPlainValue(comment.bodyV2),
-                    );
-                  }}
-                >
-                  <IconPencil size={14} />
-                </TaskIconButton>
-              )}
-              {canDelete && (
-                <TaskIconButton
-                  label={t('Delete')}
-                  isDanger
-                  isDisabled={isBusy}
-                  onClick={() => onDelete(comment.id)}
-                >
-                  <IconTrash size={14} />
-                </TaskIconButton>
-              )}
-            </>
-          )
-        }
-        footer={
-          replyingToCommentId === comment.id ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-                paddingTop: 6,
-              }}
-            >
+        id={`discussion-comment-${comment.id}`}
+        ref={registerVisibleComment(comment.id)}
+      >
+        <TaskFeedItem
+          key={comment.id}
+          anchorId={`comment-${comment.id}`}
+          isHighlighted={comment.id === highlightedCommentId}
+          authorName={authorName}
+          authorEmail={author?.userEmail}
+          avatarUrl={author?.avatarUrl}
+          timestamp={comment.createdAt}
+          nameAction={
+            isEditing || !isPersisted ? undefined : (
+              <TaskCopyLinkButton
+                url={buildIssueCommentUrl({
+                  baseUrl,
+                  issueId,
+                  commentId: comment.id,
+                })}
+                label={t('Copy link to comment')}
+              />
+            )
+          }
+          actions={
+            isEditing ? undefined : (
+              <>
+                {canReply && (
+                  <TaskIconButton
+                    label={t('Reply')}
+                    isDisabled={isBusy}
+                    onClick={() => {
+                      setReplyingToCommentId(comment.id);
+                    }}
+                  >
+                    <IconArrowBackUp size={14} />
+                  </TaskIconButton>
+                )}
+                {canEdit && (
+                  <TaskIconButton
+                    label={t('Edit')}
+                    isDisabled={isBusy}
+                    onClick={() => {
+                      setEditingCommentId(comment.id);
+                      setEditDraft(
+                        commentOverridesById[comment.id] ??
+                          readRichTextPlainValue(comment.bodyV2),
+                      );
+                    }}
+                  >
+                    <IconPencil size={14} />
+                  </TaskIconButton>
+                )}
+                {canDelete && (
+                  <TaskIconButton
+                    label={t('Delete')}
+                    isDanger
+                    isDisabled={isBusy}
+                    onClick={() => onDelete(comment.id)}
+                  >
+                    <IconTrash size={14} />
+                  </TaskIconButton>
+                )}
+                <TaskCommentReactions
+                  commentId={comment.id}
+                  reactions={reactions}
+                  membersById={membersById}
+                  currentMemberId={currentMemberId}
+                  canReact={canWrite && isPersisted && onReact !== undefined}
+                  onReact={onReact}
+                />
+
+                {delivery?.status === 'sending' && (
+                  <span
+                    role="status"
+                    style={{ fontSize: 11, color: TASK_TOKENS.textTertiary }}
+                  >
+                    {t('Sending…')}
+                  </span>
+                )}
+                {delivery?.status === 'failed' && (
+                  <>
+                    <span
+                      role="alert"
+                      style={{ fontSize: 11, color: TASK_TOKENS.textDanger }}
+                    >
+                      {delivery.error}
+                    </span>
+                    <TaskButton
+                      size="small"
+                      onClick={() => optimistic.retry(delivery)}
+                    >
+                      {t('Retry')}
+                    </TaskButton>
+                  </>
+                )}
+                {readMemberIds.length > 0 && (
+                  <span
+                    style={{ fontSize: 11, color: TASK_TOKENS.textTertiary }}
+                  >
+                    {t('Read by')}{' '}
+                    {readMemberIds
+                      .map((memberId) =>
+                        readMemberName(membersById, memberId, t('Unknown')),
+                      )
+                      .join(', ')}
+                  </span>
+                )}
+              </>
+            )
+          }
+          footer={
+            replyingToCommentId === comment.id ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  paddingTop: 6,
+                }}
+              >
+                <DiscussionComposer
+                  issueId={issueId}
+                  members={mentionMembers}
+                  parentCommentId={comment.id}
+                  onCreate={optimistic.create}
+                  showConfirmation={false}
+                  onDone={() => setReplyingToCommentId(null)}
+                />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <TaskButton
+                    size="small"
+                    onClick={() => setReplyingToCommentId(null)}
+                  >
+                    {t('Cancel')}
+                  </TaskButton>
+                </div>
+              </div>
+            ) : undefined
+          }
+        >
+          {isEditing ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
                 <TaskRichTextEditor
-                  value={replyDraft}
-                  onChange={setReplyDraft}
-                  placeholder={t('Write a reply…')}
-                  minHeight={COMPOSER_MIN_HEIGHT}
+                  value={editDraft}
+                  onChange={setEditDraft}
                   issueId={issueId}
                 />
               </div>
@@ -306,63 +399,39 @@ export const IssueCommentList = ({
                 <TaskButton
                   variant="primary"
                   size="small"
-                  isDisabled={isBusy || replyDraft.trim() === ''}
-                  onClick={() => submitReply(comment.id)}
+                  isDisabled={isBusy || editDraft.trim() === ''}
+                  onClick={() => {
+                    const markdown = editDraft.trim();
+
+                    setCommentOverridesById((previous) => ({
+                      ...previous,
+                      [comment.id]: markdown,
+                    }));
+                    onUpdate(comment.id, markdown);
+                    setEditingCommentId(null);
+                  }}
                 >
-                  {t('Reply')}
+                  {t('Save')}
                 </TaskButton>
                 <TaskButton
                   size="small"
-                  onClick={() => setReplyingToCommentId(null)}
+                  onClick={() => setEditingCommentId(null)}
                 >
                   {t('Cancel')}
                 </TaskButton>
               </div>
             </div>
-          ) : undefined
-        }
-      >
-        {isEditing ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-              <TaskRichTextEditor value={editDraft} onChange={setEditDraft} issueId={issueId} />
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <TaskButton
-                variant="primary"
-                size="small"
-                isDisabled={isBusy || editDraft.trim() === ''}
-                onClick={() => {
-                  const markdown = editDraft.trim();
-
-                  setCommentOverridesById((previous) => ({
-                    ...previous,
-                    [comment.id]: markdown,
-                  }));
-                  onUpdate(comment.id, markdown);
-                  setEditingCommentId(null);
-                }}
-              >
-                {t('Save')}
-              </TaskButton>
-              <TaskButton
-                size="small"
-                onClick={() => setEditingCommentId(null)}
-              >
-                {t('Cancel')}
-              </TaskButton>
-            </div>
-          </div>
-        ) : (
-          <TaskRichTextEditor
-            value={
-              commentOverridesById[comment.id] ??
-              readRichTextPlainValue(comment.bodyV2)
-            }
-            isReadOnly
-          />
-        )}
-      </TaskFeedItem>
+          ) : (
+            <TaskRichTextEditor
+              value={
+                commentOverridesById[comment.id] ??
+                readRichTextPlainValue(comment.bodyV2)
+              }
+              isReadOnly
+            />
+          )}
+        </TaskFeedItem>
+      </div>
     );
   };
 
@@ -375,19 +444,12 @@ export const IssueCommentList = ({
         padding: `0 ${FEED_INLINE_INSET}px`,
       }}
     >
-      {/* First, not last: the composer is the control people reach for most,
-          and at the bottom of a long thread it sits below the fold.
-          Stacked and indented to FEED_BODY_INDENT: the avatar is the byline of
-          what is about to be written, and the box lines up with the text of
-          every row beneath it instead of starting a column of its own. The
-          indent also leaves the block handles their strip, so the editor needs
-          no inset of its own. */}
       {canWrite && (
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
+            alignItems: 'flex-start',
+            gap: 12,
             padding: `0 ${ROW_INLINE_PADDING}px 8px`,
           }}
         >
@@ -400,9 +462,6 @@ export const IssueCommentList = ({
             }
             size={24}
           />
-          {/* The button is under the box, not beside it: beside it the box was
-              short by a button's width on every panel, and the two controls
-              fought for the same line the moment the text wrapped. */}
           <div
             style={{
               display: 'flex',
@@ -410,32 +469,19 @@ export const IssueCommentList = ({
               flexDirection: 'column',
               gap: 8,
               minWidth: 0,
-              paddingLeft: FEED_BODY_INDENT,
             }}
           >
-            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-              <TaskRichTextEditor
-                value={draft}
-                onChange={setDraft}
-                placeholder={t('Type a comment…')}
-                minHeight={COMPOSER_MIN_HEIGHT}
-                issueId={issueId}
-              />
-            </div>
-            <div style={{ display: 'flex' }}>
-              <TaskButton
-                variant="primary"
-                isDisabled={isBusy || draft.trim() === ''}
-                onClick={submitDraft}
-              >
-                {t('Comment')}
-              </TaskButton>
-            </div>
+            <DiscussionComposer
+              issueId={issueId}
+              members={mentionMembers}
+              onCreate={optimistic.create}
+              showConfirmation={false}
+            />
           </div>
         </div>
       )}
 
-      {comments.length === 0 ? (
+      {optimistic.comments.length === 0 ? (
         <TaskEmptyState
           icon={<IconMessage size={16} />}
           title={t('No comments yet')}
@@ -446,6 +492,7 @@ export const IssueCommentList = ({
           // one column instead of two widths stacked on each other.
           style={{
             margin: `0 ${ROW_INLINE_PADDING}px 0 ${ROW_INLINE_PADDING + FEED_BODY_INDENT}px`,
+            padding: 16,
           }}
         />
       ) : (

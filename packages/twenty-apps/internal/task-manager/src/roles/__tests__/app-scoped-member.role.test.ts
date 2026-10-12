@@ -15,9 +15,17 @@ import {
   SPRINT_OBJECT_UID,
   WORKLOG_OBJECT_UID,
 } from '../../constants/universal-identifiers';
+import {
+  ISSUE_REACTION_OBJECT_UID,
+  ISSUE_READ_STATE_OBJECT_UID,
+  ISSUE_NOTIFICATION_OBJECT_UID,
+} from '../../constants/discussion';
 import appScopedMemberRole from '../app-scoped-member.role';
 
 const OBJECT_UID_BY_NAME: Record<string, string> = {
+  issueReaction: ISSUE_REACTION_OBJECT_UID,
+  issueReadState: ISSUE_READ_STATE_OBJECT_UID,
+  issueNotification: ISSUE_NOTIFICATION_OBJECT_UID,
   project: PROJECT_OBJECT_UID,
   merchant: MERCHANT_OBJECT_UID,
   issue: ISSUE_OBJECT_UID,
@@ -59,6 +67,19 @@ describe('app-scoped member role', () => {
       ).toBe(true);
     },
   );
+
+  it('prevents members from changing provider connection identity directly', () => {
+    expect(
+      appScopedMemberRole.config.objectPermissions?.find(
+        (permission) =>
+          permission.objectUniversalIdentifier === REPOSITORY_OBJECT_UID,
+      ),
+    ).toMatchObject({
+      canReadObjectRecords: true,
+      canUpdateObjectRecords: false,
+      canSoftDeleteObjectRecords: false,
+    });
+  });
 
   it('scopes every predicate by the member scopedAppIds mirror', () => {
     for (const predicate of appScopedMemberRole.config

@@ -185,6 +185,7 @@ export const TaskFeedItem = ({
               alignItems: 'center',
               display: 'flex',
               gap: 4,
+              flexWrap: 'wrap',
               // Pulled left by the buttons' own inset so the first icon lines
               // up with the text above it rather than 4px to its right.
               marginLeft: -4,

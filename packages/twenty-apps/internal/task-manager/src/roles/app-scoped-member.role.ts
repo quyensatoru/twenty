@@ -1,6 +1,11 @@
 import {
+  TASK_AI_RUN_LOCK_OBJECT_UID,
+  ISSUE_TASK_AI_RUN_LOCKS_FIELD_UID,
+} from '../constants/task-ai-run-lock';
+import {
   defineRole,
   RowLevelPermissionPredicateOperand,
+  SystemPermissionFlag,
 } from 'twenty-sdk/define';
 
 import {
@@ -74,6 +79,18 @@ import {
 // `issueHistory` is written by triggers, never by members, but it still needs
 // the scoped write here: without an objectPermission row the predicate alone
 // decides nothing and the feed goes blank.
+import {
+  ISSUE_REACTION_OBJECT_UID,
+  ISSUE_READ_STATE_OBJECT_UID,
+  ISSUE_NOTIFICATION_OBJECT_UID,
+  ISSUE_REACTION_APP_FIELD_UID,
+  ISSUE_READ_STATE_APP_FIELD_UID,
+  ISSUE_NOTIFICATION_APP_FIELD_UID,
+  ISSUE_REACTION_APP_SCOPE_PREDICATE_UID,
+  ISSUE_READ_STATE_APP_SCOPE_PREDICATE_UID,
+  ISSUE_NOTIFICATION_APP_SCOPE_PREDICATE_UID,
+} from '../constants/discussion';
+
 const scopedWrite = {
   canReadObjectRecords: true,
   canUpdateObjectRecords: true,
@@ -116,7 +133,21 @@ export default defineRole({
   canUpdateAllObjectRecords: false,
   canSoftDeleteAllObjectRecords: false,
   canDestroyAllObjectRecords: false,
+  permissionFlagUniversalIdentifiers: [SystemPermissionFlag.AI],
   objectPermissions: [
+    // Private notifications and server-owned receipts are exposed only by scoped routes.
+    ...[
+      ISSUE_REACTION_OBJECT_UID,
+      ISSUE_READ_STATE_OBJECT_UID,
+      ISSUE_NOTIFICATION_OBJECT_UID,
+      TASK_AI_RUN_LOCK_OBJECT_UID,
+    ].map((objectUniversalIdentifier) => ({
+      objectUniversalIdentifier,
+      canReadObjectRecords: false,
+      canUpdateObjectRecords: false,
+      canSoftDeleteObjectRecords: false,
+      canDestroyObjectRecords: false,
+    })),
     { objectUniversalIdentifier: ISSUE_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: SPRINT_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: EPIC_OBJECT_UID, ...scopedWrite },
@@ -125,7 +156,13 @@ export default defineRole({
     { objectUniversalIdentifier: WORKLOG_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: ISSUE_MERCHANT_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: ISSUE_HISTORY_OBJECT_UID, ...scopedWrite },
-    { objectUniversalIdentifier: REPOSITORY_OBJECT_UID, ...scopedWrite },
+    {
+      objectUniversalIdentifier: REPOSITORY_OBJECT_UID,
+      canReadObjectRecords: true,
+      canUpdateObjectRecords: false,
+      canSoftDeleteObjectRecords: false,
+      canDestroyObjectRecords: false,
+    },
     { objectUniversalIdentifier: DEVELOPMENT_LINK_OBJECT_UID, ...scopedWrite },
     {
       objectUniversalIdentifier: DEVELOPMENT_DELIVERY_OBJECT_UID,
@@ -135,7 +172,32 @@ export default defineRole({
       canDestroyObjectRecords: false,
     },
   ],
+  fieldPermissions: [
+    {
+      objectUniversalIdentifier: ISSUE_OBJECT_UID,
+      fieldUniversalIdentifier: ISSUE_TASK_AI_RUN_LOCKS_FIELD_UID,
+      canReadFieldValue: false,
+      canUpdateFieldValue: false,
+    },
+  ],
   rowLevelPermissionPredicates: [
+    ...[
+      {
+        objectUniversalIdentifier: ISSUE_REACTION_OBJECT_UID,
+        fieldUniversalIdentifier: ISSUE_REACTION_APP_FIELD_UID,
+        universalIdentifier: ISSUE_REACTION_APP_SCOPE_PREDICATE_UID,
+      },
+      {
+        objectUniversalIdentifier: ISSUE_READ_STATE_OBJECT_UID,
+        fieldUniversalIdentifier: ISSUE_READ_STATE_APP_FIELD_UID,
+        universalIdentifier: ISSUE_READ_STATE_APP_SCOPE_PREDICATE_UID,
+      },
+      {
+        objectUniversalIdentifier: ISSUE_NOTIFICATION_OBJECT_UID,
+        fieldUniversalIdentifier: ISSUE_NOTIFICATION_APP_FIELD_UID,
+        universalIdentifier: ISSUE_NOTIFICATION_APP_SCOPE_PREDICATE_UID,
+      },
+    ].map(buildAppScopePredicate),
     buildAppScopePredicate({
       universalIdentifier: DEVELOPMENT_DELIVERY_APP_SCOPE_PREDICATE_UID,
       objectUniversalIdentifier: DEVELOPMENT_DELIVERY_OBJECT_UID,

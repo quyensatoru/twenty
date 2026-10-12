@@ -1,5 +1,10 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
 
+import {
+  ISSUE_COMMENT_MENTION_MEMBER_IDS_FIELD_UID,
+  ISSUE_COMMENT_REQUEST_ID_FIELD_UID,
+} from '../constants/discussion';
+
 import { getSystemFieldUniversalIdentifier } from '../constants/derived-system-field-identifiers';
 import {
   ISSUE_COMMENT_BODY_V2_FIELD_UID,
@@ -27,6 +32,22 @@ export default defineObject({
       name: 'id',
     }),
   fields: [
+    {
+      universalIdentifier: ISSUE_COMMENT_REQUEST_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'requestId',
+      label: 'Request Id',
+      icon: 'IconMessage',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: ISSUE_COMMENT_MENTION_MEMBER_IDS_FIELD_UID,
+      type: FieldType.ARRAY,
+      name: 'mentionMemberIds',
+      label: 'Mentioned members',
+      icon: 'IconAt',
+      isNullable: true,
+    },
     {
       universalIdentifier: ISSUE_COMMENT_BODY_V2_FIELD_UID,
       type: FieldType.RICH_TEXT,

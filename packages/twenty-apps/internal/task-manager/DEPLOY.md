@@ -778,3 +778,50 @@ yarn twenty app:uninstall --remote prod
 **Xoá luôn 12 object và toàn bộ dữ liệu** — project, issue, comment, worklog, sprint, epic, cả
 `merchant` và `app`. Với production đang chạy thì đây là lệnh huỷ dữ liệu, không phải lệnh gỡ cài
 đặt. `merchant-email-campaigns` cũng hỏng theo vì field của nó nằm trên `merchant`. Export trước.
+
+## 8. Thảo luận và AI trong task
+
+Toàn bộ tính năng nằm trong application Task Manager, dùng SDK/API hiện có; không cần thay đổi
+core. Apply application theo quy trình ở trên để tạo metadata cho reaction, read state,
+notification và AI run lock. Phần Activity có tab **Comments** và **Ask AI**; chuông thông báo
+ngay bên phải **Create issue** mở các task được mention hoặc nhận reply.
+
+Comments kiểm tra thay đổi mỗi 5 giây, thông báo mỗi 10 giây. Comment được tự đánh dấu đã đọc
+khi hiện trong vùng nhìn khoảng 2 giây. Mention chỉ chọn người đang có quyền đọc app; reply,
+reaction và gửi tin cần quyền write. Draft lỗi giữ lại nội dung và cùng request ID khi retry.
+Quyền bị thu hồi sẽ chặn route và xoá nội dung discussion khỏi panel sau lần kiểm tra tiếp theo.
+
+AI dùng endpoint `generate-text` có sẵn của Twenty, với vòng đọc context giới hạn trong
+application; không cần chọn hoặc cài harness ngoài. Workspace phải cấu hình AI provider và có
+credits/quota hợp lệ. Role runtime và Task Manager member cần quyền AI; nếu dùng role riêng,
+cấp quyền AI cho role đó. Code không tự cập nhật role riêng của workspace.
+
+Đặt server variable bí mật `TASK_AI_STORAGE_SECRET` thành 32 byte ngẫu nhiên dạng hex
+(64 ký tự); ví dụ tạo bằng `openssl rand -hex 32`, rồi lưu qua màn hình server variables.
+Giữ giá trị ổn định giữa các deployment: đổi secret sẽ làm lịch sử cũ không giải mã được.
+Discussion vẫn dùng được khi chưa đặt secret; AI từ chối chạy để tránh lưu lịch sử dạng rõ.
+
+AI đọc task, status, 30 comment gần nhất và development links. Toàn bộ repo GitHub/GitLab
+đang active và liên kết với project tự động có trong source, không cần chọn repo thủ công.
+AI đọc repo liên quan khi cần; mỗi repo dùng branch gắn với task (nếu có duy nhất một branch),
+hoặc default branch, rồi pin SHA khi bắt đầu đọc. Nếu project chưa có repo thì dùng context task.
+Mỗi lượt giới hạn 12 bước context, 20 file, 100 KB mỗi file và 200 KB source tổng cộng
+dùng chung cho toàn bộ repo. UI báo rõ khi workspace chưa cấu hình AI provider.
+Kết quả được yêu cầu có trích dẫn source; lịch sử riêng theo member và task được mã hoá trong app storage.
+**Preview comment** mở preview và chỉ tạo comment sau khi xác nhận. Cancel dừng vòng đọc
+ở bước kế tiếp; request model/provider đang chạy có thể tiếp tục tới khi trả về.
+
+Ask AI tự khởi tạo phiên khi mở tab, giữ phiên khi đổi tab; Enter gửi câu hỏi và Shift + Enter
+xuống dòng. Pipeline giữ từng event và lấy trạng thái mỗi 1,5 giây, bao gồm các bước ngắn;
+đây chưa phải stream token. Model hiện dùng tier Fast của workspace. Reaction cập nhật ngay
+trên UI và lưu nền; nút reaction mở bảng emoji, chỉ reaction đã có người thả hiện thành chip.
+
+Rollback code bằng `git revert <commit>` rồi deploy/apply lại phiên bản đó theo quy trình trên.
+Git revert không tự thay đổi application đã apply. Metadata/data mới đã tạo vẫn nằm trong workspace
+khi apply với `--no-delete`; không uninstall application hoặc xoá các object để rollback tính năng.
+
+Sau khi apply vào môi trường review, kiểm tra bằng hai member: mention/reply và reaction,
+retry không nhân đôi comment, ảnh trong discussion, read receipt và thông báo; thu hồi quyền
+app rồi kiểm tra mất quyền truy cập. Với AI, kiểm tra task-only, repo GitHub/GitLab, SHA/ref,
+hai request đồng thời, cancel, lịch sử riêng và preview chia sẻ. Build và unit tests không
+thay thế kiểm tra OAuth/provider thực tế này.

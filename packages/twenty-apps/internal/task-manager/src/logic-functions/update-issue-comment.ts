@@ -5,27 +5,30 @@ import { UPDATE_ISSUE_COMMENT_ROUTE_PATH } from '../constants/route-paths';
 import { UPDATE_ISSUE_COMMENT_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { canActOnIssueComment } from '../utils/can-act-on-issue-comment.util';
 import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
-import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
-import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
+import { readDiscussionBody } from './utils/discussion-storage.util';
+import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 
 type UpdateIssueCommentBody = {
   issueCommentId?: string;
   data?: Record<string, unknown>;
 };
 
-// Reassigning `issueId` is app-scope gated; editing the comment itself is
-// restricted to its author.
 const handler = async (event: RoutePayload<UpdateIssueCommentBody>) =>
   runScopedRoute(async ({ client, scope }) => {
     const issueCommentId = requireString(
       event.body?.issueCommentId,
       'issueCommentId',
     );
-    const data = event.body?.data ?? {};
+    const input = event.body?.data ?? {};
+    if (Object.keys(input).some((key) => key !== 'bodyV2'))
+      throw new Error('Only the message body can be edited.');
+    const data = {
+      bodyV2: buildRichTextValue(readDiscussionBody(input.bodyV2)),
+    };
 
     // Authorship outlives the grant that made the comment possible, so the
     // comment the caller is editing has to be in scope on its own.
@@ -36,23 +39,6 @@ const handler = async (event: RoutePayload<UpdateIssueCommentBody>) =>
       recordId: issueCommentId,
       operation: 'write',
     });
-
-    if (typeof data.issueId === 'string') {
-      await assertAppScopeWriteAccess({
-        client,
-        scope,
-        objectNameSingular: 'issueComment',
-        foreignKeyValue: data.issueId,
-      });
-
-      // Reparenting can move the record between apps, and the predicate
-      // reads the mirror, not the chain.
-      data.appId = await resolveEffectiveAppId({
-        client,
-        objectNameSingular: 'issueComment',
-        immediateForeignKeyValue: data.issueId,
-      });
-    }
 
     const authorId = await fetchRecordColumn(
       client,

@@ -16,18 +16,22 @@ import {
 import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { parseActivityAnchor } from '../utils/parse-activity-anchor.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
+import { useDiscussionState } from '../hooks/use-discussion-state';
+import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueHistoryList } from './issue-history-list';
 import { IssueWorklogList } from './issue-worklog-list';
+import { TaskButton } from './task-button';
 import { TaskMessage } from './task-message';
-import {
-  TaskSkeletonAvatarRow,
-  TaskSkeletonBar,
-} from './task-skeleton';
+import { TaskSkeletonAvatarRow, TaskSkeletonBar } from './task-skeleton';
 import { TaskStatusLine } from './task-status-line';
 import { TaskTabs } from './task-tabs';
 import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
-import { type MemberRow, useIssueDetail } from '../hooks/use-issue-detail';
+import {
+  type IssueCommentRow,
+  type MemberRow,
+  useIssueDetail,
+} from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
@@ -79,6 +83,7 @@ export const IssueActivity = () => {
   );
   const anchor = parseActivityAnchor(locationHash);
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
+  const discussion = useDiscussionState(issueId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   // The fork put comments and worklogs behind two tabs rather than stacking
@@ -90,7 +95,7 @@ export const IssueActivity = () => {
   // keeps whatever they switch to afterwards, and the hash does not change
   // under them while they read.
   const [activityTab, setActivityTab] = useState<
-    'comments' | 'worklogs' | 'history'
+    'comments' | 'worklogs' | 'history' | 'ai'
   >(anchor?.kind === 'worklog' ? 'worklogs' : 'comments');
 
   const membersById = useMemo(
@@ -117,6 +122,7 @@ export const IssueActivity = () => {
       await action();
       setActionError(null);
       await reload();
+      await discussion.reload();
     } catch (error) {
       setActionError(readErrorText(error));
     } finally {
@@ -146,6 +152,11 @@ export const IssueActivity = () => {
           />
           <TaskSkeletonBar
             width={92}
+            height={28}
+            radius={TASK_TOKENS.radiusSmall}
+          />
+          <TaskSkeletonBar
+            width={76}
             height={28}
             radius={TASK_TOKENS.radiusSmall}
           />
@@ -202,7 +213,9 @@ export const IssueActivity = () => {
             {
               value: 'comments',
               label: t('Comments'),
-              count: data.issueComments.length,
+              count:
+                discussion.snapshot?.comments.length ??
+                data.issueComments.length,
             },
             {
               value: 'worklogs',
@@ -213,96 +226,142 @@ export const IssueActivity = () => {
               value: 'history',
               label: t('History'),
             },
+            { value: 'ai', label: t('Ask AI') },
           ]}
         />
 
-        <TaskStatusLine text={actionError ?? loadError} tone="danger" />
+        <TaskStatusLine
+          text={actionError ?? discussion.error ?? loadError}
+          tone="danger"
+        />
       </div>
 
       {activityTab === 'comments' ? (
-      <IssueCommentList
-        issueId={issueId}
-        baseUrl={readRecordPageBaseUrl()}
-        comments={data.issueComments}
-        membersById={membersById}
-        currentMemberId={data.currentWorkspaceMemberId}
-        highlightedCommentId={anchor?.kind === 'comment' ? anchor.id : null}
-        canWrite={data.canWrite}
-        canSoftDelete={data.canSoftDelete}
-        isBusy={isBusy}
-        onCreate={(input) =>
-          void run(() =>
-            postAppRoute(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
-              issueId,
-              bodyV2: buildRichTextValue(input.markdown),
-              ...(input.parentCommentId === undefined
-                ? {}
-                : { parentCommentId: input.parentCommentId }),
-            }),
-          )
-        }
-        onUpdate={(commentId, markdown) =>
-          void run(() =>
-            postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
-              issueCommentId: commentId,
-              data: { bodyV2: buildRichTextValue(markdown) },
-            }),
-          )
-        }
-        onDelete={(commentId) =>
-          void run(() =>
-            postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
-              issueCommentId: commentId,
-            }),
-          )
-        }
-      />
+        <>
+          {discussion.snapshot?.nextCursor && (
+            <TaskButton
+              variant="ghost"
+              size="small"
+              onClick={() => void discussion.loadEarlier()}
+            >
+              {t('Load earlier comments')}
+            </TaskButton>
+          )}
+          <IssueCommentList
+            key={issueId}
+            issueId={issueId}
+            baseUrl={readRecordPageBaseUrl()}
+            comments={
+              discussion.isPermissionDenied
+                ? []
+                : (discussion.snapshot?.comments ?? data.issueComments)
+            }
+            membersById={membersById}
+            currentMemberId={
+              discussion.snapshot?.currentMemberId ??
+              data.currentWorkspaceMemberId
+            }
+            highlightedCommentId={anchor?.kind === 'comment' ? anchor.id : null}
+            canWrite={
+              !discussion.isPermissionDenied &&
+              (discussion.snapshot?.canWrite ?? data.canWrite)
+            }
+            canSoftDelete={
+              !discussion.isPermissionDenied &&
+              (discussion.snapshot?.canSoftDelete ?? data.canSoftDelete)
+            }
+            isBusy={isBusy}
+            mentionMembers={
+              discussion.snapshot?.members ?? data.assignableMembers
+            }
+            reactions={discussion.snapshot?.reactions}
+            readStates={discussion.snapshot?.readStates}
+            onReact={(commentId, emoji, active) =>
+              void discussion
+                .act('react', { commentId, emoji, active })
+                .catch(() => undefined)
+            }
+            onRead={(commentId) => discussion.act('read', { commentId })}
+            onCreate={async (input) => {
+              const result = await postAppRoute<{
+                issueComment: IssueCommentRow;
+              }>(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
+                issueId,
+                bodyV2: buildRichTextValue(input.markdown),
+                requestId: input.requestId,
+                mentionMemberIds: input.mentionMemberIds,
+                ...(input.parentCommentId === undefined
+                  ? {}
+                  : { parentCommentId: input.parentCommentId }),
+              });
+              void discussion.reload();
+              void reload();
+              return result.issueComment;
+            }}
+            onUpdate={(commentId, markdown) =>
+              void run(() =>
+                postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
+                  issueCommentId: commentId,
+                  data: { bodyV2: buildRichTextValue(markdown) },
+                }),
+              )
+            }
+            onDelete={(commentId) =>
+              void run(() =>
+                postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
+                  issueCommentId: commentId,
+                }),
+              )
+            }
+          />
+        </>
       ) : activityTab === 'worklogs' ? (
-      <IssueWorklogList
-        issueId={issueId}
-        baseUrl={readRecordPageBaseUrl()}
-        worklogs={data.worklogs}
-        membersById={membersById}
-        currentMemberId={data.currentWorkspaceMemberId}
-        highlightedWorklogId={anchor?.kind === 'worklog' ? anchor.id : null}
-        canWrite={data.canWrite}
-        canSoftDelete={data.canSoftDelete}
-        totalMinutes={data.issue.timeSpentMinutes}
-        originalEstimateMinutes={data.issue.originalEstimateMinutes}
-        isBusy={isBusy}
-        onCreate={(input) =>
-          void run(() =>
-            postAppRoute(CREATE_WORKLOG_ROUTE_PATH, {
-              issueId,
-              data: {
-                timeSpentMinutes: input.timeSpentMinutes,
-                description: input.description,
-                startedAt: input.startedAt,
-              },
-            }),
-          )
-        }
-        onUpdateDescription={(worklogId, description) =>
-          void run(() =>
-            postAppRoute(UPDATE_WORKLOG_ROUTE_PATH, {
-              worklogId,
-              data: { description },
-            }),
-          )
-        }
-        onDelete={(worklogId) =>
-          void run(() =>
-            postAppRoute(DELETE_WORKLOG_ROUTE_PATH, { worklogId }),
-          )
-        }
-      />
-      ) : (
-      <IssueHistoryList
-        histories={data.issueHistories}
-        membersById={membersById}
-        statusNameById={statusNameById}
-      />
-      )}
+        <IssueWorklogList
+          issueId={issueId}
+          baseUrl={readRecordPageBaseUrl()}
+          worklogs={data.worklogs}
+          membersById={membersById}
+          currentMemberId={data.currentWorkspaceMemberId}
+          highlightedWorklogId={anchor?.kind === 'worklog' ? anchor.id : null}
+          canWrite={data.canWrite}
+          canSoftDelete={data.canSoftDelete}
+          totalMinutes={data.issue.timeSpentMinutes}
+          originalEstimateMinutes={data.issue.originalEstimateMinutes}
+          isBusy={isBusy}
+          onCreate={(input) =>
+            void run(() =>
+              postAppRoute(CREATE_WORKLOG_ROUTE_PATH, {
+                issueId,
+                data: {
+                  timeSpentMinutes: input.timeSpentMinutes,
+                  description: input.description,
+                  startedAt: input.startedAt,
+                },
+              }),
+            )
+          }
+          onUpdateDescription={(worklogId, description) =>
+            void run(() =>
+              postAppRoute(UPDATE_WORKLOG_ROUTE_PATH, {
+                worklogId,
+                data: { description },
+              }),
+            )
+          }
+          onDelete={(worklogId) =>
+            void run(() =>
+              postAppRoute(DELETE_WORKLOG_ROUTE_PATH, { worklogId }),
+            )
+          }
+        />
+      ) : activityTab === 'history' ? (
+        <IssueHistoryList
+          histories={data.issueHistories}
+          membersById={membersById}
+          statusNameById={statusNameById}
+        />
+      ) : null}
+      <IssueAiActivityTab issueId={issueId} isActive={activityTab === 'ai'} />
     </ActivityFrame>
   );
 };

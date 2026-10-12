@@ -39,6 +39,7 @@ import { TaskBacklogView } from './components/task-backlog-view';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { NO_STATUS_VALUE, TaskBoardView } from './components/task-board-view';
+import { TaskDiscussionNotifications } from './components/task-discussion-notifications';
 import { TaskButton } from './components/task-button';
 import { TaskCompleteSprintDialog } from './components/task-complete-sprint-dialog';
 import { type EpicFilter, TaskEpicPanel } from './components/task-epic-panel';
@@ -328,8 +329,9 @@ const TaskBoard = () => {
   const assignIssueToEpic = async (issueId: string, epicId: string) => {
     setDraggingIssueId(null);
 
-    const parentId = board?.issues.find((issue) => issue.id === issueId)
-      ?.parentId;
+    const parentId = board?.issues.find(
+      (issue) => issue.id === issueId,
+    )?.parentId;
 
     try {
       await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
@@ -628,6 +630,7 @@ const TaskBoard = () => {
                 <IconPlus size={14} />
               </TaskButton>
             )}
+            {isMobile && <TaskDiscussionNotifications isCompact />}
           </div>
           <TaskIssueSearch
             value={search}
@@ -638,7 +641,14 @@ const TaskBoard = () => {
             size={isMobile ? 'medium' : 'large'}
             placeholder={t('Search issues by key or title…')}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             {!isMobile && board.canWrite && (
               <TaskButton
                 variant="primary"
@@ -649,6 +659,7 @@ const TaskBoard = () => {
                 {t('Create issue')}
               </TaskButton>
             )}
+            {!isMobile && <TaskDiscussionNotifications />}
           </div>
         </div>
         <div

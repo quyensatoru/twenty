@@ -24,6 +24,12 @@ export default defineApplication({
   // fills these in on the application registration; users then connect their
   // own git accounts under Settings → Applications → Task Manager.
   serverVariables: {
+    TASK_AI_STORAGE_SECRET: {
+      description:
+        '32-byte random hex secret for private Task AI history encryption. Keep stable across deployments.',
+      isSecret: true,
+      isRequired: false,
+    },
     GITHUB_CLIENT_ID: {
       description: 'OAuth client ID of the GitHub OAuth App.',
       isSecret: false,

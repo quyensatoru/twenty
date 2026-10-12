@@ -58,6 +58,11 @@ export const TaskBoardSkeleton = ({
               height={CONTROL_HEIGHT}
               radius={TASK_TOKENS.radiusSmall}
             />
+            <TaskSkeletonBar
+              width={CONTROL_HEIGHT}
+              height={CONTROL_HEIGHT}
+              radius={TASK_TOKENS.radiusSmall}
+            />
           </div>
           <TaskSkeletonBar height={36} radius={TASK_TOKENS.radiusSmall} />
         </>
@@ -84,7 +89,12 @@ export const TaskBoardSkeleton = ({
             />
           </div>
           <TaskSkeletonBar height={40} radius={TASK_TOKENS.radiusSmall} />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <TaskSkeletonBar
+              width={122}
+              height={CONTROL_HEIGHT}
+              radius={TASK_TOKENS.radiusSmall}
+            />
             <TaskSkeletonBar
               width={122}
               height={CONTROL_HEIGHT}
@@ -498,6 +508,11 @@ export const TaskBoardDetailSkeleton = ({
           />
           <TaskSkeletonBar
             width={92}
+            height={28}
+            radius={TASK_TOKENS.radiusSmall}
+          />
+          <TaskSkeletonBar
+            width={76}
             height={28}
             radius={TASK_TOKENS.radiusSmall}
           />
