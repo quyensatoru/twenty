@@ -714,7 +714,7 @@ CI API lỗi vẫn giữ các branch/PR/commit vừa sync và hiển thị lỗi
 Lần sync đầu có thể liên kết các issue của những commit cũ trong cửa sổ 100 commit này.
 Đây là backfill có giới hạn, không phải nhập toàn bộ lịch sử repository.
 
-Panel poll mỗi 5 giây, hiển thị job queued/running, lần sync thành công cuối, lỗi và issue keys
+Panel chỉ poll mỗi 5 giây khi có repository đang sync; ngoài lúc đó tải lại khi mở trang. Panel hiển thị job queued/running, lần sync thành công cuối, lỗi và issue keys
 không tìm thấy. Request của issue cũ không được ghi dữ liệu lên issue mới. Sau khi schema apply,
 kiểm tra bằng một branch có issue key, một draft PR/MR, pipeline pass/fail và deployment staging/
 production. Chưa có event deployment thì panel hiển thị chưa nhận deployment, không suy ra từ PR merged.
@@ -786,10 +786,12 @@ core. Apply application theo quy trình ở trên để tạo metadata cho react
 notification và AI run lock. Phần Activity có tab **Comments** và **Ask AI**; chuông thông báo
 ngay bên phải **Create issue** mở các task được mention hoặc nhận reply.
 
-Comments kiểm tra thay đổi mỗi 5 giây, thông báo mỗi 10 giây. Comment được tự đánh dấu đã đọc
+Comments và thông báo không poll định kỳ (mọi request dùng chung rate limit của app): tải khi mở
+trang, sau mỗi thao tác của mình, và thông báo tải lại khi bấm chuông; muốn thấy thay đổi của người
+khác thì reload trang. Comment được tự đánh dấu đã đọc
 khi hiện trong vùng nhìn khoảng 2 giây. Mention chỉ chọn người đang có quyền đọc app; reply,
 reaction và gửi tin cần quyền write. Draft lỗi giữ lại nội dung và cùng request ID khi retry.
-Quyền bị thu hồi sẽ chặn route và xoá nội dung discussion khỏi panel sau lần kiểm tra tiếp theo.
+Quyền bị thu hồi sẽ chặn route và xoá nội dung discussion khỏi panel ở lần tải tiếp theo.
 
 AI dùng endpoint `generate-text` có sẵn của Twenty, với vòng đọc context giới hạn trong
 application; không cần chọn hoặc cài harness ngoài. Workspace phải cấu hình AI provider và có

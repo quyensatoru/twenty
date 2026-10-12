@@ -116,8 +116,6 @@ export const useDiscussionState = (issueId: string | null) => {
     setError(null);
     loadedPageCount.current = 1;
     void reload();
-    const interval = setInterval(() => void reload(), 5000);
-    return () => clearInterval(interval);
   }, [reload]);
 
   const optimisticReactions = useOptimisticDiscussionReactions({

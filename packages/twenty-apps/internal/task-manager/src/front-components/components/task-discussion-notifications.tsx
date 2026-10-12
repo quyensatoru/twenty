@@ -49,8 +49,6 @@ export const TaskDiscussionNotifications = ({
   }, []);
   useEffect(() => {
     void reload();
-    const interval = setInterval(() => void reload(), 10000);
-    return () => clearInterval(interval);
   }, [reload]);
   return (
     <div style={{ position: 'relative' }}>
