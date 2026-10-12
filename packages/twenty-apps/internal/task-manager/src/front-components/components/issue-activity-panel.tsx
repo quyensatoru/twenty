@@ -17,6 +17,7 @@ import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util'
 import { parseActivityAnchor } from '../utils/parse-activity-anchor.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
 import { useDiscussionState } from '../hooks/use-discussion-state';
+import { buildMembersById } from '../utils/build-members-by-id.util';
 import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueHistoryList } from './issue-history-list';
@@ -29,7 +30,6 @@ import { TaskTabs } from './task-tabs';
 import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import {
   type IssueCommentRow,
-  type MemberRow,
   useIssueDetail,
 } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
@@ -99,8 +99,8 @@ export const IssueActivity = () => {
   >(anchor?.kind === 'worklog' ? 'worklogs' : 'comments');
 
   const membersById = useMemo(
-    () => new Map<string, MemberRow>(data.members.map((m) => [m.id, m])),
-    [data.members],
+    () => buildMembersById(data.members, discussion.snapshot?.members),
+    [data.members, discussion.snapshot?.members],
   );
 
   const statusNameById = useMemo(() => {

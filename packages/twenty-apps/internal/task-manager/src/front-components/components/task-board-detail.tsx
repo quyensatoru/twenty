@@ -32,7 +32,6 @@ import { useHiddenDetailFields } from '../hooks/use-hidden-detail-fields';
 import { useIsMobile } from '../hooks/use-is-mobile';
 import {
   type IssueCommentRow,
-  type MemberRow,
   useIssueDetail,
 } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
@@ -40,6 +39,7 @@ import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
 import { useDiscussionState } from '../hooks/use-discussion-state';
+import { buildMembersById } from '../utils/build-members-by-id.util';
 import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueDetailsPanel } from './issue-details-panel';
@@ -162,11 +162,8 @@ export const TaskBoardDetail = ({
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
 
   const membersById = useMemo(
-    () =>
-      new Map<string, MemberRow>(
-        data.members.map((member) => [member.id, member]),
-      ),
-    [data.members],
+    () => buildMembersById(data.members, discussion.snapshot?.members),
+    [data.members, discussion.snapshot?.members],
   );
 
   // Rows the link search must never offer: the issue itself, its current
