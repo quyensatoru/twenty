@@ -121,8 +121,56 @@ describe('private task code advice', () => {
         }),
       },
     });
-    expect(await post(body)).toMatchObject({ success: false });
+    expect(await post(body)).toMatchObject({ success: true });
     expect(runtime.open).not.toHaveBeenCalled();
+    expect(runtime.runAgent.mock.calls[1][0].input).toContain(
+      'repositoryId must be an id from the project repository catalogue',
+    );
+  });
+  it('asks the model again after an unreadable reply', async () => {
+    runtime.runAgent.mockResolvedValueOnce({
+      success: true,
+      status: 'INVALID_REPLY',
+      error: 'The AI reply was not a valid JSON operation.',
+      result: null,
+    });
+    expect(await post(body)).toMatchObject({
+      success: true,
+      answer: 'Advice',
+    });
+    expect(runtime.runAgent.mock.calls[1][0].input).toContain(
+      'could not be parsed',
+    );
+  });
+  it('fails with a clear message when the model keeps replying unreadably', async () => {
+    runtime.runAgent.mockResolvedValue({
+      success: true,
+      status: 'INVALID_REPLY',
+      error: 'The AI reply was not a valid JSON operation.',
+      result: null,
+    });
+    expect(await post(body)).toMatchObject({
+      success: false,
+      error: expect.stringContaining('unreadable replies'),
+    });
+    expect(runtime.runAgent).toHaveBeenCalledTimes(3);
+  });
+  it('hands a failed read back to the model instead of failing the turn', async () => {
+    runtime.runAgent.mockResolvedValueOnce({
+      success: true,
+      status: 'COMPLETED',
+      result: { operation: 'file', argument: 'missing.ts' },
+    });
+    runtime.open.mockResolvedValueOnce({
+      commit: 'a'.repeat(40),
+      execute: async () => {
+        throw new Error('File is missing or exceeds 100 KB.');
+      },
+    });
+    expect(await post(body)).toMatchObject({ success: true });
+    expect(runtime.runAgent.mock.calls[1][0].input).toContain(
+      'Read-only operation failed for repository org/repo: File is missing',
+    );
   });
   it('inspects both project repositories automatically with one shared budget', async () => {
     const repositories = [

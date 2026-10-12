@@ -25,6 +25,7 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import { runTaskAiAgent } from '../utils/task-ai-agent.util';
 import {
   TASK_AI_LOGIC_FUNCTION_UID,
+  TASK_AI_MAX_INVALID_REPLIES,
   TASK_AI_ROUTE_PATH,
 } from '../constants/task-ai';
 import {
@@ -320,6 +321,7 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           `Private prior conversation (not current repository evidence): ${JSON.stringify(history)}`,
           input,
         ];
+        let invalidReplyCount = 0;
         for (let step = 0; step < 12; step++) {
           if (
             new TextEncoder().encode(turnMessages.join('\n')).byteLength >
@@ -335,6 +337,17 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
             input: turnMessages.join('\n\n'),
           });
           await assertNotCancelled();
+          if (result.success && result.status === 'INVALID_REPLY') {
+            invalidReplyCount += 1;
+            if (invalidReplyCount > TASK_AI_MAX_INVALID_REPLIES)
+              throw new Error(
+                'The AI model kept returning unreadable replies. Try again, or pick another Fast model in Settings → AI.',
+              );
+            turnMessages.push(
+              'Your previous reply could not be parsed. Reply again with only the JSON object {"operation":"...","argument":"..."}.',
+            );
+            continue;
+          }
           if (!result.success || result.status !== 'COMPLETED')
             throw new Error(
               result.error ?? 'The AI run did not complete. Please try again.',
@@ -373,10 +386,16 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
             repositories.length === 1 ? repositories[0].id : '';
           let argument = response.argument;
           if (argument.trim().startsWith('{')) {
-            const requested = JSON.parse(argument) as {
-              repositoryId?: unknown;
-              argument?: unknown;
-            };
+            let requested: { repositoryId?: unknown; argument?: unknown };
+            try {
+              requested = JSON.parse(argument);
+            } catch {
+              turnMessages.push(
+                `Requested read operation: ${JSON.stringify(response)}`,
+                'Read-only operation failed: argument is not valid JSON. Send a JSON string with repositoryId and argument.',
+              );
+              continue;
+            }
             if (
               typeof requested.repositoryId === 'string' &&
               typeof requested.argument === 'string'
@@ -388,10 +407,13 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           const repository = repositories.find(
             (candidate) => candidate.id === repositoryId,
           );
-          if (!repository)
-            throw new Error(
-              'Repository operations must target an active repository linked to this issue’s project.',
+          if (!repository) {
+            turnMessages.push(
+              `Requested read operation: ${JSON.stringify(response)}`,
+              'Read-only operation failed: repositoryId must be an id from the project repository catalogue.',
             );
+            continue;
+          }
           if (!['tree', 'file', 'search', 'diff'].includes(response.operation))
             throw new Error('Unsupported repository operation.');
           await assertCurrentAccess();
@@ -419,7 +441,13 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           turnMessages.push(
             `Requested read operation: ${JSON.stringify(response)}`,
           );
-          input = `Read-only operation result for repository ${repository.slug}, SHA ${context.commit}: ${await context.execute(response.operation, argument)}`;
+          // A missing path or an exhausted read budget is something the model
+          // can work around, so it gets the error instead of the turn failing.
+          try {
+            input = `Read-only operation result for repository ${repository.slug}, SHA ${context.commit}: ${await context.execute(response.operation, argument)}`;
+          } catch (error) {
+            input = `Read-only operation failed for repository ${repository.slug}: ${error instanceof Error ? error.message : 'unknown error'}`;
+          }
           turnMessages.push(input);
           await assertNotCancelled();
         }
