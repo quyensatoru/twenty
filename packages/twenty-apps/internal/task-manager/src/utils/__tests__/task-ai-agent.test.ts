@@ -95,3 +95,26 @@ describe('tool-free provider adapter', () => {
     );
   });
 });
+
+describe('read requests sent in a loose shape', () => {
+  it('turns an object argument into the JSON string the loop expects', async () => {
+    runtime.post.mockResolvedValue({
+      text: JSON.stringify({
+        operation: 'search',
+        argument: { repositoryId: 'repo-1', argument: { query: 'parse' } },
+      }),
+    });
+    const result = await runTaskAiAgent({ input: 'Question' });
+    expect(JSON.parse(result.result!.argument)).toEqual({
+      repositoryId: 'repo-1',
+      argument: { query: 'parse' },
+    });
+  });
+  it('treats a missing argument as the repository root', async () => {
+    runtime.post.mockResolvedValue({ text: '{"operation":"tree"}' });
+    expect(await runTaskAiAgent({ input: 'Question' })).toMatchObject({
+      status: 'COMPLETED',
+      result: { operation: 'tree', argument: '' },
+    });
+  });
+});

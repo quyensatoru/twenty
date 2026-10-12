@@ -87,6 +87,13 @@ describe('bounded repository reader', () => {
       nextOffset: null,
     });
   });
+  it('searches with the bare text when the model skips the JSON request', async () => {
+    const reader = await openTaskAiRepository(repository, 'main');
+    const result = JSON.parse(await reader.execute('search', 'foo'));
+    expect(result).toMatchObject({
+      matches: [{ path: 'src/a.ts', line: 1, text: 'const foo = 1;' }],
+    });
+  });
   it('refuses a different connection provider before making git requests', async () => {
     runtime.connection.mockResolvedValue({
       providerName: 'gitlab',

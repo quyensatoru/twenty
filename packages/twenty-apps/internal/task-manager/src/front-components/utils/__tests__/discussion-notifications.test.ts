@@ -48,10 +48,12 @@ describe('discussion notifications', () => {
     const user = userEvent.setup();
     post.mockResolvedValue({
       success: true,
-      notifications: [{
-        ...notification,
-        body: '[@Alice Smith](#task-mention-alice) please check this',
-      }],
+      notifications: [
+        {
+          ...notification,
+          body: '[@Alice Smith](/task-mention/alice) please check this',
+        },
+      ],
       unreadCount: 1,
     });
     await act(async () =>

@@ -179,11 +179,17 @@ export const openTaskAiRepository = async (
         });
       }
       if (operation === 'search') {
-        const request = JSON.parse(argument) as {
-          query?: unknown;
-          prefix?: unknown;
-          offset?: unknown;
-        };
+        // Models often send the bare search text instead of the JSON request.
+        let request: { query?: unknown; prefix?: unknown; offset?: unknown };
+        try {
+          const parsed: unknown = JSON.parse(argument);
+          request =
+            typeof parsed === 'object' && parsed !== null
+              ? parsed
+              : { query: String(parsed) };
+        } catch {
+          request = { query: argument };
+        }
         if (
           typeof request.query !== 'string' ||
           !request.query.trim() ||

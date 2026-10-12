@@ -89,9 +89,7 @@ export const runTaskAiAgent = async ({ input }: { input: string }) => {
   if (
     !isObject(result) ||
     !('operation' in result) ||
-    !('argument' in result) ||
-    !isString(result.operation) ||
-    !isString(result.argument)
+    !isString(result.operation)
   ) {
     return {
       success: true,
@@ -105,10 +103,18 @@ export const runTaskAiAgent = async ({ input }: { input: string }) => {
       'The AI returned an invalid read-only response. Ask again.',
     );
   }
+  // A read request sent as an object instead of a JSON string still says
+  // exactly what to read.
+  const rawArgument = 'argument' in result ? result.argument : undefined;
+  const argument = isString(rawArgument)
+    ? rawArgument
+    : rawArgument == null
+      ? ''
+      : JSON.stringify(rawArgument);
   return {
     success: true,
     status: 'COMPLETED',
     error: null,
-    result: { operation: result.operation, argument: result.argument },
+    result: { operation: result.operation, argument },
   };
 };

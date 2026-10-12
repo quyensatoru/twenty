@@ -46,7 +46,7 @@ describe('rich text preview', () => {
 
   it('highlights a member mention separately from the text typed after it', async () => {
     await renderPreview(
-      '[@Alice Smith](#task-mention-alice) please check this',
+      '[@Alice Smith](/task-mention/alice) please check this',
     );
     const mention = getByText(container, '@Alice Smith');
     expect(mention.style.backgroundColor).not.toBe('');

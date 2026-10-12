@@ -64,7 +64,7 @@ describe('discussion composer', () => {
     );
     expect(queryByRole(container, 'listbox')).toBeNull();
     expect((getByRole(container, 'textbox') as HTMLTextAreaElement).value).toBe(
-      '[@Alice Smith](#task-mention-alice) please check this',
+      '[@Alice Smith](/task-mention/alice) please check this',
     );
     await act(async () => user.type(getByRole(container, 'textbox'), ' @'));
     getByRole(container, 'listbox');
@@ -75,7 +75,7 @@ describe('discussion composer', () => {
       fireEvent.change(getByRole(container, 'textbox'), {
         target: {
           value:
-            '[@Alice Smith](#task-mention-alice)\n\nplease check this [@Bob](#task-mention-bob) \n\n',
+            '[@Alice Smith](/task-mention/alice)\n\nplease check this [@Bob](/task-mention/bob) \n\n',
         },
       }),
     );
@@ -87,7 +87,7 @@ describe('discussion composer', () => {
     );
     expect(create.mock.calls[0][0]).toMatchObject({
       markdown:
-        '[@Alice Smith](#task-mention-alice)\n\nplease check this [@Bob](#task-mention-bob) \n\n too',
+        '[@Alice Smith](/task-mention/alice)\n\nplease check this [@Bob](/task-mention/bob) \n\n too',
       mentionMemberIds: ['alice', 'bob'],
     });
   });
@@ -153,7 +153,7 @@ describe('discussion composer', () => {
     );
     expect(create.mock.calls[0][0].mentionMemberIds).toEqual(['alice']);
     expect(create.mock.calls[0][0].markdown).toBe(
-      'Hi [@Alice](#task-mention-alice)',
+      'Hi [@Alice](/task-mention/alice)',
     );
   });
   it('recognizes a mention in markdown with trailing paragraph newlines', async () => {
@@ -181,7 +181,7 @@ describe('discussion composer', () => {
       user.click(getByRole(container, 'button', { name: 'Comment' })),
     );
     expect(create.mock.calls[0][0]).toMatchObject({
-      markdown: 'Hi [@Alice](#task-mention-alice)',
+      markdown: 'Hi [@Alice](/task-mention/alice)',
       mentionMemberIds: ['alice'],
     });
   });
@@ -237,7 +237,7 @@ describe('discussion composer', () => {
       user.click(getByRole(container, 'button', { name: 'Comment' })),
     );
     expect(create.mock.calls[0][0]).toMatchObject({
-      markdown: 'Hi [@Alex](#task-mention-bob)',
+      markdown: 'Hi [@Alex](/task-mention/bob)',
       mentionMemberIds: ['bob'],
     });
   });

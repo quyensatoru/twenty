@@ -396,12 +396,16 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
               );
               continue;
             }
-            if (
-              typeof requested.repositoryId === 'string' &&
-              typeof requested.argument === 'string'
-            ) {
+            // Models send the nested read argument (a search request, mostly)
+            // as an object or leave it out for the repository root.
+            if (typeof requested.repositoryId === 'string') {
               repositoryId = requested.repositoryId;
-              argument = requested.argument;
+              argument =
+                typeof requested.argument === 'string'
+                  ? requested.argument
+                  : requested.argument == null
+                    ? ''
+                    : JSON.stringify(requested.argument);
             }
           }
           const repository = repositories.find(
