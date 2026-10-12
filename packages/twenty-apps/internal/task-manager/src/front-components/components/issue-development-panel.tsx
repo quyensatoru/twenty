@@ -42,6 +42,7 @@ import { TaskSkeletonBar } from './task-skeleton';
 import { TaskStatusLine } from './task-status-line';
 import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import {
+  isRepositorySyncing,
   useDevelopment,
   type DevelopmentLinkRow,
 } from '../hooks/use-development';
@@ -559,13 +560,7 @@ export const IssueDevelopment = () => {
           }
         >
           {data.repositories.map((repo, index) => {
-            const isSyncing = [
-              'ACTIVE',
-              'WAITING',
-              'DELAYED',
-              'PRIORITIZED',
-              'WAITING_CHILDREN',
-            ].includes(repo.syncState ?? '');
+            const isSyncing = isRepositorySyncing(repo);
             const errors = [
               ...new Set(
                 [repo.syncError, repo.webhookError, repo.liveSyncError].filter(

@@ -60,7 +60,22 @@ const EMPTY_DEVELOPMENT: DevelopmentData = {
   canWrite: false,
   applicationId: null,
 };
-const POLL_INTERVAL_MS = 5000;
+// Every refresh costs about ten API requests against the app's shared
+// per-minute budget and each open issue would poll on its own, so the panel
+// only polls while a repository sync is running.
+const SYNCING_POLL_INTERVAL_MS = 5000;
+
+export const IN_PROGRESS_SYNC_STATES = [
+  'ACTIVE',
+  'WAITING',
+  'DELAYED',
+  'PRIORITIZED',
+  'WAITING_CHILDREN',
+];
+
+export const isRepositorySyncing = (
+  repository: DevelopmentRepositoryRow,
+): boolean => IN_PROGRESS_SYNC_STATES.includes(repository.syncState ?? '');
 
 // The route owns the row shape; ids guard against an absent collection on older installs.
 const readRows = <TRow extends { id: string }>(value: unknown): TRow[] =>
@@ -79,6 +94,7 @@ export const useDevelopment = (issueId: string | null) => {
     loaded: boolean;
   }>({ issueId: null, data: EMPTY_DEVELOPMENT, error: null, loaded: false });
   const requestNumber = useRef(0);
+  const hasSyncInProgress = useRef(false);
   const activeIssueId = useRef(issueId);
   activeIssueId.current = issueId;
 
@@ -100,6 +116,10 @@ export const useDevelopment = (issueId: string | null) => {
         success: true;
       }>(DEVELOPMENT_LINKS_ROUTE_PATH, { issueId });
       if (!isCurrent()) return;
+      const repositories = readRows<DevelopmentRepositoryRow>(
+        result.repositories,
+      );
+      hasSyncInProgress.current = repositories.some(isRepositorySyncing);
       setSnapshot({
         issueId,
         error: null,
@@ -109,7 +129,7 @@ export const useDevelopment = (issueId: string | null) => {
           projectId: result.issue?.projectId ?? null,
           links: readRows<DevelopmentLinkRow>(result.links),
           deliveries: readRows<DevelopmentDeliveryRow>(result.deliveries),
-          repositories: readRows<DevelopmentRepositoryRow>(result.repositories),
+          repositories,
           connections: readRows<DevelopmentConnectionRow>(result.connections),
           canWrite: result.canWrite === true,
           applicationId:
@@ -119,7 +139,7 @@ export const useDevelopment = (issueId: string | null) => {
         },
       });
     } catch (error) {
-      if (isCurrent())
+      if (isCurrent()) {
         setSnapshot((previous) => ({
           issueId,
           error: readErrorText(error),
@@ -127,17 +147,24 @@ export const useDevelopment = (issueId: string | null) => {
           data:
             previous.issueId === issueId ? previous.data : EMPTY_DEVELOPMENT,
         }));
+      }
     }
   }, [issueId]);
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      await reload();
-      if (!cancelled) timer = setTimeout(() => void poll(), POLL_INTERVAL_MS);
+    const schedulePoll = () => {
+      timer = setTimeout(() => void poll(), SYNCING_POLL_INTERVAL_MS);
     };
-    void poll();
+    const poll = async () => {
+      if (hasSyncInProgress.current) await reload();
+      if (!cancelled) schedulePoll();
+    };
+    hasSyncInProgress.current = false;
+    void reload().then(() => {
+      if (!cancelled) schedulePoll();
+    });
     return () => {
       cancelled = true;
       clearTimeout(timer);

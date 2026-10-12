@@ -40,12 +40,13 @@ afterEach(async () => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-const reply = (issueKey: string) => ({
+const reply = (issueKey: string, syncState: string | null = null) => ({
   success: true,
   issue: { issueKey, projectId: 'project-1' },
   links: [],
   deliveries: [],
-  repositories: [],
+  repositories:
+    syncState === null ? [] : [{ id: 'repo-1', isActive: true, syncState }],
   connections: [],
 });
 
@@ -70,12 +71,20 @@ describe('development panel loading', () => {
     await act(async () =>
       root.render(createElement(Probe, { issueId: 'issue-1' })),
     );
-    await act(async () => responses[0](reply('PROJ-1')));
+    await act(async () => responses[0](reply('PROJ-1', 'WAITING')));
     await act(async () => vi.advanceTimersByTimeAsync(5000));
     expect(responses).toHaveLength(2);
     await act(async () => responses[1](reply('PROJ-1 updated')));
     expect(container.querySelector('[role="status"]')?.textContent).toBe(
       'PROJ-1 updated',
     );
+  });
+  it('does not refresh on its own while no sync is running', async () => {
+    await act(async () =>
+      root.render(createElement(Probe, { issueId: 'issue-1' })),
+    );
+    await act(async () => responses[0](reply('PROJ-1')));
+    await act(async () => vi.advanceTimersByTimeAsync(10 * 60 * 1000));
+    expect(responses).toHaveLength(1);
   });
 });
