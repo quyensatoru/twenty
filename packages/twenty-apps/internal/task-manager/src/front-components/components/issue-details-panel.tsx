@@ -8,6 +8,7 @@ import {
   IconHierarchy2,
   IconKey,
   IconListDetails,
+  IconMessage,
   IconNumber,
   IconPencil,
   IconProgressCheck,
@@ -30,8 +31,10 @@ import {
 import { type IssueRow } from '../../types/task-manager-rows';
 import { formatMinutes } from '../../utils/format-minutes.util';
 import { type IssueDetail, type MemberRow } from '../hooks/use-issue-detail';
+import { useIssueCrispConversations } from '../hooks/use-issue-crisp-conversations';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskButton } from './task-button';
+import { TaskCrispConversationsField } from './task-crisp-conversations-field';
 import { DetailReadButton, LabelPicker } from './task-detail-controls';
 import { TaskDueDatePicker } from './task-due-date-picker';
 import { TaskFieldsMenu } from './task-fields-menu';
@@ -158,6 +161,7 @@ export const IssueDetailsPanel = ({
   const [estimateDraft, setEstimateDraft] = useState<string | null>(null);
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
+  const crispConversations = useIssueCrispConversations(issue.id);
 
   const isReadOnly = !detail.canWrite;
   // A subtask is planned wherever its parent is, as in Jira: its sprint and
@@ -599,6 +603,19 @@ export const IssueDetailsPanel = ({
               // The junction is reconciled to exactly this list by
               // linkIssueMerchants, so the whole set goes every time.
               onChange={(merchantIds) => onUpdate({ merchantIds })}
+            />
+          </TaskFieldRow>
+        )}
+        {crispConversations.length > 0 && (
+          <TaskFieldRow label={t('Conversations')} Icon={IconMessage}>
+            <TaskCrispConversationsField
+              conversations={crispConversations}
+              onOpenConversation={
+                onOpenRecord === undefined
+                  ? undefined
+                  : (conversationId) =>
+                      onOpenRecord('crispConversation', conversationId)
+              }
             />
           </TaskFieldRow>
         )}

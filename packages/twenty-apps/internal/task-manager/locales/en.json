@@ -844,5 +844,10 @@
     "Worklogs": "Worklogs"
   },
   "Card view": "Card view",
-  "Cards": "Cards"
+  "Cards": "Cards",
+  "Conversations": "Conversations",
+  "Open conversation": "Open conversation",
+  "Visitor": "Visitor",
+  "Resolved": "Resolved",
+  "Waiting for reply": "Waiting for reply"
 }

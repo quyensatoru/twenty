@@ -844,5 +844,10 @@
     "Worklogs": "Ghi nhận thời gian"
   },
   "Card view": "Chế độ thẻ",
-  "Cards": "Thẻ"
+  "Cards": "Thẻ",
+  "Conversations": "Hội thoại",
+  "Open conversation": "Mở hội thoại",
+  "Visitor": "Khách",
+  "Resolved": "Đã xử lý",
+  "Waiting for reply": "Đang chờ trả lời"
 }
