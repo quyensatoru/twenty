@@ -20,6 +20,8 @@ import {
   ISSUE_READ_STATE_OBJECT_UID,
   ISSUE_NOTIFICATION_OBJECT_UID,
 } from '../../constants/discussion';
+import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../../constants/task-personal-board';
+import appRuntimeRole from '../app-runtime.role';
 import appScopedMemberRole from '../app-scoped-member.role';
 
 const OBJECT_UID_BY_NAME: Record<string, string> = {
@@ -78,6 +80,32 @@ describe('app-scoped member role', () => {
       canReadObjectRecords: true,
       canUpdateObjectRecords: false,
       canSoftDeleteObjectRecords: false,
+    });
+  });
+
+  it('keeps personal planning accessible only through the scoped application routes', () => {
+    expect(
+      appScopedMemberRole.config.objectPermissions?.find(
+        (permission) =>
+          permission.objectUniversalIdentifier ===
+          TASK_PERSONAL_BOARD_OBJECT_UID,
+      ),
+    ).toMatchObject({
+      canReadObjectRecords: false,
+      canUpdateObjectRecords: false,
+      canSoftDeleteObjectRecords: false,
+      canDestroyObjectRecords: false,
+    });
+    expect(
+      appRuntimeRole.config.objectPermissions?.find(
+        (permission) =>
+          permission.objectUniversalIdentifier ===
+          TASK_PERSONAL_BOARD_OBJECT_UID,
+      ),
+    ).toMatchObject({
+      canReadObjectRecords: true,
+      canUpdateObjectRecords: true,
+      canDestroyObjectRecords: false,
     });
   });
 

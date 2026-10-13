@@ -1,3 +1,4 @@
+import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../constants/task-personal-board';
 import { TASK_AI_RUN_LOCK_OBJECT_UID } from '../constants/task-ai-run-lock';
 import {
   defineApplicationRole,
@@ -87,6 +88,7 @@ export default defineApplicationRole({
       ISSUE_READ_STATE_OBJECT_UID,
       ISSUE_NOTIFICATION_OBJECT_UID,
       TASK_AI_RUN_LOCK_OBJECT_UID,
+      TASK_PERSONAL_BOARD_OBJECT_UID,
     ].map((objectUniversalIdentifier) => ({
       objectUniversalIdentifier,
       ...readWriteDelete,

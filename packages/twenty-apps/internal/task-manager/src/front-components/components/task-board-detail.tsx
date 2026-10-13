@@ -67,6 +67,7 @@ import { TaskTextInput } from './task-text-input';
 import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 type TaskBoardDetailProps = {
+  presentation?: 'modal' | 'drawer';
   issueId: string;
   // Flat board order, so the drawer can step to the previous / next card the
   // way the Jira issue modal does.
@@ -89,6 +90,7 @@ type TaskBoardDetailProps = {
 // same ones the record page uses — so app-scope stays enforced and worklog
 // time-tracking keeps recomputing.
 export const TaskBoardDetail = ({
+  presentation = 'modal',
   issueId,
   navIssueIds,
   onSelectIssue,
@@ -277,6 +279,7 @@ export const TaskBoardDetail = ({
         onClose={onClose}
         focusKey={issueId}
         isMobile={isMobile}
+        presentation={presentation}
       >
         <TaskBoardDetailSkeleton isMobile={isMobile} />
       </TaskBoardDetailFrame>
@@ -289,6 +292,7 @@ export const TaskBoardDetail = ({
         onClose={onClose}
         focusKey={issueId}
         isMobile={isMobile}
+        presentation={presentation}
       >
         <TaskMessage
           text={loadError ?? t('This issue is not available to you.')}
@@ -483,6 +487,7 @@ export const TaskBoardDetail = ({
       onClose={onClose}
       focusKey={issueId}
       isMobile={isMobile}
+      presentation={presentation}
     >
       <div
         style={{
@@ -1011,11 +1016,13 @@ export const TaskBoardDetail = ({
 // carries no height of its own, so percentage heights have nothing to resolve
 // against. unitless numbers stay for the icon-sized boxes only.
 const TaskBoardDetailFrame = ({
+  presentation = 'modal',
   children,
   onClose,
   focusKey,
   isMobile,
 }: {
+  presentation?: 'modal' | 'drawer';
   children: React.ReactNode;
   onClose: () => void;
   focusKey: string;
@@ -1038,8 +1045,8 @@ const TaskBoardDetailFrame = ({
         alignItems: 'center',
         display: 'flex',
         inset: 0,
-        justifyContent: 'center',
-        padding: isMobile ? 0 : 32,
+        justifyContent: presentation === 'drawer' ? 'flex-end' : 'center',
+        padding: isMobile || presentation === 'drawer' ? 0 : 32,
         position: 'fixed',
         zIndex: 60,
       }}
@@ -1071,17 +1078,24 @@ const TaskBoardDetailFrame = ({
         style={{
           background: TASK_TOKENS.background,
           border: `1px solid ${TASK_TOKENS.borderLight}`,
-          borderRadius: isMobile ? 0 : 12,
+          borderRadius: isMobile || presentation === 'drawer' ? 0 : 12,
           boxShadow: TASK_TOKENS.shadowStrong,
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
           fontFamily: TASK_TOKENS.fontFamily,
-          height: isMobile ? '100%' : 'min(860px, calc(100vh - 64px))',
+          height:
+            isMobile || presentation === 'drawer'
+              ? '100vh'
+              : 'min(860px, calc(100vh - 64px))',
           maxWidth: '100%',
           minHeight: 0,
           position: 'relative',
-          width: isMobile ? '100%' : 'min(1280px, calc(100vw - 48px))',
+          width: isMobile
+            ? '100%'
+            : presentation === 'drawer'
+              ? 'min(920px, calc(100vw - 120px))'
+              : 'min(1280px, calc(100vw - 48px))',
           zIndex: 61,
         }}
       >

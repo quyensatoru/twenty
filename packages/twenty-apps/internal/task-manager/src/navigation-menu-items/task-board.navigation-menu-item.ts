@@ -17,7 +17,7 @@ export default defineNavigationMenuItem({
   name: 'Board',
   icon: 'IconLayoutKanban',
   color: 'red',
-  position: 0,
+  position: 1,
   type: NavigationMenuItemType.PAGE_LAYOUT,
   pageLayoutUniversalIdentifier: TASK_BOARD_PAGE_LAYOUT_UID,
   folderUniversalIdentifier: TASK_MANAGER_FOLDER_NAV_ITEM_UID,
