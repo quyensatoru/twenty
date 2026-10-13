@@ -58,6 +58,21 @@ describe('readCrispSettings', () => {
       }),
     ).toMatchObject({ workspacesByAppKey: {} });
   });
+
+  it('completes app workspaces with the shared plugin credentials', () => {
+    expect(
+      readCrispSettings({
+        CRISP_API_IDENTIFIER: 'plugin-id',
+        CRISP_API_KEY: 'plugin-key',
+        CRISP_API_IDENTIFIER_BLOY: '',
+        CRISP_WEBSITE_ID_BLOY: 'bloy-site',
+        CRISP_WEBSITE_ID_MIDA: 'mida-site',
+      }).workspacesByAppKey,
+    ).toEqual({
+      BLOY: { identifier: 'plugin-id', key: 'plugin-key', websiteId: 'bloy-site' },
+      MIDA: { identifier: 'plugin-id', key: 'plugin-key', websiteId: 'mida-site' },
+    });
+  });
 });
 
 describe('resolveCrispWorkspaces', () => {

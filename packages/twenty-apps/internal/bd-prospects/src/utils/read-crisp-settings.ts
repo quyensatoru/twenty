@@ -61,12 +61,20 @@ export const readCrispSettings = (
   const workspacesByAppKey: Record<string, CrispWorkspace> = {};
 
   for (const app of SELLABLE_APPS) {
-    const workspace = readWorkspace({
+    const ownWorkspace = readWorkspace({
       env,
       identifierVariable: workspaceVariable('CRISP_API_IDENTIFIER', app.key),
       keyVariable: workspaceVariable('CRISP_API_KEY', app.key),
       websiteIdVariable: workspaceVariable('CRISP_WEBSITE_ID', app.key),
     });
+    // A marketplace plugin token is installed once and works on every website
+    // it was added to, so apps can share the fallback credentials and only
+    // declare their own website id.
+    const workspace: CrispWorkspace = {
+      identifier: ownWorkspace.identifier || fallbackWorkspace.identifier,
+      key: ownWorkspace.key || fallbackWorkspace.key,
+      websiteId: ownWorkspace.websiteId || fallbackWorkspace.websiteId,
+    };
 
     if (isCompleteWorkspace(workspace)) {
       workspacesByAppKey[app.key] = workspace;
