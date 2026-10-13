@@ -18,11 +18,11 @@ export const createTaskAiBudget = () => {
       const size = new TextEncoder().encode(content).byteLength;
       if (
         size > 100 * 1024 ||
-        bytes + size > 200 * 1024 ||
-        (!files.has(path) && files.size >= 20)
+        bytes + size > 300 * 1024 ||
+        (!files.has(path) && files.size >= 30)
       ) {
         throw new Error(
-          'Repository context limit reached (20 files, 100 KB per file, 200 KB per turn). Narrow the question.',
+          'Repository context limit reached (30 files, 100 KB per file, 300 KB per turn). Narrow the question.',
         );
       }
       files.add(path);

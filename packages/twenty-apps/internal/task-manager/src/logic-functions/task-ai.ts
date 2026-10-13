@@ -27,6 +27,7 @@ import {
   TASK_AI_LOGIC_FUNCTION_UID,
   TASK_AI_MAX_INVALID_REPLIES,
   TASK_AI_MAX_STEPS,
+  TASK_AI_READING_TIME_LIMIT_MS,
   TASK_AI_ROUTE_PATH,
 } from '../constants/task-ai';
 import {
@@ -344,7 +345,12 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           return { ...answer, run };
         };
         let invalidReplyCount = 0;
+        const readingStartedAt = Date.now();
         for (let step = 0; step < TASK_AI_MAX_STEPS; step++) {
+          // The proxy and the function both stop at 300 s; leaving reads early
+          // keeps time for the final answer instead of losing the whole turn.
+          if (Date.now() - readingStartedAt > TASK_AI_READING_TIME_LIMIT_MS)
+            break;
           if (step === TASK_AI_MAX_STEPS - 1)
             turnMessages.push(
               'This is your last round: reply with operation answer now, using only the context above, and say what is still unknown.',

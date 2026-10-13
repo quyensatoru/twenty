@@ -18,12 +18,13 @@ describe('task AI repository boundaries', () => {
     expect(() => budget.consume('a', 'x'.repeat(102401))).toThrow();
     budget.consume('a', 'x'.repeat(102400));
     budget.consume('b', 'x'.repeat(102400));
-    expect(() => budget.consume('c', 'x')).toThrow();
+    budget.consume('c', 'x'.repeat(102400));
+    expect(() => budget.consume('d', 'x')).toThrow();
   });
   it('counts distinct files and UTF-8 bytes', () => {
     const budget = createTaskAiBudget();
-    for (let index = 0; index < 20; index++) budget.consume(String(index), 'x');
-    expect(() => budget.consume('21', 'x')).toThrow();
+    for (let index = 0; index < 30; index++) budget.consume(String(index), 'x');
+    expect(() => budget.consume('31', 'x')).toThrow();
     expect(() =>
       createTaskAiBudget().consume('a', 'é'.repeat(51201)),
     ).toThrow();

@@ -47,7 +47,7 @@ beforeEach(() => {
 describe('bounded repository reader', () => {
   it('counts the same file path in different repositories against the shared file limit', async () => {
     const budget = createTaskAiBudget();
-    for (let index = 0; index < 19; index++)
+    for (let index = 0; index < 29; index++)
       budget.consume(`existing:${index}`, 'code');
     const first = await openTaskAiRepository(repository, 'main', budget);
     const second = await openTaskAiRepository(
@@ -57,7 +57,7 @@ describe('bounded repository reader', () => {
     );
     await first.execute('file', 'src/a.ts');
     await expect(second.execute('file', 'src/a.ts')).rejects.toThrow(
-      '20 files',
+      '30 files',
     );
   });
   it('uses the resolved SHA for file reads and omits credentials from results', async () => {

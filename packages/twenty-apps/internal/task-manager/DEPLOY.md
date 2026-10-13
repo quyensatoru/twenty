@@ -807,7 +807,7 @@ AI đọc task, status, 30 comment gần nhất và development links. Toàn b�
 đang active và liên kết với project tự động có trong source, không cần chọn repo thủ công.
 AI đọc repo liên quan khi cần; mỗi repo dùng branch gắn với task (nếu có duy nhất một branch),
 hoặc default branch, rồi pin SHA khi bắt đầu đọc. Nếu project chưa có repo thì dùng context task.
-Mỗi lượt giới hạn 12 bước context, 20 file, 100 KB mỗi file và 200 KB source tổng cộng
+Mỗi lượt giới hạn 24 bước context (dừng đọc sau khoảng 230 giây để kịp trả lời trước mốc 300 giây của proxy và function), 30 file, 100 KB mỗi file và 300 KB source tổng cộng
 dùng chung cho toàn bộ repo. UI báo rõ khi workspace chưa cấu hình AI provider.
 Kết quả được yêu cầu có trích dẫn source; lịch sử riêng theo member và task được mã hoá trong app storage.
 **Preview comment** mở preview và chỉ tạo comment sau khi xác nhận. Cancel dừng vòng đọc

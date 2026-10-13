@@ -187,10 +187,40 @@ describe('private task code advice', () => {
       success: true,
       answer: 'Best effort advice',
     });
-    expect(runtime.runAgent).toHaveBeenCalledTimes(13);
-    expect(runtime.runAgent.mock.calls[11][0].input).toContain(
+    expect(runtime.runAgent).toHaveBeenCalledTimes(25);
+    expect(runtime.runAgent.mock.calls[23][0].input).toContain(
       'This is your last round',
     );
+  });
+  it('stops reading near the request timeout and answers from what it has', async () => {
+    const now = vi.spyOn(Date, 'now');
+    let clock = 1_000_000;
+    now.mockImplementation(() => clock);
+    try {
+      runtime.runAgent.mockImplementation(
+        async ({ input }: { input: string }) => {
+          clock += 60_000;
+          return input.includes('inspection limit is reached')
+            ? {
+                success: true,
+                status: 'COMPLETED',
+                result: { operation: 'answer', argument: 'Timed advice' },
+              }
+            : {
+                success: true,
+                status: 'COMPLETED',
+                result: { operation: 'tree', argument: '' },
+              };
+        },
+      );
+      expect(await post(body)).toMatchObject({
+        success: true,
+        answer: 'Timed advice',
+      });
+      expect(runtime.runAgent.mock.calls.length).toBeLessThan(8);
+    } finally {
+      now.mockRestore();
+    }
   });
   it('still reports the inspection limit when the final answer request is not an answer', async () => {
     runtime.runAgent.mockResolvedValue({
