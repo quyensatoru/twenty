@@ -94,6 +94,15 @@ describe('bounded repository reader', () => {
       matches: [{ path: 'src/a.ts', line: 1, text: 'const foo = 1;' }],
     });
   });
+  it('lists paths containing a guessed directory name when no path starts with it', async () => {
+    const reader = await openTaskAiRepository(repository, 'main');
+    const result = JSON.parse(await reader.execute('tree', 'a.ts'));
+    expect(result).toMatchObject({
+      note: expect.stringContaining('No path starts with'),
+      paths: ['src/a.ts'],
+      topLevelDirectories: ['src'],
+    });
+  });
   it('refuses a different connection provider before making git requests', async () => {
     runtime.connection.mockResolvedValue({
       providerName: 'gitlab',

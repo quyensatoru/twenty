@@ -169,6 +169,40 @@ describe('private task code advice', () => {
       'not as a function or tool call',
     );
   });
+  it('asks for an answer from the gathered context once every round was spent reading', async () => {
+    runtime.runAgent.mockImplementation(async ({ input }: { input: string }) =>
+      input.includes('inspection limit is reached')
+        ? {
+            success: true,
+            status: 'COMPLETED',
+            result: { operation: 'answer', argument: 'Best effort advice' },
+          }
+        : {
+            success: true,
+            status: 'COMPLETED',
+            result: { operation: 'tree', argument: '' },
+          },
+    );
+    expect(await post(body)).toMatchObject({
+      success: true,
+      answer: 'Best effort advice',
+    });
+    expect(runtime.runAgent).toHaveBeenCalledTimes(13);
+    expect(runtime.runAgent.mock.calls[11][0].input).toContain(
+      'This is your last round',
+    );
+  });
+  it('still reports the inspection limit when the final answer request is not an answer', async () => {
+    runtime.runAgent.mockResolvedValue({
+      success: true,
+      status: 'COMPLETED',
+      result: { operation: 'tree', argument: '' },
+    });
+    expect(await post(body)).toMatchObject({
+      success: false,
+      error: expect.stringContaining('inspection limit'),
+    });
+  });
   it('hands a failed read back to the model instead of failing the turn', async () => {
     runtime.runAgent.mockResolvedValueOnce({
       success: true,

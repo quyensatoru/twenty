@@ -159,10 +159,30 @@ export const openTaskAiRepository = async (
     execute: async (operation: string, argument: string): Promise<string> => {
       if (operation === 'tree') {
         if (argument) requireTaskAiPath(argument);
-        const paths = (await readTree())
-          .filter((entry) => entry.path.startsWith(argument))
-          .map((entry) => entry.path);
+        const allPaths = (await readTree()).map((entry) => entry.path);
+        const prefixPaths = allPaths.filter((path) =>
+          path.startsWith(argument),
+        );
+        // Models guess a directory from a word in the question ("prompt");
+        // matching it anywhere in the path saves them a round of guessing.
+        const needle = argument.toLowerCase();
+        const paths =
+          prefixPaths.length > 0
+            ? prefixPaths
+            : allPaths.filter((path) => path.toLowerCase().includes(needle));
         return JSON.stringify({
+          ...(prefixPaths.length === 0 && argument !== ''
+            ? {
+                note: `No path starts with "${argument}"; listing paths that contain it instead.`,
+              }
+            : {}),
+          topLevelDirectories: [
+            ...new Set(
+              allPaths
+                .filter((path) => path.includes('/'))
+                .map((path) => path.split('/')[0]),
+            ),
+          ].slice(0, 100),
           paths: paths.slice(0, 400),
           omitted: Math.max(0, paths.length - 400),
         });

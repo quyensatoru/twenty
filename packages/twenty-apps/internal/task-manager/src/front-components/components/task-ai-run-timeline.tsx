@@ -23,6 +23,7 @@ export const TaskAiRunTimeline = ({ events }: TaskAiRunTimelineProps) => {
     'Reading file': t('Reading file'),
     'Searching repository': t('Searching repository'),
     'Comparing changes': t('Comparing changes'),
+    'Writing reply': t('Writing reply'),
     'Saving reply': t('Saving reply'),
     'Reply ready': t('Reply ready'),
     'Reply failed': t('Reply failed'),

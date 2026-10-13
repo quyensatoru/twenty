@@ -26,6 +26,7 @@ import { runTaskAiAgent } from '../utils/task-ai-agent.util';
 import {
   TASK_AI_LOGIC_FUNCTION_UID,
   TASK_AI_MAX_INVALID_REPLIES,
+  TASK_AI_MAX_STEPS,
   TASK_AI_ROUTE_PATH,
 } from '../constants/task-ai';
 import {
@@ -321,8 +322,33 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           `Private prior conversation (not current repository evidence): ${JSON.stringify(history)}`,
           input,
         ];
+        const saveAnswer = async (answerText: string) => {
+          await assertCurrentAccess();
+          const sources = [...contexts].map(([repositoryId, context]) => ({
+            repository: repositories.find(
+              (repository) => repository.id === repositoryId,
+            )!.slug,
+            sha: context.commit,
+          }));
+          const answer = {
+            question: message,
+            answer: answerText,
+            sha: sources.length === 1 ? sources[0].sha : '',
+            repository: sources.length === 1 ? sources[0].repository : '',
+            sources,
+          };
+          await assertNotCancelled();
+          await updateState('running', 'Saving reply');
+          await appendTaskAiHistory(keys.history, answer);
+          const run = await updateState('completed', 'Reply ready');
+          return { ...answer, run };
+        };
         let invalidReplyCount = 0;
-        for (let step = 0; step < 12; step++) {
+        for (let step = 0; step < TASK_AI_MAX_STEPS; step++) {
+          if (step === TASK_AI_MAX_STEPS - 1)
+            turnMessages.push(
+              'This is your last round: reply with operation answer now, using only the context above, and say what is still unknown.',
+            );
           if (
             new TextEncoder().encode(turnMessages.join('\n')).byteLength >
             500 * 1024
@@ -367,27 +393,8 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
             typeof response.argument !== 'string'
           )
             throw new Error('The AI returned an invalid response.');
-          if (response.operation === 'answer') {
-            await assertCurrentAccess();
-            const sources = [...contexts].map(([repositoryId, context]) => ({
-              repository: repositories.find(
-                (repository) => repository.id === repositoryId,
-              )!.slug,
-              sha: context.commit,
-            }));
-            const answer = {
-              question: message,
-              answer: response.argument,
-              sha: sources.length === 1 ? sources[0].sha : '',
-              repository: sources.length === 1 ? sources[0].repository : '',
-              sources,
-            };
-            await assertNotCancelled();
-            await updateState('running', 'Saving reply');
-            await appendTaskAiHistory(keys.history, answer);
-            const run = await updateState('completed', 'Reply ready');
-            return { ...answer, run };
-          }
+          if (response.operation === 'answer')
+            return await saveAnswer(response.argument);
           let repositoryId =
             repositories.length === 1 ? repositories[0].id : '';
           let argument = response.argument;
@@ -461,6 +468,27 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           turnMessages.push(input);
           await assertNotCancelled();
         }
+        // The model spent every round reading; one more call asks it to answer
+        // from what it already has instead of failing the whole turn.
+        await assertCurrentAccess();
+        await updateState('running', 'Writing reply');
+        turnMessages.push(
+          'The inspection limit is reached and no more reads are possible. Reply now with operation answer, using only the context above, and say what is still unknown.',
+        );
+        const finalResult = await runTaskAiAgent({
+          input: turnMessages.join('\n\n'),
+        });
+        await assertNotCancelled();
+        const finalResponse = finalResult.result as {
+          operation?: unknown;
+          argument?: unknown;
+        } | null;
+        if (
+          finalResult.status === 'COMPLETED' &&
+          finalResponse?.operation === 'answer' &&
+          typeof finalResponse.argument === 'string'
+        )
+          return await saveAnswer(finalResponse.argument);
         throw new Error(
           'The AI reached its inspection limit. Ask a narrower question.',
         );
