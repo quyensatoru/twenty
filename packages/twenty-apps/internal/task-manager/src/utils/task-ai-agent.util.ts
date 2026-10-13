@@ -67,10 +67,17 @@ export const parseTaskAiReply = (text: unknown): unknown => {
 
 const TASK_AI_PROVIDER_RETRY_DELAY_MS = 2000;
 
+// Gemini treats the read operations as tools once the transcript holds a few
+// of them and answers with a native function call. No tools are declared, so
+// the provider drops the call and the reply arrives empty
+// (MALFORMED_FUNCTION_CALL). Ending every prompt with this keeps it on text.
+const TASK_AI_REPLY_REMINDER =
+  'Reply now. Write your reply as plain text: exactly one JSON object {"operation":"...","argument":"..."} and nothing else. You have no functions or tools; never emit a function call.';
+
 const generateText = (input: string) =>
   new RestApiClient().post<{ text: string }>('/rest/ai/generate-text', {
     systemPrompt: TASK_AI_SYSTEM_PROMPT,
-    userPrompt: input,
+    userPrompt: `${input}\n\n${TASK_AI_REPLY_REMINDER}`,
   });
 
 export const runTaskAiAgent = async ({ input }: { input: string }) => {

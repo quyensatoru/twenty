@@ -86,6 +86,17 @@ describe('tool-free provider adapter', () => {
       vi.useRealTimers();
     }
   });
+  it('ends every prompt by asking for plain text instead of a function call', async () => {
+    runtime.post.mockResolvedValue({
+      text: JSON.stringify({ operation: 'answer', argument: 'Advice' }),
+    });
+    await runTaskAiAgent({ input: 'Question' });
+    const { userPrompt } = runtime.post.mock.calls[0][1] as {
+      userPrompt: string;
+    };
+    expect(userPrompt.startsWith('Question')).toBe(true);
+    expect(userPrompt).toMatch(/never emit a function call\.$/);
+  });
   it('rejects non-read operations returned by a model', async () => {
     runtime.post.mockResolvedValue({
       text: JSON.stringify({ operation: 'write', argument: 'malicious' }),

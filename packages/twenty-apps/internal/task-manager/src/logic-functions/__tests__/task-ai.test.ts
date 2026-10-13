@@ -247,7 +247,7 @@ describe('private task code advice', () => {
     });
     expect(await post(body)).toMatchObject({ success: true });
     expect(runtime.runAgent.mock.calls[1][0].input).toContain(
-      'Read-only operation failed for repository org/repo: File is missing',
+      'The app could not run that read for repository org/repo: File is missing',
     );
   });
   it('inspects both project repositories automatically with one shared budget', async () => {

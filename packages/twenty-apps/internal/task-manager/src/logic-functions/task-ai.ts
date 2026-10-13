@@ -410,8 +410,8 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
               requested = JSON.parse(argument);
             } catch {
               turnMessages.push(
-                `Requested read operation: ${JSON.stringify(response)}`,
-                'Read-only operation failed: argument is not valid JSON. Send a JSON string with repositoryId and argument.',
+                `Earlier you replied with: ${JSON.stringify(response)}`,
+                'The app could not run that read: argument is not valid JSON. Send a JSON string with repositoryId and argument.',
               );
               continue;
             }
@@ -432,8 +432,8 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           );
           if (!repository) {
             turnMessages.push(
-              `Requested read operation: ${JSON.stringify(response)}`,
-              'Read-only operation failed: repositoryId must be an id from the project repository catalogue.',
+              `Earlier you replied with: ${JSON.stringify(response)}`,
+              'The app could not run that read: repositoryId must be an id from the project repository catalogue.',
             );
             continue;
           }
@@ -462,14 +462,14 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           );
           await assertCurrentAccess();
           turnMessages.push(
-            `Requested read operation: ${JSON.stringify(response)}`,
+            `Earlier you replied with: ${JSON.stringify(response)}`,
           );
           // A missing path or an exhausted read budget is something the model
           // can work around, so it gets the error instead of the turn failing.
           try {
-            input = `Read-only operation result for repository ${repository.slug}, SHA ${context.commit}: ${await context.execute(response.operation, argument)}`;
+            input = `The app returned this read result for repository ${repository.slug}, SHA ${context.commit}: ${await context.execute(response.operation, argument)}`;
           } catch (error) {
-            input = `Read-only operation failed for repository ${repository.slug}: ${error instanceof Error ? error.message : 'unknown error'}`;
+            input = `The app could not run that read for repository ${repository.slug}: ${error instanceof Error ? error.message : 'unknown error'}`;
           }
           turnMessages.push(input);
           await assertNotCancelled();
