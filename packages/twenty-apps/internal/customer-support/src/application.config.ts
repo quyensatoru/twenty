@@ -1,11 +1,67 @@
-import { defineApplication } from 'twenty-sdk/define';
+import { defineApplication, FieldType } from 'twenty-sdk/define';
 
-import { APPLICATION_UID } from './constants/universal-identifiers';
+import {
+  CRISP_PLUGIN_IDENTIFIER_VARIABLE,
+  CRISP_PLUGIN_KEY_VARIABLE,
+  CRISP_SYNC_ENABLED_VARIABLE,
+  CRISP_WEBHOOK_SECRET_VARIABLE,
+  getCrispWebsiteIdVariable,
+} from './constants/crisp';
+import {
+  APPLICATION_UID,
+  CRISP_PLUGIN_IDENTIFIER_VARIABLE_UID,
+  CRISP_PLUGIN_KEY_VARIABLE_UID,
+  CRISP_SYNC_ENABLED_VARIABLE_UID,
+  CRISP_WEBHOOK_SECRET_VARIABLE_UID,
+  CRISP_WEBSITE_ID_BLOY_VARIABLE_UID,
+  CRISP_WEBSITE_ID_EU_VARIABLE_UID,
+  CRISP_WEBSITE_ID_FRAUD_VARIABLE_UID,
+  CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
+} from './constants/universal-identifiers';
+
+const websiteIdVariable = (appName: string, universalIdentifier: string) => ({
+  [getCrispWebsiteIdVariable(appName)]: {
+    universalIdentifier,
+    description: `Crisp website ID of the ${appName} inbox, found in the Crisp dashboard URL. Leave empty if ${appName} has no Crisp inbox.`,
+    isSecret: false,
+  },
+});
 
 export default defineApplication({
   universalIdentifier: APPLICATION_UID,
   displayName: 'Customer Support',
   description:
-    'Merchant master data shared across apps: the merchant record itself, browsed and maintained here rather than from whichever app happens to reference it.',
-  applicationVariables: {},
+    'Merchant master data shared across apps, and the support inbox that mirrors every Crisp chat next to the merchant it belongs to.',
+  applicationVariables: {
+    [CRISP_PLUGIN_IDENTIFIER_VARIABLE]: {
+      universalIdentifier: CRISP_PLUGIN_IDENTIFIER_VARIABLE_UID,
+      description:
+        'Production token identifier of the Crisp Marketplace plugin (Marketplace > plugin > Tokens). The plugin must be installed on every website below.',
+      isSecret: true,
+    },
+    [CRISP_PLUGIN_KEY_VARIABLE]: {
+      universalIdentifier: CRISP_PLUGIN_KEY_VARIABLE_UID,
+      description:
+        'Production token key of the Crisp Marketplace plugin, paired with the identifier above.',
+      isSecret: true,
+    },
+    [CRISP_WEBHOOK_SECRET_VARIABLE]: {
+      universalIdentifier: CRISP_WEBHOOK_SECRET_VARIABLE_UID,
+      description:
+        'Signing secret Crisp shows when the plugin web hook is created (Marketplace > plugin > Settings > Events). Deliveries with another signature are rejected.',
+      isSecret: true,
+    },
+    ...websiteIdVariable('MIDA', CRISP_WEBSITE_ID_MIDA_VARIABLE_UID),
+    ...websiteIdVariable('BLOY', CRISP_WEBSITE_ID_BLOY_VARIABLE_UID),
+    ...websiteIdVariable('FRAUD', CRISP_WEBSITE_ID_FRAUD_VARIABLE_UID),
+    ...websiteIdVariable('EU', CRISP_WEBSITE_ID_EU_VARIABLE_UID),
+    [CRISP_SYNC_ENABLED_VARIABLE]: {
+      universalIdentifier: CRISP_SYNC_ENABLED_VARIABLE_UID,
+      description:
+        'Whether Crisp chats are synced. Turn off to pause both the web hook and the hourly catch-up without touching Crisp.',
+      type: FieldType.BOOLEAN,
+      isSecret: false,
+      value: true,
+    },
+  },
 });
