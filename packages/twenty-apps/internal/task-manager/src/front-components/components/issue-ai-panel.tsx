@@ -18,6 +18,7 @@ import { TaskAiRunTimeline } from './task-ai-run-timeline';
 import { TaskButton } from './task-button';
 import { TaskRichTextPreview } from './task-rich-text-preview';
 import { TASK_TOKENS } from './task-tokens';
+import { resolveTaskAiCitationLinks } from '../../utils/resolve-task-ai-citation-links.util';
 
 type IssueAiPanelProps = { issueId: string };
 type RepositoryChoice = {
@@ -25,6 +26,7 @@ type RepositoryChoice = {
   name: string | null;
   slug: string;
   provider: string;
+  remoteUrl?: string | null;
 };
 type Answer = {
   question: string;
@@ -247,7 +249,14 @@ export const IssueAiPanel = ({ issueId }: IssueAiPanelProps) => {
     if (preview === null) return;
     setIsBusy(true);
     setError('');
-    const content = formatAnswer(preview);
+    // Answers saved before citations were resolved still hold relative links.
+    const content = resolveTaskAiCitationLinks(
+      formatAnswer(preview),
+      (repositories ?? []).map((repository) => ({
+        ...repository,
+        remoteUrl: repository.remoteUrl ?? null,
+      })),
+    );
     const markdown = `**${t('AI-assisted')}**\n\n${content}`;
     try {
       await postAppRoute(CREATE_ISSUE_COMMENT_ROUTE_PATH, {

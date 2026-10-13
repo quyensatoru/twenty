@@ -38,6 +38,7 @@ import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
+import { resolveTaskAiCitationLinks } from '../utils/resolve-task-ai-citation-links.util';
 
 type TaskAiBody = {
   action?: string;
@@ -126,12 +127,15 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
       return {
         history: await readTaskAiHistory(keys.history),
         run: await kv.get<TaskAiRunState>(keys.run),
-        repositories: repositories.map(({ id, name, slug, provider }) => ({
-          id,
-          name,
-          slug,
-          provider,
-        })),
+        repositories: repositories.map(
+          ({ id, name, slug, provider, remoteUrl }) => ({
+            id,
+            name,
+            slug,
+            provider,
+            remoteUrl,
+          }),
+        ),
       };
     if (event.body?.action !== 'send')
       throw new Error('Unsupported Task AI action.');
@@ -333,7 +337,7 @@ export const taskAiHandler = async (event: RoutePayload<TaskAiBody>) =>
           }));
           const answer = {
             question: message,
-            answer: answerText,
+            answer: resolveTaskAiCitationLinks(answerText, repositories),
             sha: sources.length === 1 ? sources[0].sha : '',
             repository: sources.length === 1 ? sources[0].repository : '',
             sources,
