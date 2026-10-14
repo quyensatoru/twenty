@@ -20,6 +20,7 @@ import { postAppRoute } from '../utils/post-app-route.util';
 import { readColorLabel } from '../utils/read-color-label.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { TaskActionMenu } from './task-action-menu';
+import { TaskButton } from './task-button';
 import { TaskIconButton } from './task-icon-button';
 import { TaskTextInput } from './task-text-input';
 import {
@@ -72,6 +73,8 @@ export const TaskEpicPanel = ({
     new Map(),
   );
   const [isCreating, setIsCreating] = useState(false);
+  // Enter and the Create button can both fire for the same name.
+  const [isSubmittingEpic, setIsSubmittingEpic] = useState(false);
   const [newEpicName, setNewEpicName] = useState('');
   const [newEpicKey, setNewEpicKey] = useState(0);
   const [renamingEpicId, setRenamingEpicId] = useState<string | null>(null);
@@ -131,9 +134,11 @@ export const TaskEpicPanel = ({
   const createEpic = async () => {
     const name = newEpicName.trim();
 
-    if (name === '') {
+    if (name === '' || isSubmittingEpic) {
       return;
     }
+
+    setIsSubmittingEpic(true);
 
     const isCreated = await runEpicWrite(CREATE_EPIC_ROUTE_PATH, {
       projectId,
@@ -144,10 +149,17 @@ export const TaskEpicPanel = ({
       },
     });
 
+    setIsSubmittingEpic(false);
+
     if (isCreated) {
       setNewEpicName('');
       setNewEpicKey((key) => key + 1);
     }
+  };
+
+  const cancelCreatingEpic = () => {
+    setIsCreating(false);
+    setNewEpicName('');
   };
 
   const renameEpic = async (epicId: string) => {
@@ -305,7 +317,9 @@ export const TaskEpicPanel = ({
               padding: '4px 10px',
             }}
           >
-            {t('No epics yet. Use epics to group related issues into a larger piece of work.')}
+            {t(
+              'No epics yet. Use epics to group related issues into a larger piece of work.',
+            )}
           </span>
         )}
         {epics.map((epic) => {
@@ -518,19 +532,37 @@ export const TaskEpicPanel = ({
       </div>
       {canWrite &&
         (isCreating ? (
-          <TaskTextInput
-            key={newEpicKey}
-            ariaLabel={t('Epic name')}
-            placeholder={t('What needs to be done?')}
-            value={newEpicName}
-            onChange={setNewEpicName}
-            onEnter={() => void createEpic()}
-            onEscape={() => {
-              setIsCreating(false);
-              setNewEpicName('');
-            }}
-            shouldAutoFocus
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <TaskTextInput
+              key={newEpicKey}
+              ariaLabel={t('Epic name')}
+              placeholder={t('What needs to be done?')}
+              value={newEpicName}
+              onChange={setNewEpicName}
+              onEnter={() => void createEpic()}
+              onEscape={cancelCreatingEpic}
+              shouldAutoFocus
+            />
+            <div
+              style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}
+            >
+              <TaskButton
+                size="small"
+                variant="ghost"
+                onClick={cancelCreatingEpic}
+              >
+                {t('Cancel')}
+              </TaskButton>
+              <TaskButton
+                size="small"
+                variant="primary"
+                isDisabled={newEpicName.trim() === '' || isSubmittingEpic}
+                onClick={() => void createEpic()}
+              >
+                {isSubmittingEpic ? t('Creating…') : t('Create')}
+              </TaskButton>
+            </div>
+          </div>
         ) : (
           <button
             type="button"
