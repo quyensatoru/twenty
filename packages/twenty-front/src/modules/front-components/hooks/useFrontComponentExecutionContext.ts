@@ -443,7 +443,7 @@ export const useFrontComponentExecutionContext = ({
     }: EnqueueSnackbarParams) => {
       enqueueToast({
         children: message,
-        variant,
+        status: variant,
         duration,
         description: detailedMessage,
         dedupeKey,
