@@ -23,10 +23,12 @@ export const SUPPORT_INBOX_SUMMARIZE_ROUTE_PATH =
   '/customer-support/inbox/summarize';
 export const SUPPORT_INBOX_SEARCH_ISSUES_ROUTE_PATH =
   '/customer-support/inbox/search-issues';
-// Called from task-manager's issue panel, so its path is a contract between
-// the two apps: change it on both sides at once.
+// Called from task-manager's issue panel, so these paths are a contract
+// between the two apps: change them on both sides at once.
 export const ISSUE_CRISP_CONVERSATIONS_ROUTE_PATH =
   '/customer-support/issue-conversations';
+export const MERCHANT_CRISP_CONVERSATIONS_ROUTE_PATH =
+  '/customer-support/merchant-conversations';
 
 export const SUPPORT_INBOX_CONVERSATION_PAGE_SIZE = 30;
 export const SUPPORT_INBOX_MESSAGE_PAGE_SIZE = 80;

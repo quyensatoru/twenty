@@ -1,11 +1,21 @@
-import { useState } from 'react';
-import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
+import { useEffect, useState } from 'react';
+import {
+  enqueueSnackbar,
+  navigate,
+  type AppPath,
+  t,
+  useFrontComponentExecutionContext,
+} from 'twenty-sdk/front-component';
 
 import { type SupportInboxTab } from '../../types/support-inbox';
 import { useConversationThread } from '../hooks/use-conversation-thread';
 import { useInboxConversations } from '../hooks/use-inbox-conversations';
 import { useIsMobile } from '../hooks/use-is-mobile';
 import { readErrorText } from '../utils/read-error-text.util';
+import {
+  parseConversationAnchor,
+  buildSupportInboxConversationPath,
+} from '../utils/support-inbox-link.util';
 import { ConversationListPanel } from './conversation-list-panel';
 import { ConversationThreadPanel } from './conversation-thread-panel';
 import { CustomerDetailsPanel } from './customer-details-panel';
@@ -16,20 +26,50 @@ const HISTORY_IMPORT_DAYS = 30;
 
 export const SupportInbox = () => {
   const isMobile = useIsMobile();
-  const [tab, setTab] = useState<SupportInboxTab>('waiting');
+  const locationHash = useFrontComponentExecutionContext(
+    (context) => (context as { locationHash?: string }).locationHash ?? '',
+  );
+  const conversationAnchor = parseConversationAnchor(locationHash);
+  const pathname = useFrontComponentExecutionContext(
+    (context) =>
+      (context as { locationPathname?: string }).locationPathname ?? '',
+  );
+  const [tab, setTab] = useState<SupportInboxTab>(
+    conversationAnchor === null ? 'waiting' : 'all',
+  );
   const [appName, setAppName] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(null);
+  >(conversationAnchor);
   const [isDetailsOpen, setIsDetailsOpen] = useState(true);
   // On a phone details replace the thread, so they start closed every time a
   // conversation is opened.
   const [isMobileDetailsOpen, setIsMobileDetailsOpen] = useState(false);
 
+  useEffect(() => {
+    setSelectedConversationId(conversationAnchor);
+    setIsMobileDetailsOpen(false);
+  }, [conversationAnchor]);
+
   const selectConversation = (conversationId: string | null) => {
     setSelectedConversationId(conversationId);
     setIsMobileDetailsOpen(false);
+    if (pathname !== '') {
+      const destination =
+        conversationId === null
+          ? pathname
+          : buildSupportInboxConversationPath(pathname, conversationId);
+      void navigate(destination as AppPath, undefined, undefined, {
+        replace: true,
+        surface: 'main',
+      }).catch((error) => {
+        void enqueueSnackbar({
+          message: readErrorText(error),
+          variant: 'error',
+        });
+      });
+    }
   };
 
   const inbox = useInboxConversations({ tab, appName, search });

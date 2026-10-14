@@ -53,6 +53,7 @@ type ConversationThreadPanelProps = {
   // Shown in place of the thread while details are open. Left out, details
   // live in a column beside the panel and the thread always stays.
   detailsContent?: ReactNode;
+  headerActions?: ReactNode;
 };
 
 const readCrispUrl = (conversation: SupportInboxConversation): string | null =>
@@ -107,6 +108,7 @@ export const ConversationThreadPanel = ({
   onToggleDetails,
   onLoadOlder,
   detailsContent,
+  headerActions,
 }: ConversationThreadPanelProps) => {
   // Narrow places (the record page in a side panel, a phone) get the compact
   // layout: details swap in for the thread, the pills move under the name,
@@ -301,6 +303,7 @@ export const ConversationThreadPanel = ({
                 {t('Open in Crisp')}
               </InboxButton>
             )}
+            {headerActions}
             {(!isMobile || isCompact) && (
               <InboxIconButton
                 label={isDetailsOpen ? t('Hide details') : t('Show details')}
