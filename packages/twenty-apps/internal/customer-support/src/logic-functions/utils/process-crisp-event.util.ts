@@ -22,7 +22,6 @@ import {
   extractContactEmails,
   extractShopDomains,
 } from './extract-shop-domains.util';
-import { linkIssuesMentionedInNotes } from './link-conversation-issues.util';
 import {
   mapCrispMessage,
   readCrispMessageText,
@@ -165,14 +164,6 @@ export const processCrispEvent = async ({
         ...applyMessageToConversation(stored, message),
         messageCount: await countConversationMessages(client, conversationId),
       });
-
-      if (message.messageType === 'note') {
-        await linkIssuesMentionedInNotes({
-          client,
-          conversationId,
-          noteTexts: [message.text],
-        });
-      }
 
       return 'message-stored';
     }

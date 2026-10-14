@@ -135,9 +135,6 @@ export const getCrispWebsiteClaimKey = (websiteId: string): string =>
   `crisp:website-claim:${websiteId}`;
 
 export const CRISP_SYNC_STATE_KEY = 'crisp:sync-state';
-// Notes stored before auto-linking existed, or whose thread the sync skipped,
-// are scanned from the CRM itself up to this point.
-export const CRISP_NOTE_LINKS_SCANNED_AT_KEY = 'crisp:note-links-scanned-at';
 
 // The web hook events the CRM stores; every other namespace is acknowledged
 // and dropped.

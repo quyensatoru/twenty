@@ -6,7 +6,6 @@ import {
   countConversationMessages,
   upsertMessages,
 } from './crisp-conversation-store.util';
-import { linkIssuesMentionedInNotes } from './link-conversation-issues.util';
 import {
   type CrispSettings,
   type CrispWebsite,
@@ -96,13 +95,6 @@ export const importConversationMessages = async ({
   );
 
   await upsertMessages(client, records);
-  await linkIssuesMentionedInNotes({
-    client,
-    conversationId,
-    noteTexts: records
-      .filter((record) => record.messageType === 'note')
-      .map((record) => record.text),
-  });
 
   const threadMessages = records.filter((record) =>
     isThreadMessage(record.messageType),

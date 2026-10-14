@@ -1,6 +1,10 @@
 import { type ApiClient } from '../../types/api-client';
 import { type SupportInboxIssue } from '../../types/support-inbox';
 import { executeWithRetry } from './execute-with-retry.util';
+import {
+  readConversationMerchant,
+  readMerchantIssueIds,
+} from './issue-merchant-links.util';
 
 type IssueNode = {
   id: string;
@@ -27,10 +31,10 @@ export const toSupportInboxIssue = (node: IssueNode): SupportInboxIssue => ({
 // A chat links a handful of issues at most; this caps a runaway junction.
 const MAX_LINKED_ISSUES = 50;
 
-export const readConversationIssues = async (
+const readDirectlyLinkedIssueIds = async (
   client: ApiClient,
   conversationId: string,
-): Promise<SupportInboxIssue[]> => {
+): Promise<string[]> => {
   const links = await executeWithRetry<{
     crispConversationIssues?: {
       edges?: { node: { issueId?: string | null } }[];
@@ -47,9 +51,25 @@ export const readConversationIssues = async (
       },
     }),
   );
-  const issueIds = (links?.crispConversationIssues?.edges ?? [])
+
+  return (links?.crispConversationIssues?.edges ?? [])
     .map((edge) => edge.node.issueId)
     .filter((issueId): issueId is string => typeof issueId === 'string');
+};
+
+// The issues the chat's merchant is on, and the ones linked to the chat
+// directly while it had no merchant.
+export const readConversationIssues = async (
+  client: ApiClient,
+  conversationId: string,
+): Promise<SupportInboxIssue[]> => {
+  const [directIssueIds, merchant] = await Promise.all([
+    readDirectlyLinkedIssueIds(client, conversationId),
+    readConversationMerchant(client, conversationId),
+  ]);
+  const merchantIssueIds =
+    merchant === null ? [] : await readMerchantIssueIds(client, merchant.id);
+  const issueIds = [...new Set([...directIssueIds, ...merchantIssueIds])];
 
   if (issueIds.length === 0) {
     return [];

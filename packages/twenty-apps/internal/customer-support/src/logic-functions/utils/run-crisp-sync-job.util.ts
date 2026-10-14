@@ -1,6 +1,5 @@
-import { enqueueJobs, kv } from 'twenty-sdk/logic-function';
+import { enqueueJobs } from 'twenty-sdk/logic-function';
 
-import { CRISP_NOTE_LINKS_SCANNED_AT_KEY } from '../../constants/crisp';
 
 import { CRISP_SYNC_LOGIC_FUNCTION_UID } from '../../constants/universal-identifiers';
 import { createAppClient } from './create-app-client.util';
@@ -9,7 +8,6 @@ import {
   readCrispSyncState,
   writeCrispSyncState,
 } from './crisp-sync-state.util';
-import { linkIssuesFromStoredNotes } from './link-conversation-issues.util';
 import { readErrorMessage } from './read-error-message.util';
 import {
   isCrispApiConfigured,
@@ -70,20 +68,6 @@ export const enqueueCrispSync = async (
   return result.enqueued;
 };
 
-// Runs after every sync pass, so notes the pass just wrote are included.
-// The first run scans every stored note, later ones only what changed.
-const scanStoredNotesForIssueLinks = async (): Promise<void> => {
-  const since = await kv.get<string>(CRISP_NOTE_LINKS_SCANNED_AT_KEY);
-  const { scannedUntil } = await linkIssuesFromStoredNotes({
-    client: createAppClient(),
-    since: typeof since === 'string' ? since : null,
-  });
-
-  if (scannedUntil !== null) {
-    await kv.set(CRISP_NOTE_LINKS_SCANNED_AT_KEY, scannedUntil);
-  }
-};
-
 export const runCrispSyncJob = async (
   payload: CrispSyncJobPayload,
 ): Promise<CrispSyncSummary | { skipped: string }> => {
@@ -107,9 +91,6 @@ export const runCrispSyncJob = async (
       cursor: payload.cursor ?? { websiteIndex: 0, pageNumber: 1 },
       deadline: Date.now() + RUN_BUDGET_MS,
     });
-
-    // Reads only the CRM, so it runs even while Crisp is rate limiting.
-    await scanStoredNotesForIssueLinks();
 
     if (!summary.completed && summary.next !== undefined) {
       const isRateLimited = summary.isRateLimited === true;
