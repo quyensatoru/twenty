@@ -1,9 +1,11 @@
 import {
   CRISP_PLUGIN_IDENTIFIER_VARIABLE,
   CRISP_PLUGIN_KEY_VARIABLE,
+  CRISP_SHARED_WEBSITE_APP_NAMES,
   CRISP_SYNC_ENABLED_VARIABLE,
   CRISP_WEBHOOK_SECRET_VARIABLE,
   CRISP_WEBSITE_APP_NAMES,
+  type CrispWebsiteAppName,
   getCrispWebsiteIdVariable,
 } from '../../constants/crisp';
 
@@ -32,10 +34,18 @@ export const readCrispSettings = (
   identifier: readVariable(env, CRISP_PLUGIN_IDENTIFIER_VARIABLE),
   key: readVariable(env, CRISP_PLUGIN_KEY_VARIABLE),
   webhookSecret: readVariable(env, CRISP_WEBHOOK_SECRET_VARIABLE),
+  // A product sharing another's website may be configured with the same id;
+  // the first product keeps it, and the session flags tell the two apart.
   websites: CRISP_WEBSITE_APP_NAMES.map((appName) => ({
     appName,
     websiteId: readVariable(env, getCrispWebsiteIdVariable(appName)),
-  })).filter((website) => website.websiteId.length > 0),
+  })).filter(
+    (website, index, websites) =>
+      website.websiteId.length > 0 &&
+      websites.findIndex(
+        (candidate) => candidate.websiteId === website.websiteId,
+      ) === index,
+  ),
 });
 
 export const isCrispApiConfigured = (settings: CrispSettings): boolean =>
@@ -48,3 +58,16 @@ export const findCrispWebsite = (
   websiteId: string | undefined,
 ): CrispWebsite | undefined =>
   settings.websites.find((website) => website.websiteId === websiteId);
+
+// Every product with chats in the configured websites, including the ones
+// answering in another product's website.
+export const listCrispAppNames = (settings: CrispSettings): string[] => [
+  ...new Set(
+    settings.websites.flatMap((website) => [
+      website.appName,
+      ...(CRISP_SHARED_WEBSITE_APP_NAMES[
+        website.appName as CrispWebsiteAppName
+      ] ?? []),
+    ]),
+  ),
+];

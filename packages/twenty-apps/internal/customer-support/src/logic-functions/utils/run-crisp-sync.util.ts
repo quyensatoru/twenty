@@ -10,13 +10,9 @@ import {
   updateConversation,
   upsertConversations,
 } from './crisp-conversation-store.util';
-import {
-  extractContactEmails,
-  extractShopDomains,
-} from './extract-shop-domains.util';
 import { importConversationMessages } from './import-conversation-messages.util';
-import { matchMerchant } from './match-merchant.util';
 import { type CrispSettings } from './read-crisp-settings.util';
+import { resolveConversationMerchant } from './resolve-conversation-merchant.util';
 
 export type CrispSyncCursor = {
   websiteIndex: number;
@@ -97,28 +93,17 @@ const runCrispSyncPages = async ({
       );
       const rows: (Record<string, unknown> & { id: string })[] = [];
 
+      // Matched again on every pass, not only while unlinked, so a link an
+      // older rule got wrong is corrected the next time the chat moves.
       for (const [index, record] of records.entries()) {
-        const existing = stored.get(record.id);
-        const shopDomains = extractShopDomains(withSession[index].meta);
-        let merchantFields: Record<string, unknown> = {};
+        const merchantFields = await resolveConversationMerchant({
+          client,
+          appName: record.appName,
+          meta: withSession[index].meta,
+        });
 
-        if (existing?.merchantId === null || existing === undefined) {
-          const match = await matchMerchant({
-            client,
-            appName: website.appName,
-            shopDomains,
-            emails: extractContactEmails(withSession[index].meta),
-          });
-
-          if (match !== undefined) {
-            summary.merchantsMatched += 1;
-            merchantFields = {
-              merchantId: match.merchantId,
-              shopDomain: match.shopDomain,
-            };
-          } else if (shopDomains.length > 0) {
-            merchantFields = { shopDomain: shopDomains[0] };
-          }
+        if (merchantFields.merchantId !== null) {
+          summary.merchantsMatched += 1;
         }
 
         rows.push({ ...record, ...merchantFields });

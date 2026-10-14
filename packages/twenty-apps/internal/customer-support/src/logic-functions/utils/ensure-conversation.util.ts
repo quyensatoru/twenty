@@ -64,7 +64,7 @@ export const ensureConversation = async ({
   const shopDomains = extractShopDomains(conversation.meta);
   const match = await matchMerchant({
     client,
-    appName: website.appName,
+    appName: record.appName,
     shopDomains,
     emails: extractContactEmails(conversation.meta),
   });

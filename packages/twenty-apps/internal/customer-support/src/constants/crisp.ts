@@ -12,6 +12,23 @@ export type CrispWebsiteAppName = (typeof CRISP_WEBSITE_APP_NAMES)[number];
 export const getCrispWebsiteIdVariable = (appName: string): string =>
   `CRISP_WEBSITE_ID_${appName}`;
 
+// Products that answer their chats in another product's Crisp website.
+export const CRISP_SHARED_WEBSITE_APP_NAMES: Partial<
+  Record<CrispWebsiteAppName, readonly CrispWebsiteAppName[]>
+> = {
+  MIDA: ['FRAUD'],
+  BLOY: ['EU'],
+};
+
+// The session data flag each product's app sets on a shop that uses it, the
+// only way to tell which product a chat in a shared website is about.
+export const CRISP_APP_SESSION_FLAGS: Record<CrispWebsiteAppName, string> = {
+  MIDA: 'using_mida',
+  BLOY: 'using_bloy',
+  FRAUD: 'using_mida_fraud',
+  EU: 'using_eu_withdrawal',
+};
+
 export const SUPPORT_INBOX_CONVERSATIONS_ROUTE_PATH =
   '/customer-support/inbox/conversations';
 export const SUPPORT_INBOX_MESSAGES_ROUTE_PATH =

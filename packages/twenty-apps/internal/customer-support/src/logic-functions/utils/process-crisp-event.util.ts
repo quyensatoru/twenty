@@ -32,6 +32,7 @@ import {
   type CrispSettings,
   type CrispWebsite,
 } from './read-crisp-settings.util';
+import { resolveConversationAppName } from './resolve-conversation-app-name.util';
 
 export type CrispEventOutcome =
   | 'message-stored'
@@ -73,7 +74,7 @@ const rematchMerchant = async ({
   const shopDomains = extractShopDomains(combinedMeta);
   const match = await matchMerchant({
     client,
-    appName: website.appName,
+    appName: resolveConversationAppName(website.appName, combinedMeta.data),
     shopDomains,
     emails: extractContactEmails(combinedMeta),
   });

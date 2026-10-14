@@ -2,6 +2,7 @@ import { type CrispConversationStatus } from '../../constants/crisp';
 import { type CrispConversationPayload } from '../../types/crisp-api';
 import { computeCrispConversationId } from './crisp-record-id.util';
 import { type CrispWebsite } from './read-crisp-settings.util';
+import { resolveConversationAppName } from './resolve-conversation-app-name.util';
 
 export type CrispConversationRecord = {
   id: string;
@@ -59,7 +60,7 @@ export const buildConversationRecord = ({
     }),
     sessionId,
     websiteId: website.websiteId,
-    appName: website.appName,
+    appName: resolveConversationAppName(website.appName, meta.data),
     visitorName: readText(meta.nickname),
     visitorEmail: readText(meta.email)?.toLowerCase() ?? null,
     ...(status === undefined ? {} : { status }),

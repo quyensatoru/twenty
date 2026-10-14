@@ -49,12 +49,13 @@ const readAppId = async (
 };
 
 // A shop installs each product separately, so one domain is several merchant
-// rows. The row of the product whose inbox the chat came from wins.
+// rows. Only the row of the product the chat is about counts: another
+// product's row would show the chat on a merchant it never concerned.
 const pickCandidate = (
   candidates: MerchantCandidate[],
   appId: string | null,
 ): MerchantCandidate | undefined =>
-  candidates.find((candidate) => candidate.appId === appId) ?? candidates[0];
+  candidates.find((candidate) => candidate.appId === appId);
 
 export const matchMerchant = async ({
   client,
@@ -68,12 +69,17 @@ export const matchMerchant = async ({
   emails: string[];
 }): Promise<MerchantMatch | undefined> => {
   const appId = await readAppId(client, appName);
+  const appFilter =
+    appId === null ? { appId: { is: 'NULL' } } : { appId: { eq: appId } };
 
   if (shopDomains.length > 0) {
     const result = await executeWithRetry<MerchantConnection>(() =>
       client.query({
         merchants: {
-          __args: { filter: { name: { in: shopDomains } }, first: 20 },
+          __args: {
+            filter: { and: [appFilter, { name: { in: shopDomains } }] },
+            first: 20,
+          },
           edges: { node: { id: true, name: true, appId: true } },
         },
       }),
@@ -97,9 +103,14 @@ export const matchMerchant = async ({
       merchants: {
         __args: {
           filter: {
-            or: emails.map((email) => ({
-              email: { primaryEmail: { ilike: escapeLikePattern(email) } },
-            })),
+            and: [
+              appFilter,
+              {
+                or: emails.map((email) => ({
+                  email: { primaryEmail: { ilike: escapeLikePattern(email) } },
+                })),
+              },
+            ],
           },
           first: 20,
         },

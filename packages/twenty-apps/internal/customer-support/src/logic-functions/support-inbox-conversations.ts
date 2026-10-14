@@ -13,6 +13,7 @@ import {
 import { readCrispSyncState } from './utils/crisp-sync-state.util';
 import {
   isCrispApiConfigured,
+  listCrispAppNames,
   readCrispSettings,
 } from './utils/read-crisp-settings.util';
 import { runRoute } from './utils/run-route.util';
@@ -150,7 +151,7 @@ const handler = async (event: RoutePayload<ConversationsBody>) =>
       endCursor: page?.crispConversations?.pageInfo?.endCursor ?? null,
       hasNextPage: page?.crispConversations?.pageInfo?.hasNextPage === true,
       counts,
-      appNames: settings.websites.map((website) => website.appName),
+      appNames: listCrispAppNames(settings),
       sync: {
         ...syncState,
         isConfigured: isCrispApiConfigured(settings),

@@ -170,6 +170,9 @@ export const CRISP_SYNC_ENABLED_VARIABLE_UID =
 // points into it across the application boundary.
 export const ISSUE_OBJECT_UID = 'e14a5928-2bbe-4e20-b766-ea8975ee819f';
 export const ISSUE_STATUS_OBJECT_UID = '3439277b-2995-4a5c-b497-1b75396533a4';
+// Also task-manager's: the merchants an issue concerns, whose chats the issue
+// shows.
+export const ISSUE_MERCHANT_OBJECT_UID = 'a469cd28-a0f7-4132-8f5d-d89fa044f516';
 
 export const CRISP_CONVERSATION_ISSUE_OBJECT_UID =
   'a9be6520-e16d-4e3d-a769-4f0f7bd41767';
@@ -207,6 +210,8 @@ export const MERCHANT_CRISP_CONVERSATIONS_LOGIC_FUNCTION_UID =
   'e5c59deb-280d-4d9b-9ef7-8a17a41e2a45';
 export const LINK_CONVERSATIONS_ON_MERCHANT_CREATED_LOGIC_FUNCTION_UID =
   'eb5eef4a-1c12-4d6a-8ad6-bf58cfab03f3';
+export const RELINK_CRISP_CONVERSATION_MERCHANTS_LOGIC_FUNCTION_UID =
+  'c2dc12c0-8fe5-4437-b6a2-738602c917b4';
 
 export const CRISP_CONVERSATION_AI_SUMMARY_FIELD_UID =
   'cf6c7014-0b56-4246-8535-149028f8156e';

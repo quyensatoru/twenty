@@ -6,6 +6,7 @@ import {
   CRISP_CONVERSATION_ISSUE_OBJECT_UID,
   CRISP_CONVERSATION_OBJECT_UID,
   CRISP_MESSAGE_OBJECT_UID,
+  ISSUE_MERCHANT_OBJECT_UID,
   ISSUE_OBJECT_UID,
   ISSUE_STATUS_OBJECT_UID,
   MERCHANT_OBJECT_UID,
@@ -27,8 +28,8 @@ const readWrite = {
 
 // Scoped to what the Crisp sync and the support inbox touch: the chats it
 // owns, the merchants and issues it links them to, and the app registry it
-// reads to prefer a merchant of the same product. Issues are read-only: a chat
-// links to an issue, it never edits one.
+// reads to prefer a merchant of the same product. Issues and the merchants
+// they concern are read-only: a chat links to an issue, it never edits one.
 export default defineApplicationRole({
   universalIdentifier: APP_RUNTIME_ROLE_UID,
   label: 'Customer Support runtime',
@@ -55,5 +56,6 @@ export default defineApplicationRole({
     { objectUniversalIdentifier: APP_OBJECT_UID, ...readOnly },
     { objectUniversalIdentifier: ISSUE_OBJECT_UID, ...readOnly },
     { objectUniversalIdentifier: ISSUE_STATUS_OBJECT_UID, ...readOnly },
+    { objectUniversalIdentifier: ISSUE_MERCHANT_OBJECT_UID, ...readOnly },
   ],
 });
