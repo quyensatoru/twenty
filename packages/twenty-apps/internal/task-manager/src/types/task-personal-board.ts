@@ -1,3 +1,4 @@
+import { type BoardIssueSort } from '../constants/board-issue-sorts';
 import { type TASK_PERSONAL_BOARD_COLUMNS } from '../constants/task-personal-board';
 import {
   type IssueRow,
@@ -13,6 +14,8 @@ export type PersonalBoardPreferences = {
   density: 'comfortable' | 'compact';
   projectId: string | null;
   collapsedColumns: PersonalBoardColumn[];
+  // The order the project board's columns are read in.
+  boardSort: BoardIssueSort;
 };
 export type PersonalBoardPlan = {
   column: PersonalBoardPlanningColumn;

@@ -921,5 +921,19 @@
   "Hide empty fields": "Ẩn trường trống",
   "Show {count} empty fields": "Hiện {count} trường trống",
   "+{count} more": "+{count} nữa",
-  "{count} files": "{count} tệp"
+  "{count} files": "{count} tệp",
+  "All priorities": "Tất cả priority",
+  "Sort by": "Sắp xếp theo",
+  "Created date": "Ngày tạo",
+  "Updated date": "Ngày cập nhật",
+  "Ascending": "Tăng dần",
+  "Descending": "Giảm dần",
+  "Sort": "Sắp xếp",
+  "then by": "rồi theo",
+  "Sort field": "Trường sắp xếp",
+  "Move up": "Đưa lên",
+  "Remove sort": "Bỏ sắp xếp",
+  "Add sort": "Thêm sắp xếp",
+  "Clear sort": "Xoá sắp xếp",
+  "Cards keep their manual order. Add a sort to reorder them.": "Card đang theo thứ tự thủ công. Thêm sắp xếp để đổi thứ tự."
 }

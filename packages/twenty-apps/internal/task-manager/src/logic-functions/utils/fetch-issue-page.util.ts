@@ -1,4 +1,6 @@
 import { attachDevelopmentSummaries } from './attach-development-summaries.util';
+import { buildBoardIssueOrderBy } from './build-board-issue-order-by.util';
+import { type BoardIssueSort } from '../../constants/board-issue-sorts';
 import { ISSUE_SEARCH_SELECTION } from '../../constants/record-selections';
 import { type ApiClient } from '../../types/api-client';
 import { type IssueRow } from '../../types/task-manager-rows';
@@ -24,18 +26,20 @@ export const fetchIssuePage = async ({
   filter,
   first,
   after,
+  sort = [],
 }: {
   client: ApiClient;
   filter: Record<string, unknown>;
   first: number;
   after?: string | null;
+  sort?: BoardIssueSort;
 }): Promise<IssuePage> => {
   const result = await client.query({
     issues: {
       __args: {
         filter,
         first,
-        orderBy: [{ position: 'AscNullsLast' }],
+        orderBy: buildBoardIssueOrderBy(sort),
         ...(typeof after === 'string' && after !== '' ? { after } : {}),
       },
       edges: { node: ISSUE_SEARCH_SELECTION },

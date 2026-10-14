@@ -24,6 +24,40 @@ describe('readBoardIssueQuery', () => {
     expect(readBoardIssueQuery('p1', { epicId: '' }).epicId).toBeNull();
     expect(readBoardIssueQuery('p1', { epicId: 'e1' }).epicId).toBe('e1');
   });
+
+  it('reads a known priority and drops anything else', () => {
+    expect(readBoardIssueQuery('p1', {}).priority).toBeNull();
+    expect(readBoardIssueQuery('p1', { priority: 'HIGH' }).priority).toBe(
+      'HIGH',
+    );
+    expect(
+      readBoardIssueQuery('p1', { priority: 'URGENT' }).priority,
+    ).toBeNull();
+  });
+
+  it('reads the sort rules, dropping unknown, repeated and extra ones', () => {
+    expect(readBoardIssueQuery('p1', {}).sort).toEqual([]);
+    expect(
+      readBoardIssueQuery('p1', {
+        sort: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'title; drop', direction: 'asc' },
+          { field: 'priority', direction: 'asc' },
+          { field: 'createdAt', direction: 'sideways' },
+          { field: 'dueDate', direction: 'asc' },
+          { field: 'storyPoints', direction: 'desc' },
+        ],
+      }).sort,
+    ).toEqual([
+      { field: 'priority', direction: 'desc' },
+      { field: 'createdAt', direction: 'desc' },
+      { field: 'dueDate', direction: 'asc' },
+    ]);
+  });
+
+  it('treats a malformed sort as no sort', () => {
+    expect(readBoardIssueQuery('p1', { sort: 'priority' }).sort).toEqual([]);
+  });
 });
 
 describe('applyActiveSprint', () => {

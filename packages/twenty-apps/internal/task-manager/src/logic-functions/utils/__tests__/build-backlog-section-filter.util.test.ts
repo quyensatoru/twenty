@@ -11,6 +11,7 @@ const QUERY = {
   epicId: 'e1',
   assigneeIds: ['m1'],
   issueType: 'BUG',
+  priority: 'HIGH',
 };
 
 describe('buildBacklogSectionFilter', () => {
@@ -29,6 +30,7 @@ describe('buildBacklogSectionFilter', () => {
           epicId: { eq: 'e1' },
           assigneeId: { in: ['m1'] },
           issueType: { eq: 'BUG' },
+          priority: { eq: 'HIGH' },
         },
         { parentId: { is: 'NULL' } },
       ],

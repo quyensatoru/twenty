@@ -27,6 +27,7 @@ import {
   type BoardIssueQueryBody,
   readBoardIssueQuery,
 } from './utils/read-board-issue-query.util';
+import { readPersonalBoardPreferencesForMember } from './utils/personal-board-storage.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type TaskBoardBody = BoardIssueQueryBody & {
@@ -107,11 +108,11 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
         ) as { appId?: string | null } | undefined
       )?.appId ?? null;
 
-    const requestedQuery = readBoardIssueQuery(activeProjectId, event.body);
+    const isSortRequested = event.body?.sort !== undefined;
     const shouldIncludeIssues = event.body?.includeIssues !== false;
     const now = new Date();
 
-    const [issueStatuses, sprints, epics, assignableMembers] =
+    const [issueStatuses, sprints, epics, assignableMembers, savedBoardSort] =
       await Promise.all([
         listScopedRecords<{ id: string; category?: string | null }>({
           client,
@@ -139,7 +140,20 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
         activeProjectAppId === null
           ? Promise.resolve([])
           : listAppMembers({ client, appId: activeProjectAppId }),
+        // A board opened without a sort reads in the order its viewer last
+        // chose, so the first paint is already in that order.
+        isSortRequested || scope.workspaceMemberId === null
+          ? Promise.resolve(null)
+          : readPersonalBoardPreferencesForMember(
+              client,
+              scope.workspaceMemberId,
+            ).then((preferences) => preferences.boardSort),
       ]);
+
+    const requestedQuery = {
+      ...readBoardIssueQuery(activeProjectId, event.body),
+      ...(savedBoardSort === null ? {} : { sort: savedBoardSort }),
+    };
 
     const activeSprintId =
       sprints.find((sprint) => sprint.state === 'ACTIVE')?.id ?? null;
@@ -181,6 +195,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
               now,
             }),
             first: BOARD_COLUMN_PAGE_SIZE,
+            sort: query.sort,
           }),
         ),
       ),
@@ -219,6 +234,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       members,
       assignableMembers,
       hiddenDoneIssueCount,
+      boardSort: query.sort,
       currentWorkspaceMemberId: scope.workspaceMemberId,
       // What the board may offer on this project, by the rule its write
       // routes enforce. Only hides controls; the routes still decide.

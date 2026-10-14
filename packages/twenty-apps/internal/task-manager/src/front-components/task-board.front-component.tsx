@@ -8,6 +8,7 @@ import {
 import { IconFilterOff, IconPlus, IconStack2 } from 'twenty-ui/icon';
 
 import { BOARD_ACTIVE_SPRINT } from '../constants/board-active-sprint';
+import { ISSUE_PRIORITY_OPTIONS } from '../constants/issue-priority-options';
 import { ISSUE_TYPE_OPTIONS } from '../constants/issue-type-options';
 import {
   ISSUE_CARD_FIELDS,
@@ -29,6 +30,7 @@ import {
   type BoardViewMode,
   type PageInset,
 } from '../types/task-board';
+import { readBoardIssueSort } from '../utils/read-board-issue-sort.util';
 import { readIssueViewSettings } from '../utils/read-issue-view-settings.util';
 import {
   TaskBoardAssigneeFilter,
@@ -37,6 +39,7 @@ import {
 } from './components/task-board-assignee-filter';
 import { TaskBacklogView } from './components/task-backlog-view';
 import { TaskBoardSelect } from './components/task-board-select';
+import { TaskBoardSortMenu } from './components/task-board-sort-menu';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { NO_STATUS_VALUE, TaskBoardView } from './components/task-board-view';
 import { TaskDiscussionNotifications } from './components/task-discussion-notifications';
@@ -54,6 +57,7 @@ import {
 } from './components/task-sprint-header';
 import { readTagColor, TASK_TOKENS } from './components/task-tokens';
 import { TaskViewSwitch } from './components/task-view-switch';
+import { useBoardSortPreference } from './hooks/use-board-sort-preference';
 import { useIsMobile } from './hooks/use-is-mobile';
 import {
   parseBoardIssueAnchor,
@@ -150,6 +154,7 @@ const TaskBoard = () => {
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [isOnlyMine, setIsOnlyMine] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
+  const [priorityFilter, setPriorityFilter] = useState<string>(ALL_VALUE);
   // A board deep link decides the opening modal, so a pasted link lands on
   // the issue it is about. It is the INITIAL value only: the reader keeps
   // whatever they open afterwards.
@@ -188,6 +193,19 @@ const TaskBoard = () => {
     [isOnlyMine, currentMemberId, selectedAssigneeIds],
   );
   const issueTypeFilter = typeFilter === ALL_VALUE ? null : typeFilter;
+  const issuePriorityFilter =
+    priorityFilter === ALL_VALUE ? null : priorityFilter;
+  const {
+    requestedSort,
+    sort: boardSort,
+    canAddRule: canAddSortRule,
+    addRule: addSortRule,
+    changeRuleField: changeSortRuleField,
+    toggleRuleDirection: toggleSortRuleDirection,
+    moveRuleUp: moveSortRuleUp,
+    removeRule: removeSortRule,
+    clearSort,
+  } = useBoardSortPreference(board?.boardSort);
 
   // The filters the two views share. The backlog has no sprint filter: its
   // sections are the sprints.
@@ -196,17 +214,25 @@ const TaskBoard = () => {
       ...(epicFilter === undefined ? {} : { epicId: epicFilter }),
       assigneeIds: assigneeFilterIds,
       issueType: issueTypeFilter,
+      priority: issuePriorityFilter,
     }),
-    [epicFilter, assigneeFilterIds, issueTypeFilter],
+    [epicFilter, assigneeFilterIds, issueTypeFilter, issuePriorityFilter],
   );
 
   const boardQueryBody = useMemo(
     () => ({
       ...sharedQueryBody,
       ...(sprintId === undefined ? {} : { sprintId }),
+      ...(requestedSort === null ? {} : { sort: requestedSort }),
       includeOlderDone: shouldIncludeOlderDone,
     }),
-    [sharedQueryBody, sprintId, shouldIncludeOlderDone],
+    [sharedQueryBody, sprintId, requestedSort, shouldIncludeOlderDone],
+  );
+  // A column's next pages must come in the order its first page did, which
+  // may be the saved one the board load answered with.
+  const columnQueryBody = useMemo(
+    () => ({ ...boardQueryBody, sort: boardSort }),
+    [boardQueryBody, boardSort],
   );
 
   const loadBoard = useCallback(async () => {
@@ -237,6 +263,7 @@ const TaskBoard = () => {
         assignableMembers: result.assignableMembers ?? [],
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
         hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
+        boardSort: readBoardIssueSort(result.boardSort),
         canWrite: result.canWrite === true,
         canSoftDelete: result.canSoftDelete === true,
         canManageViews: result.canManageViews === true,
@@ -296,7 +323,11 @@ const TaskBoard = () => {
     epicFilter !== undefined ||
     selectedAssigneeIds.length > 0 ||
     isOnlyMine ||
-    typeFilter !== ALL_VALUE;
+    typeFilter !== ALL_VALUE ||
+    priorityFilter !== ALL_VALUE;
+  // The sort only applies to the board view, so only there does it count as
+  // something to clear.
+  const isSorted = view === 'board' && boardSort.length > 0;
 
   const resetFilters = () => {
     setSearch('');
@@ -305,6 +336,11 @@ const TaskBoard = () => {
     setSelectedAssigneeIds([]);
     setIsOnlyMine(false);
     setTypeFilter(ALL_VALUE);
+    setPriorityFilter(ALL_VALUE);
+
+    if (isSorted) {
+      void clearSort();
+    }
   };
 
   // Picking faces and "Only my issues" are two ways to say whose cards to
@@ -692,7 +728,7 @@ const TaskBoard = () => {
           )}
           <TaskBoardSelect
             ariaLabel={t('Type')}
-            width={130}
+            width={isMobile ? 'calc(50% - 6px)' : 130}
             value={typeFilter}
             options={[
               { value: ALL_VALUE, label: t('All types') },
@@ -704,10 +740,24 @@ const TaskBoard = () => {
             ]}
             onChange={(value) => setTypeFilter(value)}
           />
+          <TaskBoardSelect
+            ariaLabel={t('Priority')}
+            width={isMobile ? 'calc(50% - 6px)' : 140}
+            value={priorityFilter}
+            options={[
+              { value: ALL_VALUE, label: t('All priorities') },
+              ...ISSUE_PRIORITY_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+                color: option.color,
+              })),
+            ]}
+            onChange={(value) => setPriorityFilter(value)}
+          />
           {view === 'board' && !isShowingActiveSprint && (
             <TaskBoardSelect
               ariaLabel={t('Sprint')}
-              width={170}
+              width={isMobile ? 'calc(50% - 6px)' : 170}
               value={
                 sprintFilter === ACTIVE_SPRINT_VALUE &&
                 activeSprint === undefined
@@ -733,7 +783,25 @@ const TaskBoard = () => {
               onChange={(value) => setSprintFilter(value)}
             />
           )}
-          {isFiltered && (
+          {view === 'board' && (
+            <TaskBoardSortMenu
+              isMobile={isMobile}
+              width={isMobile ? 'calc(50% - 6px)' : undefined}
+              sort={boardSort}
+              canAddRule={canAddSortRule}
+              onAddRule={() => void addSortRule()}
+              onChangeRuleField={(index, field) =>
+                void changeSortRuleField(index, field)
+              }
+              onToggleRuleDirection={(index) =>
+                void toggleSortRuleDirection(index)
+              }
+              onMoveRuleUp={(index) => void moveSortRuleUp(index)}
+              onRemoveRule={(index) => void removeSortRule(index)}
+              onClearSort={() => void clearSort()}
+            />
+          )}
+          {(isFiltered || isSorted) && (
             <TaskButton variant="ghost" onClick={resetFilters}>
               <IconFilterOff size={14} />
               {t('Clear filters')}
@@ -858,7 +926,7 @@ const TaskBoard = () => {
             <TaskBoardView
               board={board}
               setBoard={setBoard}
-              boardQueryBody={boardQueryBody}
+              boardQueryBody={columnQueryBody}
               boardGenerationRef={boardGenerationRef}
               loadingColumnKeys={loadingColumnKeys}
               setLoadingColumnKeys={setLoadingColumnKeys}

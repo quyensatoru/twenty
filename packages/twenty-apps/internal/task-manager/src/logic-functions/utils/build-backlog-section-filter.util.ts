@@ -42,5 +42,6 @@ export const unfilterBoardIssueQuery = (
   ...query,
   assigneeIds: [],
   issueType: null,
+  priority: null,
   epicId: undefined,
 });

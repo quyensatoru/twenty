@@ -1,4 +1,7 @@
 import { BOARD_ACTIVE_SPRINT } from '../../constants/board-active-sprint';
+import { type BoardIssueSort } from '../../constants/board-issue-sorts';
+import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
+import { readBoardIssueSort } from '../../utils/read-board-issue-sort.util';
 import { type BoardIssueQuery } from './build-board-issue-filters.util';
 
 export type BoardIssueQueryBody = {
@@ -9,11 +12,14 @@ export type BoardIssueQueryBody = {
   epicId?: string | null;
   assigneeIds?: unknown;
   issueType?: unknown;
+  priority?: unknown;
+  sort?: unknown;
   // Done issues past the board's window are left out unless asked for.
   includeOlderDone?: boolean;
 };
 
 export type RequestedBoardIssueQuery = BoardIssueQuery & {
+  sort: BoardIssueSort;
   shouldIncludeOlderDone: boolean;
   isActiveSprintRequested: boolean;
 };
@@ -50,6 +56,10 @@ export const readBoardIssueQuery = (
       typeof body?.issueType === 'string' && body.issueType !== ''
         ? body.issueType
         : null,
+    priority:
+      ISSUE_PRIORITY_OPTIONS.find((option) => option.value === body?.priority)
+        ?.value ?? null,
+    sort: readBoardIssueSort(body?.sort),
     shouldIncludeOlderDone: body?.includeOlderDone === true,
     isActiveSprintRequested,
   };

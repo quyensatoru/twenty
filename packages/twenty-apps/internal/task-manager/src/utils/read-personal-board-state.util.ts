@@ -5,6 +5,7 @@ import {
   type PersonalBoardPlan,
   type PersonalBoardPreferences,
 } from '../types/task-personal-board';
+import { readBoardIssueSort } from './read-board-issue-sort.util';
 
 export const readPersonalBoardPreferences = (
   value: unknown,
@@ -20,6 +21,7 @@ export const readPersonalBoardPreferences = (
           (stored.collapsedColumns as unknown[]).includes(column),
         )
       : [],
+    boardSort: readBoardIssueSort(stored.boardSort),
   };
 };
 

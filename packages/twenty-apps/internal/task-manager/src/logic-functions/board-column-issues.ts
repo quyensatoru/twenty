@@ -88,6 +88,7 @@ const handler = async (event: RoutePayload<BoardColumnIssuesBody>) =>
       }),
       first: BOARD_COLUMN_PAGE_SIZE,
       after,
+      sort: query.sort,
     });
 
     const members = await listIssueMembers({ client, issues: page.issues });

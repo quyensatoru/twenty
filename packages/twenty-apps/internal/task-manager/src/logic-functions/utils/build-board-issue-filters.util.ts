@@ -16,6 +16,7 @@ export type BoardIssueQuery = {
   // Member ids, optionally with BOARD_UNASSIGNED_ASSIGNEE. Empty = everyone.
   assigneeIds: readonly string[];
   issueType: string | null;
+  priority: string | null;
 };
 
 const readDoneCutoff = (now: Date): string =>
@@ -49,6 +50,7 @@ export const buildBoardScopeFilter = ({
   epicId,
   assigneeIds,
   issueType,
+  priority,
 }: BoardIssueQuery): IssueFilter => ({
   projectId: { eq: projectId },
   ...(sprintId === undefined
@@ -63,6 +65,7 @@ export const buildBoardScopeFilter = ({
       : { epicId: { eq: epicId } }),
   ...buildAssigneeFilter(assigneeIds),
   ...(issueType === null ? {} : { issueType: { eq: issueType } }),
+  ...(priority === null ? {} : { priority: { eq: priority } }),
 });
 
 // One column's issues. A long-lived project is mostly finished work — the

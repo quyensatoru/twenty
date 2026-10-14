@@ -921,5 +921,19 @@
   "Hide empty fields": "Hide empty fields",
   "Show {count} empty fields": "Show {count} empty fields",
   "+{count} more": "+{count} more",
-  "{count} files": "{count} files"
+  "{count} files": "{count} files",
+  "All priorities": "All priorities",
+  "Sort by": "Sort by",
+  "Created date": "Created date",
+  "Updated date": "Updated date",
+  "Ascending": "Ascending",
+  "Descending": "Descending",
+  "Sort": "Sort",
+  "then by": "then by",
+  "Sort field": "Sort field",
+  "Move up": "Move up",
+  "Remove sort": "Remove sort",
+  "Add sort": "Add sort",
+  "Clear sort": "Clear sort",
+  "Cards keep their manual order. Add a sort to reorder them.": "Cards keep their manual order. Add a sort to reorder them."
 }

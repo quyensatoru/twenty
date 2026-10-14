@@ -1,3 +1,4 @@
+import { type BoardIssueSort } from '../constants/board-issue-sorts';
 import { type IssueDevelopmentSummary } from './issue-development-summary';
 
 // Rows the task-board route returns, shaped for the Jira-style board page.
@@ -110,6 +111,9 @@ export type BoardData = {
   currentWorkspaceMemberId: string | null;
   // Done issues left off the board for being older than its window.
   hiddenDoneIssueCount: number;
+  // The order the columns were read in: the viewer's saved choice unless the
+  // request named one.
+  boardSort: BoardIssueSort;
   // What the caller may change on the active project's board.
   canWrite: boolean;
   canSoftDelete: boolean;

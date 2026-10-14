@@ -16,9 +16,16 @@ const BASE_QUERY = {
   epicId: undefined,
   assigneeIds: [],
   issueType: null,
+  priority: null,
 };
 
 describe('buildBoardScopeFilter', () => {
+  it('adds the priority scope', () => {
+    expect(
+      buildBoardScopeFilter({ ...BASE_QUERY, priority: 'HIGH' }).priority,
+    ).toEqual({ eq: 'HIGH' });
+  });
+
   it('adds the epic scope', () => {
     expect(
       buildBoardScopeFilter({ ...BASE_QUERY, epicId: null }).epicId,

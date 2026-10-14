@@ -294,19 +294,45 @@ describe('Personal member board', () => {
       },
     });
     await run({ action: 'preferences', patch: { projectId: 'project' } });
+    await run({
+      action: 'preferences',
+      patch: {
+        boardSort: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'asc' },
+        ],
+      },
+    });
     expect((await run()).preferences).toEqual({
       workView: 'list',
       density: 'compact',
       projectId: 'project',
       collapsedColumns: ['done'],
       effectsEnabled: true,
+      boardSort: [
+        { field: 'priority', direction: 'desc' },
+        { field: 'createdAt', direction: 'asc' },
+      ],
     });
     runtime.scope.workspaceMemberId = 'other';
     expect((await run()).preferences).toMatchObject({
       workView: 'desk',
       density: 'comfortable',
       projectId: null,
+      boardSort: [],
     });
+  });
+
+  it('reads the earlier saved shapes as a sort of at most one rule', async () => {
+    await run({
+      action: 'preferences',
+      patch: { boardSort: { field: 'dueDate', direction: 'asc' } },
+    });
+    expect((await run()).preferences.boardSort).toEqual([
+      { field: 'dueDate', direction: 'asc' },
+    ]);
+    await run({ action: 'preferences', patch: { boardSort: 'newest' } });
+    expect((await run()).preferences.boardSort).toEqual([]);
   });
   it('paginates the full queue and returns only planning for visible tasks on that page', async () => {
     runtime.records.issues = Array.from({ length: 82 }, (_, index) => ({
