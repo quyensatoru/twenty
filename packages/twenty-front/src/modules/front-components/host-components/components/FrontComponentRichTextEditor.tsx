@@ -118,6 +118,10 @@ export const FrontComponentRichTextEditor = ({
   onUploadFileRef.current = onUploadFile;
 
   const editor = useCreateBlockNote({
+    // macOS spell checking rewrites words still being composed by the
+    // Vietnamese input source, and ProseMirror then keeps both copies
+    // ("Phần" typed as "PPhần").
+    domAttributes: { editor: { spellcheck: 'false' } },
     dictionary: {
       ...blockNoteEnglishDictionary,
       placeholders: {
