@@ -8,8 +8,10 @@ import { linkMerchantToIssues } from './utils/issue-merchant-links.util';
 type ConversationIssueLink = {
   id: string;
   issueId: string | null;
-  conversation: { merchant: { id?: string; appId?: string | null } | null };
+  conversation: { merchantId: string | null } | null;
 };
+
+type MerchantRow = { id: string; appId: string | null };
 
 const PAGE_SIZE = 100;
 
@@ -41,7 +43,9 @@ const handler = async () => {
             node: {
               id: true,
               issueId: true,
-              conversation: { merchant: { id: true, appId: true } },
+              // A relation two levels down comes back null, so the merchant is
+              // read by id below.
+              conversation: { merchantId: true },
             },
           },
           pageInfo: { hasNextPage: true, endCursor: true },
@@ -49,14 +53,48 @@ const handler = async () => {
       }),
     );
     const connection = result?.crispConversationIssues;
+    const links = (connection?.edges ?? []).map(({ node }) => node);
+    const merchantIds = [
+      ...new Set(
+        links
+          .map((link) => link.conversation?.merchantId)
+          .filter(
+            (merchantId): merchantId is string =>
+              typeof merchantId === 'string',
+          ),
+      ),
+    ];
+    const merchantsById = new Map<string, MerchantRow>();
+
+    if (merchantIds.length > 0) {
+      const merchantResult = await executeWithRetry<{
+        merchants?: { edges?: { node: MerchantRow }[] };
+      }>(() =>
+        client.query({
+          merchants: {
+            __args: {
+              first: merchantIds.length,
+              filter: { id: { in: merchantIds } },
+            },
+            edges: { node: { id: true, appId: true } },
+          },
+        }),
+      );
+
+      for (const { node } of merchantResult?.merchants?.edges ?? []) {
+        merchantsById.set(node.id, node);
+      }
+    }
+
     const movedIds: string[] = [];
 
-    for (const { node: link } of connection?.edges ?? []) {
+    for (const link of links) {
       scanned += 1;
 
-      const merchant = link.conversation?.merchant;
+      const merchantId = link.conversation?.merchantId;
+      const merchant = merchantId ? merchantsById.get(merchantId) : undefined;
 
-      if (typeof merchant?.id !== 'string' || link.issueId === null) {
+      if (merchant === undefined || link.issueId === null) {
         continue;
       }
 
@@ -89,7 +127,8 @@ const handler = async () => {
 };
 
 export default defineLogicFunction({
-  universalIdentifier: MOVE_CONVERSATION_ISSUE_LINKS_TO_MERCHANTS_LOGIC_FUNCTION_UID,
+  universalIdentifier:
+    MOVE_CONVERSATION_ISSUE_LINKS_TO_MERCHANTS_LOGIC_FUNCTION_UID,
   name: 'move-conversation-issue-links-to-merchants',
   description:
     "One-off: turns direct chat-issue links into the chat's merchant on the issue, for chats that have a merchant.",
