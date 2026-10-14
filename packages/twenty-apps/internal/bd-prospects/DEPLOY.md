@@ -217,33 +217,32 @@ Manifest không làm thay được bốn việc này. Bỏ bước 1 thì coi nh
    có grant thì cột trống, không phải lỗi.
 4. **Tuỳ chọn**: Settings → Roles → BD → `Upsell deal` → Record Visibility Policy, đặt
    `owner = current member` nếu muốn mỗi BD chỉ thấy deal của mình.
-5. **Crisp sync (để 2 cột Crisp Chat / Email PIC có dữ liệu).** Mỗi app một Crisp workspace
-   riêng: Settings → Apps → BD Prospects → Variables, điền một bộ ba cho mỗi app
-   (`CRISP_API_IDENTIFIER_BLOY`, `CRISP_API_KEY_BLOY`, `CRISP_WEBSITE_ID_BLOY`, tương tự cho
-   `MIDA`; lấy ở Crisp Settings → Workspace settings → Integrations → API của từng workspace,
-   website ID trong URL dashboard). Bộ ba `CRISP_API_IDENTIFIER` / `CRISP_API_KEY` /
-   `CRISP_WEBSITE_ID` không hậu tố dùng cho app nào chưa có bộ riêng.
+5. **Crisp Chat / Email PIC dùng conversation trong CRM.** Cài Customer Support trước BD Prospects.
+   Customer Support giữ việc nhận webhook/sync từ Crisp; BD không cần Crisp credentials và không
+   chạy cron gọi Crisp. Khi conversation thay đổi, BD lấy chat qua `merchant.prospectId`, ghi link
+   mở Support Inbox với conversation được chọn sẵn và lấy Email PIC từ `visitorEmail`. Conversation mới
+   nhất đứng trước; các email trùng nhau chỉ xuất hiện một lần. Nếu không còn conversation/email,
+   giá trị cũ được xoá. Merchant được chuyển hoặc gắn vào prospect sau đó cũng cập nhật hai cột.
 
-   Chỉ prospect có app (`ourApps` không rỗng) mới được sync, và mỗi app chỉ tìm trong workspace
-   của chính app đó. Shop dùng nhiều app có một link mỗi app (link chính + link phụ, nhãn ghi
-   tên app). Workspace nào bị Crisp từ chối (401/403) thì bị bỏ qua tới hết lượt, lỗi nằm ở
-   `workspaceErrors`, và prospect cần workspace đó không bị đánh dấu đã kiểm tra (đếm ở
-   `blocked`) để lần sau tìm lại.
+   Nếu frontend và API khác origin, đặt biến `RECORD_PAGE_BASE_URL` của BD Prospects thành URL
+   frontend (dev: `http://localhost:3001`), để link record không trỏ tới API `localhost:3000`.
+   Khi không cấu hình, dùng API URL cho deployment phục vụ frontend và API chung origin.
 
-   Chạy backfill lần đầu, lặp tới khi `completed: true`. `dev:function:exec` cần đăng nhập bằng
-   user, API key bị từ chối, nên với remote dùng API key thì gọi route:
+   Sau khi deploy bản thay cron hoặc đổi frontend URL, backfill từ các conversation đã lưu:
 
 ```bash
 curl -X POST "$URL/s/bd-prospects/sync-crisp-manual" -H "Authorization: Bearer $API_KEY" \
-  -H 'Content-Type: application/json' -d '{"limit":200}'
-```
+  -H 'Content-Type: application/json' -d '{}'
 
-Kiểm tra một shop cụ thể:
-
-```bash
+# Hoặc kiểm tra riêng một prospect:
 curl -X POST "$URL/s/bd-prospects/sync-crisp-manual" -H "Authorization: Bearer $API_KEY" \
   -H 'Content-Type: application/json' -d '{"prospectId":"<id>"}'
 ```
+
+   Giữ cron sync merchants và LinkedIn như trước. Các biến `CRISP_*` cũ của BD không còn được dùng;
+   credentials Crisp chỉ cấu hình trong Customer Support. Backfill xử lý tối đa 200 prospect mỗi
+   lượt mặc định; khi `completed: false`, truyền `nextCursor` nhận được vào `after` của lượt tiếp
+   theo đến khi `completed: true`. Mỗi lượt tự dừng trước timeout và trả cursor tiếp tục.
 
 ### Bước 6 — Kiểm tra
 
@@ -266,7 +265,8 @@ yarn twenty dev:function:logs -n sync-prospects-from-merchants -r prod
 | `sync-prospects-from-merchants` | Cron `0 3 * * *` |
 | `enrich-prospect-linkedin` | Cron `*/30 * * * *` |
 | `enrich-prospect-linkedin-manual` | Route `POST /bd-prospects/enrich-prospect-linkedin-manual` |
-| `sync-crisp-conversations` | Cron `0 2 * * *` |
+| `sync-crisp-conversations` | `crispConversation.*` (không có cron) |
+| `refresh-prospect-conversations-on-merchant-changed` | `merchant.*`, thay đổi `prospectId` |
 | `sync-crisp-conversations-manual` | Route `POST /bd-prospects/sync-crisp-manual` |
 | `refresh-prospect-on-merchant-created` | `merchant.created` |
 | `refresh-prospect-on-merchant-updated` | `merchant.updated` |

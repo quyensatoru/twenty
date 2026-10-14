@@ -1,40 +1,25 @@
 import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
-import { CoreApiClient } from 'twenty-client-sdk/core';
 
 import { SYNC_CRISP_MANUAL_ROUTE_PATH } from '../constants/route-paths';
 import { SYNC_CRISP_MANUAL_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
-import {
-  hasAnyCrispWorkspace,
-  readCrispSettings,
-} from '../utils/read-crisp-settings';
+import { createConversationAppClient } from '../utils/create-conversation-app-client';
 import {
   syncCrispConversations,
   type CrispSyncSummary,
 } from './sync-crisp-conversations';
 
-type ApiClient = any;
-
 type SyncCrispManualBody = {
   prospectId?: string;
   limit?: number;
+  after?: string;
 };
 
-// Manual entry point for the first backfill and for verifying a single shop on
-// demand. Same core as the daily batch; a prospectId forces a re-check even
-// when freshly stamped, otherwise the next stale batch runs. No UI calls this,
-// by design: the portal only reads the synced columns.
+// Existing prospects need one backfill when switching from Crisp API links
+// to the conversations already stored in the CRM.
 const handler = async (
   event: RoutePayload<SyncCrispManualBody>,
 ): Promise<{ success: true } & CrispSyncSummary> => {
-  const settings = readCrispSettings();
-
-  if (!hasAnyCrispWorkspace(settings)) {
-    throw new Error(
-      'No Crisp workspace is configured. Add one triple per app (CRISP_API_IDENTIFIER_<APP>, CRISP_API_KEY_<APP>, CRISP_WEBSITE_ID_<APP>) or the fallback triple under Settings > Apps > BD Prospects > Variables.',
-    );
-  }
-
-  const client: ApiClient = new CoreApiClient();
+  const client = createConversationAppClient();
   const prospectId =
     typeof event.body?.prospectId === 'string'
       ? event.body.prospectId
@@ -47,9 +32,9 @@ const handler = async (
 
   const summary = await syncCrispConversations({
     client,
-    settings,
     prospectId,
     writeLimit,
+    after: typeof event.body?.after === 'string' ? event.body.after : undefined,
   });
 
   return { success: true, ...summary };
@@ -59,7 +44,7 @@ export default defineLogicFunction({
   universalIdentifier: SYNC_CRISP_MANUAL_LOGIC_FUNCTION_UID,
   name: 'sync-crisp-conversations-manual',
   description:
-    'Route: runs the Crisp sync once, for one prospect or the next stale batch.',
+    'Route: rebuilds BD chat links and Email PIC from stored CRM conversations.',
   timeoutSeconds: 600,
   httpRouteTriggerSettings: {
     path: SYNC_CRISP_MANUAL_ROUTE_PATH,

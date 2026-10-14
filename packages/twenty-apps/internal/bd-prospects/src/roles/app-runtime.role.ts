@@ -2,6 +2,7 @@ import { defineApplicationRole } from 'twenty-sdk/define';
 
 import {
   APP_OBJECT_UID,
+  CRISP_CONVERSATION_OBJECT_UID,
   MERCHANT_OBJECT_UID,
   PROSPECT_OBJECT_UID,
   UPSELL_DEAL_OBJECT_UID,
@@ -24,7 +25,7 @@ const readOnly = {
 };
 
 // Role the app's own jobs run as. Narrow on purpose: the sync reads merchants
-// and writes prospects and deals, nothing else. Reading merchants also needs
+// and conversations and writes prospects and deals. Reading merchants also needs
 // app-scope bypass, which machine contexts get automatically
 // (should-bypass-app-scope.util.ts).
 export default defineApplicationRole({
@@ -40,6 +41,7 @@ export default defineApplicationRole({
     { objectUniversalIdentifier: PROSPECT_OBJECT_UID, ...readWrite },
     { objectUniversalIdentifier: UPSELL_DEAL_OBJECT_UID, ...readWrite },
     { objectUniversalIdentifier: MERCHANT_OBJECT_UID, ...readWrite },
+    { objectUniversalIdentifier: CRISP_CONVERSATION_OBJECT_UID, ...readOnly },
     // Read-only: the sync resolves app ids to the keys written into
     // prospect.appsUsed, it never edits the app registry.
     { objectUniversalIdentifier: APP_OBJECT_UID, ...readOnly },

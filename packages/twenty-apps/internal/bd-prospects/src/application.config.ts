@@ -1,33 +1,15 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
-  CRISP_API_IDENTIFIER_BLOY_VARIABLE,
-  CRISP_API_IDENTIFIER_MIDA_VARIABLE,
-  CRISP_API_IDENTIFIER_VARIABLE,
-  CRISP_API_KEY_BLOY_VARIABLE,
-  CRISP_API_KEY_MIDA_VARIABLE,
-  CRISP_API_KEY_VARIABLE,
-  CRISP_ENABLED_VARIABLE,
-  CRISP_WEBSITE_ID_BLOY_VARIABLE,
-  CRISP_WEBSITE_ID_MIDA_VARIABLE,
-  CRISP_WEBSITE_ID_VARIABLE,
   ENRICH_ENABLED_VARIABLE,
   ENRICH_HOUR_VARIABLE,
+  RECORD_PAGE_BASE_URL_VARIABLE,
   SERPER_API_KEY_VARIABLE,
 } from './constants/application-variable-names';
 import {
-  CRISP_API_IDENTIFIER_BLOY_VARIABLE_UID,
-  CRISP_API_IDENTIFIER_MIDA_VARIABLE_UID,
-  CRISP_API_IDENTIFIER_VARIABLE_UID,
-  CRISP_API_KEY_BLOY_VARIABLE_UID,
-  CRISP_API_KEY_MIDA_VARIABLE_UID,
-  CRISP_API_KEY_VARIABLE_UID,
-  CRISP_ENABLED_VARIABLE_UID,
-  CRISP_WEBSITE_ID_BLOY_VARIABLE_UID,
-  CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
-  CRISP_WEBSITE_ID_VARIABLE_UID,
   ENRICH_ENABLED_VARIABLE_UID,
   ENRICH_HOUR_VARIABLE_UID,
+  RECORD_PAGE_BASE_URL_VARIABLE_UID,
   SERPER_API_KEY_VARIABLE_UID,
 } from './constants/universal-identifiers';
 
@@ -40,6 +22,12 @@ export default defineApplication({
   description:
     'High-Value Prospects area for the BD team: Advanced/Plus shops, cross-app upsell candidates and deal pipeline.',
   applicationVariables: {
+    [RECORD_PAGE_BASE_URL_VARIABLE]: {
+      universalIdentifier: RECORD_PAGE_BASE_URL_VARIABLE_UID,
+      description:
+        'CRM frontend URL for Support Inbox links. Set when the frontend and API have different origins; otherwise defaults to the API URL.',
+      isSecret: false,
+    },
     [SERPER_API_KEY_VARIABLE]: {
       universalIdentifier: SERPER_API_KEY_VARIABLE_UID,
       description:
@@ -61,66 +49,6 @@ export default defineApplication({
       type: FieldType.NUMBER,
       isSecret: false,
       value: 4,
-    },
-    [CRISP_API_IDENTIFIER_VARIABLE]: {
-      universalIdentifier: CRISP_API_IDENTIFIER_VARIABLE_UID,
-      description:
-        'Fallback Crisp REST API identifier, used for shops with no app yet. Shops running BLOY or MIDA use their own workspace credentials below.',
-      isSecret: true,
-    },
-    [CRISP_API_KEY_VARIABLE]: {
-      universalIdentifier: CRISP_API_KEY_VARIABLE_UID,
-      description:
-        'Fallback Crisp REST API key paired with the identifier above.',
-      isSecret: true,
-    },
-    [CRISP_WEBSITE_ID_VARIABLE]: {
-      universalIdentifier: CRISP_WEBSITE_ID_VARIABLE_UID,
-      description:
-        'Fallback Crisp website ID, used for shops with no app yet. Shops running BLOY or MIDA are searched in their own inbox first.',
-      isSecret: false,
-    },
-    [CRISP_WEBSITE_ID_BLOY_VARIABLE]: {
-      universalIdentifier: CRISP_WEBSITE_ID_BLOY_VARIABLE_UID,
-      description:
-        'Crisp website ID of the BLOY inbox, found in the Crisp dashboard URL.',
-      isSecret: false,
-    },
-    [CRISP_WEBSITE_ID_MIDA_VARIABLE]: {
-      universalIdentifier: CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
-      description:
-        'Crisp website ID of the MIDA inbox, found in the Crisp dashboard URL.',
-      isSecret: false,
-    },
-    [CRISP_API_IDENTIFIER_BLOY_VARIABLE]: {
-      universalIdentifier: CRISP_API_IDENTIFIER_BLOY_VARIABLE_UID,
-      description: 'Crisp REST API identifier of the BLOY workspace.',
-      isSecret: true,
-    },
-    [CRISP_API_KEY_BLOY_VARIABLE]: {
-      universalIdentifier: CRISP_API_KEY_BLOY_VARIABLE_UID,
-      description:
-        'Crisp REST API key of the BLOY workspace, paired with the identifier above.',
-      isSecret: true,
-    },
-    [CRISP_API_IDENTIFIER_MIDA_VARIABLE]: {
-      universalIdentifier: CRISP_API_IDENTIFIER_MIDA_VARIABLE_UID,
-      description: 'Crisp REST API identifier of the MIDA workspace.',
-      isSecret: true,
-    },
-    [CRISP_API_KEY_MIDA_VARIABLE]: {
-      universalIdentifier: CRISP_API_KEY_MIDA_VARIABLE_UID,
-      description:
-        'Crisp REST API key of the MIDA workspace, paired with the identifier above.',
-      isSecret: true,
-    },
-    [CRISP_ENABLED_VARIABLE]: {
-      universalIdentifier: CRISP_ENABLED_VARIABLE_UID,
-      description:
-        'Whether the Crisp sync runs. Turn off without touching its schedule.',
-      type: FieldType.BOOLEAN,
-      isSecret: false,
-      value: true,
     },
   },
 });

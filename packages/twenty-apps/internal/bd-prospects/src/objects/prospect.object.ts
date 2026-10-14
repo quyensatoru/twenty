@@ -92,7 +92,7 @@ export default defineObject({
       name: 'crispChat',
       label: 'Crisp Chat',
       description:
-        'Link opening this shop’s conversation in the Crisp inbox, found by the daily Crisp sync. Empty when the shop never chatted.',
+        'Links opening this prospect’s merchant conversations in Support Inbox, updated when conversations change.',
       icon: 'IconMessage',
       isNullable: true,
     },
@@ -102,7 +102,7 @@ export default defineObject({
       name: 'crispEmail',
       label: 'Email PIC',
       description:
-        'Visitor email attached to the Crisp conversation above, used by BD for outreach. Empty when Crisp has no email for this shop.',
+        'Visitor emails from the linked CRM conversations, used by BD for outreach.',
       icon: 'IconMail',
       isNullable: true,
     },
@@ -112,7 +112,7 @@ export default defineObject({
       name: 'crispCheckedAt',
       label: 'Crisp checked at',
       description:
-        'When the Crisp sync last searched for this shop, hit or miss. Drives the incremental daily re-check.',
+        'When the conversation links and Email PIC were last rebuilt from stored CRM conversations.',
       icon: 'IconClock',
       isNullable: true,
     },
