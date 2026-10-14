@@ -67,6 +67,7 @@ export const RESYNC_REPOSITORY_ROUTE_PATH = '/task-manager/resync-repository';
 
 export const MERCHANT_CUSTOM_SETTINGS_ROUTE_PATH =
   '/task-manager/merchant-custom-settings';
+export const MERCHANT_PREVIEW_ROUTE_PATH = '/task-manager/merchant-preview';
 export const UPDATE_MERCHANT_CUSTOM_SETTINGS_ROUTE_PATH =
   '/task-manager/update-merchant-custom-settings';
 export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_ROUTE_PATH =

@@ -3,3 +3,5 @@
 // panel works whether or not that app is installed.
 export const CUSTOMER_SUPPORT_ISSUE_CONVERSATIONS_ROUTE_PATH =
   '/customer-support/issue-conversations';
+export const CUSTOMER_SUPPORT_MERCHANT_CONVERSATIONS_ROUTE_PATH =
+  '/customer-support/merchant-conversations';

@@ -44,6 +44,10 @@ import { isPlainPrimaryPress } from '../utils/is-plain-primary-press.util';
 import { IssueAiActivityTab } from './issue-ai-activity-tab';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueDetailsPanel } from './issue-details-panel';
+import {
+  IssueRecordPreview,
+  type IssueRecordPreviewTarget,
+} from './issue-record-preview';
 import { IssueHistoryList } from './issue-history-list';
 import { IssueWorklogList } from './issue-worklog-list';
 import { DescriptionEmptyBox } from './task-description-empty-box';
@@ -101,6 +105,10 @@ export const TaskBoardDetail = ({
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
   const discussion = useDiscussionState(issueId);
   const isMobile = useIsMobile();
+  const [recordPreview, setRecordPreview] = useState<
+    (IssueRecordPreviewTarget & { issueId: string }) | null
+  >(null);
+  const preview = recordPreview?.issueId === issueId ? recordPreview : null;
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   // Field values just picked, shown before the server confirms them, the way
@@ -149,6 +157,7 @@ export const TaskBoardDetail = ({
   // edit state resets with the issue — otherwise one card's draft leaks into
   // the next. The Details panel's own drafts reset by its key instead.
   useEffect(() => {
+    setRecordPreview(null);
     setPendingPatch({});
     setActionError(null);
     setIsEditingTitle(false);
@@ -480,6 +489,22 @@ export const TaskBoardDetail = ({
       .finally(() => setIsSaving(false));
   };
 
+  const recordPreviewPanel =
+    preview === null ? null : (
+      <IssueRecordPreview
+        issueId={issueId}
+        target={preview}
+        merchants={data.merchants}
+        onBack={() => setRecordPreview(null)}
+        onSelect={(target) => setRecordPreview({ ...target, issueId })}
+        onOpenIssue={(linkedIssueId) => {
+          setRecordPreview(null);
+          if (linkedIssueId !== issueId) onSelectIssue(linkedIssueId);
+        }}
+        onOpenFull={onClose}
+      />
+    );
+
   // Detaching the parent clears this issue's own pointer. Only an unlink —
   // deleting the parent record itself is never offered from its child.
   return (
@@ -488,6 +513,7 @@ export const TaskBoardDetail = ({
       focusKey={issueId}
       isMobile={isMobile}
       presentation={presentation}
+      onEscape={preview === null ? onClose : () => setRecordPreview(null)}
     >
       <div
         style={{
@@ -557,447 +583,523 @@ export const TaskBoardDetail = ({
         </TaskIconButton>
       </div>
 
-      {/* On a phone the two columns stack, Details under the content as in
-          Jira's mobile issue view, and the whole body scrolls as one. */}
       <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 20,
-          minHeight: 0,
-          overflowY: isMobile ? 'auto' : 'visible',
-          ...(isMobile ? TASK_THIN_SCROLLBAR_STYLE : {}),
-          padding: isMobile ? '12px 16px 16px 16px' : '12px 20px 20px 20px',
-        }}
+        style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}
       >
+        {/* On a phone the two columns stack, Details under the content as in
+          Jira's mobile issue view, and the whole body scrolls as one. */}
         <div
           style={{
             display: 'flex',
-            flex: isMobile ? '0 0 auto' : 1,
-            flexDirection: 'column',
-            gap: 16,
+            flex: 1,
+            flexDirection: isMobile ? 'column' : 'row',
+            visibility: isMobile && preview !== null ? 'hidden' : undefined,
+            gap: 20,
             minHeight: 0,
-            minWidth: 0,
-            overflowY: isMobile ? 'visible' : 'auto',
-            ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
+            overflowY: isMobile ? 'auto' : 'visible',
+            ...(isMobile ? TASK_THIN_SCROLLBAR_STYLE : {}),
+            padding: isMobile ? '12px 16px 16px 16px' : '12px 20px 20px 20px',
           }}
         >
-          {isEditingTitle ? (
-            <TaskTextInput
-              ariaLabel={t('Title')}
-              value={currentTitle}
-              shouldAutoFocus
-              onChange={setTitleDraft}
-              onEnter={(value) => {
-                setIsEditingTitle(false);
-                setTitleDraft(null);
-                void update({ data: { title: value } }, { refreshBoard: true });
-              }}
-              onBlur={(value) => {
-                setIsEditingTitle(false);
-                setTitleDraft(null);
-
-                if (value !== (issue.title ?? '')) {
+          <div
+            style={{
+              display: 'flex',
+              flex: isMobile ? '0 0 auto' : 1,
+              flexDirection: 'column',
+              gap: 16,
+              minHeight: 0,
+              minWidth: 0,
+              overflowY: isMobile ? 'visible' : 'auto',
+              ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
+            }}
+          >
+            {isEditingTitle ? (
+              <TaskTextInput
+                ariaLabel={t('Title')}
+                value={currentTitle}
+                shouldAutoFocus
+                onChange={setTitleDraft}
+                onEnter={(value) => {
+                  setIsEditingTitle(false);
+                  setTitleDraft(null);
                   void update(
                     { data: { title: value } },
                     { refreshBoard: true },
                   );
-                }
-              }}
-            />
-          ) : (
-            <button
-              type="button"
-              title={data.canWrite ? t('Edit title') : undefined}
-              disabled={!data.canWrite}
-              onClick={() => {
-                setTitleDraft(issue.title ?? '');
-                setIsEditingTitle(true);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderRadius: TASK_TOKENS.radiusSmall,
-                color: TASK_TOKENS.textPrimary,
-                cursor: data.canWrite ? 'text' : 'default',
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 20,
-                fontWeight: 600,
-                lineHeight: '28px',
-                margin: 0,
-                padding: '4px 8px',
-                textAlign: 'left',
-                width: '100%',
-              }}
-            >
-              {issue.title ?? t('(No title)')}
-            </button>
-          )}
+                }}
+                onBlur={(value) => {
+                  setIsEditingTitle(false);
+                  setTitleDraft(null);
 
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <SectionHeading label={t('Description')} />
-            {!data.canWrite ? (
-              currentDescription.trim() === '' ? (
-                <span
-                  style={{
-                    color: TASK_TOKENS.textTertiary,
-                    fontSize: 13,
-                    padding: '4px 8px',
-                  }}
-                >
-                  {t('No description.')}
-                </span>
-              ) : (
-                <div style={{ padding: '4px 8px' }}>
-                  <TaskRichTextEditor value={currentDescription} isReadOnly />
-                </div>
-              )
+                  if (value !== (issue.title ?? '')) {
+                    void update(
+                      { data: { title: value } },
+                      { refreshBoard: true },
+                    );
+                  }
+                }}
+              />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
+              <button
+                type="button"
+                title={data.canWrite ? t('Edit title') : undefined}
+                disabled={!data.canWrite}
+                onClick={() => {
+                  setTitleDraft(issue.title ?? '');
+                  setIsEditingTitle(true);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: TASK_TOKENS.radiusSmall,
+                  color: TASK_TOKENS.textPrimary,
+                  cursor: data.canWrite ? 'text' : 'default',
+                  fontFamily: TASK_TOKENS.fontFamily,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  lineHeight: '28px',
+                  margin: 0,
+                  padding: '4px 8px',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                {issue.title ?? t('(No title)')}
+              </button>
+            )}
+
+            <section
+              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              <SectionHeading label={t('Description')} />
+              {!data.canWrite ? (
+                currentDescription.trim() === '' ? (
+                  <span
+                    style={{
+                      color: TASK_TOKENS.textTertiary,
+                      fontSize: 13,
+                      padding: '4px 8px',
+                    }}
+                  >
+                    {t('No description.')}
+                  </span>
+                ) : (
+                  <div style={{ padding: '4px 8px' }}>
+                    <TaskRichTextEditor value={currentDescription} isReadOnly />
+                  </div>
+                )
+              ) : (
                 <div
-                  role={isEditingDescription ? undefined : 'button'}
-                  tabIndex={isEditingDescription ? undefined : 0}
-                  title={isEditingDescription ? undefined : t('Edit')}
-                  onMouseDown={
-                    isEditingDescription
-                      ? undefined
-                      : (event) => {
-                          if (isPlainPrimaryPress(event)) {
-                            startEditingDescription();
-                          }
-                        }
-                  }
-                  onKeyDown={
-                    isEditingDescription
-                      ? undefined
-                      : (event) => {
-                          if (event.key === 'Enter') {
-                            startEditingDescription();
-                          }
-                        }
-                  }
-                  onMouseEnter={() => setIsDescriptionHovered(true)}
-                  onMouseLeave={() => setIsDescriptionHovered(false)}
-                  style={{
-                    ...(isEditingDescription
-                      ? TASK_EDITING_RICH_TEXT_FRAME_STYLE
-                      : {}),
-                    background:
-                      !isEditingDescription && isDescriptionHovered
-                        ? TASK_TOKENS.backgroundHover
-                        : 'transparent',
-                    borderRadius: TASK_TOKENS.radiusSmall,
-                    boxSizing: 'border-box',
-                    cursor: isEditingDescription ? 'auto' : 'text',
-                    display: 'flex',
-                    minHeight: isEditingDescription
-                      ? undefined
-                      : currentDescription.trim() === ''
-                        ? 120
-                        : TASK_DESCRIPTION_MIN_HEIGHT,
-                    padding:
-                      isEditingDescription || currentDescription.trim() === ''
-                        ? 0
-                        : TASK_RICH_TEXT_READING_PADDING,
-                    width: '100%',
-                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
                 >
-                  {!isEditingDescription && currentDescription.trim() === '' ? (
-                    <DescriptionEmptyBox />
-                  ) : (
-                    <TaskRichTextEditor
-                      value={currentDescription}
-                      onChange={
-                        isEditingDescription
-                          ? (next) => {
-                              setDescriptionDraft(next);
-                              pendingDescriptionRef.current = next;
+                  {/* Keeping one host editor mounted avoids flashes and preserves its edit session. */}
+                  <div
+                    role={isEditingDescription ? undefined : 'button'}
+                    tabIndex={isEditingDescription ? undefined : 0}
+                    title={isEditingDescription ? undefined : t('Edit')}
+                    onMouseDown={
+                      isEditingDescription
+                        ? undefined
+                        : (event) => {
+                            if (isPlainPrimaryPress(event)) {
+                              startEditingDescription();
                             }
-                          : undefined
-                      }
-                      isReadOnly={!isEditingDescription}
-                      placeholder={t('Describe the issue…')}
-                      minHeight={
-                        isEditingDescription
-                          ? TASK_DESCRIPTION_MIN_HEIGHT
-                          : undefined
-                      }
-                      issueId={issueId}
-                    />
+                          }
+                    }
+                    onKeyDown={
+                      isEditingDescription
+                        ? undefined
+                        : (event) => {
+                            if (event.key === 'Enter') {
+                              startEditingDescription();
+                            }
+                          }
+                    }
+                    onMouseEnter={() => setIsDescriptionHovered(true)}
+                    onMouseLeave={() => setIsDescriptionHovered(false)}
+                    style={{
+                      ...(isEditingDescription
+                        ? TASK_EDITING_RICH_TEXT_FRAME_STYLE
+                        : {}),
+                      background:
+                        !isEditingDescription && isDescriptionHovered
+                          ? TASK_TOKENS.backgroundHover
+                          : 'transparent',
+                      borderRadius: TASK_TOKENS.radiusSmall,
+                      boxSizing: 'border-box',
+                      cursor: isEditingDescription ? 'auto' : 'text',
+                      display: 'flex',
+                      minHeight: isEditingDescription
+                        ? undefined
+                        : currentDescription.trim() === ''
+                          ? 120
+                          : TASK_DESCRIPTION_MIN_HEIGHT,
+                      padding:
+                        isEditingDescription || currentDescription.trim() === ''
+                          ? 0
+                          : TASK_RICH_TEXT_READING_PADDING,
+                      width: '100%',
+                    }}
+                  >
+                    {!isEditingDescription &&
+                    currentDescription.trim() === '' ? (
+                      <DescriptionEmptyBox />
+                    ) : (
+                      <TaskRichTextEditor
+                        value={currentDescription}
+                        onChange={
+                          isEditingDescription
+                            ? (next) => {
+                                setDescriptionDraft(next);
+                                pendingDescriptionRef.current = next;
+                              }
+                            : undefined
+                        }
+                        isReadOnly={!isEditingDescription}
+                        placeholder={t('Describe the issue…')}
+                        minHeight={
+                          isEditingDescription
+                            ? TASK_DESCRIPTION_MIN_HEIGHT
+                            : undefined
+                        }
+                        issueId={issueId}
+                      />
+                    )}
+                  </div>
+                  {isEditingDescription && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <TaskButton
+                        variant="primary"
+                        size="small"
+                        onClick={() =>
+                          void saveDescription(
+                            pendingDescriptionRef.current ?? currentDescription,
+                          )
+                        }
+                      >
+                        {t('Save')}
+                      </TaskButton>
+                      <TaskButton
+                        size="small"
+                        onClick={cancelEditingDescription}
+                      >
+                        {t('Cancel')}
+                      </TaskButton>
+                    </div>
                   )}
                 </div>
-                {isEditingDescription && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <TaskButton
-                      variant="primary"
-                      size="small"
-                      onClick={() =>
-                        void saveDescription(
-                          pendingDescriptionRef.current ?? currentDescription,
+              )}
+            </section>
+
+            <section
+              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              <SectionHeading
+                label={t('Subtasks')}
+                count={data.childIssues.length}
+              />
+              {data.childIssues.map((child) => (
+                <TaskSubtaskRow
+                  key={child.id}
+                  row={child}
+                  statusName={statusNameById.get(child.statusId ?? '') ?? null}
+                  statusColor={
+                    data.issueStatuses.find(
+                      (candidate) => candidate.id === child.statusId,
+                    )?.color ?? null
+                  }
+                  ownerName={
+                    child.assigneeId === null || child.assigneeId === undefined
+                      ? null
+                      : readMemberName(
+                          membersById,
+                          child.assigneeId,
+                          t('Unknown'),
                         )
-                      }
+                  }
+                  ownerAvatarUrl={
+                    membersById.get(child.assigneeId ?? '')?.avatarUrl
+                  }
+                  onOpen={() => onSelectIssue(child.id)}
+                  onUnlink={
+                    data.canWrite ? () => unlinkSubtask(child.id) : undefined
+                  }
+                  unlinkLabel={t('Remove subtask link')}
+                />
+              ))}
+              {data.canWrite && (
+                <TaskIssueSearch
+                  value={subtaskDraft}
+                  onChange={setSubtaskDraft}
+                  onSelectIssue={linkSubtask}
+                  onCreateNew={createSubtask}
+                  isShortcutEnabled={false}
+                  ariaLabel={t('New subtask title')}
+                  placeholder={t('Add a subtask…')}
+                  excludeIds={unlinkableIds}
+                  maxWidth="100%"
+                />
+              )}
+            </section>
+
+            <section
+              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              <SectionHeading label={t('Activity')} />
+              <TaskTabs
+                value={activityTab}
+                onChange={setActivityTab}
+                tabs={[
+                  {
+                    value: 'comments',
+                    label: t('Comments'),
+                    count:
+                      discussion.snapshot?.comments.length ??
+                      data.issueComments.length,
+                  },
+                  {
+                    value: 'worklogs',
+                    label: t('Worklogs'),
+                    count: data.worklogs.length,
+                  },
+                  { value: 'history', label: t('History') },
+                  { value: 'ai', label: t('Ask AI') },
+                ]}
+              />
+              <TaskStatusLine
+                text={actionError ?? discussion.error}
+                tone="danger"
+              />
+              {activityTab === 'comments' ? (
+                <>
+                  {discussion.snapshot?.nextCursor && (
+                    <TaskButton
+                      variant="ghost"
+                      size="small"
+                      onClick={() => void discussion.loadEarlier()}
                     >
-                      {t('Save')}
+                      {t('Load earlier comments')}
                     </TaskButton>
-                    <TaskButton size="small" onClick={cancelEditingDescription}>
-                      {t('Cancel')}
-                    </TaskButton>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <SectionHeading
-              label={t('Subtasks')}
-              count={data.childIssues.length}
-            />
-            {data.childIssues.map((child) => (
-              <TaskSubtaskRow
-                key={child.id}
-                row={child}
-                statusName={statusNameById.get(child.statusId ?? '') ?? null}
-                statusColor={
-                  data.issueStatuses.find(
-                    (candidate) => candidate.id === child.statusId,
-                  )?.color ?? null
-                }
-                ownerName={
-                  child.assigneeId === null || child.assigneeId === undefined
-                    ? null
-                    : readMemberName(
-                        membersById,
-                        child.assigneeId,
-                        t('Unknown'),
+                  )}
+                  <IssueCommentList
+                    key={issueId}
+                    issueId={issueId}
+                    baseUrl={readRecordPageBaseUrl()}
+                    comments={
+                      discussion.isPermissionDenied
+                        ? []
+                        : (discussion.snapshot?.comments ?? data.issueComments)
+                    }
+                    membersById={membersById}
+                    currentMemberId={
+                      discussion.snapshot?.currentMemberId ??
+                      data.currentWorkspaceMemberId
+                    }
+                    highlightedCommentId={null}
+                    canWrite={
+                      !discussion.isPermissionDenied &&
+                      (discussion.snapshot?.canWrite ?? data.canWrite)
+                    }
+                    canSoftDelete={
+                      !discussion.isPermissionDenied &&
+                      (discussion.snapshot?.canSoftDelete ?? data.canSoftDelete)
+                    }
+                    isBusy={isSaving}
+                    mentionMembers={
+                      discussion.snapshot?.members ?? data.assignableMembers
+                    }
+                    reactions={discussion.snapshot?.reactions}
+                    readStates={discussion.snapshot?.readStates}
+                    onReact={(commentId, emoji, active) =>
+                      void discussion
+                        .act('react', { commentId, emoji, active })
+                        .catch(() => undefined)
+                    }
+                    onRead={(commentId) =>
+                      discussion.act('read', { commentId })
+                    }
+                    onCreate={async (input) => {
+                      const result = await postAppRoute<{
+                        issueComment: IssueCommentRow;
+                      }>(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
+                        issueId,
+                        bodyV2: buildRichTextValue(input.markdown),
+                        requestId: input.requestId,
+                        mentionMemberIds: input.mentionMemberIds,
+                        ...(input.parentCommentId === undefined
+                          ? {}
+                          : { parentCommentId: input.parentCommentId }),
+                      });
+                      void discussion.reload();
+                      void reload();
+                      return result.issueComment;
+                    }}
+                    onUpdate={(commentId, markdown) =>
+                      void runFeedAction(() =>
+                        postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
+                          issueCommentId: commentId,
+                          data: { bodyV2: buildRichTextValue(markdown) },
+                        }),
                       )
-                }
-                ownerAvatarUrl={
-                  membersById.get(child.assigneeId ?? '')?.avatarUrl
-                }
-                onOpen={() => onSelectIssue(child.id)}
-                onUnlink={
-                  data.canWrite ? () => unlinkSubtask(child.id) : undefined
-                }
-                unlinkLabel={t('Remove subtask link')}
-              />
-            ))}
-            {data.canWrite && (
-              <TaskIssueSearch
-                value={subtaskDraft}
-                onChange={setSubtaskDraft}
-                onSelectIssue={linkSubtask}
-                onCreateNew={createSubtask}
-                isShortcutEnabled={false}
-                ariaLabel={t('New subtask title')}
-                placeholder={t('Add a subtask…')}
-                excludeIds={unlinkableIds}
-                maxWidth="100%"
-              />
-            )}
-          </section>
-
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <SectionHeading label={t('Activity')} />
-            <TaskTabs
-              value={activityTab}
-              onChange={setActivityTab}
-              tabs={[
-                {
-                  value: 'comments',
-                  label: t('Comments'),
-                  count:
-                    discussion.snapshot?.comments.length ??
-                    data.issueComments.length,
-                },
-                {
-                  value: 'worklogs',
-                  label: t('Worklogs'),
-                  count: data.worklogs.length,
-                },
-                { value: 'history', label: t('History') },
-                { value: 'ai', label: t('Ask AI') },
-              ]}
-            />
-            <TaskStatusLine
-              text={actionError ?? discussion.error}
-              tone="danger"
-            />
-            {activityTab === 'comments' ? (
-              <>
-                {discussion.snapshot?.nextCursor && (
-                  <TaskButton
-                    variant="ghost"
-                    size="small"
-                    onClick={() => void discussion.loadEarlier()}
-                  >
-                    {t('Load earlier comments')}
-                  </TaskButton>
-                )}
-                <IssueCommentList
-                  key={issueId}
+                    }
+                    onDelete={(commentId) =>
+                      void runFeedAction(() =>
+                        postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
+                          issueCommentId: commentId,
+                        }),
+                      )
+                    }
+                  />
+                </>
+              ) : activityTab === 'worklogs' ? (
+                <IssueWorklogList
                   issueId={issueId}
                   baseUrl={readRecordPageBaseUrl()}
-                  comments={
-                    discussion.isPermissionDenied
-                      ? []
-                      : (discussion.snapshot?.comments ?? data.issueComments)
-                  }
+                  worklogs={data.worklogs}
                   membersById={membersById}
-                  currentMemberId={
-                    discussion.snapshot?.currentMemberId ??
-                    data.currentWorkspaceMemberId
-                  }
-                  highlightedCommentId={null}
-                  canWrite={
-                    !discussion.isPermissionDenied &&
-                    (discussion.snapshot?.canWrite ?? data.canWrite)
-                  }
-                  canSoftDelete={
-                    !discussion.isPermissionDenied &&
-                    (discussion.snapshot?.canSoftDelete ?? data.canSoftDelete)
-                  }
+                  currentMemberId={data.currentWorkspaceMemberId}
+                  highlightedWorklogId={null}
+                  canWrite={data.canWrite}
+                  canSoftDelete={data.canSoftDelete}
+                  totalMinutes={issue.timeSpentMinutes}
+                  originalEstimateMinutes={issue.originalEstimateMinutes}
                   isBusy={isSaving}
-                  mentionMembers={
-                    discussion.snapshot?.members ?? data.assignableMembers
-                  }
-                  reactions={discussion.snapshot?.reactions}
-                  readStates={discussion.snapshot?.readStates}
-                  onReact={(commentId, emoji, active) =>
-                    void discussion
-                      .act('react', { commentId, emoji, active })
-                      .catch(() => undefined)
-                  }
-                  onRead={(commentId) => discussion.act('read', { commentId })}
-                  onCreate={async (input) => {
-                    const result = await postAppRoute<{
-                      issueComment: IssueCommentRow;
-                    }>(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
-                      issueId,
-                      bodyV2: buildRichTextValue(input.markdown),
-                      requestId: input.requestId,
-                      mentionMemberIds: input.mentionMemberIds,
-                      ...(input.parentCommentId === undefined
-                        ? {}
-                        : { parentCommentId: input.parentCommentId }),
-                    });
-                    void discussion.reload();
-                    void reload();
-                    return result.issueComment;
-                  }}
-                  onUpdate={(commentId, markdown) =>
+                  onCreate={(input) =>
                     void runFeedAction(() =>
-                      postAppRoute(UPDATE_ISSUE_COMMENT_ROUTE_PATH, {
-                        issueCommentId: commentId,
-                        data: { bodyV2: buildRichTextValue(markdown) },
+                      postAppRoute(CREATE_WORKLOG_ROUTE_PATH, {
+                        issueId,
+                        data: {
+                          timeSpentMinutes: input.timeSpentMinutes,
+                          description: input.description,
+                          startedAt: input.startedAt,
+                        },
                       }),
                     )
                   }
-                  onDelete={(commentId) =>
+                  onUpdateDescription={(worklogId, description) =>
                     void runFeedAction(() =>
-                      postAppRoute(DELETE_ISSUE_COMMENT_ROUTE_PATH, {
-                        issueCommentId: commentId,
+                      postAppRoute(UPDATE_WORKLOG_ROUTE_PATH, {
+                        worklogId,
+                        data: { description },
                       }),
+                    )
+                  }
+                  onDelete={(worklogId) =>
+                    void runFeedAction(() =>
+                      postAppRoute(DELETE_WORKLOG_ROUTE_PATH, { worklogId }),
                     )
                   }
                 />
-              </>
-            ) : activityTab === 'worklogs' ? (
-              <IssueWorklogList
+              ) : activityTab === 'history' ? (
+                <IssueHistoryList
+                  histories={data.issueHistories}
+                  membersById={membersById}
+                  statusNameById={statusNameById}
+                />
+              ) : null}
+              <IssueAiActivityTab
                 issueId={issueId}
-                baseUrl={readRecordPageBaseUrl()}
-                worklogs={data.worklogs}
-                membersById={membersById}
-                currentMemberId={data.currentWorkspaceMemberId}
-                highlightedWorklogId={null}
-                canWrite={data.canWrite}
-                canSoftDelete={data.canSoftDelete}
-                totalMinutes={issue.timeSpentMinutes}
-                originalEstimateMinutes={issue.originalEstimateMinutes}
-                isBusy={isSaving}
-                onCreate={(input) =>
-                  void runFeedAction(() =>
-                    postAppRoute(CREATE_WORKLOG_ROUTE_PATH, {
-                      issueId,
-                      data: {
-                        timeSpentMinutes: input.timeSpentMinutes,
-                        description: input.description,
-                        startedAt: input.startedAt,
-                      },
-                    }),
-                  )
-                }
-                onUpdateDescription={(worklogId, description) =>
-                  void runFeedAction(() =>
-                    postAppRoute(UPDATE_WORKLOG_ROUTE_PATH, {
-                      worklogId,
-                      data: { description },
-                    }),
-                  )
-                }
-                onDelete={(worklogId) =>
-                  void runFeedAction(() =>
-                    postAppRoute(DELETE_WORKLOG_ROUTE_PATH, { worklogId }),
-                  )
-                }
+                isActive={activityTab === 'ai'}
               />
-            ) : activityTab === 'history' ? (
-              <IssueHistoryList
-                histories={data.issueHistories}
-                membersById={membersById}
-                statusNameById={statusNameById}
+            </section>
+          </div>
+
+          <aside
+            style={{
+              // Longhands only: the side that carries the rule changes with
+              // the layout, and React drops a longhand beside a shorthand.
+              borderLeft: isMobile
+                ? 'none'
+                : `1px solid ${TASK_TOKENS.borderLight}`,
+              borderTop: isMobile
+                ? `1px solid ${TASK_TOKENS.borderLight}`
+                : 'none',
+              boxSizing: 'border-box',
+              display: isMobile ? 'flex' : 'grid',
+              gridTemplateRows:
+                preview === null ? 'minmax(0, 1fr) auto' : 'minmax(0, 1fr)',
+              gridTemplateColumns: 'minmax(0, 1fr)',
+              flexDirection: 'column',
+              flexShrink: 0,
+              gap: 4,
+              minHeight: 0,
+              minWidth: 0,
+              overflowX: 'hidden',
+              overflowY: isMobile ? 'visible' : 'hidden',
+              ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
+              paddingLeft: isMobile ? 0 : 16,
+              paddingTop: isMobile ? 16 : 0,
+              // Sized for the linked-record preview even while Details shows,
+              // so opening a merchant or chat does not reflow the issue.
+              width: isMobile ? '100%' : 'min(480px, 46%)',
+            }}
+          >
+            <div
+              style={{
+                gridArea: '1 / 1',
+                minHeight: 0,
+                overflowY: isMobile ? 'visible' : 'auto',
+                visibility:
+                  !isMobile && preview !== null ? 'hidden' : undefined,
+                width:
+                  !isMobile && preview !== null ? 'min(303px, 100%)' : '100%',
+                ...(!isMobile ? TASK_THIN_SCROLLBAR_STYLE : {}),
+              }}
+            >
+              <IssueDetailsPanel
+                key={issue.id}
+                issue={issue}
+                detail={displayedDetail}
+                onUpdate={(body, options) => void update(body, options)}
+                onError={setActionError}
+                onHiddenFieldsChange={saveHiddenDetailFields}
+                onOpenIssue={onSelectIssue}
+                onOpenRecord={(objectNameSingular, recordId) => {
+                  if (
+                    objectNameSingular === 'merchant' ||
+                    objectNameSingular === 'crispConversation'
+                  ) {
+                    setRecordPreview({ issueId, objectNameSingular, recordId });
+                  } else {
+                    void navigate(
+                      AppPath.RecordShowPage,
+                      { objectNameSingular, objectRecordId: recordId },
+                      undefined,
+                      { surface: 'main' },
+                    ).then(onClose);
+                  }
+                }}
+                onLogWork={() => setActivityTab('worklogs')}
               />
-            ) : null}
-            <IssueAiActivityTab
-              issueId={issueId}
-              isActive={activityTab === 'ai'}
-            />
-          </section>
+            </div>
+            {!isMobile && preview !== null && (
+              <div style={{ gridArea: '1 / 1', minHeight: 0, display: 'flex' }}>
+                {recordPreviewPanel}
+              </div>
+            )}
+            {/* It reports Details edits, and its reserved line would sit
+                under the preview as an empty strip. */}
+            {(isMobile || preview === null) && (
+              <TaskStatusLine
+                text={actionError ?? (isSaving ? t('Saving...') : null)}
+                tone={actionError === null ? 'muted' : 'danger'}
+              />
+            )}
+          </aside>
         </div>
-
-        <aside
-          style={{
-            // Longhands only: the side that carries the rule changes with
-            // the layout, and React drops a longhand beside a shorthand.
-            borderLeft: isMobile
-              ? 'none'
-              : `1px solid ${TASK_TOKENS.borderLight}`,
-            borderTop: isMobile
-              ? `1px solid ${TASK_TOKENS.borderLight}`
-              : 'none',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            flexShrink: 0,
-            gap: 4,
-            minHeight: 0,
-            minWidth: 0,
-            overflowX: 'hidden',
-            overflowY: isMobile ? 'visible' : 'auto',
-            ...(isMobile ? {} : TASK_THIN_SCROLLBAR_STYLE),
-            paddingLeft: isMobile ? 0 : 16,
-            paddingTop: isMobile ? 16 : 0,
-            width: isMobile ? '100%' : 320,
-          }}
-        >
-          <IssueDetailsPanel
-            key={issue.id}
-            issue={issue}
-            detail={displayedDetail}
-            onUpdate={(body, options) => void update(body, options)}
-            onError={setActionError}
-            onHiddenFieldsChange={saveHiddenDetailFields}
-            onOpenIssue={onSelectIssue}
-            onLogWork={() => setActivityTab('worklogs')}
-          />
-
-          <TaskStatusLine
-            text={actionError ?? (isSaving ? t('Saving...') : null)}
-            tone={actionError === null ? 'muted' : 'danger'}
-          />
-        </aside>
+        {isMobile && preview !== null && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              padding: 16,
+              background: TASK_TOKENS.background,
+            }}
+          >
+            {recordPreviewPanel}
+          </div>
+        )}
       </div>
     </TaskBoardDetailFrame>
   );
@@ -1019,10 +1121,12 @@ const TaskBoardDetailFrame = ({
   presentation = 'modal',
   children,
   onClose,
+  onEscape,
   focusKey,
   isMobile,
 }: {
   presentation?: 'modal' | 'drawer';
+  onEscape?: () => void;
   children: React.ReactNode;
   onClose: () => void;
   focusKey: string;
@@ -1072,7 +1176,8 @@ const TaskBoardDetailFrame = ({
           // open above stops the event on the host side first, so Escape
           // closes the topmost layer only, the way stacked modals behave.
           if (event.key === 'Escape') {
-            onClose();
+            event.stopPropagation();
+            (onEscape ?? onClose)();
           }
         }}
         style={{
@@ -1094,8 +1199,8 @@ const TaskBoardDetailFrame = ({
           width: isMobile
             ? '100%'
             : presentation === 'drawer'
-              ? 'min(920px, calc(100vw - 120px))'
-              : 'min(1280px, calc(100vw - 48px))',
+              ? 'min(1160px, calc(100vw - 48px))'
+              : 'min(1480px, calc(100vw - 48px))',
           zIndex: 61,
         }}
       >

@@ -13,9 +13,9 @@ export type IssueCrispConversation = {
   waitingSince: string | null;
 };
 
-// Read once per issue. Any failure, including the Customer Support app not
-// being installed, reads as "no conversations" and the row stays hidden.
+// Customer Support is optional, so an unavailable route reads as no links.
 export const useIssueCrispConversations = (issueId: string) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [conversations, setConversations] = useState<IssueCrispConversation[]>(
     [],
   );
@@ -24,6 +24,7 @@ export const useIssueCrispConversations = (issueId: string) => {
     let isCurrent = true;
 
     setConversations([]);
+    setIsLoading(true);
 
     postAppRoute<{ conversations?: IssueCrispConversation[] }>(
       CUSTOMER_SUPPORT_ISSUE_CONVERSATIONS_ROUTE_PATH,
@@ -38,6 +39,11 @@ export const useIssueCrispConversations = (issueId: string) => {
         if (isCurrent) {
           setConversations([]);
         }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       });
 
     return () => {
@@ -45,5 +51,5 @@ export const useIssueCrispConversations = (issueId: string) => {
     };
   }, [issueId]);
 
-  return conversations;
+  return { conversations, isLoading };
 };

@@ -577,6 +577,8 @@ export const UPDATE_MERCHANT_CUSTOM_SETTINGS_LOGIC_FUNCTION_UID =
   '37c7d2c1-427d-48de-9a4b-ffdf5ec5e7d8';
 export const RUN_MERCHANT_CUSTOM_SETTING_TOOL_LOGIC_FUNCTION_UID =
   '6e057a27-eede-47f3-b525-fe735af608e7';
+export const MERCHANT_PREVIEW_LOGIC_FUNCTION_UID =
+  '790c1b4a-5875-448f-999e-706757b34a3c';
 
 // The Home tab of the merchant record page: `merchant` has no page of its
 // own in any manifest, and the engine's backfill gave it "Default Merchant

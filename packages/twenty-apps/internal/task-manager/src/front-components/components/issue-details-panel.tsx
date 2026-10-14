@@ -161,7 +161,8 @@ export const IssueDetailsPanel = ({
   const [estimateDraft, setEstimateDraft] = useState<string | null>(null);
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
-  const crispConversations = useIssueCrispConversations(issue.id);
+  const { conversations: crispConversations, isLoading: isLoadingConversations } =
+    useIssueCrispConversations(issue.id);
 
   const isReadOnly = !detail.canWrite;
   // A subtask is planned wherever its parent is, as in Jira: its sprint and
@@ -606,19 +607,18 @@ export const IssueDetailsPanel = ({
             />
           </TaskFieldRow>
         )}
-        {crispConversations.length > 0 && (
-          <TaskFieldRow label={t('Conversations')} Icon={IconMessage}>
-            <TaskCrispConversationsField
-              conversations={crispConversations}
-              onOpenConversation={
-                onOpenRecord === undefined
-                  ? undefined
-                  : (conversationId) =>
-                      onOpenRecord('crispConversation', conversationId)
-              }
-            />
-          </TaskFieldRow>
-        )}
+        <TaskFieldRow label={t('Conversations')} Icon={IconMessage}>
+          <TaskCrispConversationsField
+            conversations={crispConversations}
+            isLoading={isLoadingConversations}
+            onOpenConversation={
+              onOpenRecord === undefined
+                ? undefined
+                : (conversationId) =>
+                    onOpenRecord('crispConversation', conversationId)
+            }
+          />
+        </TaskFieldRow>
         {isShown('labels') && (
           <TaskFieldRow label={t('Labels')} Icon={IconTags}>
             <LabelPicker

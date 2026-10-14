@@ -3,9 +3,12 @@ import { t } from 'twenty-sdk/front-component';
 import { type IssueCrispConversation } from '../hooks/use-issue-crisp-conversations';
 import { DetailReadButton } from './task-detail-controls';
 import { TaskRecordChip } from './task-record-chip';
+import { TaskSkeletonBar } from './task-skeleton';
+import { TASK_TOKENS } from './task-tokens';
 
 type TaskCrispConversationsFieldProps = {
   conversations: IssueCrispConversation[];
+  isLoading?: boolean;
   onOpenConversation?: (conversationId: string) => void;
 };
 
@@ -34,6 +37,7 @@ const readConversationDetail = (
 
 export const TaskCrispConversationsField = ({
   conversations,
+  isLoading = false,
   onOpenConversation,
 }: TaskCrispConversationsFieldProps) => (
   <div
@@ -45,18 +49,34 @@ export const TaskCrispConversationsField = ({
       width: '100%',
     }}
   >
-    {conversations.map((conversation) => (
-      <DetailReadButton
-        key={conversation.id}
-        label={t('Open conversation')}
-        isReadOnly={onOpenConversation === undefined}
-        onOpen={() => onOpenConversation?.(conversation.id)}
+    {isLoading ? (
+      <div
+        role="status"
+        aria-label={t('Loading conversations')}
+        aria-busy="true"
       >
-        <TaskRecordChip
-          name={readConversationName(conversation)}
-          detail={readConversationDetail(conversation)}
-        />
-      </DetailReadButton>
-    ))}
+        <TaskSkeletonBar width={120} height={20} />
+      </div>
+    ) : conversations.length === 0 ? (
+      <span
+        style={{ color: TASK_TOKENS.textLight, fontSize: 13, padding: '0 4px' }}
+      >
+        {t('No conversations')}
+      </span>
+    ) : (
+      conversations.map((conversation) => (
+        <DetailReadButton
+          key={conversation.id}
+          label={t('Open conversation')}
+          isReadOnly={onOpenConversation === undefined}
+          onOpen={() => onOpenConversation?.(conversation.id)}
+        >
+          <TaskRecordChip
+            name={readConversationName(conversation)}
+            detail={readConversationDetail(conversation)}
+          />
+        </DetailReadButton>
+      ))
+    )}
   </div>
 );

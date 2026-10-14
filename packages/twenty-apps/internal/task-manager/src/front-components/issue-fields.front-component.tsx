@@ -14,6 +14,7 @@ import { IssueDetailsPanel } from './components/issue-details-panel';
 import { TaskMessage } from './components/task-message';
 import { TaskSkeletonFieldRow } from './components/task-skeleton';
 import { TaskStatusLine } from './components/task-status-line';
+import { SectionHeading } from './components/task-section-heading';
 import {
   TASK_THIN_SCROLLBAR_STYLE,
   TASK_TOKENS,
@@ -108,12 +109,27 @@ const IssueFields = () => {
   if (isLoading && data.issue === null) {
     return (
       <section style={PANEL_STYLE}>
-        <TaskSkeletonFieldRow valueWidth={35} />
-        <TaskSkeletonFieldRow valueWidth={55} />
-        <TaskSkeletonFieldRow valueWidth={50} />
-        <TaskSkeletonFieldRow valueWidth={30} />
-        <TaskSkeletonFieldRow valueWidth={40} />
-        <TaskSkeletonFieldRow valueWidth={60} />
+        <SectionHeading label={t('Details')} />
+        <div
+          role="status"
+          aria-label={t('Loading details')}
+          aria-busy="true"
+          style={{
+            background: TASK_TOKENS.background,
+            border: `1px solid ${TASK_TOKENS.borderLight}`,
+            borderRadius: TASK_TOKENS.radius,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            padding: '8px 10px',
+          }}
+        >
+          {[35, 55, 50, 30, 40, 60, 35, 50, 40, 55, 60, 30, 40, 50, 35, 60].map(
+            (valueWidth, index) => (
+              <TaskSkeletonFieldRow key={index} valueWidth={valueWidth} />
+            ),
+          )}
+        </div>
       </section>
     );
   }
