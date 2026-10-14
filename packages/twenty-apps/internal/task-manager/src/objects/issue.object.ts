@@ -9,6 +9,7 @@ import {
   ISSUE_ATTACHMENTS_FIELD_UID,
   ISSUE_DESCRIPTION_FIELD_UID,
   ISSUE_DUE_DATE_FIELD_UID,
+  ISSUE_PINNED_AT_FIELD_UID,
   ISSUE_KEY_FIELD_UID,
   ISSUE_LABELS_FIELD_UID,
   ISSUE_OBJECT_UID,
@@ -121,6 +122,15 @@ export default defineObject({
       label: 'Due date',
       description: 'Issue due date',
       icon: 'IconCalendarEvent',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: ISSUE_PINNED_AT_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'pinnedAt',
+      label: 'Pinned at',
+      description: 'When the issue was pinned to the top of its board column',
+      icon: 'IconPin',
       isNullable: true,
     },
     {

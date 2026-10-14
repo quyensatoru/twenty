@@ -18,6 +18,7 @@ import {
   buildBoardScopeFilter,
 } from './utils/build-board-issue-filters.util';
 import { countIssues } from './utils/count-issues.util';
+import { buildBoardIssueOrderBy } from './utils/build-board-issue-order-by.util';
 import { fetchIssuePage } from './utils/fetch-issue-page.util';
 import { listAppMembers } from './utils/list-app-members.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
@@ -195,7 +196,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
               now,
             }),
             first: BOARD_COLUMN_PAGE_SIZE,
-            sort: query.sort,
+            orderBy: buildBoardIssueOrderBy(query.sort),
           }),
         ),
       ),

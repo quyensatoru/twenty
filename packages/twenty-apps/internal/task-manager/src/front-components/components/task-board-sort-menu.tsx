@@ -272,7 +272,7 @@ export const TaskBoardSortMenu = ({
             {sort.length === 0 ? (
               <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}>
                 {t(
-                  'Cards keep their manual order. Add a sort to reorder them.',
+                  'Newest cards come first, after pinned ones. Add a sort to reorder them.',
                 )}
               </span>
             ) : (

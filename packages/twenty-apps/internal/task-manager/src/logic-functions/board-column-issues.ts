@@ -9,6 +9,7 @@ import {
   buildBoardColumnFilter,
   buildBoardScopeFilter,
 } from './utils/build-board-issue-filters.util';
+import { buildBoardIssueOrderBy } from './utils/build-board-issue-order-by.util';
 import { fetchIssuePage } from './utils/fetch-issue-page.util';
 import { findActiveSprintId } from './utils/find-active-sprint-id.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
@@ -88,7 +89,7 @@ const handler = async (event: RoutePayload<BoardColumnIssuesBody>) =>
       }),
       first: BOARD_COLUMN_PAGE_SIZE,
       after,
-      sort: query.sort,
+      orderBy: buildBoardIssueOrderBy(query.sort),
     });
 
     const members = await listIssueMembers({ client, issues: page.issues });

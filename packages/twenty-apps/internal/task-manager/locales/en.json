@@ -678,7 +678,8 @@
     "Worklogs logged by the workspace member": "Worklogs logged by the workspace member",
     "Workspace member behind the change, if a person made it": "Workspace member behind the change, if a person made it",
     "Workspace member granted this access": "Workspace member granted this access",
-    "Workspace member who logged the time": "Workspace member who logged the time"
+    "Workspace member who logged the time": "Workspace member who logged the time",
+    "When the issue was pinned to the top of its board column": "When the issue was pinned to the top of its board column"
   },
   "fieldMetadata.label": {
     "Action": "Action",
@@ -750,7 +751,8 @@
     "Worklogs": "Worklogs",
     "Configuration": "Configuration",
     "Member Id": "Member Id",
-    "Issue Id": "Issue Id"
+    "Issue Id": "Issue Id",
+    "Pinned at": "Pinned at"
   },
   "navigationMenuItem.name": {
     "App Accesses": "App Accesses",
@@ -935,6 +937,7 @@
   "Remove sort": "Remove sort",
   "Add sort": "Add sort",
   "Clear sort": "Clear sort",
-  "Cards keep their manual order. Add a sort to reorder them.": "Cards keep their manual order. Add a sort to reorder them.",
-  "Creating…": "Creating…"
+  "Newest cards come first, after pinned ones. Add a sort to reorder them.": "Newest cards come first, after pinned ones. Add a sort to reorder them.",
+  "Creating…": "Creating…",
+  "Pin to top": "Pin to top"
 }

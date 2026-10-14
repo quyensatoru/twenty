@@ -43,6 +43,7 @@ export type IssueRow = {
   resolution?: string | null;
   storyPoints?: number | null;
   dueDate?: string | null;
+  pinnedAt?: string | null;
   labels?: string[] | null;
   position?: number | null;
   statusId?: string | null;

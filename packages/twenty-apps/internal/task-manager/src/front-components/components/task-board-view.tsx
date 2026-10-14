@@ -39,6 +39,7 @@ import { moveIdOnto } from '../utils/move-id-onto.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
+import { toggleBoardIssuePin } from '../utils/toggle-board-issue-pin.util';
 import { TaskBoardAddStatus } from './task-board-add-status';
 import { TaskBoardCard } from './task-board-card';
 import { TaskBoardDetail } from './task-board-detail';
@@ -289,6 +290,37 @@ export const TaskBoardView = ({
       });
       const message = readErrorText(error);
       void enqueueSnackbar({ message, variant: 'error' });
+    }
+  };
+
+  // Optimistic like the move above. An unpin reloads once confirmed: where
+  // the card belongs under the sort is only known to the server.
+  const toggleIssuePin = async (issueId: string) => {
+    const previousIssues = board.issues;
+    const toggled = toggleBoardIssuePin(
+      board.issues,
+      issueId,
+      new Date().toISOString(),
+    );
+
+    if (toggled === null) {
+      return;
+    }
+
+    setBoard({ ...board, issues: toggled.issues });
+
+    try {
+      await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
+        issueId,
+        data: { pinnedAt: toggled.pinnedAt },
+      });
+
+      if (toggled.pinnedAt === null) {
+        refreshBoard();
+      }
+    } catch (error) {
+      setBoard({ ...board, issues: previousIssues });
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
     }
   };
 
@@ -971,6 +1003,7 @@ export const TaskBoardView = ({
                     canDelete={board.canSoftDelete}
                     onOpen={() => setSelectedIssueId(issue.id)}
                     onMove={(statusId) => void moveIssue(issue.id, statusId)}
+                    onTogglePin={() => void toggleIssuePin(issue.id)}
                     onDelete={() => void deleteIssue(issue.id)}
                     onDragStartCard={() => setDraggingIssueId(issue.id)}
                     onDragEndCard={() => {

@@ -1,6 +1,5 @@
 import { attachDevelopmentSummaries } from './attach-development-summaries.util';
-import { buildBoardIssueOrderBy } from './build-board-issue-order-by.util';
-import { type BoardIssueSort } from '../../constants/board-issue-sorts';
+import { type IssueOrderByEntry } from './build-board-issue-order-by.util';
 import { ISSUE_SEARCH_SELECTION } from '../../constants/record-selections';
 import { type ApiClient } from '../../types/api-client';
 import { type IssueRow } from '../../types/task-manager-rows';
@@ -18,28 +17,35 @@ type IssuePageConnection = {
   totalCount?: number;
 };
 
-// One page of a board column, with what the column needs to keep paging and
-// to show its real size. The SEARCH selection, not the full one: a card never
-// renders the rich text body, which would multiply the payload per row.
+// The backlog's manual rank, with the id as the tie break cursor paging needs.
+const MANUAL_ISSUE_ORDER_BY: IssueOrderByEntry[] = [
+  { position: 'AscNullsLast' },
+  { id: 'AscNullsLast' },
+];
+
+// One page of a board column or backlog section, with what it needs to keep
+// paging and to show its real size. The SEARCH selection, not the full one: a
+// card never renders the rich text body, which would multiply the payload per
+// row.
 export const fetchIssuePage = async ({
   client,
   filter,
   first,
   after,
-  sort = [],
+  orderBy = MANUAL_ISSUE_ORDER_BY,
 }: {
   client: ApiClient;
   filter: Record<string, unknown>;
   first: number;
   after?: string | null;
-  sort?: BoardIssueSort;
+  orderBy?: IssueOrderByEntry[];
 }): Promise<IssuePage> => {
   const result = await client.query({
     issues: {
       __args: {
         filter,
         first,
-        orderBy: buildBoardIssueOrderBy(sort),
+        orderBy,
         ...(typeof after === 'string' && after !== '' ? { after } : {}),
       },
       edges: { node: ISSUE_SEARCH_SELECTION },

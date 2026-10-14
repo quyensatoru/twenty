@@ -14,6 +14,7 @@ export type BoardIssue = {
   priority?: string | null;
   storyPoints?: number | null;
   dueDate?: string | null;
+  pinnedAt?: string | null;
   labels?: string[] | null;
   statusId?: string | null;
   projectId?: string | null;

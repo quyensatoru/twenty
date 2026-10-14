@@ -1,3 +1,4 @@
+import { isNonEmptyString } from '@sniptt/guards';
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
@@ -11,6 +12,9 @@ import {
   IconCheck,
   IconDotsVertical,
   IconHierarchy2,
+  IconPin,
+  IconPinned,
+  IconPinnedOff,
   IconSquareCheck,
   IconTrash,
   IconUser,
@@ -55,6 +59,7 @@ type TaskBoardCardProps = {
   canDelete: boolean;
   onOpen: () => void;
   onMove: (statusId: string) => void;
+  onTogglePin: () => void;
   onDelete: () => void;
   onDragStartCard: () => void;
   onDragEndCard: () => void;
@@ -166,6 +171,7 @@ export const TaskBoardCard = ({
   canDelete,
   onOpen,
   onMove,
+  onTogglePin,
   onDelete,
   onDragStartCard,
   onDragEndCard,
@@ -173,11 +179,13 @@ export const TaskBoardCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
+  const [isPinItemHovered, setIsPinItemHovered] = useState(false);
   // Two-step delete: the sandbox has no confirm dialog, so the first click
   // arms the button and the second executes. Disarmed whenever the menu
   // closes, so a stale arm can never survive to the next open.
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
+  const isPinned = isNonEmptyString(issue.pinnedAt);
   const dueLabel = readShortDate(issue.dueDate);
   const isOverdue = readIsOverdue(issue.dueDate, isDone);
   const labelOptions = (issue.labels ?? []).slice(0, 2);
@@ -256,22 +264,31 @@ export const TaskBoardCard = ({
           width: '100%',
         }}
       >
-        <span
-          style={{
-            color: TASK_TOKENS.textPrimary,
-            display: '-webkit-box',
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 13,
-            lineHeight: '18px',
-            maxHeight: 54,
-            overflow: 'hidden',
-            overflowWrap: 'anywhere',
-            paddingRight: 20,
-            WebkitBoxOrient: 'vertical',
-            WebkitLineClamp: 3,
-          }}
-        >
-          {issue.title ?? t('(No title)')}
+        <span style={{ display: 'flex', gap: 4, paddingRight: 20 }}>
+          {isPinned && (
+            <span
+              title={t('Pinned')}
+              style={{ display: 'inline-flex', flexShrink: 0, paddingTop: 2 }}
+            >
+              <IconPinned size={14} color={TASK_TOKENS.accent} />
+            </span>
+          )}
+          <span
+            style={{
+              color: TASK_TOKENS.textPrimary,
+              display: '-webkit-box',
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 13,
+              lineHeight: '18px',
+              maxHeight: 54,
+              overflow: 'hidden',
+              overflowWrap: 'anywhere',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 3,
+            }}
+          >
+            {issue.title ?? t('(No title)')}
+          </span>
         </span>
 
         {hasTags && (
@@ -537,6 +554,55 @@ export const TaskBoardCard = ({
             >
               {canMove && (
                 <>
+                  {/* Keyed by state: the sandbox can keep a menu item's first
+                      click handler, which would pin an issue already pinned. */}
+                  <button
+                    key={isPinned ? 'unpin' : 'pin'}
+                    type="button"
+                    role="menuitem"
+                    onMouseEnter={() => setIsPinItemHovered(true)}
+                    onMouseLeave={() => setIsPinItemHovered(false)}
+                    onClick={() => {
+                      onTogglePin();
+                      setIsMoveOpen(false);
+                    }}
+                    style={{
+                      alignItems: 'center',
+                      background: isPinItemHovered
+                        ? TASK_TOKENS.backgroundHover
+                        : 'transparent',
+                      border: 'none',
+                      borderRadius: TASK_TOKENS.radiusSmall,
+                      color: TASK_TOKENS.textPrimary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      fontFamily: TASK_TOKENS.fontFamily,
+                      fontSize: 13,
+                      gap: 8,
+                      minHeight: 32,
+                      padding: '0 8px',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    {isPinned ? (
+                      <IconPinnedOff
+                        size={14}
+                        color={TASK_TOKENS.textSecondary}
+                      />
+                    ) : (
+                      <IconPin size={14} color={TASK_TOKENS.textSecondary} />
+                    )}
+                    {isPinned ? t('Unpin') : t('Pin to top')}
+                  </button>
+                  <div
+                    style={{
+                      background: TASK_TOKENS.borderLight,
+                      height: 1,
+                      margin: '4px 0',
+                      width: '100%',
+                    }}
+                  />
                   <span
                     style={{
                       color: TASK_TOKENS.textTertiary,

@@ -678,7 +678,8 @@
     "Worklogs logged by the workspace member": "Các ghi nhận thời gian của thành viên này",
     "Workspace member behind the change, if a person made it": "Thành viên workspace thực hiện thay đổi, nếu là người thao tác",
     "Workspace member granted this access": "Thành viên workspace được cấp quyền này",
-    "Workspace member who logged the time": "Thành viên workspace đã ghi nhận thời gian"
+    "Workspace member who logged the time": "Thành viên workspace đã ghi nhận thời gian",
+    "When the issue was pinned to the top of its board column": "Thời điểm issue được ghim lên đầu cột trên board"
   },
   "fieldMetadata.label": {
     "Action": "Hành động",
@@ -750,7 +751,8 @@
     "Worklogs": "Ghi nhận thời gian",
     "Configuration": "Cấu hình",
     "Member Id": "ID thành viên",
-    "Issue Id": "ID công việc"
+    "Issue Id": "ID công việc",
+    "Pinned at": "Thời điểm ghim"
   },
   "navigationMenuItem.name": {
     "App Accesses": "Quyền truy cập app",
@@ -935,6 +937,7 @@
   "Remove sort": "Bỏ sắp xếp",
   "Add sort": "Thêm sắp xếp",
   "Clear sort": "Xoá sắp xếp",
-  "Cards keep their manual order. Add a sort to reorder them.": "Card đang theo thứ tự thủ công. Thêm sắp xếp để đổi thứ tự.",
-  "Creating…": "Đang tạo…"
+  "Newest cards come first, after pinned ones. Add a sort to reorder them.": "Card mới tạo ở trên, sau các card đã ghim. Thêm sắp xếp để đổi thứ tự.",
+  "Creating…": "Đang tạo…",
+  "Pin to top": "Ghim lên đầu"
 }
