@@ -3,6 +3,7 @@ import {
   type MarkdownInlineNode,
 } from '../types/markdown-node';
 import { parseMarkdownBlocks } from './parse-markdown-blocks.util';
+import { readBlocknoteSafeUrl } from './read-blocknote-safe-url.util';
 
 type BlocknoteStyles = { bold?: true; italic?: true; code?: true };
 
@@ -36,28 +37,36 @@ const toBlocknoteInlineContent = (
   nodes: MarkdownInlineNode[],
 ): BlocknoteInlineContent[] =>
   nodes.map((node) => {
-    if (node.type === 'link') {
-      return {
-        type: 'link' as const,
-        href: node.url,
-        content: [{ type: 'text' as const, text: node.text, styles: {} }],
-      };
-    }
-
     // An inline image inside a paragraph has no BlockNote equivalent — image is
     // a block there — so it degrades to a link rather than being dropped.
-    if (node.type === 'image') {
+    if (node.type === 'link' || node.type === 'image') {
+      const text = node.type === 'link' ? node.text : node.alt || node.url;
+      const href = readBlocknoteSafeUrl(node.url);
+
+      if (href === null) {
+        return { type: 'text' as const, text, styles: {} };
+      }
+
       return {
         type: 'link' as const,
-        href: node.url,
-        content: [
-          { type: 'text' as const, text: node.alt || node.url, styles: {} },
-        ],
+        href,
+        content: [{ type: 'text' as const, text, styles: {} }],
       };
     }
 
-    return { type: 'text' as const, text: node.text, styles: buildStyles(node) };
+    return {
+      type: 'text' as const,
+      text: node.text,
+      styles: buildStyles(node),
+    };
   });
+
+// A media file the server would refuse is kept as its address in text, so the
+// save goes through and nothing disappears from the derived half.
+const unsafeMediaParagraph = (url: string): BlocknoteBlock => ({
+  type: 'paragraph',
+  content: [{ type: 'text', text: url, styles: {} }],
+});
 
 const toBlocknoteBlock = (block: MarkdownBlock): BlocknoteBlock => {
   switch (block.type) {
@@ -77,14 +86,44 @@ const toBlocknoteBlock = (block: MarkdownBlock): BlocknoteBlock => {
     case 'codeBlock':
       return {
         type: 'codeBlock',
-        ...(block.language === null ? {} : { props: { language: block.language } }),
+        ...(block.language === null
+          ? {}
+          : { props: { language: block.language } }),
         content: [{ type: 'text', text: block.code, styles: {} }],
       };
-    case 'image':
+    case 'image': {
+      const url = readBlocknoteSafeUrl(block.url);
+
+      if (url === null) {
+        return unsafeMediaParagraph(block.url);
+      }
+
       return {
         type: 'image',
-        props: { url: block.url, name: block.alt, caption: '' },
+        props: {
+          url,
+          name: block.alt,
+          caption: block.caption ?? '',
+          ...(block.width === undefined ? {} : { previewWidth: block.width }),
+        },
       };
+    }
+    // The server re-signs file URLs only where a block carries them, so a
+    // video or audio file left out here would stop loading once its token
+    // expired.
+    case 'video':
+    case 'audio': {
+      const url = readBlocknoteSafeUrl(block.url);
+
+      if (url === null) {
+        return unsafeMediaParagraph(block.url);
+      }
+
+      return {
+        type: block.type,
+        props: { url, caption: block.caption ?? '' },
+      };
+    }
     case 'divider':
       return { type: 'divider' };
     case 'paragraph':

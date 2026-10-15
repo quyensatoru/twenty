@@ -29,6 +29,9 @@ const PREVIEW_HTML_SCHEMA = {
   attributes: {
     ...defaultSchema.attributes,
     p: [...(defaultSchema.attributes?.p ?? []), 'style'],
+    // The editor wraps what markdown cannot spell (alignment, block colours,
+    // nested blocks) in <div>s marked with data attributes.
+    div: [...(defaultSchema.attributes?.div ?? []), 'style', 'data*'],
     span: [...(defaultSchema.attributes?.span ?? []), 'style'],
     td: [...(defaultSchema.attributes?.td ?? []), 'style'],
     th: [...(defaultSchema.attributes?.th ?? []), 'style'],
@@ -37,12 +40,60 @@ const PREVIEW_HTML_SCHEMA = {
   },
 };
 
-// The host resets native HTML styles, so semantic tags need explicit formatting.
+// The editor this text was written in is BlockNote, so the preview copies its
+// measurements (13px text, 1.5 line height, 3px around every block, its
+// heading scale, list indent and colours): what was written and what is read
+// should look like the same document. The host resets native HTML styles, so
+// every tag is styled here.
+const BLOCK_SPACING = '3px 0';
+const LIST_INDENT = 24;
+const NESTING_GUIDE_COLOR = '#cfcfcf';
+const QUOTE_COLOR = '#7d797a';
+const TABLE_BORDER_COLOR = '#dddddd';
+const LINK_COLOR = '#0000ee';
+const CODE_BLOCK_BACKGROUND = '#161616';
+const CODE_BLOCK_COLOR = '#ffffff';
+const HEADING_SCALE = ['3em', '2em', '1.3em', '1em', '0.9em', '0.8em'];
+const BULLET_STYLES = ['disc', 'circle', 'square'];
+
 const CELL_STYLE: CSSProperties = {
-  border: `1px solid ${TASK_TOKENS.borderStrong}`,
-  padding: '6px 12px',
+  border: `1px solid ${TABLE_BORDER_COLOR}`,
+  minWidth: 120,
+  padding: '5px 10px',
   textAlign: 'left',
   verticalAlign: 'top',
+};
+
+// A nested group in BlockNote sits one indent in, with a thin guide line under
+// its parent's marker.
+const NESTED_GROUP_STYLE: CSSProperties = {
+  borderLeft: `1px solid ${NESTING_GUIDE_COLOR}`,
+  marginLeft: 4 - LIST_INDENT,
+  paddingLeft: 2 * LIST_INDENT - 5,
+};
+
+const headingStyle = (level: number): CSSProperties => ({
+  fontSize: HEADING_SCALE[level - 1],
+  fontWeight: 700,
+  lineHeight: 1.5,
+  margin: 0,
+  padding: '18px 0 3px',
+});
+
+const readDepth = (node: Element | undefined) => {
+  const depth = Number(node?.properties?.dataListDepth);
+
+  return Number.isFinite(depth) ? depth : 0;
+};
+
+const listStyle = (node: Element | undefined): CSSProperties => {
+  const depth = readDepth(node);
+
+  return {
+    margin: 0,
+    padding: 0,
+    ...(depth === 0 ? { paddingLeft: LIST_INDENT } : NESTED_GROUP_STYLE),
+  };
 };
 
 const inlineStyle = (style?: CSSProperties): CSSProperties => {
@@ -61,6 +112,23 @@ const inlineStyle = (style?: CSSProperties): CSSProperties => {
     }
   }
   return result;
+};
+
+// The editor saves a resized image or video as an HTML width; the preview
+// honours it the same way the editor does, never wider than the column.
+const mediaSizeStyle = (width?: number | string): CSSProperties => {
+  const pixelWidth = Number(width);
+
+  // Inline so an aligned block around it can centre or right-align it.
+  return {
+    display: 'inline-block',
+    verticalAlign: 'top',
+    height: 'auto',
+    maxWidth: '100%',
+    ...(Number.isFinite(pixelWidth) && pixelWidth > 0
+      ? { width: pixelWidth }
+      : {}),
+  };
 };
 
 const stopLinkEventPropagation = (event: SyntheticEvent) => {
@@ -140,13 +208,135 @@ const rehypePreviewLinks = () => (tree: Root) => {
   visitChildren(tree);
 };
 
+const isListElement = (node: RootContent) =>
+  node.type === 'element' && (node.tagName === 'ul' || node.tagName === 'ol');
+
+const isElementWith = (node: RootContent | undefined, property: string) =>
+  node?.type === 'element' &&
+  node.tagName === 'div' &&
+  node.properties?.[property] !== undefined;
+
+// A toggle is written as a wrapper around its line followed by a wrapper
+// around its children. BlockNote shows it closed, so it becomes a closed
+// <details>: the line is the summary, the children open under it.
+const foldTogglesIntoDetails = (parent: Root | Element) => {
+  const children = parent.children as RootContent[];
+
+  for (let index = 0; index < children.length; index++) {
+    const toggle = children[index];
+
+    if (toggle.type !== 'element' || !isElementWith(toggle, 'dataToggle')) {
+      continue;
+    }
+
+    const [line] = toggle.children.filter(
+      (node): node is Element => node.type === 'element',
+    );
+    const item =
+      line?.tagName === 'ul'
+        ? line.children.find(
+            (node): node is Element =>
+              node.type === 'element' && node.tagName === 'li',
+          )
+        : undefined;
+    const nextSibling = children
+      .slice(index + 1)
+      .find((node) => node.type !== 'text' || node.value.trim() !== '');
+    const hasChildren = isElementWith(nextSibling, 'dataBlocknoteChildren');
+    const details: Element = {
+      type: 'element',
+      tagName: 'details',
+      properties: { style: toggle.properties?.style },
+      children: [
+        {
+          type: 'element',
+          tagName: 'summary',
+          properties: {},
+          children: item?.children ?? (line === undefined ? [] : [line]),
+        },
+        ...(hasChildren ? [nextSibling as Element] : []),
+      ],
+    };
+
+    children.splice(
+      index,
+      hasChildren
+        ? children.indexOf(nextSibling as RootContent) - index + 1
+        : 1,
+      details,
+    );
+  }
+};
+
+// Marks up what the preview has to style by context, since a component only
+// sees its own node: which wrappers are toggles, how deep a list sits, and
+// which inline text of a ticked task is crossed out (not its subtasks, which
+// BlockNote leaves alone).
+const rehypeEditorLayout = () => (tree: Root) => {
+  const visit = (parent: Root | Element, listDepth: number) => {
+    foldTogglesIntoDetails(parent);
+
+    for (const child of parent.children as RootContent[]) {
+      if (child.type !== 'element') {
+        continue;
+      }
+
+      if (isListElement(child)) {
+        child.properties = { ...child.properties, dataListDepth: listDepth };
+        visit(child, listDepth + 1);
+        continue;
+      }
+
+      if (child.tagName === 'li') {
+        const checkbox = child.children.find(
+          (node): node is Element =>
+            node.type === 'element' && node.tagName === 'input',
+        );
+
+        // GFM keeps the space after `[ ]`, which would push the text past
+        // where BlockNote puts it and start a strike line before the word.
+        const textAfterCheckbox =
+          checkbox === undefined
+            ? undefined
+            : child.children[child.children.indexOf(checkbox) + 1];
+
+        if (textAfterCheckbox?.type === 'text') {
+          textAfterCheckbox.value = textAfterCheckbox.value.trimStart();
+        }
+
+        if (checkbox?.properties?.checked === true) {
+          const inline = child.children.filter(
+            (node) => node !== checkbox && !isListElement(node),
+          );
+          const lists = child.children.filter(isListElement) as Element[];
+
+          child.children = [
+            checkbox,
+            {
+              type: 'element',
+              tagName: 'span',
+              properties: { dataChecked: true },
+              children: inline as Element['children'],
+            },
+            ...lists,
+          ];
+        }
+      }
+
+      visit(child, listDepth);
+    }
+  };
+
+  visit(tree, 0);
+};
+
 export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
   <div
     style={{
       color: TASK_TOKENS.textPrimary,
       fontFamily: TASK_TOKENS.fontFamily,
       fontSize: 13,
-      lineHeight: '1.6',
+      lineHeight: 1.5,
       minWidth: 0,
       overflowWrap: 'anywhere',
       userSelect: 'text',
@@ -159,6 +349,7 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
         rehypeRaw,
         rehypePreviewLinks,
         [rehypeSanitize, PREVIEW_HTML_SCHEMA],
+        rehypeEditorLayout,
       ]}
       components={{
         a: ({ children, href, title }) =>
@@ -185,7 +376,7 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
               onClick={stopLinkEventPropagation}
               onKeyDown={stopLinkEventPropagation}
               style={{
-                color: TASK_TOKENS.accent,
+                color: LINK_COLOR,
                 cursor: 'pointer',
                 textDecoration: 'underline',
               }}
@@ -193,57 +384,46 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
               {children}
             </a>
           ),
-        h1: ({ children }) => (
-          <h1
-            style={{ fontSize: '2em', fontWeight: 'bold', margin: '0 0 8px' }}
-          >
-            {children}
-          </h1>
-        ),
-        h2: ({ children }) => (
-          <h2
-            style={{ fontSize: '1.5em', fontWeight: 'bold', margin: '0 0 8px' }}
-          >
-            {children}
-          </h2>
-        ),
-        h3: ({ children }) => (
-          <h3
+        h1: ({ children }) => <h1 style={headingStyle(1)}>{children}</h1>,
+        h2: ({ children }) => <h2 style={headingStyle(2)}>{children}</h2>,
+        h3: ({ children }) => <h3 style={headingStyle(3)}>{children}</h3>,
+        h4: ({ children }) => <h4 style={headingStyle(4)}>{children}</h4>,
+        h5: ({ children }) => <h5 style={headingStyle(5)}>{children}</h5>,
+        h6: ({ children }) => <h6 style={headingStyle(6)}>{children}</h6>,
+        div: ({ children, style, node }) => (
+          <div
             style={{
-              fontSize: '1.17em',
-              fontWeight: 'bold',
-              margin: '0 0 8px',
+              ...(node?.properties?.dataBlocknoteChildren === undefined
+                ? {}
+                : {
+                    borderLeft: `1px solid ${NESTING_GUIDE_COLOR}`,
+                    marginLeft: 4,
+                    paddingLeft: LIST_INDENT - 5,
+                  }),
+              ...inlineStyle(style),
             }}
           >
             {children}
-          </h3>
-        ),
-        h4: ({ children }) => (
-          <h4
-            style={{ fontSize: '1em', fontWeight: 'bold', margin: '0 0 8px' }}
-          >
-            {children}
-          </h4>
-        ),
-        h5: ({ children }) => (
-          <h5
-            style={{ fontSize: '.83em', fontWeight: 'bold', margin: '0 0 8px' }}
-          >
-            {children}
-          </h5>
-        ),
-        h6: ({ children }) => (
-          <h6
-            style={{ fontSize: '.67em', fontWeight: 'bold', margin: '0 0 8px' }}
-          >
-            {children}
-          </h6>
+          </div>
         ),
         p: ({ children, style }) => (
-          <p style={{ margin: '0 0 8px', ...inlineStyle(style) }}>{children}</p>
+          <p
+            style={{ margin: 0, padding: BLOCK_SPACING, ...inlineStyle(style) }}
+          >
+            {children}
+          </p>
         ),
-        span: ({ children, style }) => (
-          <span style={inlineStyle(style)}>{children}</span>
+        span: ({ children, style, node }) => (
+          <span
+            style={{
+              ...inlineStyle(style),
+              ...(node?.properties?.dataChecked === undefined
+                ? {}
+                : { textDecoration: 'line-through' }),
+            }}
+          >
+            {children}
+          </span>
         ),
         strong: ({ children }) => (
           <strong style={{ fontWeight: 'bold' }}>{children}</strong>
@@ -260,26 +440,30 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
         mark: ({ children }) => (
           <mark style={{ backgroundColor: '#fff59d' }}>{children}</mark>
         ),
-        ul: ({ children }) => (
+        ul: ({ children, className, node }) => (
           <ul
             style={{
-              listStyleType: 'disc',
-              paddingLeft: 24,
-              margin: '0 0 8px',
+              ...listStyle(node),
+              listStyleType: className?.includes('contains-task-list')
+                ? 'none'
+                : BULLET_STYLES[readDepth(node) % BULLET_STYLES.length],
+              ...(className?.includes('contains-task-list') &&
+              readDepth(node) === 0
+                ? { paddingLeft: 0 }
+                : {}),
             }}
           >
             {children}
           </ul>
         ),
-        ol: ({ children, start }) => (
+        ol: ({ children, start, node }) => (
           <ol
             start={start}
             style={{
+              ...listStyle(node),
               listStyleType: 'decimal',
               counterReset:
                 start === undefined ? undefined : `list-item ${start - 1}`,
-              paddingLeft: 24,
-              margin: '0 0 8px',
             }}
           >
             {children}
@@ -291,28 +475,58 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
               display: 'list-item',
               listStyleType:
                 className === 'task-list-item' ? 'none' : 'inherit',
+              padding: BLOCK_SPACING,
             }}
           >
             {children}
           </li>
         ),
+        input: ({ checked, type }) =>
+          type === 'checkbox' ? (
+            // Not disabled: a disabled box is greyed out, unlike the editor's.
+            <input
+              type="checkbox"
+              checked={checked === true}
+              readOnly
+              tabIndex={-1}
+              style={{
+                margin: '0 8px 0 0',
+                pointerEvents: 'none',
+                verticalAlign: 'middle',
+              }}
+            />
+          ) : null,
+        details: ({ children, style }) => (
+          <details style={{ padding: BLOCK_SPACING, ...inlineStyle(style) }}>
+            {children}
+          </details>
+        ),
+        // Like a link, opening a toggle must not also open the editor the
+        // preview sits in.
+        summary: ({ children }) => (
+          <summary
+            onMouseDown={stopLinkEventPropagation}
+            onClick={stopLinkEventPropagation}
+            style={{ cursor: 'pointer', display: 'list-item' }}
+          >
+            {children}
+          </summary>
+        ),
         blockquote: ({ children }) => (
           <blockquote
             style={{
-              borderLeft: `3px solid ${TASK_TOKENS.borderStrong}`,
-              paddingLeft: 12,
-              margin: '0 0 8px',
-              color: TASK_TOKENS.textSecondary,
+              borderLeft: `2px solid ${QUOTE_COLOR}`,
+              paddingLeft: 13,
+              margin: BLOCK_SPACING,
+              color: QUOTE_COLOR,
             }}
           >
             {children}
           </blockquote>
         ),
         table: ({ children }) => (
-          <div style={{ overflowX: 'auto', marginBottom: 8 }}>
-            <table style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
-              {children}
-            </table>
+          <div style={{ overflowX: 'auto', padding: BLOCK_SPACING }}>
+            <table style={{ borderCollapse: 'collapse' }}>{children}</table>
           </div>
         ),
         th: ({ children, style, colSpan, rowSpan }) => (
@@ -321,7 +535,6 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
             rowSpan={rowSpan}
             style={{
               ...CELL_STYLE,
-              backgroundColor: TASK_TOKENS.backgroundTertiary,
               ...inlineStyle(style),
               fontWeight: 'bold',
             }}
@@ -338,21 +551,49 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
             {children}
           </td>
         ),
-        img: ({ src, alt, title }) => (
+        img: ({ src, alt, title, width }) => (
           <img
             src={src}
             alt={alt}
             title={title}
-            style={{ borderRadius: TASK_TOKENS.radiusSmall, maxWidth: '100%' }}
+            style={{ borderRadius: 4, ...mediaSizeStyle(width) }}
           />
+        ),
+        video: ({ src, width }) => (
+          <video
+            src={src}
+            controls
+            style={{ borderRadius: 4, ...mediaSizeStyle(width) }}
+          />
+        ),
+        audio: ({ src }) => (
+          <audio src={src} controls style={{ maxWidth: '100%' }} />
+        ),
+        figure: ({ children }) => (
+          <figure style={{ margin: 0, padding: BLOCK_SPACING }}>
+            {children}
+          </figure>
+        ),
+        figcaption: ({ children }) => (
+          <figcaption
+            style={{
+              color: TASK_TOKENS.textSecondary,
+              fontSize: TASK_TOKENS.fontSizeSmall,
+              marginTop: 4,
+            }}
+          >
+            {children}
+          </figcaption>
         ),
         pre: ({ children }) => (
           <pre
             style={{
-              background: TASK_TOKENS.backgroundSecondary,
-              borderRadius: TASK_TOKENS.radiusSmall,
+              background: CODE_BLOCK_BACKGROUND,
+              borderRadius: 8,
+              color: CODE_BLOCK_COLOR,
+              margin: BLOCK_SPACING,
               overflowX: 'auto',
-              padding: 8,
+              padding: 24,
               whiteSpace: 'pre',
             }}
           >
@@ -360,14 +601,7 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
           </pre>
         ),
         code: ({ children }) => (
-          <code
-            style={{
-              fontFamily: 'monospace',
-              backgroundColor: TASK_TOKENS.backgroundTertiary,
-              borderRadius: 3,
-              padding: '1px 3px',
-            }}
-          >
+          <code style={{ fontFamily: 'monospace', fontSize: 13 }}>
             {children}
           </code>
         ),
@@ -375,8 +609,8 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
           <hr
             style={{
               border: 0,
-              borderTop: `1px solid ${TASK_TOKENS.borderStrong}`,
-              margin: '12px 0',
+              borderTop: `1px solid ${QUOTE_COLOR}`,
+              margin: '9.5px 0',
             }}
           />
         ),

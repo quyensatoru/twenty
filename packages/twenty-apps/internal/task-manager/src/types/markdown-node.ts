@@ -15,7 +15,14 @@ export type MarkdownBlock =
   | { type: 'bulletListItem'; content: MarkdownInlineNode[] }
   | { type: 'numberedListItem'; content: MarkdownInlineNode[] }
   | { type: 'quote'; content: MarkdownInlineNode[] }
-  | { type: 'image'; alt: string; url: string }
+  | {
+      type: 'image';
+      alt: string;
+      url: string;
+      caption?: string;
+      width?: number;
+    }
+  | { type: 'video' | 'audio'; url: string; caption?: string }
   | { type: 'codeBlock'; code: string; language: string | null }
   | { type: 'divider' };
 

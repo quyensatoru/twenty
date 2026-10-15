@@ -79,6 +79,51 @@ describe('parseMarkdownBlocks', () => {
     ]);
   });
 
+  it('reads the media lines the editor writes as HTML', () => {
+    expect(
+      parseMarkdownBlocks(
+        [
+          '<img src="https://x.test/a.png?x=1&amp;y=2" alt="a" width="320">',
+          '<figure><img src="https://x.test/b.png"><figcaption>cap &lt;b&gt;</figcaption></figure>',
+          '<video src="https://x.test/c.mp4" controls width="400"></video>',
+          '<figure><audio src="https://x.test/d.mp3" controls></audio><figcaption>talk</figcaption></figure>',
+        ].join('\n\n'),
+      ),
+    ).toEqual([
+      {
+        type: 'image',
+        alt: 'a',
+        url: 'https://x.test/a.png?x=1&y=2',
+        width: 320,
+      },
+      {
+        type: 'image',
+        alt: '',
+        url: 'https://x.test/b.png',
+        caption: 'cap <b>',
+      },
+      { type: 'video', url: 'https://x.test/c.mp4' },
+      { type: 'audio', url: 'https://x.test/d.mp3', caption: 'talk' },
+    ]);
+  });
+
+  it('reads the blocks inside the editor wrappers and keeps empty lines', () => {
+    expect(
+      parseMarkdownBlocks(
+        [
+          'parent',
+          '<div data-blocknote-children>',
+          'child',
+          '</div>',
+          '&#xA0;',
+          '<div data-blocknote-block data-text-alignment="center" style="text-align: center;">',
+          '# centred',
+          '</div>',
+        ].join('\n\n'),
+      ).map((block) => block.type),
+    ).toEqual(['paragraph', 'paragraph', 'paragraph', 'heading']);
+  });
+
   it('returns nothing for blank input', () => {
     expect(parseMarkdownBlocks('   \n\n  ')).toEqual([]);
   });
@@ -102,6 +147,55 @@ describe('markdownToBlocknote', () => {
         ],
       },
     ]);
+  });
+
+  it('keeps every media file in the blocknote half so its URL is re-signed', () => {
+    expect(
+      JSON.parse(
+        markdownToBlocknote(
+          '<img src="https://x.test/a.png" alt="a" width="320">\n\n<video src="https://x.test/c.mp4" controls></video>',
+        ) ?? '[]',
+      ),
+    ).toEqual([
+      {
+        type: 'image',
+        props: {
+          url: 'https://x.test/a.png',
+          name: 'a',
+          caption: '',
+          previewWidth: 320,
+        },
+      },
+      {
+        type: 'video',
+        props: { url: 'https://x.test/c.mp4', caption: '' },
+      },
+    ]);
+  });
+
+  it('never writes a URL the server would refuse into the blocknote half', () => {
+    const blocknote = markdownToBlocknote(
+      [
+        '[toc](#section) [site](example.com) [bad](javascript:alert(1))',
+        '[spaced](<https://x.test/a b>) [parens](https://x.test/a\\(1\\)) [mail](mailto:a@x.test)',
+        '[@Huân](/task-mention/123)',
+        '![local](images/a.png)',
+        '<video src="relative.mp4" controls></video>',
+      ].join('\n\n'),
+    );
+    const urls = Array.from(
+      (blocknote ?? '').matchAll(/"(?:url|href)"\s*:\s*"([^"]*)"/g),
+      ([, url]) => url,
+    );
+
+    expect(urls).toEqual([
+      'https://x.test/a b',
+      'https://x.test/a(1)',
+      'mailto:a@x.test',
+      '/task-mention/123',
+    ]);
+    expect(blocknote).toContain('"text":"toc"');
+    expect(blocknote).toContain('"text":"images/a.png"');
   });
 
   it('writes a link as blocknote link content', () => {

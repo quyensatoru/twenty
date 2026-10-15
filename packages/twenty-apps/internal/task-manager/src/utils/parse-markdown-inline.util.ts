@@ -7,8 +7,10 @@ import {
 // Ordered alternation: an image has to win over a link, and a fenced code span
 // over emphasis, otherwise `![a](u)` is read as text plus a link and
 // `` `a * b` `` turns into an italic run.
+// A destination may be wrapped in <…> or escape its parentheses (`\(`), as
+// the editor writes them.
 const INLINE_PATTERN =
-  /!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]*)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|__([^_]+)__|\*([^*]+)\*|_([^_]+)_|(https?:\/\/[^\s<>()[\]]+)/g;
+  /!\[([^\]]*)\]\((<[^>\n]*>|(?:\\.|[^)\s\\])+)\)|\[([^\]]*)\]\((<[^>\n]*>|(?:\\.|[^)\s\\])+)\)|`([^`]+)`|\*\*([^*]+)\*\*|__([^_]+)__|\*([^*]+)\*|_([^_]+)_|(https?:\/\/[^\s<>()[\]]+)/g;
 
 const IMAGE_URL_PATTERN = /\.(png|jpe?g|gif|webp|avif|svg|bmp)(\?|#|$)/i;
 
