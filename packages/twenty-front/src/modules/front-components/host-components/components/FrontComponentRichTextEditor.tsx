@@ -1,3 +1,7 @@
+import { convertBlocksToMarkdown } from '@/front-components/host-components/utils/convertBlocksToMarkdown';
+import { convertMarkdownToBlocks } from '@/front-components/host-components/utils/convertMarkdownToBlocks';
+import { handleMarkdownPaste } from '@/front-components/host-components/utils/handleMarkdownPaste';
+import { markdownDocumentExtension } from '@/front-components/host-components/utils/markdownDocumentExtension';
 import { en as blockNoteEnglishDictionary } from '@blocknote/core/locales';
 import '@blocknote/mantine/style.css';
 import { BlockNoteView } from '@blocknote/mantine';
@@ -72,9 +76,11 @@ const StyledEditorContainer = styled.div`
 const UPLOAD_REFUSED_BY_GUEST = 'The front component did not store the file.';
 
 // The front component speaks markdown on both ends, so a host-side editor that
-// speaks blocks has to translate. The conversion is lossy by BlockNote's own
-// admission, which is why the guest keeps owning persistence: it decides what
-// to store, this only reports what the user typed.
+// speaks blocks has to translate. The translation keeps everything the editor
+// offers (convertBlocksToMarkdown) and reads markdown the way the component's
+// own preview does, so what is typed, what is saved and what is shown
+// afterwards are the same document. The guest keeps owning persistence: it
+// decides what to store, this only reports what the user typed.
 export const FrontComponentRichTextEditor = ({
   value,
   placeholder,
@@ -118,6 +124,13 @@ export const FrontComponentRichTextEditor = ({
   onUploadFileRef.current = onUploadFile;
 
   const editor = useCreateBlockNote({
+    extensions: [markdownDocumentExtension],
+    pasteHandler: handleMarkdownPaste,
+    // Tiptap's paste rules turn any pasted `*text*`, `**text**` or `~~text~~`
+    // into formatting after the paste is parsed, so an escaped or literal
+    // asterisk came out italic. The paste is already parsed as markdown, which
+    // is where formatting belongs; typing shortcuts are input rules and stay.
+    _tiptapOptions: { enablePasteRules: false },
     // macOS spell checking rewrites words still being composed by the
     // Vietnamese input source, and ProseMirror then keeps both copies
     // ("Phần" typed as "PPhần").
@@ -162,7 +175,7 @@ export const FrontComponentRichTextEditor = ({
 
     hasEmittedSinceSeedRef.current = false;
 
-    const blocks = editor.tryParseMarkdownToBlocks(value);
+    const blocks = convertMarkdownToBlocks(editor, value);
 
     isSeedingRef.current = true;
 
@@ -173,7 +186,8 @@ export const FrontComponentRichTextEditor = ({
 
     isSeedingRef.current = false;
 
-    seededMarkdownRoundTripRef.current = editor.blocksToMarkdownLossy(
+    seededMarkdownRoundTripRef.current = convertBlocksToMarkdown(
+      editor,
       editor.document,
     );
   }, [editor, value, isReadOnly]);
@@ -195,7 +209,7 @@ export const FrontComponentRichTextEditor = ({
       return;
     }
 
-    const markdown = editor.blocksToMarkdownLossy(editor.document);
+    const markdown = convertBlocksToMarkdown(editor, editor.document);
 
     if (markdown === seededMarkdownRoundTripRef.current) {
       return;
