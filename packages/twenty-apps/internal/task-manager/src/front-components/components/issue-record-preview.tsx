@@ -59,7 +59,7 @@ export const IssueRecordPreview = ({
     ...merchants.map((merchant) => ({
       objectNameSingular: 'merchant' as const,
       recordId: merchant.id,
-      label: (merchant.name ?? merchant.id).replace(/\.myshopify\.com$/, ''),
+      label: merchant.name ?? merchant.id,
     })),
     ...conversations.map((conversation) => ({
       objectNameSingular: 'crispConversation' as const,

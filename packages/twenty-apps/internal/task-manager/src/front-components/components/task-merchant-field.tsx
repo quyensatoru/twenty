@@ -237,10 +237,7 @@ export const TaskMerchantField = ({
                   <span
                     style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
-                    {(merchant.name ?? merchant.id).replace(
-                      /\.myshopify\.com$/,
-                      '',
-                    )}
+                    {merchant.name ?? merchant.id}
                   </span>
                 </span>
               </DetailReadButton>
