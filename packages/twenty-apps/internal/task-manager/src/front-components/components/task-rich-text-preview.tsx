@@ -11,6 +11,7 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 import { TASK_TOKENS } from './task-tokens';
+import { normalizeMarkdownHardBreaks } from '../utils/normalize-markdown-hard-breaks.util';
 import { TASK_MENTION_HREF_PREFIX } from '../utils/task-mention-markdown.util';
 
 type TaskRichTextPreviewProps = { value: string };
@@ -72,6 +73,14 @@ const NESTED_GROUP_STYLE: CSSProperties = {
   paddingLeft: 2 * LIST_INDENT - 5,
 };
 
+// The same guide and text position for a group whose parent has no indent to
+// pull back into: a top-level checklist, or a block's nested children.
+const UNINDENTED_PARENT_GROUP_STYLE: CSSProperties = {
+  borderLeft: `1px solid ${NESTING_GUIDE_COLOR}`,
+  marginLeft: 4,
+  paddingLeft: LIST_INDENT - 5,
+};
+
 const headingStyle = (level: number): CSSProperties => ({
   fontSize: HEADING_SCALE[level - 1],
   fontWeight: 700,
@@ -92,7 +101,11 @@ const listStyle = (node: Element | undefined): CSSProperties => {
   return {
     margin: 0,
     padding: 0,
-    ...(depth === 0 ? { paddingLeft: LIST_INDENT } : NESTED_GROUP_STYLE),
+    ...(depth === 0
+      ? { paddingLeft: LIST_INDENT }
+      : node?.properties?.dataUnderTopLevelTask === true
+        ? UNINDENTED_PARENT_GROUP_STYLE
+        : NESTED_GROUP_STYLE),
   };
 };
 
@@ -304,6 +317,16 @@ const rehypeEditorLayout = () => (tree: Root) => {
           textAfterCheckbox.value = textAfterCheckbox.value.trimStart();
         }
 
+        // A top-level checklist has no indent, unlike other lists.
+        if (checkbox !== undefined && listDepth === 1) {
+          for (const list of child.children.filter(isListElement)) {
+            (list as Element).properties = {
+              ...(list as Element).properties,
+              dataUnderTopLevelTask: true,
+            };
+          }
+        }
+
         if (checkbox?.properties?.checked === true) {
           const inline = child.children.filter(
             (node) => node !== checkbox && !isListElement(node),
@@ -395,11 +418,7 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
             style={{
               ...(node?.properties?.dataBlocknoteChildren === undefined
                 ? {}
-                : {
-                    borderLeft: `1px solid ${NESTING_GUIDE_COLOR}`,
-                    marginLeft: 4,
-                    paddingLeft: LIST_INDENT - 5,
-                  }),
+                : UNINDENTED_PARENT_GROUP_STYLE),
               ...inlineStyle(style),
             }}
           >
@@ -616,7 +635,7 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
         ),
       }}
     >
-      {value}
+      {normalizeMarkdownHardBreaks(value)}
     </Markdown>
   </div>
 );

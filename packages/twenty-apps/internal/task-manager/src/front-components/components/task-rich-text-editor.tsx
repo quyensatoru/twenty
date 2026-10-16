@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { type RichTextUploadEvent } from '../../types/front-component-host-elements';
 import { useRichTextUploads } from '../hooks/use-rich-text-uploads';
@@ -46,6 +46,21 @@ export const TaskRichTextEditor = ({
   issueId,
 }: TaskRichTextEditorProps) => {
   const { resolvedUploads, handleUpload } = useRichTextUploads(issueId);
+
+  // A hidden host editor still answers every mousemove on the page: each
+  // BlockNote side menu measures every editor and repaints, so a page of
+  // comments made the whole issue lag. The host editor is only mounted once
+  // this box is first edited, then kept for its edit session.
+  const [hasBeenEditable, setHasBeenEditable] = useState(!isReadOnly);
+  // A fresh host editor paints empty for a few frames before it takes its
+  // value, so opening it straight from the preview flashed a blank box. It is
+  // mounted, still hidden, while the pointer or focus is on the preview, and
+  // has its text by the time the click opens it.
+  const [isAboutToEdit, setIsAboutToEdit] = useState(false);
+
+  if (!isReadOnly && !hasBeenEditable) {
+    setHasBeenEditable(true);
+  }
 
   // The element keeps the first handler it was given for an event and does
   // not reliably take a newer one, so a closure from a read-only render (no
@@ -104,6 +119,10 @@ export const TaskRichTextEditor = ({
 
   return (
     <div
+      onMouseEnter={() => setIsAboutToEdit(true)}
+      onMouseLeave={() => setIsAboutToEdit(false)}
+      onFocus={() => setIsAboutToEdit(true)}
+      onBlur={() => setIsAboutToEdit(false)}
       style={{
         boxSizing: 'border-box',
         display: 'flex',
@@ -120,17 +139,19 @@ export const TaskRichTextEditor = ({
     >
       {isReadOnly && <TaskRichTextPreview value={value} />}
       {/* Keeping the host editor mounted preserves its edit session on Save/Cancel. */}
-      <div style={{ display: isReadOnly ? 'none' : 'flex', width: '100%' }}>
-        <twenty-rich-text-editor
-          value={value}
-          placeholder={placeholder}
-          isReadOnly={isReadOnly}
-          resolvedUploads={resolvedUploads}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onUpload={handleUploadEvent}
-        />
-      </div>
+      {(hasBeenEditable || (isReadOnly && isAboutToEdit)) && (
+        <div style={{ display: isReadOnly ? 'none' : 'flex', width: '100%' }}>
+          <twenty-rich-text-editor
+            value={value}
+            placeholder={placeholder}
+            isReadOnly={isReadOnly}
+            resolvedUploads={resolvedUploads}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onUpload={handleUploadEvent}
+          />
+        </div>
+      )}
     </div>
   );
 };

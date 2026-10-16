@@ -83,6 +83,25 @@ describe('rich text preview', () => {
     ).not.toBeNull();
   });
 
+  it('keeps the guide of a nested checklist inside the text column', async () => {
+    await renderPreview(
+      '- [x] Backend\n  - [x] Authentication\n\nMixed list:\n\n- Application\n  - Frontend',
+    );
+    expect(
+      getByText(container, 'Authentication').closest('ul')?.style.marginLeft,
+    ).toBe('4px');
+    expect(
+      getByText(container, 'Frontend').closest('ul')?.style.marginLeft,
+    ).toBe('-20px');
+  });
+
+  it('shows a hard break after a link without a stray backslash', async () => {
+    await renderPreview('Design https://example.com/a?b=1\\\nnext line');
+    expect(
+      getByText(container, 'https://example.com/a?b=1').getAttribute('href'),
+    ).toBe('https://example.com/a?b=1');
+  });
+
   it('preserves embedded HTML tables and inline formatting safely', async () => {
     await renderPreview(
       '<table><tbody><tr><td colspan="2"><strong>HTML cell</strong></td></tr></tbody></table>\n\n<u>Underlined</u> and <span style="color: red; position: fixed">Colored</span>\n\n<script>alert(1)</script>',

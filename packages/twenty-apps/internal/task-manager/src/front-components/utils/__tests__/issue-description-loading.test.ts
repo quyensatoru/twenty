@@ -66,22 +66,21 @@ describe('issue description loading', () => {
       }),
     );
 
-    const editor = container.querySelector('twenty-rich-text-editor');
-
-    expect(editor?.getAttribute('value')).toBe(markdown);
+    // Only previewed so far: no host editor yet, see TaskRichTextEditor.
+    expect(container.querySelector('twenty-rich-text-editor')).toBeNull();
     expect(getByRole(container, 'table')).toBeDefined();
-    expect(isInaccessible(editor as HTMLElement)).toBe(true);
 
     await act(async () =>
       user.click(getByRole(container, 'heading', { name: 'Release' })),
     );
-    expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
+    const editor = container.querySelector('twenty-rich-text-editor');
     expect(editor?.getAttribute('value')).toBe(markdown);
 
     await act(async () =>
       user.click(getByRole(container, 'button', { name: 'Cancel' })),
     );
     expect(container.querySelector('twenty-rich-text-editor')).toBe(editor);
+    expect(isInaccessible(editor as HTMLElement)).toBe(true);
     expect(editor?.getAttribute('value')).toBe(markdown);
     expect(getByRole(container, 'table')).toBeDefined();
   });

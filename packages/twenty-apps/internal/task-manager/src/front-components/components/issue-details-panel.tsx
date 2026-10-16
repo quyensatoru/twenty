@@ -162,7 +162,10 @@ export const IssueDetailsPanel = ({
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
   const { conversations: crispConversations, isLoading: isLoadingConversations } =
-    useIssueCrispConversations(issue.id);
+    useIssueCrispConversations(
+      issue.id,
+      detail.merchants.map((merchant) => merchant.id),
+    );
 
   const isReadOnly = !detail.canWrite;
   // A subtask is planned wherever its parent is, as in Jira: its sprint and

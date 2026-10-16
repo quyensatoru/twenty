@@ -44,7 +44,10 @@ export const IssueRecordPreview = ({
   onBack,
   onOpenFull,
 }: IssueRecordPreviewProps) => {
-  const { conversations } = useIssueCrispConversations(issueId);
+  const { conversations } = useIssueCrispConversations(
+    issueId,
+    merchants.map((merchant) => merchant.id),
+  );
   const [error, setError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
   const isConversation = target.objectNameSingular === 'crispConversation';

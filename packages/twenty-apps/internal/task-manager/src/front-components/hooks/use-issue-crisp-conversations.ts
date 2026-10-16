@@ -14,17 +14,28 @@ export type IssueCrispConversation = {
 };
 
 // Customer Support is optional, so an unavailable route reads as no links.
-export const useIssueCrispConversations = (issueId: string) => {
+// An issue reaches its chats through its merchants, so the list is read again
+// whenever the saved merchants change; the chats already shown stay up while
+// that reload runs, and only another issue starts from an empty list.
+export const useIssueCrispConversations = (
+  issueId: string,
+  merchantIds: readonly string[],
+) => {
   const [isLoading, setIsLoading] = useState(true);
   const [conversations, setConversations] = useState<IssueCrispConversation[]>(
     [],
   );
+  const [loadedIssueId, setLoadedIssueId] = useState(issueId);
+  const merchantIdsKey = [...merchantIds].sort().join(',');
+
+  if (loadedIssueId !== issueId) {
+    setLoadedIssueId(issueId);
+    setConversations([]);
+    setIsLoading(true);
+  }
 
   useEffect(() => {
     let isCurrent = true;
-
-    setConversations([]);
-    setIsLoading(true);
 
     postAppRoute<{ conversations?: IssueCrispConversation[] }>(
       CUSTOMER_SUPPORT_ISSUE_CONVERSATIONS_ROUTE_PATH,
@@ -49,7 +60,7 @@ export const useIssueCrispConversations = (issueId: string) => {
     return () => {
       isCurrent = false;
     };
-  }, [issueId]);
+  }, [issueId, merchantIdsKey]);
 
   return { conversations, isLoading };
 };

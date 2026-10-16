@@ -7,6 +7,7 @@ import {
 import { isDefined } from 'twenty-shared/utils';
 
 import { MARKDOWN_BLOCK_WRAPPER_ATTRIBUTES } from '@/front-components/host-components/constants/MarkdownBlockWrapperAttributes';
+import { normalizeMarkdownHardBreaks } from '@/front-components/host-components/utils/normalizeMarkdownHardBreaks';
 import {
   NON_BREAKING_SPACE_ENTITY,
   escapeMarkdownText,
@@ -425,7 +426,9 @@ export const convertBlocksToMarkdown = (
   editor: BlockNoteEditor,
   blocks: Block[],
 ): string => {
-  const markdown = serializeBlocks(editor, dropTrailingEmptyParagraphs(blocks));
+  const markdown = normalizeMarkdownHardBreaks(
+    serializeBlocks(editor, dropTrailingEmptyParagraphs(blocks)),
+  );
 
   return markdown === '' ? '' : `${markdown}\n`;
 };

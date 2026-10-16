@@ -2,6 +2,7 @@ import { type Block, type BlockNoteEditor } from '@blocknote/core';
 
 import { MARKDOWN_BLOCK_WRAPPER_ATTRIBUTES } from '@/front-components/host-components/constants/MarkdownBlockWrapperAttributes';
 import { convertMarkdownToHtml } from '@/front-components/host-components/utils/convertMarkdownToHtml';
+import { normalizeMarkdownHardBreaks } from '@/front-components/host-components/utils/normalizeMarkdownHardBreaks';
 
 // `\s` matches the non-breaking space an empty paragraph is written as.
 const BLANK_TEXT = /^\s*$/;
@@ -125,7 +126,9 @@ export const convertMarkdownToBlocks = (
 ): Block[] => {
   const template = document.createElement('template');
 
-  template.innerHTML = convertMarkdownToHtml(markdown);
+  template.innerHTML = convertMarkdownToHtml(
+    normalizeMarkdownHardBreaks(markdown),
+  );
 
   return parseContainer(editor, template.content).map(restoreEmptyParagraph);
 };
