@@ -222,7 +222,7 @@ describe('Personal member board', () => {
       issueId: null,
       configuration: { workView: 'list', density: 'compact' },
     });
-    expect((await run()).preferences.workView).toBe('desk');
+    expect((await run()).preferences.workView).toBe('list');
     runtime.scope.workspaceMemberId = null;
     runtime.scope.canBypassAppScope = true;
     expect(
@@ -308,7 +308,7 @@ describe('Personal member board', () => {
       density: 'compact',
       projectId: 'project',
       collapsedColumns: ['done'],
-      effectsEnabled: true,
+      effectsEnabled: false,
       boardSort: [
         { field: 'priority', direction: 'desc' },
         { field: 'createdAt', direction: 'asc' },
@@ -316,7 +316,7 @@ describe('Personal member board', () => {
     });
     runtime.scope.workspaceMemberId = 'other';
     expect((await run()).preferences).toMatchObject({
-      workView: 'desk',
+      workView: 'list',
       density: 'comfortable',
       projectId: null,
       boardSort: [],

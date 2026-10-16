@@ -47,6 +47,11 @@ type TaskRelationSelectProps = {
   // right-aligns it back inside; the default keeps the option list over the
   // chip just clicked.
   overlayOffsetX?: number;
+  // The issue sidebar's look: the value fills the row, a click edits it (a
+  // record is opened from the list instead), and an empty value says so in
+  // words rather than repeating the field's name.
+  isSidebar?: boolean;
+  emptyDisplay?: ReactNode;
 };
 
 // What RecordInlineCellContainer gives a row: a 24px label line and a value
@@ -57,9 +62,10 @@ const OPTION_HEIGHT = 32;
 // option rows, in a 202px card with an 8px radius.
 const SEARCH_HEIGHT = 36;
 const CARD_WIDTH = 202;
-// The host's own dropdown measures 222 overall; with the 36px search line this
-// is the same card.
-const OPTIONS_MAX_HEIGHT = 180;
+// Eight rows and the list padding: a project's full status workflow (seven
+// plus "No status") fits without scrolling. At the host's 180 the last two
+// statuses, usually Done and Canceled, were hidden below the fold.
+const OPTIONS_MAX_HEIGHT = OPTION_HEIGHT * 8 + 8;
 // Measured on the host's own relation dropdown: it opens 5px up and left of the
 // value it belongs to, so the first option lands over the chip just clicked.
 const OVERLAY_INSET = 5;
@@ -89,6 +95,8 @@ export const TaskRelationSelect = ({
   isDisabled = false,
   isReadOnly = false,
   overlayOffsetX = -OVERLAY_INSET,
+  isSidebar = false,
+  emptyDisplay,
 }: TaskRelationSelectProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
@@ -102,9 +110,12 @@ export const TaskRelationSelect = ({
     option.label.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
+  // The pointer leaves the row through the overlay, which the row never
+  // hears about, so its hover tint is cleared here instead.
   const close = () => {
     onOpenChange(false);
     setSearch('');
+    setIsHovered(false);
   };
 
   const open = () => {
@@ -138,6 +149,16 @@ export const TaskRelationSelect = ({
           aria-readonly={isReadOnly}
           disabled={isDisabled || !isInteractive}
           onClick={() => {
+            if (isSidebar && !isReadOnly) {
+              if (isOpen) {
+                close();
+              } else {
+                open();
+              }
+
+              return;
+            }
+
             // A chip stands for a record, so it goes to that record. Changing
             // the value is the pencil's job — and an empty field has no record
             // to go to, so there the whole row opens the list.
@@ -164,7 +185,9 @@ export const TaskRelationSelect = ({
                 ? TASK_TOKENS.backgroundHover
                 : 'transparent',
             border: 'none',
-            borderRadius: TASK_TOKENS.radius,
+            borderRadius: isSidebar
+              ? TASK_TOKENS.radiusSmall
+              : TASK_TOKENS.radius,
             color: TASK_TOKENS.textPrimary,
             cursor: isDisabled
               ? 'not-allowed'
@@ -175,16 +198,21 @@ export const TaskRelationSelect = ({
             fontFamily: TASK_TOKENS.fontFamily,
             fontSize: 13,
             maxWidth: '100%',
-            minHeight: ROW_HEIGHT,
+            minHeight: isSidebar ? 28 : ROW_HEIGHT,
             minWidth: 0,
             opacity: isDisabled ? 0.5 : 1,
             overflow: 'hidden',
-            padding: '0 4px',
+            padding: isSidebar ? '0 6px' : '0 4px',
             textAlign: 'left',
+            width: isSidebar ? '100%' : undefined,
           }}
         >
           {selected === null ? (
-            <span style={{ color: TASK_TOKENS.textLight }}>{placeholder}</span>
+            isSidebar && emptyDisplay !== undefined ? (
+              emptyDisplay
+            ) : (
+              <span style={{ color: TASK_TOKENS.textLight }}>{placeholder}</span>
+            )
           ) : (
             (selected.valueChip ?? selected.chip)
           )}
@@ -192,7 +220,11 @@ export const TaskRelationSelect = ({
 
         {/* On hover, beside the value, and only when there is a value to edit
             — the same three conditions RecordInlineCellDisplayMode puts on it. */}
-        {isHovered && !isDisabled && !isReadOnly && selected !== null && (
+        {!isSidebar &&
+          isHovered &&
+          !isDisabled &&
+          !isReadOnly &&
+          selected !== null && (
           <TaskIconButton
             label={t('Edit')}
             isElevated

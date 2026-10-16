@@ -1,8 +1,8 @@
 import { t } from 'twenty-sdk/front-component';
+import { IconMessage } from 'twenty-ui/icon';
 
 import { type IssueCrispConversation } from '../hooks/use-issue-crisp-conversations';
 import { DetailReadButton } from './task-detail-controls';
-import { TaskRecordChip } from './task-record-chip';
 import { TaskSkeletonBar } from './task-skeleton';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -59,7 +59,7 @@ export const TaskCrispConversationsField = ({
       </div>
     ) : conversations.length === 0 ? (
       <span
-        style={{ color: TASK_TOKENS.textLight, fontSize: 13, padding: '0 4px' }}
+        style={{ color: TASK_TOKENS.textTertiary, fontSize: 13, padding: '0 6px' }}
       >
         {t('No conversations')}
       </span>
@@ -71,10 +71,51 @@ export const TaskCrispConversationsField = ({
           isReadOnly={onOpenConversation === undefined}
           onOpen={() => onOpenConversation?.(conversation.id)}
         >
-          <TaskRecordChip
-            name={readConversationName(conversation)}
-            detail={readConversationDetail(conversation)}
-          />
+          <span
+            title={`${readConversationName(conversation)} · ${readConversationDetail(conversation)}`}
+            style={{
+              alignItems: 'flex-start',
+              display: 'flex',
+              fontSize: 13,
+              gap: 6,
+              minWidth: 0,
+            }}
+          >
+            <span style={{ display: 'inline-flex', flexShrink: 0, paddingTop: 2 }}>
+              <IconMessage size={14} color={TASK_TOKENS.textTertiary} />
+            </span>
+            {/* Two lines: side by side, the name and the state both lost
+                their ends in a 220px column. */}
+            <span
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
+              }}
+            >
+              <span
+                style={{
+                  color: TASK_TOKENS.textPrimary,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {readConversationName(conversation)}
+              </span>
+              <span
+                style={{
+                  color: TASK_TOKENS.textTertiary,
+                  fontSize: 12,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {readConversationDetail(conversation)}
+              </span>
+            </span>
+          </span>
         </DetailReadButton>
       ))
     )}

@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
-import { getByRole, getByText, queryByRole } from '@testing-library/dom';
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText,
+} from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { act, createElement, type ComponentType } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -83,23 +88,21 @@ describe('issue Details loading', () => {
     expect(
       queryByRole(container, 'status', { name: 'Loading details' }),
     ).toBeNull();
-    expect(
-      getByRole(container, 'button', { name: 'Status' }),
-    ).toBeDefined();
+    expect(getByRole(container, 'button', { name: 'Status' })).toBeDefined();
   });
 
   it('keeps Conversations visible while loading and opens the linked record', async () => {
     const user = userEvent.setup();
     await act(async () => root.render(createElement(IssueFields)));
     await act(async () => replyDetail(detail));
-    const label = getByText(container, 'Conversations');
+    const label = getByText(container, 'Chats');
     expect(
       getByRole(container, 'status', { name: 'Loading conversations' }),
     ).toBeDefined();
     await act(async () =>
       replyConversations({ success: true, conversations: [conversation] }),
     );
-    expect(getByText(container, 'Conversations')).toBe(label);
+    expect(getByText(container, 'Chats')).toBe(label);
     expect(
       queryByRole(container, 'status', { name: 'Loading conversations' }),
     ).toBeNull();
@@ -123,7 +126,14 @@ describe('issue Details loading', () => {
       await act(async () => root.render(createElement(IssueFields)));
       await act(async () => replyDetail(detail));
       await act(async () => replyConversations(response));
-      expect(getByText(container, 'Conversations')).toBeDefined();
+      // An empty field folds under its section's "empty fields" line.
+      expect(queryByText(container, 'No conversations')).toBeNull();
+      await act(async () =>
+        userEvent
+          .setup()
+          .click(getByRole(container, 'button', { name: /Chats/ })),
+      );
+      expect(getByText(container, 'Chats')).toBeDefined();
       expect(getByText(container, 'No conversations')).toBeDefined();
       expect(
         queryByRole(container, 'status', { name: 'Loading conversations' }),

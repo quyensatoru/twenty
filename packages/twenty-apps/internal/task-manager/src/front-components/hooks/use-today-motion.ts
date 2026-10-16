@@ -11,9 +11,9 @@ export const useTodayMotion = (
     : MOTION_STORAGE_KEY;
   const [isMotionRequested, setIsMotionRequested] = useState(() => {
     try {
-      return localStorage.getItem(storageKey) !== 'off';
+      return localStorage.getItem(storageKey) === 'on';
     } catch {
-      return true;
+      return false;
     }
   });
   const [hasEntered, setHasEntered] = useState(false);

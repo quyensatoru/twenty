@@ -24,6 +24,8 @@ import { InlineMarkdown } from './message-content';
 
 type AiSummaryCardProps = {
   conversation: SupportInboxConversation;
+  // In the issue's side column: the same card, tighter.
+  isEmbedded?: boolean;
 };
 
 const AI_GRADIENT =
@@ -113,7 +115,10 @@ const LoadingLines = () => {
 
 // The summary is written on demand and kept on the conversation, so the next
 // agent who opens the chat reads it without paying for another model call.
-export const AiSummaryCard = ({ conversation }: AiSummaryCardProps) => {
+export const AiSummaryCard = ({
+  conversation,
+  isEmbedded = false,
+}: AiSummaryCardProps) => {
   const locale = useLocale();
   const [summary, setSummary] = useState<SupportInboxSummary | null>(
     readStoredSummary(conversation),
@@ -148,17 +153,154 @@ export const AiSummaryCard = ({ conversation }: AiSummaryCardProps) => {
     }
   };
 
+  if (isEmbedded) {
+    const lineStyle = {
+      color: INBOX_TOKENS.textPrimary,
+      fontSize: 12.5,
+      lineHeight: 1.5,
+    } as const;
+
+    return (
+      <div
+        style={{
+          background: `linear-gradient(180deg, ${INBOX_TOKENS.accentSoft}, ${INBOX_TOKENS.background} 60%)`,
+          border: `1px solid ${INBOX_TOKENS.border}`,
+          borderRadius: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          padding: '10px 12px',
+        }}
+      >
+        <div style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
+          <IconSparkles size={13} color={INBOX_TOKENS.accent} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>
+            {t('AI summary')}
+          </span>
+          {shownSummary !== null && !isSummarizing && (
+            <span style={{ color: INBOX_TOKENS.textTertiary, fontSize: 11.5 }}>
+              {'· '}
+              {formatRelativeTime(shownSummary.aiSummaryAt)}
+            </span>
+          )}
+          <span style={{ flex: 1 }} />
+          {shownSummary !== null && (
+            <InboxIconButton
+              label={t('Summarize again')}
+              isDisabled={isSummarizing}
+              size={24}
+              onClick={() => void summarize()}
+            >
+              <IconRefresh size={13} />
+            </InboxIconButton>
+          )}
+        </div>
+
+        {isSummarizing ? (
+          <>
+            <LoadingLines />
+            <span style={{ color: INBOX_TOKENS.textTertiary, fontSize: 11.5 }}>
+              {t('Reading the conversation… long chats can take up to a minute.')}
+            </span>
+          </>
+        ) : shownSummary === null ? (
+          <>
+            <span style={{ ...lineStyle, color: INBOX_TOKENS.textSecondary }}>
+              {t(
+                'Get the gist of this chat, where the customer is stuck and what to do next.',
+              )}
+            </span>
+            <span
+              style={{
+                borderTop: `1px solid ${INBOX_TOKENS.borderLight}`,
+                display: 'flex',
+                paddingTop: 6,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => void summarize()}
+                style={{
+                  alignItems: 'center',
+                  background: 'transparent',
+                  border: 'none',
+                  color: INBOX_TOKENS.accent,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  fontFamily: 'inherit',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  gap: 4,
+                  padding: 0,
+                }}
+              >
+                <IconSparkles size={12} />
+                {t('Summarize')}
+              </button>
+            </span>
+          </>
+        ) : (
+          <>
+            <div style={lineStyle}>
+              <SummaryLines text={shownSummary.aiSummary} />
+            </div>
+            {shownSummary.aiProblem !== null && (
+              <div style={lineStyle}>
+                <span style={{ fontWeight: 600 }}>{t('Problem')}: </span>
+                {shownSummary.aiProblem}
+              </div>
+            )}
+            {shownSummary.aiNextStep !== null && (
+              <div style={lineStyle}>
+                <span style={{ fontWeight: 600 }}>{t('Next step')}: </span>
+                {shownSummary.aiNextStep}
+              </div>
+            )}
+            {newMessageCount > 0 && (
+              <span
+                style={{
+                  borderTop: `1px solid ${INBOX_TOKENS.borderLight}`,
+                  color: INBOX_TOKENS.textTertiary,
+                  fontSize: 11.5,
+                  paddingTop: 6,
+                }}
+              >
+                {t('{count} new messages since', { count: newMessageCount })}
+                {' · '}
+                <button
+                  type="button"
+                  onClick={() => void summarize()}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: INBOX_TOKENS.accent,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: 11.5,
+                    padding: 0,
+                  }}
+                >
+                  {t('Summarize again')}
+                </button>
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
         background: `linear-gradient(${INBOX_TOKENS.background}, ${INBOX_TOKENS.background}) padding-box, ${AI_GRADIENT} border-box`,
         border: '1px solid transparent',
-        borderRadius: 14,
-        boxShadow: '0 8px 24px -16px rgba(79,70,229,.45)',
+        borderRadius: isEmbedded ? 8 : 14,
+        boxShadow: isEmbedded ? 'none' : '0 8px 24px -16px rgba(79,70,229,.45)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
-        padding: 14,
+        gap: isEmbedded ? 8 : 12,
+        padding: isEmbedded ? '10px 12px' : 14,
       }}
     >
       <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>

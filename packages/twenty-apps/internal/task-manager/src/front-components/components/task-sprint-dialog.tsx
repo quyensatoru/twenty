@@ -51,6 +51,9 @@ export const TaskSprintDialog = ({
       : '');
   const [name, setName] = useState(sprint.name ?? '');
   const [goal, setGoal] = useState(sprint.goal ?? '');
+  const [capacity, setCapacity] = useState(
+    typeof sprint.capacity === 'number' ? String(sprint.capacity) : '',
+  );
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
   const [duration, setDuration] = useState(
@@ -78,7 +81,8 @@ export const TaskSprintDialog = ({
   };
 
   const save = async () => {
-    const startIso = startDate === '' ? null : dateInputToIso(startDate, 'start');
+    const startIso =
+      startDate === '' ? null : dateInputToIso(startDate, 'start');
     const endIso = endDate === '' ? null : dateInputToIso(endDate, 'end');
 
     if (mode === 'start' && (startIso === null || endIso === null)) {
@@ -93,6 +97,19 @@ export const TaskSprintDialog = ({
       return;
     }
 
+    const trimmedCapacity = capacity.trim();
+    const capacityPoints =
+      trimmedCapacity === '' ? null : Number(trimmedCapacity);
+
+    if (
+      capacityPoints !== null &&
+      (!Number.isFinite(capacityPoints) || capacityPoints < 0)
+    ) {
+      setError(t('Capacity must be a number of points, 0 or more.'));
+
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
@@ -102,6 +119,7 @@ export const TaskSprintDialog = ({
           sprintId: sprint.id,
           name: name.trim(),
           goal: goal.trim() === '' ? null : goal.trim(),
+          capacity: capacityPoints,
           startDate: startIso,
           endDate: endIso,
         });
@@ -111,6 +129,7 @@ export const TaskSprintDialog = ({
           data: {
             ...(name.trim() === '' ? {} : { name: name.trim() }),
             goal: goal.trim() === '' ? null : goal.trim(),
+            capacity: capacityPoints,
             startDate: startIso,
             endDate: endIso,
           },
@@ -118,8 +137,7 @@ export const TaskSprintDialog = ({
       }
 
       void enqueueSnackbar({
-        message:
-          mode === 'start' ? t('Sprint started.') : t('Sprint updated.'),
+        message: mode === 'start' ? t('Sprint started.') : t('Sprint updated.'),
         variant: 'success',
       });
       onSaved();
@@ -217,6 +235,17 @@ export const TaskSprintDialog = ({
           ariaLabel={t('Sprint goal')}
           value={goal}
           onChange={setGoal}
+          onEscape={onClose}
+        />
+      </TaskDialogField>
+      <TaskDialogField label={t('Capacity (points)')}>
+        <TaskTextInput
+          ariaLabel={t('Capacity (points)')}
+          type="number"
+          placeholder={t('Optional')}
+          value={capacity}
+          onChange={setCapacity}
+          onEnter={() => void save()}
           onEscape={onClose}
         />
       </TaskDialogField>

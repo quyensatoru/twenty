@@ -15,6 +15,7 @@ import { TaskIssueSearch } from './task-issue-search';
 import { TaskSkeletonBar } from './task-skeleton';
 import { TaskMessage } from './task-message';
 import { TaskStatusLine } from './task-status-line';
+import { readStatusGlyph } from './task-status-icon';
 import { TaskSubtaskRow } from './task-subtask-row';
 import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 import {
@@ -46,17 +47,10 @@ export const IssueSubtasks = () => {
     [data.members],
   );
 
-  const statusById = useMemo(() => {
-    const map = new Map<string, { name: string; color?: string | null }>();
-
-    for (const status of data.issueStatuses) {
-      if (typeof status.name === 'string') {
-        map.set(status.id, { name: status.name, color: status.color });
-      }
-    }
-
-    return map;
-  }, [data.issueStatuses]);
+  const statusById = useMemo(
+    () => new Map(data.issueStatuses.map((status) => [status.id, status])),
+    [data.issueStatuses],
+  );
 
   // Rows the link search must never offer: this issue, its children and its
   // parent — any of them would loop the parent chain. Up here with the other
@@ -238,6 +232,8 @@ export const IssueSubtasks = () => {
         row={row}
         statusName={status?.name ?? null}
         statusColor={status?.color}
+        statusGlyph={readStatusGlyph(status, data.issueStatuses)}
+        isDone={status?.category === 'DONE'}
         ownerName={
           typeof row.assigneeId === 'string'
             ? readMemberName(membersById, row.assigneeId, t('Unknown'))
@@ -311,7 +307,6 @@ export const IssueSubtasks = () => {
           onChange={setSubtaskDraft}
           onSelectIssue={linkSubtask}
           onCreateNew={createSubtask}
-          isShortcutEnabled={false}
           ariaLabel={t('New subtask title')}
           placeholder={t('Add a subtask…')}
           excludeIds={unlinkableIds}

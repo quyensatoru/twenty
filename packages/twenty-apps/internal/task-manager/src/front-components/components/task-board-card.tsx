@@ -2,20 +2,16 @@ import { isNonEmptyString } from '@sniptt/guards';
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
-  IconAlertCircle,
   IconGitBranch,
-  IconGitCommit,
   IconArrowMerge,
   IconCircleX,
-  IconBookmark,
   IconCalendarEvent,
+  IconCalendarRepeat,
   IconCheck,
   IconDotsVertical,
-  IconHierarchy2,
   IconPin,
   IconPinned,
   IconPinnedOff,
-  IconSquareCheck,
   IconTrash,
   IconUser,
 } from 'twenty-ui/icon';
@@ -24,9 +20,10 @@ import { ISSUE_LABEL_OPTIONS } from '../../constants/issue-label-options';
 import { ISSUE_TYPE_OPTIONS } from '../../constants/issue-type-options';
 import { type IssueCardFieldKey } from '../../constants/issue-view-fields';
 import { type BoardIssue } from '../../types/task-board';
+import { readIsOverdue, readShortDate } from '../utils/read-due-date.util';
 import { TaskAvatar } from './task-avatar';
+import { TaskChip, TaskColorDot } from './task-chip';
 import { TaskPriorityGlyph } from './task-priority-glyph';
-import { TaskTag } from './task-tag';
 import {
   readTagColor,
   TASK_CIRCLE_STYLE,
@@ -65,63 +62,58 @@ type TaskBoardCardProps = {
   onDragEndCard: () => void;
 };
 
-// Jira draws the type as a small glyph in the option's own colour: a green
-// bookmark for a story, a blue tick for a task, a red bug, a grey subtask
-// glyph. Reproduced rather than imported — no host component draws it.
-export const IssueTypeGlyph = ({ issueType }: { issueType: string | null }) => {
+// The type as a small filled square in the option's own colour, with a white
+// mark inside: a tick for a task, a bookmark for a story, a dot for a bug and
+// a branch for a subtask. Drawn here because no host component draws it.
+export const IssueTypeGlyph = ({
+  issueType,
+  size = 14,
+}: {
+  issueType: string | null;
+  size?: number;
+}) => {
   const option = ISSUE_TYPE_OPTIONS.find(
     (candidate) => candidate.value === issueType,
   );
-  const color = readTagColor(option?.color).text;
-  const size = 14;
+  const color = readTagColor(option?.color ?? 'blue').text;
 
-  switch (option?.value) {
-    case 'STORY':
-      return <IconBookmark size={size} color={color} />;
-    case 'BUG':
-      return <IconAlertCircle size={size} color={color} />;
-    case 'SUBTASK':
-      return <IconHierarchy2 size={size} color={color} />;
-    default:
-      return <IconSquareCheck size={size} color={color} />;
-  }
-};
-
-const readShortDate = (value: string | null | undefined): string | null => {
-  if (typeof value !== 'string' || value === '') {
-    return null;
-  }
-
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-  });
-};
-
-const readIsOverdue = (
-  value: string | null | undefined,
-  isDone: boolean,
-): boolean => {
-  if (isDone || typeof value !== 'string' || value === '') {
-    return false;
-  }
-
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return false;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return parsed.getTime() < today.getTime();
+  return (
+    <span
+      title={option?.label}
+      style={{
+        display: 'inline-flex',
+        flexShrink: 0,
+        height: size,
+        width: size,
+      }}
+    >
+      <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="14" height="14" rx="3.5" fill={color} />
+        {option?.value === 'STORY' ? (
+          <path d="M5.5 4.5h5v7l-2.5-2l-2.5 2z" fill="#ffffff" />
+        ) : option?.value === 'BUG' ? (
+          <circle cx="8" cy="8" r="2.75" fill="#ffffff" />
+        ) : option?.value === 'SUBTASK' ? (
+          <path
+            d="M5.5 4.5v5.5a1.5 1.5 0 0 0 1.5 1.5h3.5M5.5 7.5h5"
+            stroke="#ffffff"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            fill="none"
+          />
+        ) : (
+          <path
+            d="M5 8.2l2 2l4-4.4"
+            stroke="#ffffff"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        )}
+      </svg>
+    </span>
+  );
 };
 
 // The unassigned slot keeps its place in the footer, so every card lines up
@@ -195,10 +187,27 @@ export const TaskBoardCard = ({
   const shownEpicName = isShown('epic') ? epicName : null;
   const shownSprintName = isShown('sprint') ? sprintName : null;
   const shownLabels = isShown('labels') ? labelOptions : [];
-  const hasTags =
+  const shownPoints =
+    isShown('points') && typeof issue.storyPoints === 'number'
+      ? issue.storyPoints
+      : null;
+  const shownDueLabel = isShown('dueDate') ? dueLabel : null;
+  const development = issue.developmentSummary;
+  const hasDevelopment =
+    development !== undefined &&
+    development.openPullRequestCount +
+      development.branchCount +
+      development.failedBuildCount +
+      development.failedDeploymentCount +
+      development.successfulProductionDeploymentCount >
+      0;
+  const hasProperties =
     shownEpicName !== null ||
     shownSprintName !== null ||
-    shownLabels.length > 0;
+    shownLabels.length > 0 ||
+    shownPoints !== null ||
+    shownDueLabel !== null ||
+    hasDevelopment;
 
   return (
     <div
@@ -230,7 +239,7 @@ export const TaskBoardCard = ({
         border: `1px solid ${isSelected ? TASK_TOKENS.accent : isHovered ? TASK_TOKENS.borderStrong : TASK_TOKENS.border}`,
         borderRadius: TASK_TOKENS.radius,
         boxShadow: isSelected
-          ? `0 0 0 1px ${TASK_TOKENS.accent}`
+          ? `0 0 0 2px ${TASK_TOKENS.accentSoft}`
           : isHovered && !isDragging
             ? TASK_TOKENS.shadowLight
             : 'none',
@@ -257,83 +266,24 @@ export const TaskBoardCard = ({
           display: 'flex',
           flexDirection: 'column',
           fontFamily: TASK_TOKENS.fontFamily,
-          gap: 8,
+          gap: 6,
           margin: 0,
-          padding: '10px 12px',
+          padding: '9px 10px 9px 10px',
           textAlign: 'left',
           width: '100%',
         }}
       >
-        <span style={{ display: 'flex', gap: 4, paddingRight: 20 }}>
-          {isPinned && (
-            <span
-              title={t('Pinned')}
-              style={{ display: 'inline-flex', flexShrink: 0, paddingTop: 2 }}
-            >
-              <IconPinned size={14} color={TASK_TOKENS.accent} />
-            </span>
-          )}
-          <span
-            style={{
-              color: TASK_TOKENS.textPrimary,
-              display: '-webkit-box',
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 13,
-              lineHeight: '18px',
-              maxHeight: 54,
-              overflow: 'hidden',
-              overflowWrap: 'anywhere',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 3,
-            }}
-          >
-            {issue.title ?? t('(No title)')}
-          </span>
-        </span>
-
-        {hasTags && (
-          <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {shownEpicName !== null && (
-              <TaskTag color={epicColor ?? 'purple'}>{shownEpicName}</TaskTag>
-            )}
-            {shownSprintName !== null && (
-              <TaskTag color="sky">{shownSprintName}</TaskTag>
-            )}
-            {shownLabels.map((label) => {
-              const option = ISSUE_LABEL_OPTIONS.find(
-                (candidate) => candidate.value === label,
-              );
-
-              return (
-                <TaskTag key={label} color={option?.color ?? 'gray'}>
-                  {option?.label ?? label}
-                </TaskTag>
-              );
-            })}
-            {shownLabels.length > 0 && extraLabelCount > 0 && (
-              <span
-                style={{
-                  alignSelf: 'center',
-                  color: TASK_TOKENS.textTertiary,
-                  fontFamily: TASK_TOKENS.fontFamily,
-                  fontSize: 11,
-                }}
-              >
-                +{extraLabelCount}
-              </span>
-            )}
-          </span>
-        )}
-
         <span
           style={{
             alignItems: 'center',
             display: 'flex',
             gap: 6,
-            minHeight: 22,
-            width: '100%',
+            minHeight: 20,
           }}
         >
+          {isShown('priority') && (
+            <TaskPriorityGlyph priority={issue.priority} shouldShowEmpty />
+          )}
           {isShown('type') && (
             <span
               title={
@@ -351,138 +301,33 @@ export const TaskBoardCard = ({
               color: TASK_TOKENS.textTertiary,
               fontFamily: TASK_TOKENS.fontFamily,
               fontSize: 12,
-              fontWeight: 500,
+              fontVariantNumeric: 'tabular-nums',
               minWidth: 0,
               overflow: 'hidden',
-              // Jira strikes the key, not the title, once the work is done:
-              // the card stays readable while its state still shows.
-              textDecoration: isDone ? 'line-through' : 'none',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
           >
             {issue.issueKey ?? ''}
           </span>
-          {isDone && (
+          {isPinned && (
             <span
-              title={t('Done')}
+              title={t('Pinned')}
               style={{ display: 'inline-flex', flexShrink: 0 }}
             >
-              <IconCheck
-                size={14}
-                color={readTagColor('green').text}
-                stroke={2.5}
-              />
-            </span>
-          )}
-          {issue.developmentSummary !== undefined && (
-            <span
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
-            >
-              {issue.developmentSummary.branchCount > 0 && (
-                <span title={t('Branches')}>
-                  <IconGitBranch size={12} />
-                  {issue.developmentSummary.branchCount}
-                </span>
-              )}
-              {issue.developmentSummary.commitCount > 0 && (
-                <span title={t('Commits')}>
-                  <IconGitCommit size={12} />
-                  {issue.developmentSummary.commitCount}
-                </span>
-              )}
-              {issue.developmentSummary.openPullRequestCount > 0 && (
-                <span title={t('Open pull requests')}>
-                  <IconArrowMerge size={12} />
-                  {issue.developmentSummary.openPullRequestCount}
-                </span>
-              )}
-              {issue.developmentSummary.successfulProductionDeploymentCount >
-                0 && (
-                <span title={t('Deployed to production')}>
-                  <IconCheck
-                    size={12}
-                    color={readTagColor('green').text}
-                  />
-                </span>
-              )}
-              {issue.developmentSummary.failedBuildCount +
-                issue.developmentSummary.failedDeploymentCount >
-                0 && (
-                <span title={t('Build or deployment failed')}>
-                  <IconCircleX size={12} color={readTagColor('red').text} />
-                </span>
-              )}
-            </span>
-          )}
-          {isShown('dueDate') && dueLabel !== null && (
-            <span
-              title={isOverdue ? t('Overdue') : t('Due date')}
-              style={{
-                alignItems: 'center',
-                background: isOverdue
-                  ? readTagColor('red').background
-                  : 'transparent',
-                borderRadius: TASK_TOKENS.radiusExtraSmall,
-                color: isOverdue
-                  ? TASK_TOKENS.textDanger
-                  : TASK_TOKENS.textSecondary,
-                display: 'inline-flex',
-                flexShrink: 0,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 11,
-                fontWeight: isOverdue ? 600 : 400,
-                gap: 2,
-                height: 18,
-                padding: isOverdue ? '0 4px' : 0,
-              }}
-            >
-              <IconCalendarEvent
-                size={12}
-                color={
-                  isOverdue ? TASK_TOKENS.textDanger : TASK_TOKENS.textTertiary
-                }
-              />
-              {dueLabel}
+              <IconPinned size={13} color={TASK_TOKENS.accent} />
             </span>
           )}
           <span style={{ flex: 1 }} />
-          {isShown('points') && typeof issue.storyPoints === 'number' && (
-            <span
-              title={t('Story points')}
-              style={{
-                alignItems: 'center',
-                background: TASK_TOKENS.backgroundTertiary,
-                borderRadius: 10,
-                color: TASK_TOKENS.textSecondary,
-                display: 'inline-flex',
-                flexShrink: 0,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 11,
-                fontWeight: 600,
-                height: 18,
-                justifyContent: 'center',
-                minWidth: 18,
-                padding: '0 6px',
-              }}
-            >
-              {issue.storyPoints}
-            </span>
-          )}
-          {isShown('priority') && (
-            <TaskPriorityGlyph priority={issue.priority} />
-          )}
-          {/* Smaller and first: the reporter is context, the assignee is who
-              the card belongs to. */}
           {isShown('reporter') && reporterName !== null && (
             <span
               title={`${t('Reporter')}: ${reporterName}`}
-              style={{ display: 'inline-flex', flexShrink: 0, opacity: 0.8 }}
+              style={{ display: 'inline-flex', flexShrink: 0, opacity: 0.7 }}
             >
               <TaskAvatar
                 name={reporterName}
                 avatarUrl={reporterAvatarUrl}
-                size={18}
+                size={16}
                 shouldShowTitle={false}
               />
             </span>
@@ -492,12 +337,137 @@ export const TaskBoardCard = ({
               <TaskAvatar
                 name={assigneeName}
                 avatarUrl={assigneeAvatarUrl}
-                size={22}
+                size={20}
               />
             ) : (
-              <UnassignedAvatar size={22} />
+              <UnassignedAvatar size={20} />
             ))}
         </span>
+
+        <span
+          style={{
+            color: isDone ? TASK_TOKENS.textSecondary : TASK_TOKENS.textPrimary,
+            display: '-webkit-box',
+            fontFamily: TASK_TOKENS.fontFamily,
+            fontSize: 13,
+            fontWeight: 500,
+            lineHeight: '18px',
+            maxHeight: 54,
+            overflow: 'hidden',
+            overflowWrap: 'anywhere',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 3,
+          }}
+        >
+          {issue.title ?? t('(No title)')}
+        </span>
+
+        {hasProperties && (
+          <span
+            style={{
+              alignItems: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+            }}
+          >
+            {shownEpicName !== null && (
+              <TaskChip
+                title={t('Epic')}
+                icon={
+                  <TaskColorDot
+                    color={readTagColor(epicColor ?? 'purple').text}
+                  />
+                }
+              >
+                {shownEpicName}
+              </TaskChip>
+            )}
+            {shownSprintName !== null && (
+              <TaskChip
+                title={t('Sprint')}
+                icon={<IconCalendarRepeat size={12} />}
+              >
+                {shownSprintName}
+              </TaskChip>
+            )}
+            {shownLabels.map((label) => {
+              const option = ISSUE_LABEL_OPTIONS.find(
+                (candidate) => candidate.value === label,
+              );
+
+              return (
+                <TaskChip
+                  key={label}
+                  icon={
+                    <TaskColorDot
+                      color={readTagColor(option?.color ?? 'gray').text}
+                      size={6}
+                    />
+                  }
+                >
+                  {option?.label ?? label}
+                </TaskChip>
+              );
+            })}
+            {shownLabels.length > 0 && extraLabelCount > 0 && (
+              <TaskChip>+{extraLabelCount}</TaskChip>
+            )}
+            {shownPoints !== null && (
+              <TaskChip title={t('Story points')}>{shownPoints}</TaskChip>
+            )}
+            {shownDueLabel !== null && (
+              <TaskChip
+                title={isOverdue ? t('Overdue') : t('Due date')}
+                tone={isOverdue ? 'danger' : 'default'}
+                icon={<IconCalendarEvent size={12} />}
+              >
+                {shownDueLabel}
+              </TaskChip>
+            )}
+            {development !== undefined &&
+              development.openPullRequestCount > 0 && (
+                <TaskChip
+                  title={t('Open pull requests')}
+                  icon={<IconArrowMerge size={12} />}
+                >
+                  {development.openPullRequestCount}
+                </TaskChip>
+              )}
+            {development !== undefined &&
+              development.openPullRequestCount === 0 &&
+              development.branchCount > 0 && (
+                <TaskChip
+                  title={t('Branches')}
+                  icon={<IconGitBranch size={12} />}
+                >
+                  {development.branchCount}
+                </TaskChip>
+              )}
+            {development !== undefined &&
+              development.failedBuildCount + development.failedDeploymentCount >
+                0 && (
+                <TaskChip
+                  title={t('Build or deployment failed')}
+                  tone="danger"
+                  icon={<IconCircleX size={12} />}
+                >
+                  {t('Failed')}
+                </TaskChip>
+              )}
+            {development !== undefined &&
+              development.successfulProductionDeploymentCount > 0 && (
+                <TaskChip
+                  title={t('Deployed to production')}
+                  icon={
+                    <IconCheck size={12} color={readTagColor('green').text} />
+                  }
+                >
+                  {t('Deployed')}
+                </TaskChip>
+              )}
+          </span>
+        )}
       </button>
       <span
         style={{
@@ -506,8 +476,8 @@ export const TaskBoardCard = ({
               ? 'inline-flex'
               : 'none',
           position: 'absolute',
-          right: 6,
-          top: 6,
+          right: isShown('assignee') ? 34 : 8,
+          top: 8,
         }}
       >
         <button

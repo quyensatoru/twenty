@@ -34,7 +34,7 @@ type TaskBoardSortMenuProps = {
   width?: number | string;
 };
 
-const TRIGGER_HEIGHT = 32;
+const TRIGGER_HEIGHT = 28;
 const MOBILE_MENU_WIDTH = 320;
 
 const readDirectionArrow = (direction: 'asc' | 'desc') =>
@@ -184,6 +184,7 @@ export const TaskBoardSortMenu = ({
   width,
 }: TaskBoardSortMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTriggerHovered, setIsTriggerHovered] = useState(false);
   const [pickingIndex, setPickingIndex] = useState<number | null>(null);
   const summary = sort
     .map(
@@ -206,16 +207,20 @@ export const TaskBoardSortMenu = ({
         aria-expanded={isOpen}
         title={summary === '' ? undefined : summary}
         onClick={() => setIsOpen((current) => !current)}
+        onMouseEnter={() => setIsTriggerHovered(true)}
+        onMouseLeave={() => setIsTriggerHovered(false)}
         style={{
           alignItems: 'center',
           background:
-            sort.length > 0 ? TASK_TOKENS.accentSoft : TASK_TOKENS.background,
-          border: `1px solid ${
-            isOpen || sort.length > 0 ? TASK_TOKENS.accent : TASK_TOKENS.border
-          }`,
+            sort.length > 0
+              ? TASK_TOKENS.accentSoft
+              : isOpen || isTriggerHovered
+                ? TASK_TOKENS.backgroundHover
+                : 'transparent',
+          border: 'none',
           borderRadius: TASK_TOKENS.radiusSmall,
           boxSizing: 'border-box',
-          color: sort.length > 0 ? TASK_TOKENS.accent : TASK_TOKENS.textPrimary,
+          color: sort.length > 0 ? TASK_TOKENS.accent : TASK_TOKENS.textSecondary,
           cursor: 'pointer',
           display: 'flex',
           fontFamily: TASK_TOKENS.fontFamily,
@@ -225,7 +230,7 @@ export const TaskBoardSortMenu = ({
           height: TRIGGER_HEIGHT,
           maxWidth: isMobile ? '100%' : 380,
           minWidth: 0,
-          padding: '0 10px',
+          padding: '0 8px',
           width: '100%',
         }}
       >

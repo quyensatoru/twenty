@@ -1,4 +1,8 @@
-import { copyToClipboard, enqueueSnackbar, t } from 'twenty-sdk/front-component';
+import {
+  copyToClipboard,
+  enqueueSnackbar,
+  t,
+} from 'twenty-sdk/front-component';
 import { IconLink } from 'twenty-ui/icon';
 
 import { TaskIconButton } from './task-icon-button';
@@ -12,6 +16,15 @@ type TaskCopyLinkButtonProps = {
 // The host owns the clipboard: the sandbox has no navigator.clipboard, and the
 // bridge deliberately suppresses its own success toast so the app can say what
 // it copied.
+export const copyLinkToClipboard = (url: string, successMessage?: string) => {
+  void copyToClipboard(url).then(() =>
+    enqueueSnackbar({
+      message: successMessage ?? t('Link copied'),
+      variant: 'success',
+    }),
+  );
+};
+
 export const TaskCopyLinkButton = ({
   url,
   label,
@@ -19,14 +32,7 @@ export const TaskCopyLinkButton = ({
 }: TaskCopyLinkButtonProps) => (
   <TaskIconButton
     label={label ?? t('Copy link')}
-    onClick={() => {
-      void copyToClipboard(url).then(() =>
-        enqueueSnackbar({
-          message: successMessage ?? t('Link copied'),
-          variant: 'success',
-        }),
-      );
-    }}
+    onClick={() => copyLinkToClipboard(url, successMessage)}
   >
     <IconLink size={14} />
   </TaskIconButton>

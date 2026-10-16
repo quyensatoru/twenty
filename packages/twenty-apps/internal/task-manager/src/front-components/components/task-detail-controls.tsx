@@ -39,16 +39,16 @@ export const DetailReadButton = ({
         background:
           isHovered && !isReadOnly ? TASK_TOKENS.backgroundHover : 'transparent',
         border: 'none',
-        borderRadius: TASK_TOKENS.radius,
+        borderRadius: TASK_TOKENS.radiusSmall,
         color: TASK_TOKENS.textPrimary,
         cursor: isReadOnly ? 'default' : 'pointer',
         display: 'flex',
         fontFamily: TASK_TOKENS.fontFamily,
         fontSize: 13,
-        minHeight: 24,
+        minHeight: 28,
         minWidth: 0,
         overflow: 'hidden',
-        padding: '0 4px',
+        padding: '4px 6px',
         textAlign: 'left',
         width: '100%',
       }}
@@ -78,6 +78,7 @@ export const LabelPicker = ({
   isReadOnly?: boolean;
 }) => {
   const [search, setSearch] = useState('');
+  const [isTriggerHovered, setIsTriggerHovered] = useState(false);
   const term = search.trim().toLowerCase();
   const matches = ISSUE_LABEL_OPTIONS.filter((option) =>
     option.label.toLowerCase().includes(term),
@@ -92,24 +93,29 @@ export const LabelPicker = ({
         aria-readonly={isReadOnly}
         disabled={isReadOnly}
         onClick={() => onOpenChange(!isOpen)}
+        onMouseEnter={() => setIsTriggerHovered(true)}
+        onMouseLeave={() => setIsTriggerHovered(false)}
         style={{
           alignItems: 'center',
-          background: 'transparent',
+          background:
+            isTriggerHovered && !isReadOnly
+              ? TASK_TOKENS.backgroundHover
+              : 'transparent',
           border: 'none',
-          borderRadius: TASK_TOKENS.radius,
+          borderRadius: TASK_TOKENS.radiusSmall,
           cursor: isReadOnly ? 'default' : 'pointer',
           display: 'flex',
           flexWrap: 'wrap',
           gap: 4,
-          minHeight: 24,
-          padding: '0 4px',
+          minHeight: 28,
+          padding: '4px 6px',
           textAlign: 'left',
           width: '100%',
         }}
       >
         {selected.length === 0 ? (
-          <span style={{ color: TASK_TOKENS.textLight, fontSize: 13 }}>
-            {t('Labels')}
+          <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 13 }}>
+            {t('No labels')}
           </span>
         ) : (
           selected.map((value) => {

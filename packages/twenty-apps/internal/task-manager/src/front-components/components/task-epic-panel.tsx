@@ -20,6 +20,7 @@ import { postAppRoute } from '../utils/post-app-route.util';
 import { readColorLabel } from '../utils/read-color-label.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { TaskActionMenu } from './task-action-menu';
+import { TaskColorDot } from './task-chip';
 import { TaskButton } from './task-button';
 import { TaskIconButton } from './task-icon-button';
 import { TaskTextInput } from './task-text-input';
@@ -234,20 +235,23 @@ export const TaskEpicPanel = ({
         onMouseEnter={() => setHoveredRowKey(rowKey)}
         onMouseLeave={() => setHoveredRowKey(null)}
         style={{
+          alignItems: 'center',
           background: isSelected
-            ? TASK_TOKENS.accentSoft
+            ? TASK_TOKENS.backgroundSelected
             : hoveredRowKey === rowKey
               ? TASK_TOKENS.backgroundHover
               : 'transparent',
           border: 'none',
           borderRadius: TASK_TOKENS.radiusSmall,
-          color: isSelected ? TASK_TOKENS.accent : TASK_TOKENS.textSecondary,
+          color: isSelected ? TASK_TOKENS.textPrimary : TASK_TOKENS.textSecondary,
           cursor: 'pointer',
+          display: 'flex',
+          flexShrink: 0,
           fontFamily: TASK_TOKENS.fontFamily,
           fontSize: 13,
-          fontWeight: isSelected ? 600 : 400,
-          minHeight: 32,
-          padding: '0 10px',
+          fontWeight: isSelected ? 500 : 400,
+          minHeight: 30,
+          padding: '0 8px',
           textAlign: 'left',
           width: '100%',
         }}
@@ -260,29 +264,40 @@ export const TaskEpicPanel = ({
   return (
     <aside
       style={{
+        background: TASK_TOKENS.backgroundSecondary,
         borderRight: isFullScreen
           ? 'none'
-          : `1px solid ${TASK_TOKENS.borderLight}`,
+          : `1px solid ${TASK_TOKENS.border}`,
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
         fontFamily: TASK_TOKENS.fontFamily,
-        gap: 4,
+        gap: 2,
         minHeight: 0,
-        // Left lined up with the header; right matching what the left
-        // looks like once the host's own strip is counted.
-        padding: `0 ${inset.right}px 12px ${inset.left}px`,
-        width: isFullScreen ? '100%' : 280,
+        padding: isFullScreen
+          ? `8px ${inset.right}px 12px ${inset.left}px`
+          : '8px 8px 12px 8px',
+        width: isFullScreen ? '100%' : 236,
       }}
     >
-      <div style={{ alignItems: 'center', display: 'flex', minHeight: 32 }}>
+      <div
+        style={{
+          alignItems: 'center',
+          display: 'flex',
+          gap: 2,
+          minHeight: 28,
+          padding: '0 2px 4px 8px',
+        }}
+      >
         <span
           style={{
-            color: TASK_TOKENS.textPrimary,
+            color: TASK_TOKENS.textTertiary,
             flex: 1,
-            fontSize: 14,
+            fontSize: 11,
             fontWeight: 600,
+            letterSpacing: 0.4,
+            textTransform: 'uppercase',
           }}
         >
           {t('Epics')}
@@ -292,7 +307,7 @@ export const TaskEpicPanel = ({
         </TaskIconButton>
       </div>
       {renderFilterRow('ALL', t('All issues'), undefined)}
-      {renderFilterRow('NONE', t('Issues without epic'), null)}
+      {renderFilterRow('NONE', t('No epic'), null)}
       {/* Content-sized: the create control follows the last epic instead of
           sitting at the foot of an empty column, and the list only scrolls
           once it fills the panel. */}
@@ -301,8 +316,8 @@ export const TaskEpicPanel = ({
           display: 'flex',
           flex: '0 1 auto',
           flexDirection: 'column',
-          gap: 6,
-          marginTop: 4,
+          gap: 2,
+          marginTop: 6,
           minHeight: 0,
           overflowY: 'auto',
           ...TASK_THIN_SCROLLBAR_STYLE,
@@ -331,10 +346,8 @@ export const TaskEpicPanel = ({
               : Math.round((summary.doneCount / summary.totalCount) * 100);
           const isSelected = epicFilter === epic.id;
           const isDropTarget = dropTargetEpicId === epic.id;
-          const frameColor =
-            isDropTarget || isSelected
-              ? TASK_TOKENS.accent
-              : TASK_TOKENS.borderLight;
+          const isRowHovered = hoveredRowKey === epic.id;
+          const epicTone = readTagColor(color).text;
 
           return (
             <div
@@ -368,30 +381,32 @@ export const TaskEpicPanel = ({
                 event.preventDefault();
                 dropOnEpic(epic.id);
               }}
+              onMouseEnter={() => setHoveredRowKey(epic.id)}
+              onMouseLeave={() => setHoveredRowKey(null)}
               style={{
-                background: isSelected
+                background: isDropTarget
                   ? TASK_TOKENS.accentSoft
-                  : TASK_TOKENS.background,
-                // Longhands only: React drops a borderLeft that sits beside
-                // a `border` shorthand when the shorthand changes.
-                borderBottom: `1px solid ${frameColor}`,
-                borderLeft: `4px solid ${readTagColor(color).text}`,
-                borderRight: `1px solid ${frameColor}`,
-                borderTop: `1px solid ${frameColor}`,
+                  : isSelected
+                    ? TASK_TOKENS.backgroundSelected
+                    : isRowHovered
+                      ? TASK_TOKENS.backgroundHover
+                      : 'transparent',
                 borderRadius: TASK_TOKENS.radiusSmall,
-                boxShadow:
-                  isDropTarget && draggingEpicId !== null
-                    ? `inset 0 3px 0 ${TASK_TOKENS.accent}`
-                    : 'none',
+                boxShadow: isDropTarget
+                  ? draggingEpicId !== null
+                    ? `inset 0 2px 0 ${TASK_TOKENS.accent}`
+                    : `inset 0 0 0 1px ${TASK_TOKENS.accent}`
+                  : 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 flexShrink: 0,
-                gap: 6,
+                gap: 5,
                 opacity: draggingEpicId === epic.id ? 0.5 : 1,
-                padding: '8px 6px 8px 10px',
+                padding: '6px 4px 7px 8px',
               }}
             >
-              <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
+              <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+                <TaskColorDot color={epicTone} />
                 {renamingEpicId === epic.id ? (
                   <div style={{ flex: 1 }}>
                     <TaskTextInput
@@ -413,12 +428,14 @@ export const TaskEpicPanel = ({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: TASK_TOKENS.textPrimary,
+                      color: isSelected
+                        ? TASK_TOKENS.textPrimary
+                        : TASK_TOKENS.textSecondary,
                       cursor: 'pointer',
                       flex: 1,
                       fontFamily: TASK_TOKENS.fontFamily,
                       fontSize: 13,
-                      fontWeight: 500,
+                      fontWeight: isSelected ? 500 : 400,
                       minWidth: 0,
                       overflow: 'hidden',
                       padding: 0,
@@ -430,6 +447,31 @@ export const TaskEpicPanel = ({
                     {epic.name ?? t('(No title)')}
                   </button>
                 )}
+                <span
+                  title={
+                    summary === undefined
+                      ? undefined
+                      : t('{done} of {total} issues done', {
+                          done: summary.doneCount,
+                          total: summary.totalCount,
+                        })
+                  }
+                  style={{
+                    color: TASK_TOKENS.textTertiary,
+                    fontSize: 11.5,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {summary === undefined
+                    ? ''
+                    : `${summary.doneCount}/${summary.totalCount}`}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    visibility: isRowHovered || isSelected ? 'visible' : 'hidden',
+                  }}
+                >
                 <TaskActionMenu
                   label={t('Epic actions')}
                   items={[
@@ -482,50 +524,30 @@ export const TaskEpicPanel = ({
                       : []),
                   ]}
                 />
+                </span>
               </div>
-              <div
-                title={
-                  summary === undefined
-                    ? undefined
-                    : t('{done} of {total} issues done', {
-                        done: summary.doneCount,
-                        total: summary.totalCount,
-                      })
-                }
-                style={{ alignItems: 'center', display: 'flex', gap: 8 }}
-              >
+              {summary !== undefined && summary.totalCount > 0 && (
                 <span
                   style={{
                     background: TASK_TOKENS.backgroundTertiary,
-                    borderRadius: 4,
-                    display: 'inline-flex',
-                    flex: 1,
-                    height: 6,
+                    borderRadius: 2,
+                    display: 'flex',
+                    height: 2,
+                    marginLeft: 16,
+                    marginRight: 6,
                     overflow: 'hidden',
                   }}
                 >
                   <span
                     style={{
-                      background: readTagColor('green').text,
+                      background: epicTone,
                       display: 'block',
                       height: '100%',
                       width: `${percent}%`,
                     }}
                   />
                 </span>
-                <span
-                  style={{
-                    color: TASK_TOKENS.textTertiary,
-                    fontSize: 11,
-                    minWidth: 32,
-                    textAlign: 'right',
-                  }}
-                >
-                  {summary === undefined
-                    ? ''
-                    : `${summary.doneCount}/${summary.totalCount}`}
-                </span>
-              </div>
+              )}
             </div>
           );
         })}
@@ -577,18 +599,19 @@ export const TaskEpicPanel = ({
                   : 'transparent',
               border: 'none',
               borderRadius: TASK_TOKENS.radiusSmall,
-              color: TASK_TOKENS.textSecondary,
+              color: TASK_TOKENS.textTertiary,
               cursor: 'pointer',
               display: 'flex',
+              flexShrink: 0,
               fontFamily: TASK_TOKENS.fontFamily,
               fontSize: 13,
               gap: 6,
-              minHeight: 32,
-              padding: '0 10px',
+              minHeight: 30,
+              padding: '0 8px',
             }}
           >
             <IconPlus size={14} />
-            {t('Create epic')}
+            {t('New epic')}
           </button>
         ))}
     </aside>

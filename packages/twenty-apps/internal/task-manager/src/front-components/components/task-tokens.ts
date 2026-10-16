@@ -23,6 +23,10 @@ export const TASK_TOKENS = {
     'var(--t-background-transparent-light, rgba(0,0,0,0.04))',
   backgroundTransparentLighter:
     'var(--t-background-transparent-lighter, rgba(0,0,0,0.02))',
+  // The pressed or selected state of a quiet control, one step past hover.
+  backgroundSelected:
+    'var(--t-background-transparent-medium, rgba(0,0,0,0.08))',
+  backgroundDanger: 'var(--t-background-transparent-danger, #f3000d14)',
   border: 'var(--t-border-color-medium, #ebebeb)',
   borderLight: 'var(--t-border-color-light, #f1f1f1)',
   borderStrong: 'var(--t-border-color-strong, #d6d6d6)',

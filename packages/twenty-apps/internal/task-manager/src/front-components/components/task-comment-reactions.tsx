@@ -17,6 +17,11 @@ type TaskCommentReactionsProps = {
   membersById: Map<string, MemberRow>;
   canReact: boolean;
   onReact?: (commentId: string, emoji: string, active: boolean) => void;
+  // Off when the comment has no reactions yet and only the picker is shown,
+  // on the bubble's header beside the other hover actions.
+  shouldShowChips?: boolean;
+  // Off under the body: the picker lives with the other hover actions.
+  shouldShowPicker?: boolean;
 };
 
 export const TaskCommentReactions = ({
@@ -26,6 +31,8 @@ export const TaskCommentReactions = ({
   membersById,
   canReact,
   onReact,
+  shouldShowChips = true,
+  shouldShowPicker = true,
 }: TaskCommentReactionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -51,7 +58,7 @@ export const TaskCommentReactions = ({
 
   return (
     <>
-      {canReact && (
+      {canReact && shouldShowPicker && (
         <span style={{ display: 'inline-flex', position: 'relative' }}>
           <button
             ref={trigger}
@@ -78,7 +85,7 @@ export const TaskCommentReactions = ({
               cursor: 'pointer',
             }}
           >
-            <IconMoodSmile size={16} />
+            <IconMoodSmile size={14} />
           </button>
           {isOpen && (
             <twenty-overlay offsetY={28} onClose={() => setIsOpen(false)}>
@@ -168,44 +175,46 @@ export const TaskCommentReactions = ({
           )}
         </span>
       )}
-      {DISCUSSION_REACTIONS.map((emoji) => {
-        const matching = matchingReactions(emoji);
-        if (matching.length === 0) return null;
-        const active = isActive(emoji);
-        return (
-          <button
-            key={emoji}
-            type="button"
-            aria-label={`${t('React')} ${emoji}`}
-            aria-pressed={active}
-            disabled={!canReact}
-            onClick={() => onReact?.(commentId, emoji, !active)}
-            title={matching
-              .map((reaction) =>
-                readMemberName(membersById, reaction.memberId, t('Unknown')),
-              )
-              .join(', ')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              height: 24,
-              padding: '0 7px',
-              border: `1px solid ${active ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
-              borderRadius: TASK_TOKENS.radiusSmall,
-              background: active
-                ? TASK_TOKENS.accentSoft
-                : TASK_TOKENS.background,
-              color: active ? TASK_TOKENS.accent : TASK_TOKENS.textSecondary,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 12,
-              cursor: canReact ? 'pointer' : 'default',
-            }}
-          >
-            {emoji} {matching.length}
-          </button>
-        );
-      })}
+      {shouldShowChips &&
+        DISCUSSION_REACTIONS.map((emoji) => {
+          const matching = matchingReactions(emoji);
+          if (matching.length === 0) return null;
+          const active = isActive(emoji);
+          return (
+            <button
+              key={emoji}
+              type="button"
+              aria-label={`${t('React')} ${emoji}`}
+              aria-pressed={active}
+              disabled={!canReact}
+              onClick={() => onReact?.(commentId, emoji, !active)}
+              title={matching
+                .map((reaction) =>
+                  readMemberName(membersById, reaction.memberId, t('Unknown')),
+                )
+                .join(', ')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                height: 22,
+                padding: '0 7px',
+                border: `1px solid ${active ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
+                // A pill, as in the design: a square chip read as a button.
+                borderRadius: 11,
+                background: active
+                  ? TASK_TOKENS.accentSoft
+                  : TASK_TOKENS.background,
+                color: active ? TASK_TOKENS.accent : TASK_TOKENS.textSecondary,
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 12,
+                cursor: canReact ? 'pointer' : 'default',
+              }}
+            >
+              {emoji} {matching.length}
+            </button>
+          );
+        })}
     </>
   );
 };

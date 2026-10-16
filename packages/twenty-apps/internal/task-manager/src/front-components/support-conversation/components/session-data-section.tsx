@@ -23,6 +23,8 @@ import { type PropertyRow, PropertyList } from './property-list';
 type SessionDataSectionProps = {
   sessionData: Record<string, unknown> | null;
   appName: string | null;
+  // In the issue's side column: one plain list, no tiles.
+  isEmbedded?: boolean;
 };
 
 const readLabel = (entry: SessionEntry): string =>
@@ -144,11 +146,25 @@ const HighlightTile = ({ entry }: { entry: SessionEntry }) => (
 export const SessionDataSection = ({
   sessionData,
   appName,
+  isEmbedded = false,
 }: SessionDataSectionProps) => {
   const entries = describeSessionData(sessionData, appName);
 
   if (entries.length === 0) {
     return null;
+  }
+
+  if (isEmbedded) {
+    return (
+      <PropertyList
+        variant="plain"
+        rows={entries.map((entry) => ({
+          key: entry.key,
+          label: readLabel(entry),
+          ...renderValue(entry),
+        }))}
+      />
+    );
   }
 
   const highlights = entries.filter((entry) => entry.isHighlight);

@@ -26,15 +26,16 @@ import { useMerchantCustomSettings } from '../hooks/use-merchant-custom-settings
 const LABEL_WIDTH = 90;
 const LABEL_COLUMN_WIDTH = 140;
 const ROW_MIN_HEIGHT = 24;
+const INPUT_HEIGHT = 32;
 
 type CustomSettingsTab = 'settings' | 'tools';
 
 const SettingsFrame = ({
   children,
-  isDivided,
+  isCompact,
 }: {
   children: React.ReactNode;
-  isDivided: boolean;
+  isCompact: boolean;
 }) => (
   <section
     style={{
@@ -42,7 +43,7 @@ const SettingsFrame = ({
       display: 'flex',
       flexDirection: 'column',
       fontFamily: TASK_TOKENS.fontFamily,
-      gap: isDivided ? 0 : 8,
+      gap: isCompact ? 0 : 8,
       padding: 0,
       width: '100%',
     }}
@@ -87,23 +88,21 @@ const SettingValue = ({
 // declares both kinds — a schema with one of them opens straight to it.
 export const MerchantCustomSettingsPanel = ({
   merchantId,
-  isDivided = false,
+  compactLabelWidth,
 }: {
   merchantId: string | null;
-  // Inside a bordered card: rows run edge to edge with a rule between them,
-  // the way the Fields list beside it does.
-  isDivided?: boolean;
+  // Set inside the issue's merchant preview: no frame, and the label column
+  // takes the width of the Fields list above, so both read as one list.
+  compactLabelWidth?: number | string;
 }) => {
-  const dividedRowStyle = (index: number): React.CSSProperties =>
-    isDivided
-      ? {
-          borderTop:
-            index === 0 ? 'none' : `1px solid ${TASK_TOKENS.borderLight}`,
-          padding: '10px 12px',
-        }
-      : {};
-  const padded = (node: React.ReactNode) =>
-    isDivided ? <div style={{ padding: 12 }}>{node}</div> : node;
+  const isCompact = compactLabelWidth !== undefined;
+  const compactLabelColumn =
+    typeof compactLabelWidth === 'number'
+      ? `${compactLabelWidth}px`
+      : compactLabelWidth;
+  const compactRowStyle: React.CSSProperties = isCompact
+    ? { padding: '4px 0' }
+    : {};
 
   const {
     schema,
@@ -149,21 +148,21 @@ export const MerchantCustomSettingsPanel = ({
   }
 
   if (loadError !== null) {
-    return padded(<TaskMessage text={loadError} tone="danger" />);
+    return <TaskMessage text={loadError} tone="danger" />;
   }
 
   if (!hasSettings && !hasTools) {
-    return padded(
+    return (
       <TaskMessage
         text={t('This merchant app declares no custom settings.')}
-      />,
+      />
     );
   }
 
   if (!canUpdate) {
     return (
-      <SettingsFrame isDivided={isDivided}>
-        {schema.fields.map((entry, index) => (
+      <SettingsFrame isCompact={isCompact}>
+        {schema.fields.map((entry) => (
           <div
             key={entry.key}
             style={{
@@ -171,7 +170,7 @@ export const MerchantCustomSettingsPanel = ({
               display: 'flex',
               gap: 4,
               minHeight: ROW_MIN_HEIGHT,
-              ...dividedRowStyle(index),
+              ...compactRowStyle,
             }}
           >
             <span
@@ -182,7 +181,7 @@ export const MerchantCustomSettingsPanel = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                width: LABEL_WIDTH,
+                width: compactLabelWidth ?? LABEL_WIDTH,
               }}
             >
               {entry.label}
@@ -220,7 +219,7 @@ export const MerchantCustomSettingsPanel = ({
   };
 
   return (
-    <SettingsFrame isDivided={isDivided}>
+    <SettingsFrame isCompact={isCompact}>
       {showTabBar ? (
         <TaskTabs
           value={currentTab}
@@ -236,36 +235,44 @@ export const MerchantCustomSettingsPanel = ({
         <>
           {saveError === null
             ? null
-            : padded(
+            : (
                 <span style={{ color: TASK_TOKENS.textDanger, fontSize: 12 }}>
                   {saveError}
-                </span>,
+                </span>
               )}
 
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: isDivided ? 0 : 12,
+              gap: isCompact ? 0 : 12,
             }}
           >
-            {schema.fields.map((entry, index) => (
+            {schema.fields.map((entry) => (
               <div
                 key={entry.key}
                 style={{
-                  columnGap: 16,
+                  alignItems: 'start',
+                  columnGap: isCompact ? 12 : 16,
                   display: 'grid',
-                  gridTemplateColumns: `minmax(100px, ${LABEL_COLUMN_WIDTH}px) 1fr`,
-                  ...dividedRowStyle(index),
+                  gridTemplateColumns: isCompact
+                    ? `${compactLabelColumn} minmax(0, 1fr)`
+                    : `minmax(100px, ${LABEL_COLUMN_WIDTH}px) 1fr`,
+                  ...compactRowStyle,
                 }}
               >
+                {/* Centred on the first line of the input, not on the row: a
+                    multi-line field left its label floating mid-box. */}
                 <span
                   style={{
                     alignItems: 'center',
-                    color: TASK_TOKENS.textSecondary,
+                    color: isCompact
+                      ? TASK_TOKENS.textTertiary
+                      : TASK_TOKENS.textSecondary,
                     display: 'flex',
                     fontSize: 13,
-                    minHeight: 32,
+                    lineHeight: '18px',
+                    minHeight: INPUT_HEIGHT,
                     overflowWrap: 'anywhere',
                   }}
                 >
@@ -276,7 +283,9 @@ export const MerchantCustomSettingsPanel = ({
                     </span>
                   ) : null}
                 </span>
-                <div style={{ minWidth: 0 }}>
+                {/* Capped, so a one-word select does not stretch across a wide
+                    column. */}
+                <div style={{ maxWidth: isCompact ? 320 : undefined, minWidth: 0 }}>
                   <MerchantCustomSettingInput
                     entry={entry}
                     uploadFieldMetadataId={uploadFieldMetadataId}
@@ -299,12 +308,15 @@ export const MerchantCustomSettingsPanel = ({
           <div
             style={{
               display: 'flex',
-              justifyContent: 'flex-end',
-              ...dividedRowStyle(1),
+              // Compact: under the inputs it saves, not at the far edge.
+              justifyContent: isCompact ? 'flex-start' : 'flex-end',
+              paddingLeft: isCompact ? `calc(${compactLabelColumn} + 12px)` : 0,
+              paddingTop: isCompact ? 8 : 0,
             }}
           >
             <TaskButton
               variant="primary"
+              size={isCompact ? 'compact' : undefined}
               onClick={handleSave}
               isDisabled={isSaving}
             >
@@ -313,8 +325,7 @@ export const MerchantCustomSettingsPanel = ({
           </div>
         </>
       ) : (
-        padded(
-          schema.tools.map((tool, toolIndex) => (
+        schema.tools.map((tool, toolIndex) => (
             <Fragment key={tool.key}>
               {toolIndex > 0 ? (
                 <div
@@ -339,8 +350,7 @@ export const MerchantCustomSettingsPanel = ({
                 }}
               />
             </Fragment>
-          )),
-        )
+          ))
       )}
     </SettingsFrame>
   );

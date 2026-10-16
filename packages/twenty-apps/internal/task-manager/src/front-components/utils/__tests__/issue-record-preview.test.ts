@@ -318,7 +318,13 @@ describe('issue record preview', () => {
       ),
     );
     expect(getByText(container, 'Uninstalled at')).toBeDefined();
+    await act(async () =>
+      user.click(getByRole(container, 'tab', { name: 'Settings' })),
+    );
     expect(getByText(container, 'Settings for merchant-1')).toBeDefined();
+    await act(async () =>
+      user.click(getByRole(container, 'tab', { name: /Chats/ })),
+    );
     await act(async () =>
       user.click(getByRole(container, 'button', { name: /Test visitor/ })),
     );
@@ -328,6 +334,9 @@ describe('issue record preview', () => {
       label: 'Conversation: Test visitor',
     });
     await act(async () =>
+      user.click(getByRole(container, 'tab', { name: /Issues/ })),
+    );
+    await act(async () =>
       user.click(getByRole(container, 'button', { name: /Checkout bug/ })),
     );
     expect(openIssue).toHaveBeenCalledWith('issue-2');
@@ -335,7 +344,7 @@ describe('issue record preview', () => {
       queryByRole(container, 'button', { name: 'Open full conversation' }),
     ).toBeNull();
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Back to details' })),
+      user.click(getByRole(container, 'button', { name: 'Close preview' })),
     );
     expect(back).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();

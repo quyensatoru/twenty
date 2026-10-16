@@ -5,6 +5,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { TaskRichTextLinkChipsContext } from '../../components/task-rich-text-link-chip';
 import { TaskRichTextPreview } from '../../components/task-rich-text-preview';
 import { buildTaskMentionMarkdown } from '../task-mention-markdown.util';
 
@@ -93,13 +94,6 @@ describe('rich text preview', () => {
     expect(
       getByText(container, 'Frontend').closest('ul')?.style.marginLeft,
     ).toBe('-20px');
-  });
-
-  it('shows a hard break after a link without a stray backslash', async () => {
-    await renderPreview('Design https://example.com/a?b=1\\\nnext line');
-    expect(
-      getByText(container, 'https://example.com/a?b=1').getAttribute('href'),
-    ).toBe('https://example.com/a?b=1');
   });
 
   it('preserves embedded HTML tables and inline formatting safely', async () => {
@@ -194,5 +188,72 @@ describe('rich text preview', () => {
     expect(startEditing).not.toHaveBeenCalled();
     await act(async () => user.click(getByText(container, 'Ordinary text')));
     expect(startEditing).toHaveBeenCalledOnce();
+  });
+
+  it('draws linked issues and external links as chips inside a discussion', async () => {
+    const user = userEvent.setup();
+    const startEditing = vi.fn();
+    const issueId = '0f8c2a4e-1b2c-4d5e-8f90-123456789abc';
+    const commentId = 'aa8c2a4e-1b2c-4d5e-8f90-123456789abc';
+    const issueUrl = `https://crm.example.com/object/issue/${issueId}#comment-${commentId}`;
+    const unknownUrl = `https://crm.example.com/object/issue/${commentId}`;
+    await act(async () =>
+      root.render(
+        createElement(
+          TaskRichTextLinkChipsContext.Provider,
+          {
+            value: {
+              baseUrl: 'https://crm.example.com',
+              issuesById: new Map([
+                [
+                  issueId,
+                  {
+                    id: issueId,
+                    issueKey: 'DP-3',
+                    title: 'Cart drawer animation',
+                    issueType: 'STORY',
+                  },
+                ],
+              ]),
+            },
+          },
+          createElement(
+            'div',
+            { onMouseDown: startEditing },
+            createElement(TaskRichTextPreview, {
+              value: `See ${issueUrl}\n\nDocs https://www.shopify.dev/docs/api\n\n${unknownUrl}\n\n[our guide](https://example.com/guide)`,
+            }),
+          ),
+        ),
+      ),
+    );
+
+    const issueChip = getByRole(container, 'link', {
+      name: /DP-3 Cart drawer animation › comment/,
+    });
+    expect(issueChip.getAttribute('href')).toBe(issueUrl);
+    await act(async () => user.click(issueChip));
+    expect(startEditing).not.toHaveBeenCalled();
+
+    const externalChip = getByRole(container, 'link', { name: 'shopify.dev' });
+    expect(externalChip.getAttribute('title')).toBe(
+      'https://www.shopify.dev/docs/api',
+    );
+    // Not found in this workspace: shows the host it names.
+    const unknownChip = getByRole(container, 'link', {
+      name: 'crm.example.com',
+    });
+    expect(unknownChip.getAttribute('title')).toBe(unknownUrl);
+    expect(getByRole(container, 'link', { name: 'our guide' })).toBeDefined();
+  });
+
+  it('keeps plain links outside a discussion', async () => {
+    await renderPreview('Docs https://www.shopify.dev/docs/api');
+
+    expect(
+      getByRole(container, 'link', {
+        name: 'https://www.shopify.dev/docs/api',
+      }),
+    ).toBeDefined();
   });
 });

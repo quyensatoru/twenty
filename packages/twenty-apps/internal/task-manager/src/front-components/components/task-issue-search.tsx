@@ -29,13 +29,10 @@ type TaskIssueSearchProps = {
   // A picked result jumps the board to the result's project and opens its
   // modal — the issue may live outside the project on screen.
   onSelectIssue: (issue: BoardIssue) => void;
-  // The "/" shortcut stays off while the issue modal is open, so typing a
-  // slash in a comment never yanks focus back to the board.
-  isShortcutEnabled: boolean;
   maxWidth?: number | string;
-  // `large` is the board header's search: taller, raised off the header so it
-  // reads as the page's main entry point rather than one more filter.
-  size?: 'medium' | 'large';
+  // `small` sits in the board toolbar beside 28px controls; `large` is a
+  // raised search that reads as the page's main entry point.
+  size?: 'small' | 'medium' | 'large';
   placeholder?: string;
   // Rows that must never be offered: linking them would loop the tree (the
   // issue itself, its current children, its parent). The server takes any
@@ -46,6 +43,10 @@ type TaskIssueSearchProps = {
   // one box that both links what exists and creates what does not.
   onCreateNew?: () => void;
   ariaLabel?: string;
+  // Focus the field when it appears, for a box opened by an "Add" row.
+  shouldAutoFocus?: boolean;
+  // Leaving the field empty closes it, as the "Add" row's own cancel.
+  onDismiss?: () => void;
 };
 
 type SearchState = {
@@ -55,31 +56,35 @@ type SearchState = {
 };
 
 const DEBOUNCE_MS = 300;
-const MIN_QUERY_LENGTH = 2;
 const INPUT_HEIGHT = 36;
+const SMALL_INPUT_HEIGHT = 28;
 const LARGE_INPUT_HEIGHT = 40;
 // Falls back to this when the search width is fluid (a "100%" maxWidth the
 // popover cannot measure — it lives in a body portal, not under the field).
 const POPOVER_WIDTH = 480;
 
-// Jira's board search, not the browser-filter box it replaces: typing still
-// narrows the columns on screen, but matches from EVERY project the caller
-// may read surface in a popover under the field — key, status, owner and
-// project at a glance — and picking one jumps straight to its modal.
+// Search across every project the caller may read: matches surface in a
+// popover under the field, with key, status, owner and project at a glance,
+// and picking one jumps straight to its modal.
 export const TaskIssueSearch = ({
   value,
   onChange,
   onSelectIssue,
-  isShortcutEnabled,
   maxWidth = 520,
   size = 'medium',
   placeholder,
   excludeIds,
   onCreateNew,
   ariaLabel,
+  shouldAutoFocus = false,
+  onDismiss,
 }: TaskIssueSearchProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  // Pressing a result takes focus from the input before the click lands. If
+  // the list followed focus alone it would unmount on that press and the
+  // click would hit nothing, so it also stays while the pointer is over it.
+  const [isPointerOverPopover, setIsPointerOverPopover] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [state, setState] = useState<SearchState>({
     response: null,
@@ -87,6 +92,13 @@ export const TaskIssueSearch = ({
     error: null,
   });
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // autoFocus is a no-op on the sandbox's elements, so focus is asked for.
+  useEffect(() => {
+    if (shouldAutoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [shouldAutoFocus]);
   // Every keystroke fires its own request; only the latest may paint, so a
   // slow earlier page never overwrites a fresh one.
   // oxlint-disable-next-line twenty/no-state-useref
@@ -94,13 +106,19 @@ export const TaskIssueSearch = ({
 
   const query = value.trim();
   const isLarge = size === 'large';
-  const isQualified = query.length >= MIN_QUERY_LENGTH;
-
+  const isSmall = size === 'small';
+  const inputHeight = isLarge
+    ? LARGE_INPUT_HEIGHT
+    : isSmall
+      ? SMALL_INPUT_HEIGHT
+      : INPUT_HEIGHT;
+  // Every query is searched, the empty one included: with nothing typed the
+  // route lists the most recently updated issues, so a click alone shows
+  // candidates the way a link picker does.
   useEffect(() => {
-    if (!isQualified) {
-      setState({ response: null, isLoading: false, error: null });
-      setActiveIndex(0);
-
+    // Asked only while open: a search box sitting in a toolbar must not
+    // fetch on every page load.
+    if (!isOpen) {
       return;
     }
 
@@ -130,40 +148,7 @@ export const TaskIssueSearch = ({
     }, DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [query, isQualified]);
-
-  // "/" focuses the field from anywhere on the board, the way Jira's own
-  // search does. Never steals keys from a text field, and never while the
-  // modal owns the keyboard.
-  useEffect(() => {
-    if (!isShortcutEnabled) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== '/' || event.defaultPrevented) {
-        return;
-      }
-
-      const target = event.target;
-
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-      inputRef.current?.focus();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isShortcutEnabled]);
+  }, [query, isOpen]);
 
   const membersById = useMemo(
     () =>
@@ -207,9 +192,13 @@ export const TaskIssueSearch = ({
   // creates instead of linking, so the same keystrokes cover both.
   const canCreateRow = onCreateNew !== undefined && query !== '';
   const itemCount = results.length + (canCreateRow ? 1 : 0);
-  const showPopover = isOpen && isFocused && isQualified;
+  const showPopover =
+    isOpen && (isFocused || isPointerOverPopover);
 
-  const close = () => setIsOpen(false);
+  const close = () => {
+    setIsOpen(false);
+    setIsPointerOverPopover(false);
+  };
 
   const select = (issue: BoardIssue) => {
     close();
@@ -224,9 +213,14 @@ export const TaskIssueSearch = ({
           alignItems: 'center',
           display: 'flex',
           gap: 8,
-          height: INPUT_HEIGHT,
+          height: inputHeight,
           padding: '0 8px',
           width: '100%',
+          ...(isSmall && {
+            background: TASK_TOKENS.backgroundSecondary,
+            borderRadius: TASK_TOKENS.radiusSmall,
+            gap: 6,
+          }),
           ...(isLarge && {
             background: TASK_TOKENS.background,
             borderColor: isFocused ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong,
@@ -240,7 +234,7 @@ export const TaskIssueSearch = ({
         }}
       >
         <IconSearch
-          size={isLarge ? 16 : 15}
+          size={isLarge ? 16 : isSmall ? 13 : 15}
           color={
             isLarge && isFocused ? TASK_TOKENS.accent : TASK_TOKENS.textTertiary
           }
@@ -258,7 +252,13 @@ export const TaskIssueSearch = ({
             setIsFocused(true);
             setIsOpen(true);
           }}
-          onBlur={() => setIsFocused(false)}
+          onBlur={() => {
+            setIsFocused(false);
+
+            if (value === '') {
+              onDismiss?.();
+            }
+          }}
           onChange={(event) => {
             onChange(event.target.value);
             setIsOpen(true);
@@ -296,17 +296,16 @@ export const TaskIssueSearch = ({
               }
             } else if (event.key === 'Escape') {
               close();
+              onDismiss?.();
             }
           }}
           style={{
             ...TASK_BARE_FIELD_STYLE,
-            fontSize: isLarge ? 14 : TASK_BARE_FIELD_STYLE.fontSize,
+            fontSize: isLarge ? 14 : isSmall ? 12.5 : TASK_BARE_FIELD_STYLE.fontSize,
             height: '100%',
           }}
         />
-        {value === '' ? (
-          <KbdHint label="/" />
-        ) : (
+        {value !== '' && (
           <button
             type="button"
             aria-label={t('Clear search')}
@@ -331,9 +330,11 @@ export const TaskIssueSearch = ({
       </div>
 
       {showPopover && (
-        <twenty-overlay offsetY={INPUT_HEIGHT + 4} onClose={close}>
+        <twenty-overlay offsetY={inputHeight + 4} onClose={close}>
           <div
             id="task-issue-search-results"
+            onMouseEnter={() => setIsPointerOverPopover(true)}
+            onMouseLeave={() => setIsPointerOverPopover(false)}
             role="listbox"
             aria-label={t('Issue results')}
             style={{
@@ -350,10 +351,13 @@ export const TaskIssueSearch = ({
               // the body, so no percentage can reach the field — but a numeric
               // maxWidth is the field's own width, and it doubles as the
               // popover's. Clamped to the viewport for narrow screens.
-              width:
-                typeof maxWidth === 'number'
-                  ? `min(${maxWidth}px, calc(100vw - 16px))`
-                  : POPOVER_WIDTH,
+              // Never wider than the screen less a margin: on a phone the
+              // fixed width overflowed and the host pushed the card off the
+              // left edge, cutting the issue keys. 40px rather than 16: the
+              // host zooms this subtree on phones, so vw runs a little large.
+              width: `min(${
+                typeof maxWidth === 'number' ? maxWidth : POPOVER_WIDTH
+              }px, calc(100vw - 40px))`,
             }}
           >
             <div style={{ overflowY: 'auto', ...TASK_THIN_SCROLLBAR_STYLE, padding: 4 }}>
@@ -363,7 +367,11 @@ export const TaskIssueSearch = ({
                 <PopoverNote text={state.error} tone="danger" />
               ) : results.length === 0 ? (
                 <PopoverNote
-                  text={`${t('No issues match')} "${query}"`}
+                  text={
+                    query === ''
+                      ? t('No issues yet')
+                      : `${t('No issues match')} "${query}"`
+                  }
                 />
               ) : (
                 results.map((issue, index) => {
@@ -377,6 +385,69 @@ export const TaskIssueSearch = ({
                           t('Unknown'),
                         )
                       : null;
+
+                  // The small picker (adding a sub-issue) lists one issue a
+                  // line, like the link picker in a conversation: in a list
+                  // shown before anything is typed, three-line rows fit four
+                  // candidates where this fits ten.
+                  if (isSmall) {
+                    return (
+                      <button
+                        key={issue.id}
+                        type="button"
+                        role="option"
+                        aria-selected={index === activeIndex}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        onClick={() => select(issue)}
+                        style={{
+                          alignItems: 'center',
+                          background:
+                            index === activeIndex
+                              ? TASK_TOKENS.backgroundHover
+                              : 'transparent',
+                          border: 'none',
+                          borderRadius: TASK_TOKENS.radiusSmall,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          fontFamily: TASK_TOKENS.fontFamily,
+                          fontSize: 13,
+                          gap: 8,
+                          minHeight: 34,
+                          padding: '0 8px',
+                          textAlign: 'left',
+                          width: '100%',
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: TASK_TOKENS.textTertiary,
+                            flexShrink: 0,
+                            fontSize: 12,
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {issue.issueKey ?? ''}
+                        </span>
+                        <span
+                          style={{
+                            color: TASK_TOKENS.textPrimary,
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {issue.title ?? t('(No title)')}
+                        </span>
+                        {status?.name != null && (
+                          <TaskTag color={status.color ?? 'gray'}>
+                            {status.name}
+                          </TaskTag>
+                        )}
+                      </button>
+                    );
+                  }
 
                   return (
                     <button
@@ -593,26 +664,6 @@ export const TaskIssueSearch = ({
     </div>
   );
 };
-
-const KbdHint = ({ label }: { label: string }) => (
-  <span
-    aria-hidden
-    style={{
-      background: TASK_TOKENS.backgroundTertiary,
-      border: `1px solid ${TASK_TOKENS.border}`,
-      borderRadius: TASK_TOKENS.radiusExtraSmall,
-      color: TASK_TOKENS.textTertiary,
-      fontFamily: TASK_TOKENS.fontFamily,
-      fontSize: 11,
-      fontWeight: 600,
-      lineHeight: '18px',
-      minWidth: 20,
-      textAlign: 'center',
-    }}
-  >
-    {label}
-  </span>
-);
 
 const PopoverNote = ({
   text,

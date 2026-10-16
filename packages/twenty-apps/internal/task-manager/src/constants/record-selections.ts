@@ -54,7 +54,7 @@ export const ISSUE_SEARCH_SELECTION = {
   updatedAt: true,
 } as const;
 
-// One row of the Subtasks widget: key, title, state and owner, nothing more.
+// One row of the Subtasks widget: key, title, state, priority and owner.
 // The status name and the member behind an assigneeId come from the lists the
 // issue-detail route already returns, so this selection stays narrow.
 export const LINKED_ISSUE_SELECTION = {
@@ -62,6 +62,7 @@ export const LINKED_ISSUE_SELECTION = {
   title: true,
   issueKey: true,
   statusId: true,
+  priority: true,
   assigneeId: true,
 } as const;
 
@@ -93,6 +94,7 @@ export const SPRINT_SELECTION = {
   startDate: true,
   endDate: true,
   completeDate: true,
+  capacity: true,
   ownerId: true,
   projectId: true,
   position: true,

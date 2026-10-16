@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
-import { IconCheck, IconGripVertical, IconPlus, IconX } from 'twenty-ui/icon';
+import { IconGripVertical, IconPlus, IconX } from 'twenty-ui/icon';
 
 import { BOARD_DONE_ISSUE_VISIBLE_DAYS } from '../../constants/board-done-issue-visible-days';
 import { type IssueCardFieldKey } from '../../constants/issue-view-fields';
@@ -31,9 +31,12 @@ import {
 } from '../../types/task-board';
 import { readEpicColor } from '../../utils/epic-color.util';
 import {
-  clampColumnWidth,
   COLUMN_DEFAULT_WIDTH,
   parseColumnWidth,
+  parseIsColumnCollapsed,
+  readBoardColumnLayout,
+  readBoardColumnWidth,
+  readResizedColumnWidth,
 } from '../utils/column-widths.util';
 import { moveIdOnto } from '../utils/move-id-onto.util';
 import { postAppRoute } from '../utils/post-app-route.util';
@@ -46,17 +49,18 @@ import { TaskBoardDetail } from './task-board-detail';
 import { TaskBoardSelect } from './task-board-select';
 import { TaskButton } from './task-button';
 import { TaskIconButton } from './task-icon-button';
+import {
+  readStatusGlyph,
+  TaskStatusIcon,
+  type TaskStatusGlyph,
+} from './task-status-icon';
 import { TaskStatusLine } from './task-status-line';
 import { TaskTextInput } from './task-text-input';
-import {
-  readTagColor,
-  TASK_CIRCLE_STYLE,
-  TASK_THIN_SCROLLBAR_STYLE,
-  TASK_TOKENS,
-} from './task-tokens';
+import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
 
 export const NO_STATUS_VALUE = 'NO_STATUS';
 const COLUMN_WIDTH_STORAGE_KEY = 'task-board.column-width';
+const DONE_COLUMN_COLLAPSED_STORAGE_KEY = 'task-board.done-column-collapsed';
 // How close to a column's bottom its next page is fetched: a little ahead, so
 // the reader does not hit the end before the cards are there.
 const LAZY_LOAD_THRESHOLD_PX = 400;
@@ -104,11 +108,33 @@ const storeColumnWidth = (columnWidth: number) => {
   }
 };
 
-// The column whose edge is held, and where it sits: every column takes the
-// same width, so the held edge moves (index + 1) times the width change.
+// Read and kept like the column width above, and as forgiving.
+const readStoredIsDoneColumnCollapsed = (): boolean => {
+  try {
+    return parseIsColumnCollapsed(
+      localStorage.getItem(DONE_COLUMN_COLLAPSED_STORAGE_KEY),
+    );
+  } catch {
+    return false;
+  }
+};
+
+const storeIsDoneColumnCollapsed = (isCollapsed: boolean) => {
+  try {
+    localStorage.setItem(
+      DONE_COLUMN_COLLAPSED_STORAGE_KEY,
+      String(isCollapsed),
+    );
+  } catch {
+    // A convenience like the width: losing it only costs the reader a click.
+  }
+};
+
+// The column whose edge is held, and how many shared-width columns lead up
+// to it: only those grow with the drag, the narrow ones keep their width.
 type ColumnResize = {
   statusId: string;
-  columnIndex: number;
+  resizableColumnCountThroughHeld: number;
   startX: number;
   startWidth: number;
 };
@@ -127,6 +153,9 @@ type TaskBoardViewProps = {
   membersById: Map<string, BoardMember>;
   epicsById: Map<string, BoardEpic>;
   sprintNamesById: Map<string, string>;
+  // Off while the board shows a single sprint, where every card would carry
+  // the same sprint name.
+  shouldShowSprintChip: boolean;
   hiddenCardFields: readonly IssueCardFieldKey[];
   selectedIssueId: string | null;
   setSelectedIssueId: (issueId: string | null) => void;
@@ -162,6 +191,7 @@ export const TaskBoardView = ({
   membersById,
   epicsById,
   sprintNamesById,
+  shouldShowSprintChip,
   hiddenCardFields,
   selectedIssueId,
   setSelectedIssueId,
@@ -180,18 +210,18 @@ export const TaskBoardView = ({
 }: TaskBoardViewProps) => {
   // A column being dragged by its header, and the column it would land on.
   // Kept apart from the card drag: both use the same drop zones.
-  const [draggingStatusId, setDraggingStatusId] = useState<string | null>(
-    null,
-  );
+  const [draggingStatusId, setDraggingStatusId] = useState<string | null>(null);
   const [statusDropTargetId, setStatusDropTargetId] = useState<string | null>(
     null,
   );
   const [hoveredHeaderId, setHoveredHeaderId] = useState<string | null>(null);
-  const [columnWidth, setColumnWidth] = useState<number>(
-    readStoredColumnWidth,
-  );
+  const [columnWidth, setColumnWidth] = useState<number>(readStoredColumnWidth);
   const [columnResize, setColumnResize] = useState<ColumnResize | null>(null);
   const [hoveredResizeId, setHoveredResizeId] = useState<string | null>(null);
+  const [isDoneColumnCollapsed, setIsDoneColumnCollapsed] = useState<boolean>(
+    readStoredIsDoneColumnCollapsed,
+  );
+  const [isCollapsedStripHovered, setIsCollapsedStripHovered] = useState(false);
   const [dropTargetStatusId, setDropTargetStatusId] = useState<string | null>(
     null,
   );
@@ -266,9 +296,7 @@ export const TaskBoardView = ({
     setBoard({
       ...board,
       issues: board.issues.map((issue) =>
-        issue.id === issueId
-          ? { ...issue, statusId: targetStatusId }
-          : issue,
+        issue.id === issueId ? { ...issue, statusId: targetStatusId } : issue,
       ),
       columnPages: shiftColumnTotal(
         shiftColumnTotal(board.columnPages, fromColumnKey, -1),
@@ -392,7 +420,10 @@ export const TaskBoardView = ({
       setComposerTitle('');
       setComposerKey((key) => key + 1);
       refreshBoard();
-      void enqueueSnackbar({ message: t('Issue created.'), variant: 'success' });
+      void enqueueSnackbar({
+        message: t('Issue created.'),
+        variant: 'success',
+      });
     } catch (error) {
       void enqueueSnackbar({
         message: readErrorText(error),
@@ -559,9 +590,11 @@ export const TaskBoardView = ({
   // there or the pointer leaves the strip. Dividing by the columns up to the
   // held one keeps that edge under the pointer while all of them grow.
   const readResizedWidth = (resize: ColumnResize, clientX: number) =>
-    clampColumnWidth(
-      resize.startWidth + (clientX - resize.startX) / (resize.columnIndex + 1),
-    );
+    readResizedColumnWidth({
+      startWidth: resize.startWidth,
+      deltaX: clientX - resize.startX,
+      resizableColumnCountThroughHeld: resize.resizableColumnCountThroughHeld,
+    });
 
   const updateColumnResize = (clientX: number) => {
     if (columnResize === null) {
@@ -607,24 +640,60 @@ export const TaskBoardView = ({
 
   const columns =
     statuses.length === 0
-      ? [{ id: NO_STATUS_VALUE, name: t('Issues'), color: 'gray' as string | null }]
+      ? [
+          {
+            id: NO_STATUS_VALUE,
+            name: t('Issues'),
+            color: 'gray' as string | null,
+            glyph: 'unstarted' as TaskStatusGlyph,
+          },
+        ]
       : [
           ...statuses.map((status) => ({
             id: status.id,
             name: status.name ?? status.id,
             color: status.color ?? null,
+            glyph: readStatusGlyph(status, statuses),
           })),
           ...(readColumnTotal(NO_STATUS_VALUE) > 0
-            ? [{ id: NO_STATUS_VALUE, name: t('No status'), color: 'gray' as string | null }]
+            ? [
+                {
+                  id: NO_STATUS_VALUE,
+                  name: t('No status'),
+                  color: 'gray' as string | null,
+                  glyph: 'backlog' as TaskStatusGlyph,
+                },
+              ]
             : []),
         ];
+
+  const firstDoneColumnId =
+    columns.find((column) => doneStatusIds.has(column.id))?.id ?? null;
 
   // One toggle for the whole window, on the first done column: the count
   // covers every done status, so a second copy would only repeat it.
   const olderDoneToggleColumnId =
     shouldIncludeOlderDone || board.hiddenDoneIssueCount > 0
-      ? (columns.find((column) => doneStatusIds.has(column.id))?.id ?? null)
+      ? firstDoneColumnId
       : null;
+
+  const toggleDoneColumnCollapsed = () => {
+    const nextIsCollapsed = !isDoneColumnCollapsed;
+
+    setIsDoneColumnCollapsed(nextIsCollapsed);
+    storeIsDoneColumnCollapsed(nextIsCollapsed);
+    setIsCollapsedStripHovered(false);
+
+    if (nextIsCollapsed && composerStatusId === firstDoneColumnId) {
+      closeComposer();
+    }
+  };
+
+  const columnLayouts = columns.map((column) =>
+    readBoardColumnLayout({
+      isCollapsed: isDoneColumnCollapsed && column.id === firstDoneColumnId,
+    }),
+  );
 
   return (
     <>
@@ -643,7 +712,7 @@ export const TaskBoardView = ({
           minHeight: 0,
           overflowX: 'auto',
           ...TASK_THIN_SCROLLBAR_STYLE,
-          padding: `0 ${inset.right}px ${inset.right}px ${inset.left}px`,
+          padding: `12px ${inset.right}px ${inset.right}px ${inset.left}px`,
           // A resize drag would otherwise sweep a text selection across
           // every card it passes.
           userSelect: columnResize === null ? 'auto' : 'none',
@@ -658,6 +727,9 @@ export const TaskBoardView = ({
           const isColumnLoading = loadingColumnKeys.includes(column.id);
           const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
+          const columnLayout = columnLayouts[columnIndex];
+          const isCollapsedColumn = columnLayout === 'collapsed';
+          const isCollapsibleColumn = column.id === firstDoneColumnId;
           // Column order is a view everyone on the project shares, so it
           // follows the role's "Manage Views", not a write grant on the app.
           const isReorderable =
@@ -668,7 +740,9 @@ export const TaskBoardView = ({
           const columnDropSide =
             draggingStatusId === null || statusDropTargetId !== column.id
               ? null
-              : columns.findIndex((candidate) => candidate.id === draggingStatusId) <
+              : columns.findIndex(
+                    (candidate) => candidate.id === draggingStatusId,
+                  ) <
                   columns.findIndex((candidate) => candidate.id === column.id)
                 ? 'right'
                 : 'left';
@@ -723,8 +797,7 @@ export const TaskBoardView = ({
                 // own dragstart state, which the board already tracks for the
                 // drag ghost — so dropping works in the sandbox too.
                 const payload = event.dataTransfer?.getData('text/plain') ?? '';
-                const issueId =
-                  payload !== '' ? payload : draggingIssueId;
+                const issueId = payload !== '' ? payload : draggingIssueId;
 
                 if (issueId !== null && issueId !== '') {
                   void moveIssue(issueId, column.id);
@@ -733,8 +806,8 @@ export const TaskBoardView = ({
               style={{
                 background: isDropTarget
                   ? TASK_TOKENS.accentSoft
-                  : TASK_TOKENS.backgroundSecondary,
-                border: `1px solid ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderLight}`,
+                  : TASK_TOKENS.backgroundTransparentLighter,
+                border: `1px solid ${isDropTarget ? TASK_TOKENS.accent : 'transparent'}`,
                 borderRadius: TASK_TOKENS.radius,
                 boxShadow:
                   columnDropSide === 'left'
@@ -750,409 +823,523 @@ export const TaskBoardView = ({
                 minHeight: 0,
                 opacity: isColumnDragged ? 0.5 : 1,
                 position: 'relative',
-                width: columnWidth,
+                width: readBoardColumnWidth(columnLayout, columnWidth),
+                // A collapsed column runs the board's full height, so the
+                // strip is an easy target to click or drop a card on.
+                ...(isCollapsedColumn ? { alignSelf: 'stretch' } : {}),
               }}
             >
-              {/* Sits in the gap to the next column, so it never covers a
-                  card's own controls. A sibling of the header, not inside it:
-                  the header is draggable, and a press here must not start a
-                  column move. */}
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label={t('Resize column')}
-                title={t('Drag to resize · Double-click to reset')}
-                onMouseDown={(event) =>
-                  setColumnResize({
-                    statusId: column.id,
-                    columnIndex,
-                    startX: event.clientX,
-                    startWidth: columnWidth,
-                  })
-                }
-                onDoubleClick={resetColumnWidth}
-                onMouseEnter={() => setHoveredResizeId(column.id)}
-                onMouseLeave={() => setHoveredResizeId(null)}
-                style={{
-                  bottom: 0,
-                  cursor: 'col-resize',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  position: 'absolute',
-                  right: -10,
-                  top: 0,
-                  // The strip only stops selecting once the resize state has
-                  // rendered; a press that starts here must not begin one.
-                  userSelect: 'none',
-                  width: 8,
-                  zIndex: 2,
-                }}
-              >
-                <span
+              {isCollapsedColumn ? (
+                // The section around it keeps its drop handlers, so a card
+                // dropped on the strip still moves to this status.
+                <button
+                  type="button"
+                  title={t('Expand {status}', { status: column.name })}
+                  onClick={toggleDoneColumnCollapsed}
+                  onMouseEnter={() => setIsCollapsedStripHovered(true)}
+                  onMouseLeave={() => setIsCollapsedStripHovered(false)}
                   style={{
+                    alignItems: 'center',
                     background:
-                      columnResize?.statusId === column.id
-                        ? TASK_TOKENS.accent
-                        : hoveredResizeId === column.id &&
-                            columnResize === null
-                          ? TASK_TOKENS.borderStrong
-                          : 'transparent',
-                    borderRadius: 1,
-                    height: '100%',
-                    width: 2,
-                  }}
-                />
-              </div>
-              <header
-                draggable={isReorderable}
-                title={isReorderable ? t('Drag to reorder columns') : undefined}
-                onMouseEnter={() => setHoveredHeaderId(column.id)}
-                onMouseLeave={() => setHoveredHeaderId(null)}
-                onDragStart={(event) => {
-                  // Same guard as the card's dragstart: the sandbox proxy has
-                  // no dataTransfer, and state carries the drag regardless.
-                  try {
-                    event.dataTransfer?.setData('text/plain', column.name);
-
-                    if (event.dataTransfer) {
-                      event.dataTransfer.effectAllowed = 'move';
-                    }
-                  } catch {
-                    // Sandbox proxy: state carries the payload.
-                  }
-
-                  setDraggingStatusId(column.id);
-                }}
-                onDragEnd={() => {
-                  setDraggingStatusId(null);
-                  setStatusDropTargetId(null);
-                }}
-                style={{
-                  alignItems: 'center',
-                  cursor: isReorderable ? 'grab' : 'default',
-                  display: 'flex',
-                  flexShrink: 0,
-                  gap: 8,
-                  padding: '12px 12px 8px 6px',
-                }}
-              >
-                {/* Room held whether shown or not, so the title never shifts
-                    when the grip appears under the pointer. */}
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    flexShrink: 0,
-                    marginRight: -4,
-                    visibility:
-                      isReorderable && hoveredHeaderId === column.id
-                        ? 'visible'
-                        : 'hidden',
-                  }}
-                >
-                  <IconGripVertical size={14} color={TASK_TOKENS.textTertiary} />
-                </span>
-                <span
-                  style={{
-                    background: readTagColor(column.color).text,
-                    ...TASK_CIRCLE_STYLE,
-                    flexShrink: 0,
-                    height: 8,
-                    width: 8,
-                  }}
-                />
-                <span
-                  style={{
-                    color: TASK_TOKENS.textSecondary,
+                      isCollapsedStripHovered && !isDropTarget
+                        ? TASK_TOKENS.backgroundHover
+                        : 'transparent',
+                    border: 'none',
+                    borderRadius: TASK_TOKENS.radius,
+                    cursor: 'pointer',
+                    display: 'flex',
                     flex: 1,
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: 0.3,
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    textTransform: 'uppercase',
-                    whiteSpace: 'nowrap',
+                    flexDirection: 'column',
+                    gap: 10,
+                    padding: '12px 0',
+                    width: '100%',
                   }}
                 >
-                  {column.name}
-                </span>
-                {doneStatusIds.has(column.id) && (
-                  <span title={t('Done')} style={{ display: 'inline-flex', flexShrink: 0 }}>
-                    <IconCheck size={14} color={readTagColor('green').text} stroke={2.5} />
-                  </span>
-                )}
-                <span
-                  style={{
-                    background: TASK_TOKENS.backgroundTertiary,
-                    borderRadius: TASK_TOKENS.radiusSmall,
-                    color: TASK_TOKENS.textSecondary,
-                    fontFamily: TASK_TOKENS.fontFamily,
-                    fontSize: 11,
-                    lineHeight: '16px',
-                    minWidth: 16,
-                    padding: '0 4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  {columnTotal}
-                </span>
-              </header>
-
-              <div
-                onScroll={(event) => {
-                  if (!hasMoreCards) {
-                    return;
-                  }
-
-                  // scrollTop rides the event; the heights come from the
-                  // host's geometry snapshots, a frame behind at most, which
-                  // the threshold absorbs. A zero height means not measured
-                  // yet, never "at the bottom".
-                  const scroller = event.currentTarget;
-                  const distanceToBottom =
-                    scroller.scrollHeight -
-                    scroller.clientHeight -
-                    scroller.scrollTop;
-
-                  if (
-                    scroller.scrollHeight > 0 &&
-                    distanceToBottom < LAZY_LOAD_THRESHOLD_PX
-                  ) {
-                    void loadMoreColumn(column.id);
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // Content-sized, shrinking (and scrolling) only once the
-                  // column hits the board's height with the create control
-                  // still pinned under it.
-                  flex: '0 1 auto',
-                  gap: 8,
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  ...TASK_THIN_SCROLLBAR_STYLE,
-                  padding: '4px 8px 8px 8px',
-                }}
-              >
-                {cards.length === 0 && draggingIssueId !== null && (
+                  <TaskStatusIcon
+                    glyph={column.glyph}
+                    color={column.color}
+                    title={column.name}
+                  />
                   <span
                     style={{
-                      border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
-                      borderRadius: TASK_TOKENS.radius,
-                      color: isDropTarget
-                        ? TASK_TOKENS.accent
-                        : TASK_TOKENS.textTertiary,
-                      flexShrink: 0,
+                      alignItems: 'center',
+                      color: TASK_TOKENS.textPrimary,
+                      display: 'inline-flex',
                       fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 12,
-                      padding: '16px 8px',
-                      textAlign: 'center',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      gap: 8,
+                      whiteSpace: 'nowrap',
+                      writingMode: 'vertical-rl',
                     }}
                   >
-                    {t('Drop here')}
+                    {column.name}
+                    <span
+                      style={{
+                        color: TASK_TOKENS.textTertiary,
+                        fontSize: 12,
+                        fontVariantNumeric: 'tabular-nums',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {columnTotal}
+                    </span>
                   </span>
-                )}
-                {cards.map((issue) => (
-                  <TaskBoardCard
-                    key={issue.id}
-                    issue={issue}
-                    statusOptions={statusOptions}
-                    assigneeName={
-                      issue.assigneeId === null ||
-                      issue.assigneeId === undefined
-                        ? null
-                        : readMemberName(
-                            membersById,
-                            issue.assigneeId,
-                            t('Unknown'),
-                          )
+                </button>
+              ) : (
+                <>
+                  {/* Sits in the gap to the next column, so it never covers a
+                  card's own controls. A sibling of the header, not inside it:
+                  the header is draggable, and a press here must not start a
+                  column move. Only on a column at the shared width: a narrow
+                  one has no resizable width of its own. */}
+                  {columnLayout === 'normal' && (
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={t('Resize column')}
+                      title={t('Drag to resize · Double-click to reset')}
+                      onMouseDown={(event) =>
+                        setColumnResize({
+                          statusId: column.id,
+                          resizableColumnCountThroughHeld: columnLayouts
+                            .slice(0, columnIndex + 1)
+                            .filter((layout) => layout === 'normal').length,
+                          startX: event.clientX,
+                          startWidth: columnWidth,
+                        })
+                      }
+                      onDoubleClick={resetColumnWidth}
+                      onMouseEnter={() => setHoveredResizeId(column.id)}
+                      onMouseLeave={() => setHoveredResizeId(null)}
+                      style={{
+                        bottom: 0,
+                        cursor: 'col-resize',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        position: 'absolute',
+                        right: -10,
+                        top: 0,
+                        // The strip only stops selecting once the resize state has
+                        // rendered; a press that starts here must not begin one.
+                        userSelect: 'none',
+                        width: 8,
+                        zIndex: 2,
+                      }}
+                    >
+                      <span
+                        style={{
+                          background:
+                            columnResize?.statusId === column.id
+                              ? TASK_TOKENS.accent
+                              : hoveredResizeId === column.id &&
+                                  columnResize === null
+                                ? TASK_TOKENS.borderStrong
+                                : 'transparent',
+                          borderRadius: 1,
+                          height: '100%',
+                          width: 2,
+                        }}
+                      />
+                    </div>
+                  )}
+                  <header
+                    draggable={isReorderable}
+                    title={
+                      isReorderable ? t('Drag to reorder columns') : undefined
                     }
-                    assigneeAvatarUrl={
-                      membersById.get(issue.assigneeId ?? '')?.avatarUrl
-                    }
-                    epicName={
-                      typeof issue.epicId === 'string'
-                        ? (epicsById.get(issue.epicId)?.name ?? null)
-                        : null
-                    }
-                    epicColor={readIssueEpicColor(issue.epicId)}
-                    sprintName={
-                      typeof issue.sprintId === 'string'
-                        ? (sprintNamesById.get(issue.sprintId) ?? null)
-                        : null
-                    }
-                    reporterName={
-                      typeof issue.reporterId === 'string'
-                        ? readMemberName(
-                            membersById,
-                            issue.reporterId,
-                            t('Unknown'),
-                          )
-                        : null
-                    }
-                    reporterAvatarUrl={
-                      membersById.get(issue.reporterId ?? '')?.avatarUrl
-                    }
-                    hiddenFields={hiddenCardFields}
-                    isDone={doneStatusIds.has(issue.statusId ?? '')}
-                    isSelected={selectedIssueId === issue.id}
-                    isDragging={draggingIssueId === issue.id}
-                    canMove={board.canWrite}
-                    canDelete={board.canSoftDelete}
-                    onOpen={() => setSelectedIssueId(issue.id)}
-                    onMove={(statusId) => void moveIssue(issue.id, statusId)}
-                    onTogglePin={() => void toggleIssuePin(issue.id)}
-                    onDelete={() => void deleteIssue(issue.id)}
-                    onDragStartCard={() => setDraggingIssueId(issue.id)}
-                    onDragEndCard={() => {
-                      setDraggingIssueId(null);
-                      setDropTargetStatusId(null);
-                    }}
-                  />
-                ))}
+                    onMouseEnter={() => setHoveredHeaderId(column.id)}
+                    onMouseLeave={() => setHoveredHeaderId(null)}
+                    onDragStart={(event) => {
+                      // Same guard as the card's dragstart: the sandbox proxy has
+                      // no dataTransfer, and state carries the drag regardless.
+                      try {
+                        event.dataTransfer?.setData('text/plain', column.name);
 
-                {/* Scrolling near the bottom fetches the next page. The line
-                    is a click target too, for a reader on a keyboard or a
-                    column the host has not measured yet. */}
-                {hasMoreCards && (
-                  <button
-                    type="button"
-                    disabled={isColumnLoading}
-                    onClick={() => void loadMoreColumn(column.id)}
+                        if (event.dataTransfer) {
+                          event.dataTransfer.effectAllowed = 'move';
+                        }
+                      } catch {
+                        // Sandbox proxy: state carries the payload.
+                      }
+
+                      setDraggingStatusId(column.id);
+                    }}
+                    onDragEnd={() => {
+                      setDraggingStatusId(null);
+                      setStatusDropTargetId(null);
+                    }}
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: TASK_TOKENS.textTertiary,
-                      cursor: isColumnLoading ? 'default' : 'pointer',
+                      alignItems: 'center',
+                      cursor: isReorderable ? 'grab' : 'default',
+                      display: 'flex',
                       flexShrink: 0,
-                      fontFamily: TASK_TOKENS.fontFamily,
-                      fontSize: 12,
-                      padding: '6px 0',
+                      gap: 8,
+                      minHeight: 40,
+                      padding: '4px 6px 4px 4px',
                     }}
                   >
-                    {isColumnLoading
-                      ? t('Loading…')
-                      : t('{count} more issues', { count: remainingCardCount })}
-                  </button>
-                )}
-
-                {isOlderDoneToggleColumn &&
-                  (shouldIncludeOlderDone ? (
-                    <TaskColumnFooterButton
-                      onClick={() => setShouldIncludeOlderDone(false)}
-                    >
-                      {t('Hide done issues older than {days} days', {
-                        days: BOARD_DONE_ISSUE_VISIBLE_DAYS,
-                      })}
-                    </TaskColumnFooterButton>
-                  ) : (
-                    <TaskColumnFooterButton
-                      onClick={() => setShouldIncludeOlderDone(true)}
-                    >
-                      {t('Show {count} older done issues', {
-                        count: board.hiddenDoneIssueCount,
-                      })}
-                    </TaskColumnFooterButton>
-                  ))}
-
-              </div>
-
-              {/* Pinned under the cards rather than after the last one, so
-                  creating in a long column never means scrolling to its end. */}
-              {board.canWrite && (
-                <div style={{ flexShrink: 0, padding: '0 8px 8px 8px' }}>
-                  {composerStatusId === column.id ? (
-                    <div
+                    {/* Room held whether shown or not, so the title never shifts
+                    when the grip appears under the pointer. */}
+                    <span
                       style={{
-                        background: TASK_TOKENS.background,
-                        border: `1px solid ${TASK_TOKENS.accent}`,
-                        borderRadius: TASK_TOKENS.radius,
-                        boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
+                        display: 'inline-flex',
                         flexShrink: 0,
-                        gap: 8,
-                        padding: 8,
+                        marginRight: -4,
+                        visibility:
+                          isReorderable && hoveredHeaderId === column.id
+                            ? 'visible'
+                            : 'hidden',
                       }}
                     >
-                      <TaskTextInput
-                        key={composerKey}
-                        ariaLabel={t('Issue title')}
-                        placeholder={t('What needs to be done?')}
-                        shouldAutoFocus
-                        value={composerTitle}
-                        onChange={setComposerTitle}
-                        onEnter={createIssue}
-                        onEscape={closeComposer}
+                      <IconGripVertical
+                        size={14}
+                        color={TASK_TOKENS.textTertiary}
                       />
-                      <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
-                        <TaskBoardSelect
-                          ariaLabel={t('Issue type')}
-                          width={112}
-                          value={composerType}
-                          options={ISSUE_TYPE_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label,
-                            color: option.color,
-                          }))}
-                          onChange={setComposerType}
-                        />
-                        <span style={{ flex: 1 }} />
-                        <TaskIconButton label={t('Cancel')} onClick={closeComposer}>
-                          <IconX size={14} />
-                        </TaskIconButton>
-                        <TaskButton
-                          size="small"
-                          variant="primary"
-                          title={t('Create (Enter)')}
-                          isDisabled={composerTitle.trim() === '' || isCreating}
-                          onClick={createIssue}
-                        >
-                          {t('Create')}
-                        </TaskButton>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
+                    </span>
+                    <TaskStatusIcon
+                      glyph={column.glyph}
+                      color={column.color}
+                      title={column.name}
+                    />
+                    {/* The handler stays attached on every column and checks
+                    the column itself: a removed onClick can linger in the
+                    sandbox after the first done column moves. */}
+                    <span
+                      title={
+                        isCollapsibleColumn
+                          ? t('Collapse {status}', { status: column.name })
+                          : undefined
+                      }
                       onClick={() => {
-                        setComposerStatusId(column.id);
-                        setComposerTitle('');
+                        if (isCollapsibleColumn) {
+                          toggleDoneColumnCollapsed();
+                        }
                       }}
-                      onMouseEnter={() => setHoveredCreateColumnId(column.id)}
-                      onMouseLeave={() => setHoveredCreateColumnId(null)}
                       style={{
-                        alignItems: 'center',
-                        background:
-                          hoveredCreateColumnId === column.id
-                            ? TASK_TOKENS.backgroundHover
-                            : 'transparent',
-                        border: 'none',
-                        borderRadius: TASK_TOKENS.radiusSmall,
-                        color:
-                          hoveredCreateColumnId === column.id
-                            ? TASK_TOKENS.textSecondary
-                            : TASK_TOKENS.textTertiary,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexShrink: 0,
+                        color: TASK_TOKENS.textPrimary,
+                        cursor: isCollapsibleColumn ? 'pointer' : 'inherit',
                         fontFamily: TASK_TOKENS.fontFamily,
                         fontSize: 13,
-                        gap: 6,
-                        justifyContent: 'flex-start',
-                        minHeight: 32,
-                        padding: '0 8px',
-                        width: '100%',
+                        fontWeight: 600,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <IconPlus size={14} />
-                      {t('Create issue')}
-                    </button>
+                      {column.name}
+                    </span>
+                    <span
+                      style={{
+                        color: TASK_TOKENS.textTertiary,
+                        flex: 1,
+                        fontFamily: TASK_TOKENS.fontFamily,
+                        fontSize: 12,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {columnTotal}
+                    </span>
+                    {board.canWrite && (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          visibility:
+                            hoveredHeaderId === column.id ||
+                            composerStatusId === column.id
+                              ? 'visible'
+                              : 'hidden',
+                        }}
+                      >
+                        <TaskIconButton
+                          label={t('New issue in {status}', {
+                            status: column.name,
+                          })}
+                          onClick={() => {
+                            setComposerStatusId(column.id);
+                            setComposerTitle('');
+                          }}
+                        >
+                          <IconPlus size={14} />
+                        </TaskIconButton>
+                      </span>
+                    )}
+                  </header>
+
+                  <div
+                    onScroll={(event) => {
+                      if (!hasMoreCards) {
+                        return;
+                      }
+
+                      // scrollTop rides the event; the heights come from the
+                      // host's geometry snapshots, a frame behind at most, which
+                      // the threshold absorbs. A zero height means not measured
+                      // yet, never "at the bottom".
+                      const scroller = event.currentTarget;
+                      const distanceToBottom =
+                        scroller.scrollHeight -
+                        scroller.clientHeight -
+                        scroller.scrollTop;
+
+                      if (
+                        scroller.scrollHeight > 0 &&
+                        distanceToBottom < LAZY_LOAD_THRESHOLD_PX
+                      ) {
+                        void loadMoreColumn(column.id);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      // Content-sized, shrinking (and scrolling) only once the
+                      // column hits the board's height with the create control
+                      // still pinned under it.
+                      flex: '0 1 auto',
+                      gap: 6,
+                      minHeight: 0,
+                      overflowY: 'auto',
+                      ...TASK_THIN_SCROLLBAR_STYLE,
+                      padding: '0 6px 6px 6px',
+                    }}
+                  >
+                    {cards.length === 0 && draggingIssueId !== null && (
+                      <span
+                        style={{
+                          border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
+                          borderRadius: TASK_TOKENS.radius,
+                          color: isDropTarget
+                            ? TASK_TOKENS.accent
+                            : TASK_TOKENS.textTertiary,
+                          flexShrink: 0,
+                          fontFamily: TASK_TOKENS.fontFamily,
+                          fontSize: 12,
+                          padding: '16px 8px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {t('Drop here')}
+                      </span>
+                    )}
+                    {cards.map((issue) => (
+                      <TaskBoardCard
+                        key={issue.id}
+                        issue={issue}
+                        statusOptions={statusOptions}
+                        assigneeName={
+                          issue.assigneeId === null ||
+                          issue.assigneeId === undefined
+                            ? null
+                            : readMemberName(
+                                membersById,
+                                issue.assigneeId,
+                                t('Unknown'),
+                              )
+                        }
+                        assigneeAvatarUrl={
+                          membersById.get(issue.assigneeId ?? '')?.avatarUrl
+                        }
+                        epicName={
+                          typeof issue.epicId === 'string'
+                            ? (epicsById.get(issue.epicId)?.name ?? null)
+                            : null
+                        }
+                        epicColor={readIssueEpicColor(issue.epicId)}
+                        sprintName={
+                          shouldShowSprintChip &&
+                          typeof issue.sprintId === 'string'
+                            ? (sprintNamesById.get(issue.sprintId) ?? null)
+                            : null
+                        }
+                        reporterName={
+                          typeof issue.reporterId === 'string'
+                            ? readMemberName(
+                                membersById,
+                                issue.reporterId,
+                                t('Unknown'),
+                              )
+                            : null
+                        }
+                        reporterAvatarUrl={
+                          membersById.get(issue.reporterId ?? '')?.avatarUrl
+                        }
+                        hiddenFields={hiddenCardFields}
+                        isDone={doneStatusIds.has(issue.statusId ?? '')}
+                        isSelected={selectedIssueId === issue.id}
+                        isDragging={draggingIssueId === issue.id}
+                        canMove={board.canWrite}
+                        canDelete={board.canSoftDelete}
+                        onOpen={() => setSelectedIssueId(issue.id)}
+                        onMove={(statusId) =>
+                          void moveIssue(issue.id, statusId)
+                        }
+                        onTogglePin={() => void toggleIssuePin(issue.id)}
+                        onDelete={() => void deleteIssue(issue.id)}
+                        onDragStartCard={() => setDraggingIssueId(issue.id)}
+                        onDragEndCard={() => {
+                          setDraggingIssueId(null);
+                          setDropTargetStatusId(null);
+                        }}
+                      />
+                    ))}
+
+                    {/* Scrolling near the bottom fetches the next page. The line
+                    is a click target too, for a reader on a keyboard or a
+                    column the host has not measured yet. */}
+                    {hasMoreCards && (
+                      <button
+                        type="button"
+                        disabled={isColumnLoading}
+                        onClick={() => void loadMoreColumn(column.id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: TASK_TOKENS.textTertiary,
+                          cursor: isColumnLoading ? 'default' : 'pointer',
+                          flexShrink: 0,
+                          fontFamily: TASK_TOKENS.fontFamily,
+                          fontSize: 12,
+                          padding: '6px 0',
+                        }}
+                      >
+                        {isColumnLoading
+                          ? t('Loading…')
+                          : t('{count} more issues', {
+                              count: remainingCardCount,
+                            })}
+                      </button>
+                    )}
+
+                    {isOlderDoneToggleColumn &&
+                      (shouldIncludeOlderDone ? (
+                        <TaskColumnFooterButton
+                          onClick={() => setShouldIncludeOlderDone(false)}
+                        >
+                          {t('Hide done issues older than {days} days', {
+                            days: BOARD_DONE_ISSUE_VISIBLE_DAYS,
+                          })}
+                        </TaskColumnFooterButton>
+                      ) : (
+                        <TaskColumnFooterButton
+                          onClick={() => setShouldIncludeOlderDone(true)}
+                        >
+                          {t('Show {count} older done issues', {
+                            count: board.hiddenDoneIssueCount,
+                          })}
+                        </TaskColumnFooterButton>
+                      ))}
+                  </div>
+
+                  {/* Pinned under the cards rather than after the last one, so
+                  creating in a long column never means scrolling to its end. */}
+                  {board.canWrite && (
+                    <div style={{ flexShrink: 0, padding: '0 6px 6px 6px' }}>
+                      {composerStatusId === column.id ? (
+                        <div
+                          style={{
+                            background: TASK_TOKENS.background,
+                            border: `1px solid ${TASK_TOKENS.accent}`,
+                            borderRadius: TASK_TOKENS.radius,
+                            boxShadow: `0 0 0 1px ${TASK_TOKENS.accent}`,
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flexShrink: 0,
+                            gap: 8,
+                            padding: 8,
+                          }}
+                        >
+                          <TaskTextInput
+                            key={composerKey}
+                            ariaLabel={t('Issue title')}
+                            placeholder={t('What needs to be done?')}
+                            shouldAutoFocus
+                            value={composerTitle}
+                            onChange={setComposerTitle}
+                            onEnter={createIssue}
+                            onEscape={closeComposer}
+                          />
+                          <div
+                            style={{
+                              alignItems: 'center',
+                              display: 'flex',
+                              gap: 4,
+                            }}
+                          >
+                            <TaskBoardSelect
+                              ariaLabel={t('Issue type')}
+                              width={112}
+                              value={composerType}
+                              options={ISSUE_TYPE_OPTIONS.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                                color: option.color,
+                              }))}
+                              onChange={setComposerType}
+                            />
+                            <span style={{ flex: 1 }} />
+                            <TaskIconButton
+                              label={t('Cancel')}
+                              onClick={closeComposer}
+                            >
+                              <IconX size={14} />
+                            </TaskIconButton>
+                            <TaskButton
+                              size="small"
+                              variant="primary"
+                              title={t('Create (Enter)')}
+                              isDisabled={
+                                composerTitle.trim() === '' || isCreating
+                              }
+                              onClick={createIssue}
+                            >
+                              {t('Create')}
+                            </TaskButton>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setComposerStatusId(column.id);
+                            setComposerTitle('');
+                          }}
+                          onMouseEnter={() =>
+                            setHoveredCreateColumnId(column.id)
+                          }
+                          onMouseLeave={() => setHoveredCreateColumnId(null)}
+                          style={{
+                            alignItems: 'center',
+                            background:
+                              hoveredCreateColumnId === column.id
+                                ? TASK_TOKENS.backgroundHover
+                                : 'transparent',
+                            border: 'none',
+                            borderRadius: TASK_TOKENS.radiusSmall,
+                            color:
+                              hoveredCreateColumnId === column.id
+                                ? TASK_TOKENS.textSecondary
+                                : TASK_TOKENS.textTertiary,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexShrink: 0,
+                            fontFamily: TASK_TOKENS.fontFamily,
+                            fontSize: 13,
+                            gap: 6,
+                            justifyContent: 'flex-start',
+                            minHeight: 32,
+                            padding: '0 8px',
+                            width: '100%',
+                          }}
+                        >
+                          <IconPlus size={14} />
+                          {t('New issue')}
+                        </button>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </section>
           );
@@ -1236,4 +1423,3 @@ const TaskColumnFooterButton = ({
     </button>
   );
 };
-

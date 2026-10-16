@@ -184,7 +184,7 @@ describe('issue modal linked records', () => {
     const issueColumn = draft.closest('section')?.parentElement;
     if (issueColumn) issueColumn.scrollTop = 150;
     await act(async () =>
-      user.click(getByRole(container, 'link', { name: /Demo merchant/ })),
+      user.click(getByRole(container, 'button', { name: /Demo merchant/ })),
     );
     expect(
       getByRole(container, 'region', { name: 'Linked record preview' }),
@@ -193,7 +193,7 @@ describe('issue modal linked records', () => {
     expect(navigate).not.toHaveBeenCalled();
     if (issueColumn) expect(issueColumn.scrollTop).toBe(150);
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Back to details' })),
+      user.click(getByRole(container, 'button', { name: 'Close preview' })),
     );
     expect(
       queryByRole(container, 'region', { name: 'Linked record preview' }),

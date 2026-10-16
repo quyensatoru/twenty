@@ -82,6 +82,7 @@ export type LinkedIssueRow = {
   title?: string | null;
   issueKey?: string | null;
   statusId?: string | null;
+  priority?: string | null;
   assigneeId?: string | null;
 };
 
@@ -92,7 +93,7 @@ const readLinkedIssue = (value: unknown): LinkedIssueRow | null => {
     return null;
   }
 
-  const { id, title, issueKey, statusId, assigneeId } =
+  const { id, title, issueKey, statusId, priority, assigneeId } =
     value as Record<string, unknown>;
 
   if (typeof id !== 'string') {
@@ -104,6 +105,7 @@ const readLinkedIssue = (value: unknown): LinkedIssueRow | null => {
     title: typeof title === 'string' ? title : null,
     issueKey: typeof issueKey === 'string' ? issueKey : null,
     statusId: typeof statusId === 'string' ? statusId : null,
+    priority: typeof priority === 'string' ? priority : null,
     assigneeId: typeof assigneeId === 'string' ? assigneeId : null,
   };
 };

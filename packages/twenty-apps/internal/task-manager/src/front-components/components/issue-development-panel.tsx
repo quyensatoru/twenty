@@ -1,8 +1,17 @@
 import { DevelopmentSection } from './development-section';
 import { DevelopmentStatus } from './development-status';
+import { DevelopmentSummaryChips } from './development-summary-chips';
 import { IssueDeliveryPanel } from './issue-delivery-panel';
+import { TaskSidebarSection } from './issue-details-panel';
 import { formatDateTimeLabel } from '../utils/format-date-time-label.util';
-import { useEffect, useMemo, useState } from 'react';
+import { formatRelativeTimeLabel } from '../utils/format-relative-time-label.util';
+import {
+  hasDevelopmentActivitySummary,
+  hasRepositorySyncProblem,
+  readDevelopmentSyncStatus,
+  summarizeDevelopmentActivity,
+} from '../utils/summarize-development-activity.util';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import {
   AppPath,
   copyToClipboard,
@@ -22,6 +31,7 @@ import {
   IconPlayerPlay,
   IconUnlink,
   IconFolder,
+  IconLink,
   IconPlus,
 } from 'twenty-ui/icon';
 
@@ -34,13 +44,16 @@ import {
 } from '../../constants/route-paths';
 import { TaskButton } from './task-button';
 import { TaskCopyLinkButton } from './task-copy-link-button';
-import { TaskEmptyState } from './task-empty-state';
 import { TaskIconButton } from './task-icon-button';
 import { TaskMessage } from './task-message';
 import { TaskSelect } from './task-select';
 import { TaskSkeletonBar } from './task-skeleton';
 import { TaskStatusLine } from './task-status-line';
-import { TASK_THIN_SCROLLBAR_STYLE, TASK_TOKENS } from './task-tokens';
+import {
+  readTagColor,
+  TASK_THIN_SCROLLBAR_STYLE,
+  TASK_TOKENS,
+} from './task-tokens';
 import {
   isRepositorySyncing,
   useDevelopment,
@@ -60,8 +73,20 @@ type ProviderRepoOption = {
   name: string | null;
 };
 
-export const IssueDevelopment = () => {
-  const issueId = useRecordId();
+type IssueDevelopmentProps = {
+  // Left out on the issue's record page, where the host knows the record.
+  issueId?: string | null;
+  // Given, the panel draws its own sidebar section, so the header can carry
+  // the sync state the panel alone knows about.
+  sectionLabel?: string;
+};
+
+export const IssueDevelopment = ({
+  issueId: issueIdProp,
+  sectionLabel,
+}: IssueDevelopmentProps = {}) => {
+  const recordId = useRecordId();
+  const issueId = issueIdProp ?? recordId;
   const { data, isLoading, loadError, reload } = useDevelopment(issueId);
 
   const [isGitOpen, setIsGitOpen] = useState(false);
@@ -156,12 +181,21 @@ export const IssueDevelopment = () => {
     };
   }, [isGitOpen, connectionId]);
 
+  const wrapInSection = (content: ReactNode, action?: ReactNode) =>
+    sectionLabel === undefined ? (
+      content
+    ) : (
+      <TaskSidebarSection label={sectionLabel} action={action}>
+        {content}
+      </TaskSidebarSection>
+    );
+
   if (issueId === null) {
-    return <TaskMessage text={t('No issue selected.')} />;
+    return wrapInSection(<TaskMessage text={t('No issue selected.')} />);
   }
 
   if (isLoading) {
-    return (
+    return wrapInSection(
       <section
         style={{
           display: 'flex',
@@ -189,12 +223,12 @@ export const IssueDevelopment = () => {
           radius={TASK_TOKENS.radius}
           style={{ border: `1px solid ${TASK_TOKENS.borderLight}` }}
         />
-      </section>
+      </section>,
     );
   }
 
   if (loadError !== null && data.links.length === 0) {
-    return <TaskMessage text={loadError} tone="danger" />;
+    return wrapInSection(<TaskMessage text={loadError} tone="danger" />);
   }
 
   const copyText = (text: string, message: string) => {
@@ -306,32 +340,34 @@ export const IssueDevelopment = () => {
       repository.slug ?? repository.name ?? t('Repository'),
     ]),
   );
-  const hasSyncError = data.repositories.some((repository) =>
-    [
-      repository.syncError,
-      repository.webhookError,
-      repository.liveSyncError,
-    ].some(Boolean),
+  const hasSyncError = data.repositories.some(hasRepositorySyncProblem);
+  const activitySummary = summarizeDevelopmentActivity(
+    data.links,
+    data.deliveries,
   );
+  const syncStatus = readDevelopmentSyncStatus(data.repositories);
+  const syncIndicator =
+    syncStatus === null ? null : <DevelopmentSyncIndicator {...syncStatus} />;
 
-  return (
+  return wrapInSection(
     <section
       style={{
         display: 'flex',
         flexDirection: 'column',
         fontFamily: TASK_TOKENS.fontFamily,
         color: TASK_TOKENS.textPrimary,
-        gap: 16,
-        height: '100%',
+        gap: 12,
         minHeight: 0,
-        overflowY: 'auto',
-        scrollbarGutter: 'stable',
-        ...TASK_THIN_SCROLLBAR_STYLE,
         width: '100%',
         boxSizing: 'border-box',
-        padding: '4px 0',
+        padding: '2px 0',
       }}
     >
+      {sectionLabel === undefined && syncIndicator !== null && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {syncIndicator}
+        </div>
+      )}
       {issueKey !== null && (
         <div
           style={{
@@ -340,7 +376,7 @@ export const IssueDevelopment = () => {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: 8,
-            padding: '0 8px',
+            padding: '0 2px',
           }}
         >
           <TaskButton
@@ -352,7 +388,7 @@ export const IssueDevelopment = () => {
             <IconKey size={14} /> {issueKey}
           </TaskButton>
           <TaskButton
-            variant="secondary"
+            variant="ghost"
             size="small"
             title={t('Copy branch command')}
             onClick={() =>
@@ -366,44 +402,75 @@ export const IssueDevelopment = () => {
           </TaskButton>
         </div>
       )}
-      {totalCount === 0 ? (
-        <div style={{ padding: '0 8px' }}>
-          <TaskEmptyState
-            icon={<IconGitBranch size={20} />}
-            title={t('Ready for development')}
-            description={
-              data.repositories.length === 0
-                ? t(
-                    'Connect a repository to track code, builds and deployments for this issue.',
-                  )
-                : t(
-                    'Include the issue key in a branch, commit or pull request to link it here.',
-                  )
-            }
-            style={{ border: 0, padding: '24px 16px' }}
-          />
-          {data.canWrite &&
-            data.projectId !== null &&
-            data.repositories.length === 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginTop: 8,
-                }}
-              >
-                <TaskButton
-                  variant="secondary"
-                  size="small"
-                  onClick={() => setIsGitOpen(true)}
-                >
-                  <IconPlus size={14} /> {t('Link repository')}
-                </TaskButton>
-              </div>
+      {totalCount === 0 && data.repositories.length === 0 ? (
+        <div
+          style={{
+            alignItems: 'flex-start',
+            background: TASK_TOKENS.background,
+            border: `1px dashed ${TASK_TOKENS.borderStrong}`,
+            borderRadius: TASK_TOKENS.radius,
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            margin: '0 8px',
+            padding: 12,
+          }}
+        >
+          <span
+            style={{
+              alignItems: 'center',
+              display: 'inline-flex',
+              fontSize: 13,
+              fontWeight: 500,
+              gap: 8,
+            }}
+          >
+            <IconGitBranch size={15} color={TASK_TOKENS.textTertiary} />
+            {t('Track code for this issue')}
+          </span>
+          <span
+            style={{
+              color: TASK_TOKENS.textTertiary,
+              fontSize: 12.5,
+              lineHeight: 1.5,
+            }}
+          >
+            {t(
+              "Link the project's repository once. Branches, commits and pull requests that mention {issueKey} then show up here with their builds and deployments.",
+              { issueKey: issueKey ?? t('the issue key') },
             )}
+          </span>
+          {data.canWrite && data.projectId !== null && (
+            <TaskButton
+              variant="secondary"
+              size="small"
+              onClick={() => setIsGitOpen(true)}
+            >
+              <IconLink size={14} /> {t('Link repository')}
+            </TaskButton>
+          )}
         </div>
+      ) : totalCount === 0 ? (
+        <span
+          style={{
+            color: TASK_TOKENS.textTertiary,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            padding: '0 6px',
+          }}
+        >
+          {t(
+            'Include the issue key in a branch, commit or pull request to link it here.',
+          )}
+        </span>
       ) : (
         <>
+          {hasDevelopmentActivitySummary(activitySummary) && (
+            <div style={{ padding: '0 8px' }}>
+              <DevelopmentSummaryChips summary={activitySummary} />
+            </div>
+          )}
           <div>
             <div
               style={{
@@ -569,17 +636,28 @@ export const IssueDevelopment = () => {
                 ),
               ),
             ];
+            const hasProblem = errors.length > 0;
             return (
               <div
                 key={repo.id}
-                style={{
-                  padding: '12px 0',
-                  borderTop:
-                    index === 0
-                      ? undefined
-                      : `1px solid ${TASK_TOKENS.borderLight}`,
-                  minWidth: 0,
-                }}
+                style={
+                  hasProblem
+                    ? {
+                        border: `1px solid ${readTagColor('orange').text}`,
+                        borderRadius: TASK_TOKENS.radius,
+                        margin: '6px 0',
+                        minWidth: 0,
+                        padding: '10px 10px 12px',
+                      }
+                    : {
+                        padding: '12px 0',
+                        borderTop:
+                          index === 0
+                            ? undefined
+                            : `1px solid ${TASK_TOKENS.borderLight}`,
+                        minWidth: 0,
+                      }
+                }
               >
                 <div
                   style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}
@@ -801,6 +879,53 @@ export const IssueDevelopment = () => {
         <TaskStatusLine text={actionError} tone="danger" />
       )}
       {isSaving && <TaskStatusLine text={t('Saving…')} tone="muted" />}
-    </section>
+    </section>,
+    syncIndicator,
+  );
+};
+
+type DevelopmentSyncIndicatorProps = NonNullable<
+  ReturnType<typeof readDevelopmentSyncStatus>
+>;
+
+const DevelopmentSyncIndicator = (status: DevelopmentSyncIndicatorProps) => {
+  const isLive = status.kind === 'live';
+  const syncedLabel =
+    status.kind === 'live' && status.syncedAt !== null
+      ? formatRelativeTimeLabel(status.syncedAt)
+      : '';
+
+  return (
+    <span
+      style={{
+        alignItems: 'center',
+        color: isLive ? TASK_TOKENS.textTertiary : readTagColor('orange').text,
+        display: 'inline-flex',
+        fontFamily: TASK_TOKENS.fontFamily,
+        fontSize: 11.5,
+        gap: 6,
+        minWidth: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          background: isLive
+            ? readTagColor('green').text
+            : readTagColor('orange').text,
+          borderRadius: '50%',
+          display: 'inline-block',
+          flexShrink: 0,
+          height: 7,
+          width: 7,
+        }}
+      />
+      {isLive
+        ? syncedLabel === ''
+          ? t('Live')
+          : `${t('Live')} · ${t('synced {syncedLabel}', { syncedLabel })}`
+        : t('Sync needs attention')}
+    </span>
   );
 };

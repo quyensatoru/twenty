@@ -4,7 +4,7 @@ import {
   type Root as MarkdownRoot,
   type RootContent as MarkdownContent,
 } from 'mdast';
-import { type CSSProperties, type SyntheticEvent } from 'react';
+import { type CSSProperties, type ReactNode, useContext } from 'react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -13,6 +13,15 @@ import remarkGfm from 'remark-gfm';
 import { TASK_TOKENS } from './task-tokens';
 import { normalizeMarkdownHardBreaks } from '../utils/normalize-markdown-hard-breaks.util';
 import { TASK_MENTION_HREF_PREFIX } from '../utils/task-mention-markdown.util';
+import {
+  isBareLinkText,
+  parseRichTextLink,
+} from '../utils/parse-rich-text-link.util';
+import {
+  stopLinkEventPropagation,
+  TaskRichTextLinkChip,
+  TaskRichTextLinkChipsContext,
+} from './task-rich-text-link-chip';
 
 type TaskRichTextPreviewProps = { value: string };
 
@@ -144,10 +153,6 @@ const mediaSizeStyle = (width?: number | string): CSSProperties => {
   };
 };
 
-const stopLinkEventPropagation = (event: SyntheticEvent) => {
-  event.stopPropagation();
-};
-
 // GFM literal links retain Markdown escapes and default bare www URLs to HTTP.
 const remarkPreviewLinks =
   () => (tree: MarkdownRoot, file: { value: unknown }) => {
@@ -219,6 +224,104 @@ const rehypePreviewLinks = () => (tree: Root) => {
     }
   };
   visitChildren(tree);
+};
+
+const readPlainText = (children: ReactNode): string | null => {
+  if (typeof children === 'string') {
+    return children;
+  }
+
+  return Array.isArray(children) &&
+    children.every((child) => typeof child === 'string')
+    ? children.join('')
+    : null;
+};
+
+const PreviewLink = ({
+  href,
+  title,
+  children,
+}: {
+  href?: string;
+  title?: string;
+  children?: ReactNode;
+}) => {
+  const linkChips = useContext(TaskRichTextLinkChipsContext);
+
+  if (href?.startsWith(TASK_MENTION_HREF_PREFIX) === true) {
+    return (
+      <span
+        style={{
+          color: TASK_TOKENS.accent,
+          backgroundColor: TASK_TOKENS.accentSoft,
+          borderRadius: TASK_TOKENS.radiusExtraSmall,
+          padding: '1px 4px',
+          fontWeight: 500,
+          boxDecorationBreak: 'clone',
+        }}
+      >
+        {children}
+      </span>
+    );
+  }
+
+  const text = readPlainText(children);
+  const target =
+    linkChips === null || href === undefined || text === null
+      ? null
+      : isBareLinkText(text, href)
+        ? parseRichTextLink(href)
+        : null;
+  const issue =
+    target?.kind === 'issue'
+      ? linkChips?.issuesById.get(target.issueId)
+      : undefined;
+
+  const externalDomain =
+    target?.kind === 'external'
+      ? target.domain
+      : target?.kind === 'issue' && issue === undefined
+        ? target.domain
+        : null;
+
+  if (href !== undefined && externalDomain !== null) {
+    return (
+      <TaskRichTextLinkChip
+        href={href}
+        chip={{ kind: 'external', domain: externalDomain }}
+      />
+    );
+  }
+
+  if (href !== undefined && target?.kind === 'issue' && issue !== undefined) {
+    return (
+      <TaskRichTextLinkChip
+        href={href}
+        chip={{ kind: 'issue', issue, isComment: target.commentId !== null }}
+      />
+    );
+  }
+
+  // An issue link nobody could look up (still loading, or out of the
+  // reader's reach) stays the plain link it was.
+  return (
+    <a
+      href={href}
+      title={title}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseDown={stopLinkEventPropagation}
+      onClick={stopLinkEventPropagation}
+      onKeyDown={stopLinkEventPropagation}
+      style={{
+        color: LINK_COLOR,
+        cursor: 'pointer',
+        textDecoration: 'underline',
+      }}
+    >
+      {children}
+    </a>
+  );
 };
 
 const isListElement = (node: RootContent) =>
@@ -375,38 +478,11 @@ export const TaskRichTextPreview = ({ value }: TaskRichTextPreviewProps) => (
         rehypeEditorLayout,
       ]}
       components={{
-        a: ({ children, href, title }) =>
-          href?.startsWith(TASK_MENTION_HREF_PREFIX) ? (
-            <span
-              style={{
-                color: TASK_TOKENS.accent,
-                backgroundColor: TASK_TOKENS.accentSoft,
-                borderRadius: TASK_TOKENS.radiusExtraSmall,
-                padding: '1px 4px',
-                fontWeight: 500,
-                boxDecorationBreak: 'clone',
-              }}
-            >
-              {children}
-            </span>
-          ) : (
-            <a
-              href={href}
-              title={title}
-              target="_blank"
-              rel="noopener noreferrer"
-              onMouseDown={stopLinkEventPropagation}
-              onClick={stopLinkEventPropagation}
-              onKeyDown={stopLinkEventPropagation}
-              style={{
-                color: LINK_COLOR,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              {children}
-            </a>
-          ),
+        a: ({ children, href, title }) => (
+          <PreviewLink href={href} title={title}>
+            {children}
+          </PreviewLink>
+        ),
         h1: ({ children }) => <h1 style={headingStyle(1)}>{children}</h1>,
         h2: ({ children }) => <h2 style={headingStyle(2)}>{children}</h2>,
         h3: ({ children }) => <h3 style={headingStyle(3)}>{children}</h3>,

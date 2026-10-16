@@ -29,12 +29,9 @@ export const TaskViewSwitch = ({
     <div
       role="tablist"
       style={{
-        background: TASK_TOKENS.backgroundTertiary,
-        borderRadius: TASK_TOKENS.radiusSmall,
         display: 'inline-flex',
         flexShrink: 0,
         gap: 2,
-        padding: 2,
       }}
     >
       {options.map((option) => {
@@ -54,16 +51,15 @@ export const TaskViewSwitch = ({
             style={{
               alignItems: 'center',
               background: isSelected
-                ? TASK_TOKENS.background
+                ? TASK_TOKENS.backgroundSelected
                 : hoveredValue === option.value
                   ? TASK_TOKENS.backgroundHover
                   : 'transparent',
               border: 'none',
               borderRadius: TASK_TOKENS.radiusSmall,
-              boxShadow: isSelected ? TASK_TOKENS.shadowLight : 'none',
               color: isSelected
                 ? TASK_TOKENS.textPrimary
-                : TASK_TOKENS.textSecondary,
+                : TASK_TOKENS.textTertiary,
               cursor: 'pointer',
               display: 'inline-flex',
               fontFamily: TASK_TOKENS.fontFamily,
@@ -71,7 +67,7 @@ export const TaskViewSwitch = ({
               fontWeight: 500,
               gap: 6,
               height: 28,
-              padding: '0 10px',
+              padding: isCompact ? '0 8px' : '0 10px',
             }}
           >
             <option.Icon size={14} />

@@ -35,6 +35,85 @@ export const getTaskTodayPaperColor = (layer: number): string =>
 export const TaskTodayWorkSkeleton = ({
   isDeskView,
   isMobile,
+}: TaskTodayWorkLayoutProps) =>
+  isDeskView ? (
+    <TaskTodayDeskSkeleton isDeskView={isDeskView} isMobile={isMobile} />
+  ) : (
+    <TaskTodayListSkeleton isMobile={isMobile} />
+  );
+
+// The list view's rows, as TaskTodayListRow draws them: 40px on a hairline,
+// priority and status slots, key, title, then project and due date.
+const TaskTodayListSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div
+    role="status"
+    aria-label={t('Loading your work')}
+    style={{ display: 'flex', flexDirection: 'column' }}
+  >
+    {[46, 32, 54, 28, 40].map((titleWidth, index) => (
+      <div
+        key={index}
+        aria-hidden="true"
+        style={{
+          alignItems: 'center',
+          borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
+          boxSizing: 'border-box',
+          display: 'flex',
+          gap: 8,
+          minHeight: 40,
+          padding: isMobile ? '0 12px' : '0 20px 0 18px',
+        }}
+      >
+        {!isMobile && (
+          <span
+            style={{
+              display: 'inline-flex',
+              justifyContent: 'center',
+              width: 24,
+            }}
+          >
+            <TaskSkeletonBar width={12} height={12} />
+          </span>
+        )}
+        <span
+          style={{
+            display: 'inline-flex',
+            justifyContent: 'center',
+            width: 24,
+          }}
+        >
+          <TaskSkeletonBar width={14} height={14} radius="50%" />
+        </span>
+        <span style={{ display: 'inline-flex', width: isMobile ? 40 : 70 }}>
+          <TaskSkeletonBar width={36} height={10} />
+        </span>
+        <TaskSkeletonBar width={`${titleWidth}%`} height={12} />
+        <span style={{ flex: 1 }} />
+        {!isMobile && (
+          <span
+            style={{ alignItems: 'center', display: 'inline-flex', gap: 6 }}
+          >
+            <TaskSkeletonBar width={16} height={16} radius="4px" />
+            <TaskSkeletonBar width={72} height={10} />
+          </span>
+        )}
+        <span
+          style={{
+            display: 'inline-flex',
+            justifyContent: 'flex-end',
+            width: isMobile ? 64 : 84,
+          }}
+        >
+          <TaskSkeletonBar width={44} height={10} />
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+const TaskTodayDeskSkeleton = ({
+  isDeskView,
+  isMobile,
 }: TaskTodayWorkLayoutProps) => (
   <div
     role="status"

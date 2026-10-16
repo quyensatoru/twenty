@@ -3,6 +3,7 @@ import { t } from 'twenty-sdk/front-component';
 import {
   IconChevronLeft,
   IconExternalLink,
+  IconInfoCircle,
   IconLayoutSidebarRightCollapse,
   IconLayoutSidebarRightExpand,
   IconLock,
@@ -17,6 +18,7 @@ import {
 import { PULSE_TRANSITION, usePulse } from '../hooks/use-pulse';
 import {
   formatDayLabel,
+  formatRelativeTime,
   formatWaitDuration,
 } from '../utils/format-inbox-time.util';
 import { groupThreadMessages } from '../utils/group-thread-messages.util';
@@ -54,6 +56,9 @@ type ConversationThreadPanelProps = {
   detailsContent?: ReactNode;
   headerActions?: ReactNode;
   onOpenMerchant: (merchantId: string, merchantName: string | null) => void;
+  // Inside another panel (the issue's linked-record preview): no card frame
+  // of its own and a slimmer header, since the host panel already names it.
+  isEmbedded?: boolean;
 };
 
 const readCrispUrl = (conversation: SupportInboxConversation): string | null =>
@@ -110,6 +115,7 @@ export const ConversationThreadPanel = ({
   detailsContent,
   headerActions,
   onOpenMerchant,
+  isEmbedded = false,
 }: ConversationThreadPanelProps) => {
   // Narrow places (the record page in a side panel, a phone) get the compact
   // layout: details swap in for the thread, the pills move under the name,
@@ -143,145 +149,175 @@ export const ConversationThreadPanel = ({
   return (
     <section
       aria-label={t('Conversation')}
-      style={{ ...INBOX_CARD_STYLE, flex: 1 }}
+      style={{
+        ...INBOX_CARD_STYLE,
+        ...(isEmbedded
+          ? {
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 0,
+              boxShadow: 'none',
+            }
+          : {}),
+        flex: 1,
+      }}
     >
-      <header
-        style={{
-          alignItems: 'center',
-          background: INBOX_TOKENS.background,
-          borderBottom: `1px solid ${INBOX_TOKENS.borderLight}`,
-          display: 'flex',
-          gap: 12,
-          minHeight: 68,
-          padding: '12px 16px',
-        }}
-      >
-        {isMobile && (
-          <InboxIconButton label={t('Back')} onClick={onBack}>
-            <IconChevronLeft size={18} />
-          </InboxIconButton>
-        )}
-        {conversation === null ? (
-          <div
-            style={{
-              display: 'flex',
-              flex: 1,
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <InboxSkeletonBar width={160} height={12} />
-            <InboxSkeletonBar width={220} height={9} />
-          </div>
-        ) : (
-          <>
-            <InboxAvatar
-              name={name}
-              size={40}
-              ringColor={readAppTone(conversation.appName).text}
-            />
-            <div
-              style={{
-                display: 'flex',
-                flex: 1,
-                flexDirection: 'column',
-                gap: 2,
-                minWidth: 0,
-              }}
-            >
-              <span
-                style={{
-                  alignItems: 'center',
-                  display: 'flex',
-                  gap: 8,
-                  minWidth: 0,
-                }}
-              >
+      {isEmbedded ? (
+        // The host panel's own header already names the customer, so this is
+        // one strip of state: status, how long they wait, where they came
+        // from, and the switch to their details.
+        <div
+          style={{
+            alignItems: 'center',
+            borderBottom: `1px solid ${INBOX_TOKENS.borderLight}`,
+            display: 'flex',
+            flexShrink: 0,
+            gap: 6,
+            minHeight: 44,
+            padding: '0 12px',
+          }}
+        >
+          {conversation === null ? (
+            <InboxSkeletonBar width={160} height={10} />
+          ) : (
+            <>
+              {statusPills}
+              {(conversation.appName !== null || shop !== null) && (
                 <span
                   style={{
-                    fontSize: 15,
-                    fontWeight: 650,
+                    color: INBOX_TOKENS.textTertiary,
+                    fontSize: 12,
+                    minWidth: 0,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {name}
+                  {[
+                    conversation.appName,
+                    shop?.replace(/\.myshopify\.com$/, ''),
+                  ]
+                    .filter((part) => part !== null && part !== undefined)
+                    .join(' · ')}
                 </span>
-              </span>
-              {/* Pills sit under the name, beside the contact line, so the
-                  name keeps the full width even when the column is narrow. */}
-              <span
+              )}
+            </>
+          )}
+          <span style={{ flex: 1 }} />
+          <InboxIconButton
+            label={isDetailsOpen ? t('Hide details') : t('Show details')}
+            onClick={onToggleDetails}
+            isActive={isDetailsOpen}
+            isActiveAccent
+            size={28}
+          >
+            <IconInfoCircle size={15} />
+          </InboxIconButton>
+        </div>
+      ) : (
+        <header
+          style={{
+            alignItems: 'center',
+            background: isEmbedded ? 'transparent' : INBOX_TOKENS.background,
+            borderBottom: `1px solid ${INBOX_TOKENS.borderLight}`,
+            display: 'flex',
+            gap: isEmbedded ? 10 : 12,
+            minHeight: isEmbedded ? 48 : 68,
+            // The avatar's ring draws outside its box; flush left it was clipped.
+            padding: isEmbedded ? '0 4px 10px 4px' : '12px 16px',
+          }}
+        >
+          {isMobile && (
+            <InboxIconButton label={t('Back')} onClick={onBack}>
+              <IconChevronLeft size={18} />
+            </InboxIconButton>
+          )}
+          {conversation === null ? (
+            <div
+              style={{
+                display: 'flex',
+                flex: 1,
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              <InboxSkeletonBar width={160} height={12} />
+              <InboxSkeletonBar width={220} height={9} />
+            </div>
+          ) : (
+            <>
+              <InboxAvatar
+                name={name}
+                size={isEmbedded ? 30 : 40}
+                ringColor={readAppTone(conversation.appName).text}
+              />
+              <div
                 style={{
-                  alignItems: 'center',
                   display: 'flex',
-                  gap: 6,
+                  flex: 1,
+                  flexDirection: 'column',
+                  gap: 2,
                   minWidth: 0,
                 }}
               >
-                {statusPills}
-                {!isCompact &&
-                  (conversation.visitorEmail !== null || shop !== null) && (
-                    <span
-                      style={{
-                        alignItems: 'center',
-                        color: INBOX_TOKENS.textTertiary,
-                        display: 'flex',
-                        fontSize: 12,
-                        gap: 6,
-                        minWidth: 0,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {conversation.visitorEmail !== null && (
-                        <span
-                          style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {conversation.visitorEmail}
-                        </span>
-                      )}
-                      {conversation.visitorEmail !== null && shop !== null && (
-                        <span aria-hidden="true">·</span>
-                      )}
-                      {shop !== null &&
-                        (merchantId === null ? (
+                <span
+                  style={{
+                    alignItems: 'center',
+                    display: 'flex',
+                    gap: 8,
+                    minWidth: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: isEmbedded ? 13.5 : 15,
+                      fontWeight: isEmbedded ? 600 : 650,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {name}
+                  </span>
+                </span>
+                {/* Pills sit under the name, beside the contact line, so the
+                  name keeps the full width even when the column is narrow. */}
+                <span
+                  style={{
+                    alignItems: 'center',
+                    display: 'flex',
+                    gap: 6,
+                    minWidth: 0,
+                  }}
+                >
+                  {statusPills}
+                  {!isCompact &&
+                    (conversation.visitorEmail !== null || shop !== null) && (
+                      <span
+                        style={{
+                          alignItems: 'center',
+                          color: INBOX_TOKENS.textTertiary,
+                          display: 'flex',
+                          fontSize: 12,
+                          gap: 6,
+                          minWidth: 0,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {conversation.visitorEmail !== null && (
                           <span
                             style={{
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                             }}
                           >
-                            {shop}
+                            {conversation.visitorEmail}
                           </span>
-                        ) : (
-                          <button
-                            type="button"
-                            title={t('Open merchant')}
-                            onClick={() =>
-                              onOpenMerchant(merchantId, conversation.merchant?.name ?? null)
-                            }
-                            style={{
-                              alignItems: 'center',
-                              background: 'transparent',
-                              border: 'none',
-                              color: INBOX_TOKENS.accent,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              fontFamily: 'inherit',
-                              fontSize: 12,
-                              fontWeight: 500,
-                              gap: 3,
-                              minWidth: 0,
-                              padding: 0,
-                            }}
-                          >
-                            <IconShoppingBag
-                              size={12}
-                              style={{ flexShrink: 0 }}
-                            />
+                        )}
+                        {conversation.visitorEmail !== null &&
+                          shop !== null && <span aria-hidden="true">·</span>}
+                        {shop !== null &&
+                          (merchantId === null ? (
                             <span
                               style={{
                                 overflow: 'hidden',
@@ -290,37 +326,75 @@ export const ConversationThreadPanel = ({
                             >
                               {shop}
                             </span>
-                          </button>
-                        ))}
-                    </span>
+                          ) : (
+                            <button
+                              type="button"
+                              title={t('Open merchant')}
+                              onClick={() =>
+                                onOpenMerchant(
+                                  merchantId,
+                                  conversation.merchant?.name ?? null,
+                                )
+                              }
+                              style={{
+                                alignItems: 'center',
+                                background: 'transparent',
+                                border: 'none',
+                                color: INBOX_TOKENS.accent,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                fontFamily: 'inherit',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                gap: 3,
+                                minWidth: 0,
+                                padding: 0,
+                              }}
+                            >
+                              <IconShoppingBag
+                                size={12}
+                                style={{ flexShrink: 0 }}
+                              />
+                              <span
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {shop}
+                              </span>
+                            </button>
+                          ))}
+                      </span>
+                    )}
+                </span>
+              </div>
+              {crispUrl !== null && !isMobile && !isCompact && (
+                <InboxButton
+                  href={crispUrl}
+                  icon={<IconExternalLink size={15} />}
+                >
+                  {t('Open in Crisp')}
+                </InboxButton>
+              )}
+              {headerActions}
+              {(!isMobile || isCompact) && (
+                <InboxIconButton
+                  label={isDetailsOpen ? t('Hide details') : t('Show details')}
+                  onClick={onToggleDetails}
+                  isActive={isDetailsOpen}
+                >
+                  {isDetailsOpen ? (
+                    <IconLayoutSidebarRightCollapse size={18} />
+                  ) : (
+                    <IconLayoutSidebarRightExpand size={18} />
                   )}
-              </span>
-            </div>
-            {crispUrl !== null && !isMobile && !isCompact && (
-              <InboxButton
-                href={crispUrl}
-                icon={<IconExternalLink size={15} />}
-              >
-                {t('Open in Crisp')}
-              </InboxButton>
-            )}
-            {headerActions}
-            {(!isMobile || isCompact) && (
-              <InboxIconButton
-                label={isDetailsOpen ? t('Hide details') : t('Show details')}
-                onClick={onToggleDetails}
-                isActive={isDetailsOpen}
-              >
-                {isDetailsOpen ? (
-                  <IconLayoutSidebarRightCollapse size={18} />
-                ) : (
-                  <IconLayoutSidebarRightExpand size={18} />
-                )}
-              </InboxIconButton>
-            )}
-          </>
-        )}
-      </header>
+                </InboxIconButton>
+              )}
+            </>
+          )}
+        </header>
+      )}
       {isShowingDetailsInPlace ? (
         detailsContent
       ) : (
@@ -347,8 +421,8 @@ export const ConversationThreadPanel = ({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 14,
-                padding: '20px 24px 24px',
+                gap: isEmbedded ? 12 : 14,
+                padding: isEmbedded ? 14 : '20px 24px 24px',
               }}
             >
               {error !== null && (
@@ -448,13 +522,35 @@ export const ConversationThreadPanel = ({
             style={{
               alignItems: 'center',
               background: INBOX_TOKENS.background,
-              borderTop: `1px solid ${INBOX_TOKENS.borderLight}`,
+              borderTop: `1px solid ${
+                isEmbedded ? INBOX_TOKENS.border : INBOX_TOKENS.borderLight
+              }`,
+              boxSizing: 'border-box',
               display: 'flex',
-              gap: 12,
+              flexShrink: 0,
+              gap: isEmbedded ? 8 : 12,
+              height: isEmbedded ? 48 : undefined,
               justifyContent: 'flex-end',
-              padding: '12px 16px',
+              padding: isEmbedded ? '0 12px' : '12px 16px',
             }}
           >
+            {isEmbedded && conversation?.lastMessageAt != null && (
+              <span
+                style={{
+                  color: INBOX_TOKENS.textTertiary,
+                  flex: 1,
+                  fontSize: 12,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t('Last message {time}', {
+                  time: formatRelativeTime(conversation.lastMessageAt),
+                })}
+              </span>
+            )}
             {!isCompact && (
               <div
                 style={{
@@ -486,15 +582,24 @@ export const ConversationThreadPanel = ({
                 </span>
               </div>
             )}
-            {crispUrl !== null && (
-              <InboxButton
-                variant="primary"
-                href={crispUrl}
-                icon={<IconExternalLink size={15} />}
-              >
-                {t('Reply in Crisp')}
-              </InboxButton>
-            )}
+            {crispUrl !== null &&
+              (isEmbedded ? (
+                <InboxButton
+                  size="small"
+                  href={crispUrl}
+                  trailingIcon={<IconExternalLink size={12} />}
+                >
+                  {t('Reply in Crisp')}
+                </InboxButton>
+              ) : (
+                <InboxButton
+                  variant="primary"
+                  href={crispUrl}
+                  icon={<IconExternalLink size={15} />}
+                >
+                  {t('Reply in Crisp')}
+                </InboxButton>
+              ))}
           </footer>
         </>
       )}

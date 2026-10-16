@@ -102,23 +102,50 @@ afterEach(async () => {
 });
 const render = () => act(async () => root.render(createElement(TaskToday)));
 
+const openDisplayMenu = async (user: ReturnType<typeof userEvent.setup>) =>
+  act(async () =>
+    user.click(getByRole(container, 'button', { name: 'Display options' })),
+  );
+const pickDisplayItem = async (
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+) => {
+  await openDisplayMenu(user);
+  await act(async () =>
+    user.click(getByRole(document.body, /^Show as/.test(name) ? 'menuitemradio' : 'menuitem', { name })),
+  );
+};
+
 describe('Today dashboard', () => {
-  it('offers only Cards and List while retaining deadline radar', async () => {
+  it('shows every queue as a tab with its count and says what needs attention', async () => {
     await render();
-    const views = getByRole(container, 'group', { name: 'Work view' });
-    expect(within(views).getAllByRole('button')).toHaveLength(2);
-    expect(getByRole(views, 'button', { name: 'Card view' })).toBeTruthy();
-    expect(getByRole(views, 'button', { name: 'List view' })).toBeTruthy();
-    expect(queryByRole(container, 'button', { name: 'Room view' })).toBeNull();
+    const tabs = getByRole(container, 'tablist', { name: 'Work filters' });
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(6);
+    expect(tabs.textContent).toContain('Overdue');
+    expect(tabs.textContent).toContain('Due today');
+    expect(tabs.textContent).toContain('Next 7 days');
     expect(
-      queryByRole(container, 'region', { name: 'Personal workspace' }),
-    ).toBeNull();
-    const radar = getByRole(container, 'region', { name: 'Task radar' });
-    expect(radar.textContent).toContain('Overdue');
-    expect(radar.textContent).toContain('Due today');
-    expect(radar.textContent).toContain('Next 7 days');
+      getByRole(container, 'heading', { name: '1 issue needs you today' }),
+    ).toBeDefined();
+    expect(queryByRole(container, 'button', { name: 'Room view' })).toBeNull();
   });
-  it('opens the normal task view for a legacy Room preference', async () => {
+
+  it('opens on the most pressing queue that holds work', async () => {
+    data.counts = { ...data.counts, overdue: 0, noDueDate: 1 };
+    await render();
+    expect(runtime.post).toHaveBeenLastCalledWith(
+      '/s/task-manager/today',
+      expect.objectContaining({ section: 'noDueDate' }),
+    );
+    expect(
+      getByRole(container, 'tab', { name: /No due date/ }).getAttribute(
+        'aria-selected',
+      ),
+    ).toBe('true');
+  });
+
+  it('opens the cards for a legacy Room preference', async () => {
+    const user = userEvent.setup();
     Object.assign(data, {
       memberId: 'me',
       boardPreferences: {
@@ -128,13 +155,13 @@ describe('Today dashboard', () => {
       },
     });
     await render();
-    expect(
-      getByRole(container, 'button', { name: 'Card view' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
     expect(getByRole(container, 'link', { name: 'Fix checkout' })).toBeTruthy();
-    expect(queryByRole(container, 'button', { name: 'Room view' })).toBeNull();
+    await openDisplayMenu(user);
+    expect(
+      getByRole(document.body, 'menuitemradio', {
+        name: 'Show as cards',
+      }).getAttribute('aria-checked'),
+    ).toBe('true');
     expect(
       runtime.post.mock.calls.every(([path]) =>
         String(path).endsWith('/today'),
@@ -158,14 +185,7 @@ describe('Today dashboard', () => {
       getByRole(container, 'status', { name: 'Loading your work' }),
     ).toBeTruthy();
     expect(queryByRole(container, 'link', { name: 'Fix checkout' })).toBeNull();
-    await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'List view' })),
-    );
-    expect(
-      getByRole(container, 'button', { name: 'List view' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
+    await pickDisplayItem(user, 'Show as cards');
     expect(
       getByRole(container, 'status', { name: 'Loading your work' }),
     ).toBeTruthy();
@@ -176,48 +196,38 @@ describe('Today dashboard', () => {
     ).toBeNull();
     expect(getByRole(container, 'link', { name: 'Fix checkout' })).toBeTruthy();
     expect(
-      getByRole(container, 'button', { name: 'List view' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
+      getByRole(container, 'button', { name: 'Peek at: APP-1' }),
+    ).toBeTruthy();
   });
 
-  it('lets people pause decorative motion and remembers their preference', async () => {
+  it('starts with effects off and remembers turning them on', async () => {
     const user = userEvent.setup();
     await render();
-    const toggle = getByRole(container, 'button', {
-      name: 'Toggle visual effects',
-    });
-    expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    await act(async () => user.click(toggle));
-    expect(toggle.getAttribute('aria-pressed')).toBe('false');
-    expect(localStorage.getItem('task-today.motion')).toBe('off');
+    await pickDisplayItem(user, 'Turn effects on');
+    expect(localStorage.getItem('task-today.motion')).toBe('on');
+    await openDisplayMenu(user);
+    expect(
+      getByRole(document.body, 'menuitem', { name: 'Turn effects off' }),
+    ).toBeDefined();
   });
 
   it('restores the saved effects preference when opening the dashboard', async () => {
-    localStorage.setItem('task-today.motion', 'off');
+    const user = userEvent.setup();
+    localStorage.setItem('task-today.motion', 'on');
     await render();
-    const toggle = getByRole(container, 'button', {
-      name: 'Toggle visual effects',
-    }) as HTMLButtonElement;
-    expect(toggle.getAttribute('aria-pressed')).toBe('false');
-    expect(toggle.disabled).toBe(false);
+    await openDisplayMenu(user);
+    expect(
+      getByRole(document.body, 'menuitem', { name: 'Turn effects off' }),
+    ).toBeDefined();
   });
 
   it('shuffles a visible task into the focus session without changing its status', async () => {
     const user = userEvent.setup();
     await render();
-    await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Shuffle a task' })),
-    );
+    await pickDisplayItem(user, 'Shuffle a task into focus');
     expect(
       getByRole(container, 'region', { name: 'Focus session' }).textContent,
     ).toContain('Fix checkout');
-    expect(
-      getByRole(container, 'button', { name: 'Focus on: APP-1' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
     expect(runtime.post).toHaveBeenCalledTimes(1);
   });
 
@@ -228,17 +238,15 @@ describe('Today dashboard', () => {
       user.click(getByRole(container, 'button', { name: 'Focus mode' })),
     );
     expect(
-      queryByRole(container, 'heading', { name: 'A fresh start, every day.' }),
+      queryByRole(container, 'heading', { name: '1 issue needs you today' }),
     ).toBeNull();
-    expect(
-      queryByRole(container, 'complementary', { name: 'Your inbox' }),
-    ).toBeNull();
+    expect(queryByRole(container, 'region', { name: 'Your inbox' })).toBeNull();
     expect(getByRole(container, 'region', { name: 'My work' })).toBeDefined();
     await act(async () =>
       user.click(getByRole(container, 'button', { name: 'Exit focus mode' })),
     );
     expect(
-      getByRole(container, 'heading', { name: 'A fresh start, every day.' }),
+      getByRole(container, 'heading', { name: '1 issue needs you today' }),
     ).toBeDefined();
   });
 
@@ -262,24 +270,24 @@ describe('Today dashboard', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await render();
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: '5 min' })),
+      user.click(getByRole(container, 'button', { name: '5m' })),
     );
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Start session' })),
+      user.click(getByRole(container, 'button', { name: 'Start' })),
     );
     await act(async () => vi.advanceTimersByTime(61000));
     expect(
       getByRole(container, 'timer', { name: 'Time remaining' }).textContent,
     ).toBe('03:59');
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Pause session' })),
+      user.click(getByRole(container, 'button', { name: 'Pause' })),
     );
     await act(async () => vi.advanceTimersByTime(30000));
     expect(
       getByRole(container, 'timer', { name: 'Time remaining' }).textContent,
     ).toBe('03:59');
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Resume session' })),
+      user.click(getByRole(container, 'button', { name: 'Resume' })),
     );
     await act(async () => vi.advanceTimersByTime(1000));
     expect(
@@ -298,10 +306,10 @@ describe('Today dashboard', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await render();
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: '5 min' })),
+      user.click(getByRole(container, 'button', { name: '5m' })),
     );
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Start session' })),
+      user.click(getByRole(container, 'button', { name: 'Start' })),
     );
     await act(async () => vi.advanceTimersByTime(300000));
     expect(
@@ -314,12 +322,11 @@ describe('Today dashboard', () => {
   });
 
   it('celebrates quick completion only after the guarded update succeeds', async () => {
-    localStorage.setItem('task-today.motion', 'off');
     const user = userEvent.setup();
     await render();
     runtime.post.mockRejectedValueOnce(new Error('Could not save'));
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Complete: APP-1' })),
+      user.click(getByRole(container, 'button', { name: 'Mark done: APP-1' })),
     );
     expect(getByRole(container, 'alert').textContent).toContain(
       'Could not save',
@@ -329,7 +336,7 @@ describe('Today dashboard', () => {
       path === '/s/task-manager/update-issue' ? { success: true } : data,
     );
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Complete: APP-1' })),
+      user.click(getByRole(container, 'button', { name: 'Mark done: APP-1' })),
     );
     expect(runtime.post).toHaveBeenCalledWith('/s/task-manager/update-issue', {
       issueId: 'issue',
@@ -340,12 +347,13 @@ describe('Today dashboard', () => {
     );
   });
 
-  it('turns a task over to read its brief and returns to the actionable face', async () => {
+  it('turns a card over to read its brief and returns to the actionable face', async () => {
     const user = userEvent.setup();
     data.issues[0].description = {
       markdown: 'Review the checkout redirect before release.',
     };
     await render();
+    await pickDisplayItem(user, 'Show as cards');
     expect(
       queryByRole(container, 'heading', { name: 'Task brief' }),
     ).toBeNull();
@@ -370,10 +378,11 @@ describe('Today dashboard', () => {
     expect(runtime.post).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps keyboard navigation on the visible face of a flipped task', async () => {
+  it('keeps keyboard navigation on the visible face of a flipped card', async () => {
     vi.useFakeTimers();
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await render();
+    await pickDisplayItem(user, 'Show as cards');
     await act(async () =>
       user.click(getByRole(container, 'button', { name: 'Peek at: APP-1' })),
     );
@@ -394,33 +403,23 @@ describe('Today dashboard', () => {
     );
   });
 
-  it('switches between the desk and list without changing the work queue', async () => {
+  it('switches between the list and cards without changing the work queue', async () => {
     const user = userEvent.setup();
     await render();
-    await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'List view' })),
-    );
     expect(
-      getByRole(container, 'button', { name: 'List view' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
-    expect(
-      getByRole(container, 'link', { name: 'Fix checkout' }),
+      getByRole(container, 'button', { name: 'Change status: APP-1' }),
     ).toBeDefined();
-    await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Card view' })),
-    );
+    await pickDisplayItem(user, 'Show as cards');
     expect(
-      getByRole(container, 'button', { name: 'Card view' }).getAttribute(
-        'aria-pressed',
-      ),
-    ).toBe('true');
+      getByRole(container, 'button', { name: 'Peek at: APP-1' }),
+    ).toBeDefined();
+    expect(getByRole(container, 'link', { name: 'Fix checkout' })).toBeDefined();
     expect(runtime.post).toHaveBeenCalledTimes(1);
   });
 
   it('finishes the departure animation after saving before reloading the work queue', async () => {
     vi.useFakeTimers();
+    localStorage.setItem('task-today.motion', 'on');
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await render();
     runtime.post.mockImplementation(async (path: string) => {
@@ -431,9 +430,8 @@ describe('Today dashboard', () => {
       return data;
     });
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'Complete: APP-1' })),
+      user.click(getByRole(container, 'button', { name: 'Mark done: APP-1' })),
     );
-    expect(getByRole(container, 'status').textContent).toContain('Saving');
     expect(
       runtime.post.mock.calls.filter(
         ([path]) => path === '/s/task-manager/today',
@@ -454,7 +452,7 @@ describe('Today dashboard', () => {
   it('opens work and discussion messages with the correct deep links', async () => {
     await render();
     expect(
-      getByRole(container, 'link', { name: 'Fix checkout' }).getAttribute(
+      getByRole(container, 'link', { name: /Fix checkout/ }).getAttribute(
         'href',
       ),
     ).toBe('https://crm.example.com/object/issue/issue');
@@ -472,16 +470,16 @@ describe('Today dashboard', () => {
     const user = userEvent.setup();
     await render();
     data.issues = [];
-    const filters = within(
-      getByRole(container, 'group', { name: 'Work filters' }),
+    const tabs = within(
+      getByRole(container, 'tablist', { name: 'Work filters' }),
     );
     await act(async () =>
-      user.click(filters.getByRole('button', { name: /^Due today/ })),
+      user.click(tabs.getByRole('tab', { name: /Due today/ })),
     );
     expect(
       getByRole(container, 'region', { name: 'Due today' }).textContent,
     ).toContain('Nothing is due today.');
-    expect(queryByRole(container, 'link', { name: 'Fix checkout' })).toBeNull();
+    expect(queryByRole(container, 'link', { name: /Fix checkout/ })).toBeNull();
     expect(runtime.post).toHaveBeenLastCalledWith(
       '/s/task-manager/today',
       expect.objectContaining({
@@ -504,11 +502,9 @@ describe('Today dashboard', () => {
     await act(async () =>
       user.click(getByRole(container, 'button', { name: 'Load more' })),
     );
+    expect(getByRole(container, 'link', { name: /Fix checkout/ })).toBeDefined();
     expect(
-      getByRole(container, 'link', { name: 'Fix checkout' }),
-    ).toBeDefined();
-    expect(
-      getByRole(container, 'link', { name: 'Review release' }),
+      getByRole(container, 'link', { name: /Review release/ }),
     ).toBeDefined();
     expect(queryByRole(container, 'button', { name: 'Load more' })).toBeNull();
     expect(runtime.post).toHaveBeenLastCalledWith(
@@ -518,7 +514,6 @@ describe('Today dashboard', () => {
   });
 
   it('updates status through the existing guarded route and reloads counts', async () => {
-    localStorage.setItem('task-today.motion', 'off');
     const user = userEvent.setup();
     await render();
     runtime.post.mockImplementation(async (path: string) => {
@@ -534,13 +529,13 @@ describe('Today dashboard', () => {
       ),
     );
     await act(async () =>
-      user.click(getByRole(container, 'option', { name: 'Done' })),
+      user.click(getByRole(document.body, 'menuitemradio', { name: 'Done' })),
     );
     expect(runtime.post).toHaveBeenCalledWith('/s/task-manager/update-issue', {
       issueId: 'issue',
       data: { statusId: 'done' },
     });
-    expect(queryByRole(container, 'link', { name: 'Fix checkout' })).toBeNull();
+    expect(queryByRole(container, 'link', { name: /Fix checkout/ })).toBeNull();
     expect(
       getByRole(container, 'region', { name: 'Overdue' }).textContent,
     ).toContain('No overdue work.');
@@ -576,7 +571,7 @@ describe('Today dashboard', () => {
       user.click(getByRole(container, 'button', { name: 'Mark as read' })),
     );
     expect(
-      getByRole(container, 'complementary', { name: 'Your inbox' }).textContent,
+      getByRole(container, 'region', { name: 'Your inbox' }).textContent,
     ).toContain('You’re all caught up.');
     expect(runtime.post).toHaveBeenCalledWith(
       '/s/task-manager/discussion-state',
@@ -613,7 +608,7 @@ describe('Today dashboard', () => {
       user.click(getByRole(container, 'button', { name: 'Retry' })),
     );
     expect(
-      getByRole(container, 'link', { name: 'Fix checkout' }),
+      getByRole(container, 'link', { name: /Fix checkout/ }),
     ).toBeDefined();
     expect(queryByRole(container, 'alert')).toBeNull();
   });

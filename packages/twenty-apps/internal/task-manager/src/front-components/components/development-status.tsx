@@ -1,3 +1,4 @@
+import { type ComponentType } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
   IconArrowMerge,
@@ -47,6 +48,21 @@ const readStatus = (status: string) => {
 
 export const DevelopmentStatus = ({ status }: DevelopmentStatusProps) => {
   const { label, color, Icon } = readStatus(status);
+
+  return <DevelopmentChip label={label} color={color} Icon={Icon} />;
+};
+
+type DevelopmentChipProps = {
+  label: string;
+  color: string;
+  Icon: ComponentType<{ size?: number; 'aria-hidden'?: 'true' }>;
+};
+
+export const DevelopmentChip = ({
+  label,
+  color,
+  Icon,
+}: DevelopmentChipProps) => {
   const tone = readTagColor(color);
   return (
     <span

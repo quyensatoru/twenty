@@ -4,13 +4,16 @@ import { IconX } from 'twenty-ui/icon';
 import { type LinkedIssueRow } from '../hooks/use-issue-detail';
 import { TaskAvatar } from './task-avatar';
 import { TaskIconButton } from './task-icon-button';
-import { TaskTag } from './task-tag';
+import { TaskPriorityGlyph } from './task-priority-glyph';
+import { TaskStatusIcon, type TaskStatusGlyph } from './task-status-icon';
 import { TASK_TOKENS } from './task-tokens';
 
 type TaskSubtaskRowProps = {
   row: LinkedIssueRow;
   statusName: string | null;
   statusColor?: string | null;
+  statusGlyph: TaskStatusGlyph;
+  isDone: boolean;
   ownerName: string | null;
   ownerAvatarUrl?: string | null;
   onOpen: () => void;
@@ -19,20 +22,27 @@ type TaskSubtaskRowProps = {
   // as one serialized click in the sandbox and always open the row instead.
   onUnlink?: () => void;
   unlinkLabel?: string;
+  // The parent row reads "Sub-issue of" before the key.
+  prefix?: string;
+  // Off when no row of the list has an owner: an empty slot kept for one
+  // left a gap at the end of every row.
+  isOwnerSlotShown?: boolean;
 };
 
-// One linked issue: state, key, title, owner. A button rather than a link,
-// because leaving the record is not what opening a linked issue is for — the
-// host's own relation chips open beside it, and so does this.
+// One linked issue on a single line: status, key, title, owner.
 export const TaskSubtaskRow = ({
   row,
   statusName,
   statusColor,
+  statusGlyph,
+  isDone,
   ownerName,
   ownerAvatarUrl,
   onOpen,
   onUnlink,
   unlinkLabel,
+  prefix,
+  isOwnerSlotShown = true,
 }: TaskSubtaskRowProps) => {
   // State-driven, because an app ships no stylesheet and there is no `:hover`
   // to declare.
@@ -44,15 +54,13 @@ export const TaskSubtaskRow = ({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         alignItems: 'center',
-        background: isHovered
-          ? TASK_TOKENS.backgroundTransparentLighter
-          : 'transparent',
-        border: 'none',
-        borderRadius: TASK_TOKENS.radius,
+        background: isHovered ? TASK_TOKENS.backgroundHover : 'transparent',
+        borderBottom: `1px solid ${TASK_TOKENS.borderLight}`,
+        boxSizing: 'border-box',
         display: 'flex',
         gap: 4,
-        minHeight: 36,
-        padding: '4px 4px 4px 8px',
+        minHeight: 34,
+        padding: '0 6px 0 12px',
         width: '100%',
       }}
     >
@@ -62,64 +70,98 @@ export const TaskSubtaskRow = ({
         title={row.title ?? row.issueKey ?? row.id}
         style={{
           alignItems: 'center',
+          alignSelf: 'stretch',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           display: 'flex',
           flex: 1,
           fontFamily: TASK_TOKENS.fontFamily,
-          gap: 8,
+          fontSize: 13,
+          gap: 10,
           minWidth: 0,
           padding: 0,
           textAlign: 'left',
         }}
       >
-        {statusName !== null && (
-          <TaskTag color={statusColor}>{statusName}</TaskTag>
+        <TaskStatusIcon
+          glyph={statusGlyph}
+          color={statusColor}
+          title={statusName ?? undefined}
+        />
+        {prefix !== undefined && (
+          <span style={{ color: TASK_TOKENS.textTertiary, flexShrink: 0 }}>
+            {prefix}
+          </span>
         )}
         <span
           style={{
-            display: 'flex',
-            flex: 1,
-            flexDirection: 'column',
-            minWidth: 0,
+            color: TASK_TOKENS.textTertiary,
+            flexShrink: 0,
+            fontSize: 12,
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
-          <span
-            style={{
-              color: TASK_TOKENS.textPrimary,
-              fontSize: 13,
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {row.issueKey ?? row.id}
-          </span>
-          {typeof row.title === 'string' && row.title !== '' && (
-            <span
-              style={{
-                color: TASK_TOKENS.textSecondary,
-                fontSize: 12,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {row.title}
-            </span>
+          {row.issueKey ?? ''}
+        </span>
+        <span
+          style={{
+            color: isDone ? TASK_TOKENS.textTertiary : TASK_TOKENS.textPrimary,
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+            textDecoration: isDone ? 'line-through' : 'none',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {row.title ?? ''}
+        </span>
+        {/* Priority and owner in fixed slots at the end, as in the design,
+            so the titles of a list line up whatever each row carries. */}
+        <span
+          style={{
+            display: 'inline-flex',
+            justifyContent: 'center',
+            width: 18,
+          }}
+        >
+          {typeof row.priority === 'string' && (
+            <TaskPriorityGlyph priority={row.priority} />
           )}
         </span>
-        {ownerName !== null && (
-          <TaskAvatar name={ownerName} avatarUrl={ownerAvatarUrl} size={20} />
+        {(isOwnerSlotShown || ownerName !== null) && (
+          <span
+            style={{
+              display: 'inline-flex',
+              justifyContent: 'center',
+              width: 20,
+            }}
+          >
+            {ownerName !== null && (
+              <TaskAvatar
+                name={ownerName}
+                avatarUrl={ownerAvatarUrl}
+                size={20}
+              />
+            )}
+          </span>
         )}
       </button>
-      {onUnlink !== undefined && isHovered && (
-        <TaskIconButton label={unlinkLabel ?? 'Unlink'} onClick={onUnlink}>
-          <IconX size={14} />
-        </TaskIconButton>
-      )}
+      <span
+        style={{
+          display: 'inline-flex',
+          visibility:
+            onUnlink !== undefined && isHovered ? 'visible' : 'hidden',
+          width: 24,
+        }}
+      >
+        {onUnlink !== undefined && (
+          <TaskIconButton label={unlinkLabel ?? 'Unlink'} onClick={onUnlink}>
+            <IconX size={14} />
+          </TaskIconButton>
+        )}
+      </span>
     </div>
   );
 };

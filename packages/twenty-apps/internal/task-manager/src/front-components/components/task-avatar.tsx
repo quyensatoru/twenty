@@ -19,6 +19,9 @@ type TaskAvatarProps = {
   // Off where a richer hover card already names the person: the browser's
   // own tooltip would land on top of it.
   shouldShowTitle?: boolean;
+  // Two letters (first and last word) for a large avatar of a person outside
+  // the workspace, as the support inbox draws its customers.
+  initialCount?: 1 | 2;
 };
 
 // twenty-ui's Avatar is base-ui backed, and base-ui's event handling throws in
@@ -32,10 +35,16 @@ export const TaskAvatar = ({
   shape = 'circle',
   colorName,
   shouldShowTitle = true,
+  initialCount = 1,
 }: TaskAvatarProps) => {
   const [hasImageFailed, setHasImageFailed] = useState(false);
   const trimmedName = name.trim();
-  const initial = trimmedName.charAt(0).toUpperCase();
+  const words = trimmedName.split(/\s+/).filter((word) => word !== '');
+  const initial = (
+    initialCount === 2 && words.length > 1
+      ? `${words[0].charAt(0)}${words[words.length - 1].charAt(0)}`
+      : trimmedName.charAt(0)
+  ).toUpperCase();
   const resolvedColorName = colorName ?? stringToThemeColorName(trimmedName);
   const imageUrl = hasImageFailed ? null : readAvatarImageUrl(avatarUrl);
 
@@ -76,12 +85,13 @@ export const TaskAvatar = ({
       title={shouldShowTitle ? trimmedName : undefined}
       style={{
         ...frame,
-        background: `var(--t-color-${resolvedColorName}4, ${TASK_TOKENS.backgroundTertiary})`,
-        color: `var(--t-color-${resolvedColorName}12, ${TASK_TOKENS.textPrimary})`,
+        // Solid with a white letter, as in the design: the pale tint with a
+        // dark letter read as a heavier mark than the name beside it.
+        background: `var(--t-color-${resolvedColorName}, ${TASK_TOKENS.textTertiary})`,
+        color: '#ffffff',
         fontFamily: TASK_TOKENS.fontFamily,
-        // 0.7, not 0.5: the host's 14px chip avatar carries a 10px letter, and
-        // half the box leaves it too small to read at chip size.
-        fontSize: Math.round(size * 0.7),
+        // Half the box, but never under 8px, so a 14px chip avatar still reads.
+        fontSize: Math.max(8, Math.round(size * (initial.length > 1 ? 0.4 : 0.5))),
         fontWeight: 600,
         lineHeight: 1,
       }}

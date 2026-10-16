@@ -1,22 +1,26 @@
-import { useMemo, useState } from 'react';
+import { type CSSProperties, type ReactNode, useMemo, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconClock, IconPencil, IconTrash } from 'twenty-ui/icon';
+import { IconClock, IconLink, IconPencil, IconTrash } from 'twenty-ui/icon';
 
 import { formatMinutes, parseMinutes } from '../../utils/format-minutes.util';
 import { type MemberRow, type WorklogRow } from '../hooks/use-issue-detail';
+import { useIsMobile } from '../hooks/use-is-mobile';
 import { buildIssueWorklogUrl } from '../utils/build-record-url.util';
+import { isGroupedFeedItem } from '../utils/is-grouped-feed-item.util';
 import { readMemberName } from '../utils/read-member-name.util';
-import { TaskAvatar } from './task-avatar';
 import { TaskButton } from './task-button';
-import { TaskCopyLinkButton } from './task-copy-link-button';
+import { copyLinkToClipboard } from './task-copy-link-button';
 import { TASK_COMPOSER_BOX_STYLE } from './task-control-styles';
 import { TaskDateTimeInput } from './task-date-time-input';
-import { TaskEmptyState } from './task-empty-state';
 import {
   FEED_BODY_INDENT,
+  FEED_GAP,
   FEED_INLINE_INSET,
+  FEED_TEXT_INSET,
+  TaskFeedComposerRow,
   TaskFeedItem,
 } from './task-feed-item';
+import { TaskFeedMoreMenu } from './task-feed-more-menu';
 import { TaskIconButton } from './task-icon-button';
 import { TaskRichTextEditor } from './task-rich-text-editor';
 import { TaskSortToggle } from './task-sort-toggle';
@@ -44,10 +48,14 @@ type IssueWorklogListProps = {
   }) => void;
   onUpdateDescription: (worklogId: string, description: string) => void;
   onDelete: (worklogId: string) => void;
+  // Set by a caller that shows the sort toggle on its tab row and the totals
+  // elsewhere; the list then drops its own summary line.
+  sortIsNewestFirst?: boolean;
 };
 
 const NOTE_MIN_HEIGHT = 40;
 const ROW_INLINE_PADDING = 10;
+const PROGRESS_WIDTH = 120;
 
 // datetime-local wants 'YYYY-MM-DDTHH:mm' in local time, which toISOString
 // does not give — it is always UTC.
@@ -71,17 +79,14 @@ const readWorklogTimestamp = (worklog: WorklogRow): number => {
 const WorklogSummary = ({
   totalMinutes,
   originalEstimateMinutes,
-  isNewestFirst,
-  onSortChange,
+  sortToggle,
 }: {
   totalMinutes: number | null | undefined;
   originalEstimateMinutes: number | null | undefined;
-  isNewestFirst: boolean;
-  onSortChange: (isNewestFirst: boolean) => void;
+  sortToggle?: ReactNode;
 }) => {
   const estimate =
-    typeof originalEstimateMinutes === 'number' &&
-    originalEstimateMinutes > 0
+    typeof originalEstimateMinutes === 'number' && originalEstimateMinutes > 0
       ? originalEstimateMinutes
       : null;
   const logged = totalMinutes ?? 0;
@@ -89,63 +94,67 @@ const WorklogSummary = ({
     estimate === null || logged <= 0
       ? 0
       : Math.min(100, (logged / estimate) * 100);
+  const loggedLabel = (
+    <strong style={{ color: TASK_TOKENS.textPrimary, fontWeight: 600 }}>
+      {formatMinutes(logged)}
+    </strong>
+  );
 
   return (
     <div
       style={{
+        alignItems: 'center',
+        color: TASK_TOKENS.textSecondary,
         display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        padding: `0 ${ROW_INLINE_PADDING}px`,
+        fontFamily: TASK_TOKENS.fontFamily,
+        fontSize: 12.5,
+        gap: 12,
+        minHeight: 24,
+        padding: `0 ${ROW_INLINE_PADDING}px 0 ${FEED_BODY_INDENT + FEED_TEXT_INSET}px`,
       }}
     >
-      <div
-        style={{
-          alignItems: 'center',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span
-          style={{
-            color: TASK_TOKENS.textTertiary,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 12,
-          }}
-        >
-          {t('Time spent')}: {formatMinutes(totalMinutes)}
-          {estimate === null ? '' : ` / ${formatMinutes(estimate)}`}
-        </span>
-        <TaskSortToggle
-          isNewestFirst={isNewestFirst}
-          onChange={onSortChange}
-        />
-      </div>
+      <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+        {estimate === null ? (
+          <>
+            {loggedLabel} {t('logged')}
+          </>
+        ) : (
+          <>
+            {loggedLabel}{' '}
+            {t('logged of {estimate} estimate', {
+              estimate: formatMinutes(estimate),
+            })}
+          </>
+        )}
+      </span>
       {estimate !== null && (
         <div
           role="progressbar"
+          aria-label={t('Time logged against the estimate')}
           aria-valuenow={Math.round(percent)}
           aria-valuemin={0}
           aria-valuemax={100}
           style={{
             background: TASK_TOKENS.backgroundTertiary,
-            borderRadius: TASK_TOKENS.radiusExtraSmall,
+            borderRadius: 2,
+            flexShrink: 0,
             height: 4,
             overflow: 'hidden',
-            width: '100%',
+            width: PROGRESS_WIDTH,
           }}
         >
           <div
             style={{
               background:
                 logged > estimate ? TASK_TOKENS.red : TASK_TOKENS.accent,
-              borderRadius: TASK_TOKENS.radiusExtraSmall,
               height: '100%',
               width: `${percent}%`,
             }}
           />
         </div>
       )}
+      <span style={{ flex: 1 }} />
+      {sortToggle}
     </div>
   );
 };
@@ -165,19 +174,20 @@ export const IssueWorklogList = ({
   onCreate,
   onUpdateDescription,
   onDelete,
+  sortIsNewestFirst,
 }: IssueWorklogListProps) => {
   const [timeSpent, setTimeSpent] = useState('');
   const [description, setDescription] = useState('');
+  const [formKey, setFormKey] = useState(0);
   const [startedAt, setStartedAt] = useState(toDateTimeLocalValue(new Date()));
   const [editingWorklogId, setEditingWorklogId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
-  const [isNewestFirst, setIsNewestFirst] = useState(true);
-
-  const currentMemberName = readMemberName(
-    membersById,
-    currentMemberId,
-    t('You'),
+  const [openMenuWorklogId, setOpenMenuWorklogId] = useState<string | null>(
+    null,
   );
+  const isMobile = useIsMobile();
+  const [ownIsNewestFirst, setIsNewestFirst] = useState(true);
+  const isNewestFirst = sortIsNewestFirst ?? ownIsNewestFirst;
 
   const sortedWorklogs = useMemo(
     () =>
@@ -203,6 +213,9 @@ export const IssueWorklogList = ({
     });
     setTimeSpent('');
     setDescription('');
+    // The host editor and the stable text fields keep what they last showed,
+    // so a fresh form is a remount.
+    setFormKey((key) => key + 1);
   };
 
   return (
@@ -210,49 +223,61 @@ export const IssueWorklogList = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: FEED_GAP,
         padding: `0 ${FEED_INLINE_INSET}px`,
       }}
     >
-      {/* Stacked, not side by side: this composer is a form, and a duration
-          field, a date field, a note and a button pushed into the column left
-          of an avatar leave each of them too narrow to read. The avatar goes on
-          top, as the byline of what is about to be logged. */}
       {canWrite && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            padding: `0 ${ROW_INLINE_PADDING}px 8px`,
-          }}
+        <TaskFeedComposerRow
+          name={readMemberName(membersById, currentMemberId, '')}
+          avatarUrl={
+            currentMemberId === null
+              ? undefined
+              : membersById.get(currentMemberId)?.avatarUrl
+          }
         >
-          <TaskAvatar
-            name={currentMemberName}
-            avatarUrl={
-              currentMemberId === null
-                ? null
-                : membersById.get(currentMemberId)?.avatarUrl
-            }
-            size={24}
-          />
           <div
+            key={formKey}
             style={{
+              ...TASK_COMPOSER_BOX_STYLE,
               display: 'flex',
-              flex: 1,
               flexDirection: 'column',
-              gap: 8,
-              minWidth: 0,
-              paddingLeft: FEED_BODY_INDENT,
             }}
           >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div
+              style={{
+                // The host editor's own frame would be a second border here.
+                ...({
+                  '--t-border-color-medium': 'transparent',
+                } as CSSProperties),
+                display: 'flex',
+              }}
+            >
+              <TaskRichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder={t('What did you work on?')}
+                minHeight={NOTE_MIN_HEIGHT}
+                issueId={issueId}
+              />
+            </div>
+            <div
+              style={{
+                alignItems: 'center',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 6,
+                padding: '2px 8px 8px 8px',
+              }}
+            >
               <TaskTextInput
                 ariaLabel={t('Time spent')}
                 value={timeSpent}
                 onChange={setTimeSpent}
-                placeholder={t('e.g. 90 or 1h30m')}
-                width={150}
+                onEnter={submit}
+                placeholder={t('1h30m')}
+                width={120}
+                height={28}
                 prefixIcon={
                   <IconClock size={14} color={TASK_TOKENS.textTertiary} />
                 }
@@ -262,52 +287,49 @@ export const IssueWorklogList = ({
                 value={startedAt}
                 onChange={setStartedAt}
               />
-            </div>
-            <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-              <TaskRichTextEditor
-                value={description}
-                onChange={setDescription}
-                placeholder={t('Write what you worked on…')}
-                minHeight={NOTE_MIN_HEIGHT}
-                issueId={issueId}
-              />
-            </div>
-            <div style={{ display: 'flex' }}>
+              <span style={{ flex: 1 }} />
               <TaskButton
                 variant="primary"
-                isDisabled={isBusy || parsedMinutes === null || parsedMinutes <= 0}
+                size="compact"
+                isDisabled={
+                  isBusy || parsedMinutes === null || parsedMinutes <= 0
+                }
                 onClick={submit}
               >
                 {t('Log time')}
               </TaskButton>
             </div>
           </div>
-        </div>
+        </TaskFeedComposerRow>
       )}
 
       {worklogs.length === 0 ? (
-        <TaskEmptyState
-          icon={<IconClock size={16} />}
-          title={t('No time logged yet')}
-          description={t(
-            'Log the time you spent to keep progress and estimates up to date.',
-          )}
-          // Indented to the composer box it sits under, so the two read as
-          // one column instead of two widths stacked on each other.
+        <span
           style={{
-            margin: `0 ${ROW_INLINE_PADDING}px 0 ${ROW_INLINE_PADDING + FEED_BODY_INDENT}px`,
+            color: TASK_TOKENS.textTertiary,
+            fontFamily: TASK_TOKENS.fontFamily,
+            fontSize: 13,
+            paddingLeft: FEED_BODY_INDENT + FEED_TEXT_INSET,
           }}
-        />
+        >
+          {t('No time logged yet.')}
+        </span>
       ) : (
         <WorklogSummary
           totalMinutes={totalMinutes}
           originalEstimateMinutes={originalEstimateMinutes}
-          isNewestFirst={isNewestFirst}
-          onSortChange={setIsNewestFirst}
+          sortToggle={
+            sortIsNewestFirst === undefined ? (
+              <TaskSortToggle
+                isNewestFirst={isNewestFirst}
+                onChange={setIsNewestFirst}
+              />
+            ) : undefined
+          }
         />
       )}
 
-      {sortedWorklogs.map((worklog) => {
+      {sortedWorklogs.map((worklog, index) => {
         const isOwn =
           currentMemberId !== null && worklog.memberId === currentMemberId;
         const canEdit = isOwn && canWrite;
@@ -322,105 +344,151 @@ export const IssueWorklogList = ({
           worklog.memberId,
           t('Unknown'),
         );
+        const previous = sortedWorklogs[index - 1];
+        const isGrouped = isGroupedFeedItem(
+          previous === undefined
+            ? undefined
+            : { authorId: previous.memberId, timestamp: previous.startedAt },
+          { authorId: worklog.memberId, timestamp: worklog.startedAt },
+        );
+        const description = worklog.description ?? '';
 
         return (
-          <TaskFeedItem
+          <div
             key={worklog.id}
-            anchorId={`worklog-${worklog.id}`}
-            isHighlighted={worklog.id === highlightedWorklogId}
-            authorName={memberName}
-            authorEmail={member?.userEmail}
-            avatarUrl={member?.avatarUrl}
-            timestamp={worklog.startedAt}
-            meta={
-              <span
-                style={{
-                  color: TASK_TOKENS.textSecondary,
-                  flexShrink: 0,
-                  fontSize: 12,
-                }}
-              >
-                {t('logged')} {formatMinutes(worklog.timeSpentMinutes)}
-              </span>
-            }
-            nameAction={
-              isEditing ? undefined : (
-                <TaskCopyLinkButton
-                  url={buildIssueWorklogUrl({
-                    baseUrl,
-                    issueId,
-                    worklogId: worklog.id,
-                  })}
-                  label={t('Copy link to worklog')}
-                />
-              )
-            }
-            actions={
-              isEditing || !(canEdit || canDelete) ? undefined : (
-                <>
-                  {canEdit && (
-                    <TaskIconButton
-                      label={t('Edit')}
+            style={{ marginTop: isGrouped ? -FEED_GAP : 0, minWidth: 0 }}
+          >
+            <TaskFeedItem
+              anchorId={`worklog-${worklog.id}`}
+              isHighlighted={worklog.id === highlightedWorklogId}
+              authorName={memberName}
+              authorEmail={member?.userEmail}
+              avatarUrl={member?.avatarUrl}
+              timestamp={worklog.startedAt}
+              isGrouped={isGrouped}
+              meta={
+                <span
+                  title={t('Time logged')}
+                  style={{
+                    alignItems: 'center',
+                    background: TASK_TOKENS.accentSoft,
+                    borderRadius: 10,
+                    color: TASK_TOKENS.accent,
+                    display: 'inline-flex',
+                    flexShrink: 0,
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    gap: 4,
+                    height: 20,
+                    padding: '0 6px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <IconClock size={11} />
+                  {formatMinutes(worklog.timeSpentMinutes)}
+                </span>
+              }
+              shouldShowHoverActions={
+                isMobile || openMenuWorklogId === worklog.id
+              }
+              hoverActions={
+                isEditing ? undefined : (
+                  <>
+                    {canEdit && (
+                      <TaskIconButton
+                        label={t('Edit')}
+                        isDisabled={isBusy}
+                        onClick={() => {
+                          setEditingWorklogId(worklog.id);
+                          setEditDraft(description);
+                        }}
+                      >
+                        <IconPencil size={14} />
+                      </TaskIconButton>
+                    )}
+                    <TaskFeedMoreMenu
+                      onOpenChange={(isOpen) =>
+                        setOpenMenuWorklogId(isOpen ? worklog.id : null)
+                      }
+                      items={[
+                        {
+                          key: 'copy-link',
+                          label: t('Copy link'),
+                          icon: <IconLink size={14} />,
+                          onSelect: () =>
+                            copyLinkToClipboard(
+                              buildIssueWorklogUrl({
+                                baseUrl,
+                                issueId,
+                                worklogId: worklog.id,
+                              }),
+                            ),
+                        },
+                        ...(canDelete
+                          ? [
+                              {
+                                key: 'delete',
+                                label: t('Delete worklog'),
+                                icon: <IconTrash size={14} />,
+                                isDanger: true,
+                                confirmLabel: t('Confirm delete?'),
+                                onSelect: () => onDelete(worklog.id),
+                              },
+                            ]
+                          : []),
+                      ]}
+                    />
+                  </>
+                )
+              }
+            >
+              {isEditing ? (
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                >
+                  <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
+                    <TaskRichTextEditor
+                      value={editDraft}
+                      onChange={setEditDraft}
+                      minHeight={NOTE_MIN_HEIGHT}
+                      issueId={issueId}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <TaskButton
+                      variant="primary"
+                      size="small"
                       isDisabled={isBusy}
                       onClick={() => {
-                        setEditingWorklogId(worklog.id);
-                        setEditDraft(worklog.description ?? '');
+                        onUpdateDescription(worklog.id, editDraft.trim());
+                        setEditingWorklogId(null);
                       }}
                     >
-                      <IconPencil size={14} />
-                    </TaskIconButton>
-                  )}
-                  {canDelete && (
-                    <TaskIconButton
-                      label={t('Delete')}
-                      isDanger
-                      isDisabled={isBusy}
-                      onClick={() => onDelete(worklog.id)}
+                      {t('Save')}
+                    </TaskButton>
+                    <TaskButton
+                      size="small"
+                      onClick={() => setEditingWorklogId(null)}
                     >
-                      <IconTrash size={14} />
-                    </TaskIconButton>
-                  )}
-                </>
-              )
-            }
-          >
-            {isEditing ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ ...TASK_COMPOSER_BOX_STYLE, display: 'flex' }}>
-                  <TaskRichTextEditor
-                    value={editDraft}
-                    onChange={setEditDraft}
-                    minHeight={NOTE_MIN_HEIGHT}
-                    issueId={issueId}
-                  />
+                      {t('Cancel')}
+                    </TaskButton>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <TaskButton
-                    variant="primary"
-                    size="small"
-                    isDisabled={isBusy}
-                    onClick={() => {
-                      onUpdateDescription(worklog.id, editDraft.trim());
-                      setEditingWorklogId(null);
-                    }}
-                  >
-                    {t('Save')}
-                  </TaskButton>
-                  <TaskButton
-                    size="small"
-                    onClick={() => setEditingWorklogId(null)}
-                  >
-                    {t('Cancel')}
-                  </TaskButton>
-                </div>
-              </div>
-            ) : (
-              <TaskRichTextEditor
-                value={worklog.description ?? ''}
-                isReadOnly
-              />
-            )}
-          </TaskFeedItem>
+              ) : description.trim() === '' ? (
+                <span
+                  style={{
+                    color: TASK_TOKENS.textTertiary,
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {t('No description')}
+                </span>
+              ) : (
+                <TaskRichTextEditor value={description} isReadOnly />
+              )}
+            </TaskFeedItem>
+          </div>
         );
       })}
     </section>

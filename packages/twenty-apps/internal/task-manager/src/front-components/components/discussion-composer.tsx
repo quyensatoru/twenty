@@ -1,5 +1,5 @@
 import { TASK_TOKENS } from './task-tokens';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import { TaskMentionPopover } from './task-mention-popover';
 import { t } from 'twenty-sdk/front-component';
 
@@ -30,6 +30,10 @@ type DiscussionComposerProps = {
   onDone?: () => void;
   showConfirmation?: boolean;
 };
+
+// Tall enough for one line of the host editor plus its padding: 44 with the
+// border, the design's single-row composer.
+const COMPOSER_MIN_HEIGHT = 42;
 
 export const DiscussionComposer = ({
   issueId,
@@ -88,145 +92,146 @@ export const DiscussionComposer = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div
-        style={{
-          ...TASK_COMPOSER_BOX_STYLE,
-          display: 'flex',
-          position: 'relative',
-        }}
-      >
-        <TaskRichTextEditor
-          key={editorKey}
-          value={draft}
-          issueId={issueId}
-          minHeight={40}
-          placeholder={
-            parentCommentId ? t('Write a reply…') : t('Type a comment…')
-          }
-          isReadOnly={submission?.status === 'pending'}
-          onChange={(value) => {
-            // A completed mention still contains @; only a new trigger should
-            // reopen the popover and move focus into its member search.
-            if (hasInsertedMentionTrigger(draft, value))
-              setIsMentionMenuDismissed(false);
-            setDraft(value);
-            if (submission?.status !== 'pending') setSubmission(null);
-          }}
-        />
-        {isMentionOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 1,
-              left: 1,
-              right: 1,
-              padding: '8px',
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 13,
-              lineHeight: '19.5px',
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-              pointerEvents: 'none',
-              color: 'transparent',
-            }}
-          >
-            {mentionParagraphs.map((paragraph, index) => (
-              <div key={index} style={{ padding: '3px 0' }}>
-                <span aria-hidden>{paragraph}</span>
-                {index === mentionParagraphs.length - 1 && (
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      position: 'relative',
-                      width: 0,
-                      height: '19.5px',
-                    }}
-                  >
-                    <twenty-overlay
-                      offsetY={24}
-                      onClose={() => setIsMentionMenuDismissed(true)}
-                    >
-                      <TaskMentionPopover
-                        members={members}
-                        query={mentionMatch![1]}
-                        onSelect={selectMention}
-                        onClose={() => setIsMentionMenuDismissed(true)}
-                      />
-                    </twenty-overlay>
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          flexWrap: 'wrap',
-        }}
-      >
-        <span
+    <div
+      style={{
+        ...TASK_COMPOSER_BOX_STYLE,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* One row: the text and its button side by side, the button staying
+          on the last line as the text grows. */}
+      <div style={{ alignItems: 'flex-end', display: 'flex', gap: 8 }}>
+        <div
           style={{
-            marginRight: 'auto',
-            color: TASK_TOKENS.textTertiary,
+            // The host editor draws its own frame; inside this box it would be
+            // a second border, so its colour is taken away.
+            ...({ '--t-border-color-medium': 'transparent' } as CSSProperties),
+            display: 'flex',
+            flex: 1,
+            minWidth: 0,
+            position: 'relative',
+          }}
+        >
+          <TaskRichTextEditor
+            key={editorKey}
+            value={draft}
+            issueId={issueId}
+            minHeight={COMPOSER_MIN_HEIGHT}
+            placeholder={
+              parentCommentId
+                ? t('Write a reply…')
+                : t('Leave a comment, @ to mention')
+            }
+            isReadOnly={submission?.status === 'pending'}
+            onChange={(value) => {
+              // A completed mention still contains @; only a new trigger should
+              // reopen the popover and move focus into its member search.
+              if (hasInsertedMentionTrigger(draft, value))
+                setIsMentionMenuDismissed(false);
+              setDraft(value);
+              if (submission?.status !== 'pending') setSubmission(null);
+            }}
+          />
+          {isMentionOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 1,
+                left: 1,
+                right: 1,
+                padding: '8px',
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 13,
+                lineHeight: '19.5px',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                pointerEvents: 'none',
+                color: 'transparent',
+              }}
+            >
+              {mentionParagraphs.map((paragraph, index) => (
+                <div key={index} style={{ padding: '3px 0' }}>
+                  <span aria-hidden>{paragraph}</span>
+                  {index === mentionParagraphs.length - 1 && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        position: 'relative',
+                        width: 0,
+                        height: '19.5px',
+                      }}
+                    >
+                      <twenty-overlay
+                        offsetY={24}
+                        onClose={() => setIsMentionMenuDismissed(true)}
+                      >
+                        <TaskMentionPopover
+                          members={members}
+                          query={mentionMatch![1]}
+                          onSelect={selectMention}
+                          onClose={() => setIsMentionMenuDismissed(true)}
+                        />
+                      </twenty-overlay>
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ flexShrink: 0, padding: '0 8px 8px 0' }}>
+          <TaskButton
+            variant="primary"
+            size="compact"
+            isDisabled={draft.trim() === '' || submission?.status === 'pending'}
+            onClick={() =>
+              void send(
+                submission?.status === 'failed'
+                  ? submission.input
+                  : {
+                      markdown: draft.trim(),
+                      parentCommentId,
+                      mentionMemberIds: mentionedMemberIds.filter((memberId) =>
+                        draft.includes(buildTaskMentionHref(memberId)),
+                      ),
+                      requestId:
+                        typeof globalThis.crypto?.randomUUID === 'function'
+                          ? globalThis.crypto.randomUUID()
+                          : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`,
+                    },
+              )
+            }
+          >
+            {submission?.status === 'pending'
+              ? t('Sending…')
+              : submission?.status === 'failed'
+                ? t('Retry')
+                : parentCommentId
+                  ? t('Reply')
+                  : t('Comment')}
+          </TaskButton>
+        </div>
+      </div>
+      {submission !== null && (
+        <span
+          role="status"
+          style={{
+            padding: '0 12px 8px',
+            color:
+              submission.status === 'failed'
+                ? TASK_TOKENS.textDanger
+                : TASK_TOKENS.textTertiary,
             fontSize: 12,
           }}
         >
-          {t('Use @ to mention a member')}
+          {submission.status === 'failed'
+            ? `${t('Failed to send')}: ${submission.error}`
+            : submission.status === 'sent'
+              ? t('Sent')
+              : t('Pending')}
         </span>
-        <TaskButton
-          variant="primary"
-          isDisabled={draft.trim() === '' || submission?.status === 'pending'}
-          onClick={() =>
-            void send(
-              submission?.status === 'failed'
-                ? submission.input
-                : {
-                    markdown: draft.trim(),
-                    parentCommentId,
-                    mentionMemberIds: mentionedMemberIds.filter((memberId) =>
-                      draft.includes(buildTaskMentionHref(memberId)),
-                    ),
-                    requestId:
-                      typeof globalThis.crypto?.randomUUID === 'function'
-                        ? globalThis.crypto.randomUUID()
-                        : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`,
-                  },
-            )
-          }
-        >
-          {submission?.status === 'pending'
-            ? t('Sending…')
-            : submission?.status === 'failed'
-              ? t('Retry')
-              : parentCommentId
-                ? t('Reply')
-                : t('Comment')}
-        </TaskButton>
-        {submission !== null && (
-          <span
-            role="status"
-            style={{
-              color:
-                submission.status === 'failed'
-                  ? TASK_TOKENS.textDanger
-                  : TASK_TOKENS.textTertiary,
-              fontSize: 12,
-            }}
-          >
-            {submission.status === 'failed'
-              ? `${t('Failed to send')}: ${submission.error}`
-              : submission.status === 'sent'
-                ? t('Sent')
-                : t('Pending')}
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 };

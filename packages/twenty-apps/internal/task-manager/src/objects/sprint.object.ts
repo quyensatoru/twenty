@@ -2,6 +2,7 @@ import { defineObject, FieldType } from 'twenty-sdk/define';
 
 import { SPRINT_STATE_OPTIONS } from '../constants/sprint-state-options';
 import {
+  SPRINT_CAPACITY_FIELD_UID,
   SPRINT_COMPLETE_DATE_FIELD_UID,
   SPRINT_END_DATE_FIELD_UID,
   SPRINT_GOAL_FIELD_UID,
@@ -76,6 +77,15 @@ export default defineObject({
       label: 'Complete date',
       description: 'Sprint complete date',
       icon: 'IconCalendarCheck',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: SPRINT_CAPACITY_FIELD_UID,
+      type: FieldType.NUMBER,
+      name: 'capacity',
+      label: 'Capacity',
+      description: 'Story points the team plans to finish in the sprint',
+      icon: 'IconGauge',
       isNullable: true,
     },
   ],

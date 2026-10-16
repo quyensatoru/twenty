@@ -5,7 +5,11 @@ import { INBOX_TOKENS } from './inbox-tokens';
 type InboxButtonProps = {
   children: ReactNode;
   icon?: ReactNode;
+  // After the label: an external-link arrow reads as "this leaves the app".
+  trailingIcon?: ReactNode;
   variant?: 'primary' | 'secondary';
+  // `small` sits in a 44 to 48px bar inside a side column.
+  size?: 'medium' | 'small';
   onClick?: () => void;
   href?: string;
   isDisabled?: boolean;
@@ -16,13 +20,16 @@ type InboxButtonProps = {
 export const InboxButton = ({
   children,
   icon,
+  trailingIcon,
   variant = 'secondary',
+  size = 'medium',
   onClick,
   href,
   isDisabled = false,
 }: InboxButtonProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const isPrimary = variant === 'primary';
+  const isSmall = size === 'small';
   const style = {
     alignItems: 'center',
     background: isPrimary
@@ -31,7 +38,7 @@ export const InboxButton = ({
         ? INBOX_TOKENS.backgroundHover
         : INBOX_TOKENS.background,
     border: isPrimary ? 'none' : `1px solid ${INBOX_TOKENS.border}`,
-    borderRadius: 10,
+    borderRadius: isSmall ? 6 : 10,
     boxShadow: isPrimary
       ? `0 1px 2px rgba(16,24,40,.12), inset 0 1px 0 rgba(255,255,255,.12)`
       : 'none',
@@ -41,12 +48,12 @@ export const InboxButton = ({
     filter: isPrimary && isHovered && !isDisabled ? 'brightness(1.08)' : 'none',
     flexShrink: 0,
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: isSmall ? 12.5 : 13,
     fontWeight: 500,
     gap: 6,
-    height: 32,
+    height: isSmall ? 28 : 32,
     opacity: isDisabled ? 0.6 : 1,
-    padding: '0 12px',
+    padding: isSmall ? '0 10px' : '0 12px',
     textDecoration: 'none',
     transition: 'background 120ms ease, filter 120ms ease',
     whiteSpace: 'nowrap',
@@ -64,6 +71,7 @@ export const InboxButton = ({
       >
         {icon}
         {children}
+        {trailingIcon}
       </a>
     );
   }
@@ -79,6 +87,7 @@ export const InboxButton = ({
     >
       {icon}
       {children}
+      {trailingIcon}
     </button>
   );
 };

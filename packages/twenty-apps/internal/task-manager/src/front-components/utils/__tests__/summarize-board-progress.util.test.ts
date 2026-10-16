@@ -15,8 +15,9 @@ describe('summarizeBoardProgress', () => {
         columnPages: { todo: page(3), doing: page(2), done: page(5), NO_STATUS: page(0) },
         columnKeys: ['todo', 'doing', 'done', 'NO_STATUS'],
         doneStatusIds: new Set(['done']),
+        startedStatusIds: new Set(['doing']),
       }),
-    ).toEqual({ totalCount: 10, doneCount: 5, percent: 50 });
+    ).toEqual({ totalCount: 10, doneCount: 5, startedCount: 2, percent: 50 });
   });
 
   it('reads an empty board as 0%', () => {
@@ -26,6 +27,6 @@ describe('summarizeBoardProgress', () => {
         columnKeys: ['todo'],
         doneStatusIds: new Set(),
       }),
-    ).toEqual({ totalCount: 0, doneCount: 0, percent: 0 });
+    ).toEqual({ totalCount: 0, doneCount: 0, startedCount: 0, percent: 0 });
   });
 });

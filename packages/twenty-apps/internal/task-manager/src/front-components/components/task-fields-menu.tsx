@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconSettings } from 'twenty-ui/icon';
+import { IconAdjustments, IconSettings } from 'twenty-ui/icon';
 
 import { type IssueDetailFieldKey } from '../../constants/issue-view-fields';
 import { readIssueFieldLabel } from '../utils/read-issue-field-label.util';
@@ -14,6 +14,8 @@ type TaskFieldsMenuProps<TFieldKey extends IssueDetailFieldKey> = {
   hiddenFields: readonly TFieldKey[];
   onHiddenFieldsChange: (hiddenFields: TFieldKey[]) => void;
   offsetX?: number;
+  // Draws a labelled toolbar button instead of the bare gear.
+  buttonLabel?: string;
 };
 
 export const TaskFieldsMenu = <TFieldKey extends IssueDetailFieldKey>({
@@ -22,8 +24,10 @@ export const TaskFieldsMenu = <TFieldKey extends IssueDetailFieldKey>({
   hiddenFields,
   onHiddenFieldsChange,
   offsetX = -180,
+  buttonLabel,
 }: TaskFieldsMenuProps<TFieldKey>) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTriggerHovered, setIsTriggerHovered] = useState(false);
 
   const toggleField = (key: TFieldKey) =>
     onHiddenFieldsChange(
@@ -34,13 +38,47 @@ export const TaskFieldsMenu = <TFieldKey extends IssueDetailFieldKey>({
 
   return (
     <span style={{ display: 'inline-flex', position: 'relative' }}>
-      <TaskIconButton label={label} onClick={() => setIsOpen(!isOpen)}>
-        <IconSettings size={16} />
-      </TaskIconButton>
+      {buttonLabel === undefined ? (
+        <TaskIconButton label={label} onClick={() => setIsOpen(!isOpen)}>
+          <IconSettings size={16} />
+        </TaskIconButton>
+      ) : (
+        <button
+          type="button"
+          aria-label={label}
+          title={label}
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(!isOpen)}
+          onMouseEnter={() => setIsTriggerHovered(true)}
+          onMouseLeave={() => setIsTriggerHovered(false)}
+          style={{
+            alignItems: 'center',
+            background:
+              isOpen || isTriggerHovered
+                ? TASK_TOKENS.backgroundHover
+                : 'transparent',
+            border: 'none',
+            borderRadius: TASK_TOKENS.radiusSmall,
+            color: TASK_TOKENS.textSecondary,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            flexShrink: 0,
+            fontFamily: TASK_TOKENS.fontFamily,
+            fontSize: 13,
+            fontWeight: 500,
+            gap: 6,
+            height: 28,
+            padding: '0 8px',
+          }}
+        >
+          <IconAdjustments size={14} />
+          {buttonLabel}
+        </button>
+      )}
       {isOpen && (
         <twenty-overlay
           offsetX={offsetX}
-          offsetY={28}
+          offsetY={buttonLabel === undefined ? 28 : 32}
           onClose={() => setIsOpen(false)}
         >
           <div

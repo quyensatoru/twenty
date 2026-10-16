@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconPencil, IconSearch } from 'twenty-ui/icon';
+import { IconShoppingBag, IconPencil, IconSearch } from 'twenty-ui/icon';
 
 import {
   type MerchantOptionRow,
   useMerchantOptions,
 } from '../hooks/use-merchant-options';
 import { TaskCheckbox } from './task-checkbox';
+import { DetailReadButton } from './task-detail-controls';
 import { TASK_BARE_FIELD_STYLE } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
 import { TaskRecordChip } from './task-record-chip';
@@ -158,88 +159,107 @@ export const TaskMerchantField = ({
           width: '100%',
         }}
       >
-        <button
-          type="button"
-          aria-label={t('Merchants')}
-          aria-expanded={isOpen}
-          aria-readonly={isReadOnly}
-          disabled={isDisabled}
-          onClick={() => {
-            if (!isReadOnly) {
-              if (isOpen) {
-                close();
-              } else {
-                open();
+        {shownMerchants.length === 0 ? (
+          <button
+            type="button"
+            aria-label={t('Merchants')}
+            aria-expanded={isOpen}
+            aria-readonly={isReadOnly}
+            disabled={isDisabled}
+            onClick={() => {
+              if (!isReadOnly) {
+                if (isOpen) {
+                  close();
+                } else {
+                  open();
+                }
               }
-            }
-          }}
-          style={{
-            alignItems: 'center',
-            background:
-              isHovered && !isDisabled && !isReadOnly
-                ? TASK_TOKENS.backgroundHover
-                : 'transparent',
-            border: 'none',
-            borderRadius: TASK_TOKENS.radius,
-            cursor: isDisabled
-              ? 'not-allowed'
-              : isReadOnly
-                ? 'default'
-                : 'pointer',
-            display: 'flex',
-            // One line, never wrapping. This is the only row whose height would
-            // otherwise follow its data, and a panel taller than its widget is
-            // answered with a scrollbar there is no way to turn off.
-            flexWrap: 'nowrap',
-            gap: 6,
-            maxWidth: '100%',
-            minHeight: ROW_HEIGHT,
-            minWidth: 0,
-            opacity: isDisabled ? 0.5 : 1,
-            overflow: 'hidden',
-            padding: '0 4px',
-            textAlign: 'left',
-          }}
-        >
-          {shownMerchants.length === 0 ? (
-            <span
-              style={{
-                color: TASK_TOKENS.textLight,
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 13,
-              }}
-            >
-              {t('Merchants')}
-            </span>
-          ) : (
-            shownMerchants.map((merchant) => (
-              <span
-                key={merchant.id}
-                role="link"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenMerchant(merchant.id);
-                }}
-                style={{ cursor: 'pointer', display: 'inline-flex' }}
-              >
-                <TaskRecordChip
-                  name={merchant.name ?? merchant.id}
-                  shape="square"
-                />
-              </span>
-            ))
-          )}
-        </button>
-
-        {isHovered && !isDisabled && !isReadOnly && shownMerchants.length > 0 && (
-          <TaskIconButton
-            label={t('Edit')}
-            isElevated
-            onClick={() => (isOpen ? close() : open())}
+            }}
+            style={{
+              alignItems: 'center',
+              background:
+                isHovered && !isDisabled && !isReadOnly
+                  ? TASK_TOKENS.backgroundHover
+                  : 'transparent',
+              border: 'none',
+              borderRadius: TASK_TOKENS.radiusSmall,
+              color: TASK_TOKENS.textTertiary,
+              cursor: isDisabled
+                ? 'not-allowed'
+                : isReadOnly
+                  ? 'default'
+                  : 'pointer',
+              display: 'flex',
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 13,
+              minHeight: ROW_HEIGHT,
+              opacity: isDisabled ? 0.5 : 1,
+              padding: '5px 6px',
+              textAlign: 'left',
+            }}
           >
-            <IconPencil size={14} />
-          </TaskIconButton>
+            {t('No merchants')}
+          </button>
+        ) : (
+          // One row per merchant, each its own target like the chats below:
+          // inside the picker's button a merchant could not be opened on its
+          // own, since the sandbox does not forward stopPropagation.
+          <div
+            style={{
+              display: 'flex',
+              flex: 1,
+              flexDirection: 'column',
+              gap: 2,
+              minWidth: 0,
+            }}
+          >
+            {shownMerchants.map((merchant) => (
+              <DetailReadButton
+                key={merchant.id}
+                label={merchant.name ?? merchant.id}
+                onOpen={() => onOpenMerchant(merchant.id)}
+              >
+                <span
+                  style={{
+                    alignItems: 'center',
+                    display: 'inline-flex',
+                    gap: 6,
+                    maxWidth: '100%',
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <IconShoppingBag
+                    size={14}
+                    color={TASK_TOKENS.textTertiary}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  >
+                    {(merchant.name ?? merchant.id).replace(
+                      /\.myshopify\.com$/,
+                      '',
+                    )}
+                  </span>
+                </span>
+              </DetailReadButton>
+            ))}
+          </div>
         )}
+
+        {isHovered &&
+          !isDisabled &&
+          !isReadOnly &&
+          shownMerchants.length > 0 && (
+            <TaskIconButton
+              label={t('Edit')}
+              isElevated
+              onClick={() => (isOpen ? close() : open())}
+            >
+              <IconPencil size={14} />
+            </TaskIconButton>
+          )}
 
         {isOpen && !isReadOnly && (
           <twenty-overlay

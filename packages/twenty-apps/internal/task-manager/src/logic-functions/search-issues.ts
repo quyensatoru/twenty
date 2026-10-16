@@ -16,7 +16,21 @@ import { runScopedRoute } from './utils/run-scoped-route.util';
 
 const SEARCH_RESULT_LIMIT = 50;
 
-type SearchIssuesBody = { search?: string };
+// `issueIds` turns the search into a lookup: a comment that links other
+// issues needs their key and title, and the scope filter still applies.
+type SearchIssuesBody = { search?: string; issueIds?: unknown };
+
+const readRequestedIssueIds = (value: unknown): string[] | null =>
+  Array.isArray(value)
+    ? [
+        ...new Set(
+          value.filter(
+            (issueId): issueId is string =>
+              typeof issueId === 'string' && issueId !== '',
+          ),
+        ),
+      ].slice(0, SEARCH_RESULT_LIMIT)
+    : null;
 
 const EMPTY_RESULT = {
   issues: [],
@@ -33,9 +47,12 @@ const EMPTY_RESULT = {
 // so a match can never leak a project the caller has no grant for.
 const handler = async (event: RoutePayload<SearchIssuesBody>) =>
   runScopedRoute(async ({ client, scope }) => {
+    // Empty is a real request: the picker opens on the most recently
+    // updated issues before anything is typed, the way a link picker does.
     const search = (event.body?.search ?? '').trim();
+    const requestedIssueIds = readRequestedIssueIds(event.body?.issueIds);
 
-    if (search === '') {
+    if (requestedIssueIds !== null && requestedIssueIds.length === 0) {
       return EMPTY_RESULT;
     }
 
@@ -58,7 +75,13 @@ const handler = async (event: RoutePayload<SearchIssuesBody>) =>
       pluralName: 'issues',
       filter: {
         ...buildProjectScopeFilter(visibleProjectIds),
-        or: [{ issueKey: { ilike: term } }, { title: { ilike: term } }],
+        ...(requestedIssueIds !== null
+          ? { id: { in: requestedIssueIds } }
+          : search === ''
+            ? {}
+            : {
+                or: [{ issueKey: { ilike: term } }, { title: { ilike: term } }],
+              }),
       },
       selection: ISSUE_SEARCH_SELECTION,
       orderBy: [{ updatedAt: 'DescNullsLast' }],
@@ -73,14 +96,18 @@ const handler = async (event: RoutePayload<SearchIssuesBody>) =>
       ...new Set(
         issues
           .map((issue) => issue.projectId)
-          .filter((projectId): projectId is string => typeof projectId === 'string'),
+          .filter(
+            (projectId): projectId is string => typeof projectId === 'string',
+          ),
       ),
     ];
     const matchedStatusIds = [
       ...new Set(
         issues
           .map((issue) => issue.statusId)
-          .filter((statusId): statusId is string => typeof statusId === 'string'),
+          .filter(
+            (statusId): statusId is string => typeof statusId === 'string',
+          ),
       ),
     ];
 
@@ -111,7 +138,7 @@ export default defineLogicFunction({
   universalIdentifier: SEARCH_ISSUES_LOGIC_FUNCTION_UID,
   name: 'search-issues',
   description:
-    'Route: issues matching a key or title term across every project the caller may read.',
+    'Route: issues matching a key or title term, or a list of ids, across every project the caller may read.',
   timeoutSeconds: 30,
   httpRouteTriggerSettings: {
     path: SEARCH_ISSUES_ROUTE_PATH,

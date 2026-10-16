@@ -9,6 +9,7 @@ type IssueConversationPreviewProps = {
   conversationId: string;
   onOpenMerchant: (merchantId: string, merchantName: string | null) => void;
   onOpenIssue: (issueId: string) => void;
+  issueId?: string;
 };
 
 // The Support Inbox's own thread and details, in the compact layout its
@@ -17,6 +18,7 @@ export const IssueConversationPreview = ({
   conversationId,
   onOpenMerchant,
   onOpenIssue,
+  issueId,
 }: IssueConversationPreviewProps) => {
   const thread = useConversationThread(conversationId);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -41,6 +43,7 @@ export const IssueConversationPreview = ({
         error={thread.error}
         isDetailsOpen={isDetailsOpen}
         isMobile={false}
+        isEmbedded
         onBack={() => setIsDetailsOpen(false)}
         onToggleDetails={() => setIsDetailsOpen((isOpen) => !isOpen)}
         onLoadOlder={() => void thread.loadOlder()}
@@ -53,6 +56,8 @@ export const IssueConversationPreview = ({
               onIssuesChange={thread.replaceIssues}
               onOpenMerchant={onOpenMerchant}
               onOpenIssue={onOpenIssue}
+              isEmbedded
+              currentIssueId={issueId}
             />
           )
         }

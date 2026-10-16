@@ -50,6 +50,8 @@ export type BoardSprint = {
   startDate?: string | null;
   endDate?: string | null;
   completeDate?: string | null;
+  // Story points the team plans to finish; unset leaves the header as is.
+  capacity?: number | null;
   position?: number | null;
 };
 

@@ -88,7 +88,10 @@ export const TaskActionMenu = ({ label, items }: TaskActionMenuProps) => {
                 <button
                   key={item.key}
                   type="button"
-                  role="menuitem"
+                  role={
+                    item.isSelected === undefined ? 'menuitem' : 'menuitemradio'
+                  }
+                  aria-checked={item.isSelected}
                   onMouseEnter={() => setHoveredKey(item.key)}
                   onMouseLeave={() => setHoveredKey(null)}
                   onClick={() => {

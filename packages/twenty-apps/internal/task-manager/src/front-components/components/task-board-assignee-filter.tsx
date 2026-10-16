@@ -23,7 +23,7 @@ type TaskBoardAssigneeFilterProps = {
   onToggle: (id: string) => void;
 };
 
-const AVATAR_SIZE = 28;
+const AVATAR_SIZE = 24;
 const MAX_VISIBLE = 6;
 
 // Jira's quick filter: the people on the board as a row of faces, each a

@@ -5,7 +5,15 @@ import {
   t,
   useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
-import { IconFilterOff, IconPlus, IconStack2 } from 'twenty-ui/icon';
+import {
+  IconCheckbox,
+  IconFlag,
+  IconLayoutSidebar,
+  IconPlus,
+  IconCalendarRepeat,
+  IconStack2,
+  IconUserCircle,
+} from 'twenty-ui/icon';
 
 import { BOARD_ACTIVE_SPRINT } from '../constants/board-active-sprint';
 import { ISSUE_PRIORITY_OPTIONS } from '../constants/issue-priority-options';
@@ -30,6 +38,7 @@ import {
   type BoardViewMode,
   type PageInset,
 } from '../types/task-board';
+import { readEpicColor } from '../utils/epic-color.util';
 import { readBoardIssueSort } from '../utils/read-board-issue-sort.util';
 import { readIssueViewSettings } from '../utils/read-issue-view-settings.util';
 import {
@@ -37,7 +46,9 @@ import {
   type TaskBoardAssigneeOption,
   UNASSIGNED_ASSIGNEE_VALUE,
 } from './components/task-board-assignee-filter';
+import { TaskAvatar } from './components/task-avatar';
 import { TaskBacklogView } from './components/task-backlog-view';
+import { IssueTypeGlyph, UnassignedAvatar } from './components/task-board-card';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSortMenu } from './components/task-board-sort-menu';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
@@ -46,16 +57,23 @@ import { TaskDiscussionNotifications } from './components/task-discussion-notifi
 import { TaskButton } from './components/task-button';
 import { TaskCompleteSprintDialog } from './components/task-complete-sprint-dialog';
 import { type EpicFilter, TaskEpicPanel } from './components/task-epic-panel';
+import { TaskColorDot, TaskFilterChip } from './components/task-chip';
 import { TaskFieldsMenu } from './components/task-fields-menu';
+import {
+  TaskFilterMenu,
+  type TaskFilterMenuField,
+} from './components/task-filter-menu';
 import { TaskFilterToggle } from './components/task-filter-toggle';
 import { TaskIssueSearch } from './components/task-issue-search';
 import { TaskMessage } from './components/task-message';
+import { TaskPriorityGlyph } from './components/task-priority-glyph';
 import { TaskSprintDialog } from './components/task-sprint-dialog';
 import {
   TaskNoActiveSprintBanner,
   TaskSprintHeader,
 } from './components/task-sprint-header';
 import { readTagColor, TASK_TOKENS } from './components/task-tokens';
+import { TaskProjectBadge, TaskToolbarToggle } from './components/task-toolbar';
 import { TaskViewSwitch } from './components/task-view-switch';
 import { useBoardSortPreference } from './hooks/use-board-sort-preference';
 import { useIsMobile } from './hooks/use-is-mobile';
@@ -70,6 +88,7 @@ import { summarizeBoardProgress } from './utils/summarize-board-progress.util';
 
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
+const NO_EPIC_VALUE = 'NO_EPIC';
 const ACTIVE_SPRINT_VALUE = BOARD_ACTIVE_SPRINT;
 const PROJECT_STORAGE_KEY = 'task-board.project-id';
 const VIEW_STORAGE_KEY = 'task-board.view';
@@ -558,6 +577,12 @@ const TaskBoard = () => {
     view === 'board' &&
     sprintFilter === ACTIVE_SPRINT_VALUE &&
     activeSprint !== undefined;
+  // A single sprint on the board makes the sprint chip the same on every
+  // card, so cards only carry it on a board that spans sprints.
+  const isShowingSingleSprint =
+    sprintFilter === ACTIVE_SPRINT_VALUE
+      ? activeSprint !== undefined
+      : sprintFilter !== ALL_VALUE && sprintFilter !== BACKLOG_VALUE;
   // A card created on the board joins what the board is showing, so it does
   // not vanish from a sprint or epic board the moment it exists.
   const newIssueSprintId =
@@ -571,6 +596,11 @@ const TaskBoard = () => {
     columnPages: board.columnPages,
     columnKeys: [...statuses.map((status) => status.id), NO_STATUS_VALUE],
     doneStatusIds,
+    startedStatusIds: new Set(
+      statuses
+        .filter((status) => status.category === 'STARTED')
+        .map((status) => status.id),
+    ),
   });
 
   // On a phone the epic panel takes the whole page, like a screen of its own,
@@ -587,285 +617,407 @@ const TaskBoard = () => {
     setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
   };
 
+  const selectedTypeOption = ISSUE_TYPE_OPTIONS.find(
+    (option) => option.value === typeFilter,
+  );
+  const selectedPriorityOption = ISSUE_PRIORITY_OPTIONS.find(
+    (option) => option.value === priorityFilter,
+  );
+  const selectedAssigneeNames = selectedAssigneeIds.map(
+    (assigneeId) =>
+      assigneeOptions.find((option) => option.id === assigneeId)?.name ??
+      t('Unknown'),
+  );
+  const readSprintFilterLabel = () => {
+    if (sprintFilter === ALL_VALUE) {
+      return t('All sprints');
+    }
+
+    if (sprintFilter === BACKLOG_VALUE) {
+      return t('Backlog');
+    }
+
+    return sprintNamesById.get(sprintFilter) ?? t('Active sprint');
+  };
+  const selectedEpicLabel =
+    epicFilter === null
+      ? t('No epic')
+      : typeof epicFilter === 'string'
+        ? (epicsById.get(epicFilter)?.name ?? t('Unknown'))
+        : null;
+  const toggleSingleValue =
+    (current: string, setValue: (value: string) => void) => (value: string) =>
+      setValue(current === value ? ALL_VALUE : value);
+
+  const filterFields: TaskFilterMenuField[] = [
+    {
+      key: 'assignee',
+      label: t('Assignee'),
+      icon: <IconUserCircle size={14} />,
+      isMulti: true,
+      selectedValues: selectedAssigneeIds,
+      options: assigneeOptions.map((option) => ({
+        value: option.id,
+        label: option.name,
+        icon:
+          option.id === UNASSIGNED_ASSIGNEE_VALUE ? (
+            <UnassignedAvatar size={18} />
+          ) : (
+            <TaskAvatar
+              name={option.name}
+              avatarUrl={option.avatarUrl}
+              size={18}
+              shouldShowTitle={false}
+            />
+          ),
+      })),
+      onToggle: toggleAssignee,
+    },
+    {
+      key: 'priority',
+      label: t('Priority'),
+      icon: <IconFlag size={14} />,
+      isMulti: false,
+      selectedValues: priorityFilter === ALL_VALUE ? [] : [priorityFilter],
+      options: [...ISSUE_PRIORITY_OPTIONS].reverse().map((option) => ({
+        value: option.value,
+        label: option.label,
+        icon: <TaskPriorityGlyph priority={option.value} />,
+      })),
+      onToggle: toggleSingleValue(priorityFilter, setPriorityFilter),
+    },
+    {
+      key: 'type',
+      label: t('Type'),
+      icon: <IconCheckbox size={14} />,
+      isMulti: false,
+      selectedValues: typeFilter === ALL_VALUE ? [] : [typeFilter],
+      options: ISSUE_TYPE_OPTIONS.map((option) => ({
+        value: option.value,
+        label: option.label,
+        icon: <IssueTypeGlyph issueType={option.value} />,
+      })),
+      onToggle: toggleSingleValue(typeFilter, setTypeFilter),
+    },
+    ...(board.epics.length > 0
+      ? [
+          {
+            key: 'epic',
+            label: t('Epic'),
+            icon: <IconStack2 size={14} />,
+            isMulti: false,
+            selectedValues:
+              epicFilter === undefined
+                ? []
+                : [epicFilter === null ? NO_EPIC_VALUE : epicFilter],
+            options: [
+              { value: NO_EPIC_VALUE, label: t('No epic') },
+              ...board.epics.map((epic) => ({
+                value: epic.id,
+                label: epic.name ?? t('Untitled epic'),
+                icon: (
+                  <TaskColorDot
+                    color={readTagColor(readEpicColor(epic)).text}
+                  />
+                ),
+              })),
+            ],
+            onToggle: (value: string) => {
+              const nextEpicFilter = value === NO_EPIC_VALUE ? null : value;
+
+              setEpicFilter(
+                epicFilter === nextEpicFilter ? undefined : nextEpicFilter,
+              );
+            },
+          },
+        ]
+      : []),
+    ...(view === 'board'
+      ? [
+          {
+            key: 'sprint',
+            label: t('Sprint'),
+            icon: <IconCalendarRepeat size={14} />,
+            isMulti: false,
+            selectedValues: [sprintFilter],
+            options: [
+              ...(activeSprint === undefined
+                ? []
+                : [{ value: ACTIVE_SPRINT_VALUE, label: t('Active sprint') }]),
+              { value: ALL_VALUE, label: t('All sprints') },
+              { value: BACKLOG_VALUE, label: t('Backlog') },
+              ...board.sprints
+                .filter((sprint) => sprint.state !== 'CLOSED')
+                .map((sprint) => ({
+                  value: sprint.id,
+                  label: sprint.name ?? sprint.id,
+                })),
+            ],
+            onToggle: (value: string) => setSprintFilter(value),
+          },
+        ]
+      : []),
+  ];
+
+  const toolbarInset = `0 ${pageInset.right}px 0 ${pageInset.left}px`;
+
   return (
     <TaskBoardFrame>
-      <div
+      <header
         style={{
-          background: TASK_TOKENS.background,
+          alignItems: 'center',
+          borderBottom: `1px solid ${TASK_TOKENS.border}`,
+          boxSizing: 'border-box',
           display: 'flex',
-          flexDirection: 'column',
           flexShrink: 0,
-          gap: 10,
-          padding: `12px ${pageInset.right}px 12px ${pageInset.left}px`,
+          flexWrap: isMobile ? 'wrap' : 'nowrap',
+          gap: 8,
+          minHeight: 48,
+          padding: isMobile
+            ? `8px ${pageInset.right}px 8px ${pageInset.left}px`
+            : toolbarInset,
         }}
       >
-        <div
-          style={
-            isMobile
-              ? { display: 'flex', flexDirection: 'column', gap: 8 }
-              : {
-                  alignItems: 'center',
-                  columnGap: 16,
-                  display: 'grid',
-                  // Equal outer tracks keep the search centred on the board
-                  // itself, whatever the pickers on the left and the button
-                  // on the right measure; max-content stops either side
-                  // from being squeezed.
-                  gridTemplateColumns:
-                    'minmax(max-content, 1fr) minmax(240px, 560px) minmax(max-content, 1fr)',
-                }
-          }
-        >
-          <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-            {/* On a phone the picker takes what the switch and the create
-                button leave, and no more: a 100% child would push them off
-                the screen. */}
-            <div
-              style={{
-                display: 'flex',
-                flex: isMobile ? '1 1 0' : '0 0 auto',
-                minWidth: 0,
-              }}
-            >
-              <TaskBoardSelect
-                ariaLabel={t('Project')}
-                width={isMobile ? '100%' : 190}
-                value={projectId ?? board.activeProjectId ?? ''}
-                options={board.projects.map((project) => ({
-                  value: project.id,
-                  label:
-                    typeof project.key === 'string' && project.key !== ''
-                      ? `${project.name ?? project.id} (${project.key})`
-                      : (project.name ?? project.id),
-                }))}
-                onChange={(value) => {
-                  setProjectId(value);
-                  storeValue(PROJECT_STORAGE_KEY, value);
-                  setSelectedIssueId(null);
-                  setComposerStatusId(null);
-                  setComposerSectionKey(null);
-                  setSelectedAssigneeIds([]);
-                  setSprintFilter(ACTIVE_SPRINT_VALUE);
-                  setEpicFilter(undefined);
-                  setShouldIncludeOlderDone(false);
-                }}
-              />
-            </div>
-            <TaskViewSwitch
-              value={view}
-              onChange={changeView}
-              isCompact={isMobile}
-            />
-            {isMobile && board.canWrite && (
-              <TaskButton
-                variant="primary"
-                title={t('Create issue')}
-                isDisabled={view === 'board' && statuses.length === 0}
-                onClick={openCreateIssue}
-              >
-                <IconPlus size={14} />
-              </TaskButton>
-            )}
-            {isMobile && <TaskDiscussionNotifications isCompact />}
-          </div>
-          <TaskIssueSearch
-            value={search}
-            onChange={setSearch}
-            onSelectIssue={selectSearchResult}
-            isShortcutEnabled={selectedIssueId === null}
-            maxWidth={isMobile ? '100%' : 560}
-            size={isMobile ? 'medium' : 'large'}
-            placeholder={t('Search issues by key or title…')}
-          />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {!isMobile && board.canWrite && (
-              <TaskButton
-                variant="primary"
-                isDisabled={view === 'board' && statuses.length === 0}
-                onClick={openCreateIssue}
-              >
-                <IconPlus size={14} />
-                {t('Create issue')}
-              </TaskButton>
-            )}
-            {!isMobile && <TaskDiscussionNotifications />}
-          </div>
-        </div>
+        {/* Three regions on a wide screen: project and view on the left, the
+            search in the middle, notifications and New issue on the right. The
+            side regions share the leftover width equally, which is what keeps
+            the search centred whatever each side holds. */}
         <div
           style={{
             alignItems: 'center',
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: 12,
-            minHeight: 32,
+            flex: '1 1 0',
+            gap: 8,
+            // Never narrower than what it holds: when the bar is tight the
+            // search gives up width first, not the project name.
+            minWidth: isMobile ? 0 : 'max-content',
           }}
         >
-          <TaskButton
-            variant={isEpicPanelOpen ? 'primary' : 'secondary'}
+          <div
+            style={{
+              display: 'flex',
+              flex: '0 1 auto',
+              minWidth: 0,
+            }}
+          >
+            <TaskBoardSelect
+              ariaLabel={t('Project')}
+              variant="ghost"
+              width="auto"
+              value={projectId ?? board.activeProjectId ?? ''}
+              triggerIcon={
+                <TaskProjectBadge projectKey={activeProject?.key ?? null} />
+              }
+              options={board.projects.map((project) => ({
+                value: project.id,
+                label: project.name ?? project.key ?? project.id,
+                icon: (
+                  <TaskProjectBadge
+                    projectKey={project.key ?? null}
+                    size={18}
+                  />
+                ),
+              }))}
+              onChange={(value) => {
+                setProjectId(value);
+                storeValue(PROJECT_STORAGE_KEY, value);
+                setSelectedIssueId(null);
+                setComposerStatusId(null);
+                setComposerSectionKey(null);
+                setSelectedAssigneeIds([]);
+                setSprintFilter(ACTIVE_SPRINT_VALUE);
+                setEpicFilter(undefined);
+                setShouldIncludeOlderDone(false);
+              }}
+            />
+          </div>
+          <TaskViewSwitch
+            value={view}
+            onChange={changeView}
+            isCompact={isMobile}
+          />
+        </div>
+        {!isMobile && (
+          <div style={{ display: 'flex', flex: '0 1 520px', minWidth: 240 }}>
+            <TaskIssueSearch
+              value={search}
+              onChange={setSearch}
+              onSelectIssue={selectSearchResult}
+              maxWidth={520}
+              placeholder={t('Search issues by key or title…')}
+            />
+          </div>
+        )}
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            flex: isMobile ? '0 0 auto' : '1 1 0',
+            gap: 8,
+            justifyContent: 'flex-end',
+            minWidth: isMobile ? 0 : 'max-content',
+          }}
+        >
+          <TaskDiscussionNotifications />
+          {board.canWrite && (
+            <TaskButton
+              variant="primary"
+              size="compact"
+              title={t('New issue')}
+              isDisabled={view === 'board' && statuses.length === 0}
+              onClick={openCreateIssue}
+            >
+              <IconPlus size={14} />
+              {!isMobile && t('New issue')}
+            </TaskButton>
+          )}
+        </div>
+        {isMobile && (
+          <div style={{ display: 'flex', flexBasis: '100%' }}>
+            <TaskIssueSearch
+              value={search}
+              onChange={setSearch}
+              onSelectIssue={selectSearchResult}
+              maxWidth="100%"
+              size="small"
+              placeholder={t('Search issues')}
+            />
+          </div>
+        )}
+      </header>
+
+      <div
+        style={{
+          alignItems: 'center',
+          borderBottom: `1px solid ${TASK_TOKENS.border}`,
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexShrink: 0,
+          flexWrap: 'wrap',
+          gap: 6,
+          minHeight: 40,
+          padding: `6px ${pageInset.right}px 6px ${pageInset.left}px`,
+        }}
+      >
+        {board.activeProjectId !== null && (
+          <TaskToolbarToggle
+            label={isEpicPanelOpen ? t('Hide epics') : t('Show epics')}
+            isActive={isEpicPanelOpen}
             onClick={toggleEpicPanel}
           >
-            <IconStack2 size={14} />
-            {t('Epics')}
-          </TaskButton>
+            <IconLayoutSidebar size={16} />
+          </TaskToolbarToggle>
+        )}
+        <TaskFilterMenu fields={filterFields} isCompact={isMobile} />
+        {selectedAssigneeIds.length > 0 && (
+          <TaskFilterChip
+            label={t('Assignee')}
+            value={
+              selectedAssigneeNames.length > 2
+                ? `${selectedAssigneeNames.slice(0, 2).join(', ')} +${selectedAssigneeNames.length - 2}`
+                : selectedAssigneeNames.join(', ')
+            }
+            onRemove={() => setSelectedAssigneeIds([])}
+          />
+        )}
+        {selectedPriorityOption !== undefined && (
+          <TaskFilterChip
+            label={t('Priority')}
+            value={selectedPriorityOption.label}
+            icon={
+              <TaskPriorityGlyph
+                priority={selectedPriorityOption.value}
+                size={12}
+              />
+            }
+            onRemove={() => setPriorityFilter(ALL_VALUE)}
+          />
+        )}
+        {selectedTypeOption !== undefined && (
+          <TaskFilterChip
+            label={t('Type')}
+            value={selectedTypeOption.label}
+            icon={<IssueTypeGlyph issueType={selectedTypeOption.value} />}
+            onRemove={() => setTypeFilter(ALL_VALUE)}
+          />
+        )}
+        {selectedEpicLabel !== null && (
+          <TaskFilterChip
+            label={t('Epic')}
+            value={selectedEpicLabel}
+            onRemove={() => setEpicFilter(undefined)}
+          />
+        )}
+        {view === 'board' && sprintFilter !== ACTIVE_SPRINT_VALUE && (
+          <TaskFilterChip
+            label={t('Sprint')}
+            value={readSprintFilterLabel()}
+            onRemove={() => setSprintFilter(ACTIVE_SPRINT_VALUE)}
+          />
+        )}
+        {board.currentWorkspaceMemberId !== null && (
+          <TaskFilterToggle
+            label={t('Only mine')}
+            isActive={isOnlyMine}
+            onToggle={toggleOnlyMine}
+          />
+        )}
+        {!isMobile && (
           <TaskBoardAssigneeFilter
             options={assigneeOptions}
             selectedIds={selectedAssigneeIds}
             onToggle={toggleAssignee}
           />
-          {board.currentWorkspaceMemberId !== null && (
-            <TaskFilterToggle
-              label={t('Only my issues')}
-              isActive={isOnlyMine}
-              onToggle={toggleOnlyMine}
-            />
-          )}
-          <TaskBoardSelect
-            ariaLabel={t('Type')}
-            width={isMobile ? 'calc(50% - 6px)' : 130}
-            value={typeFilter}
-            options={[
-              { value: ALL_VALUE, label: t('All types') },
-              ...ISSUE_TYPE_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-                color: option.color,
-              })),
-            ]}
-            onChange={(value) => setTypeFilter(value)}
+        )}
+        {(isFiltered || isSorted) && (
+          <TaskButton variant="ghost" size="compact" onClick={resetFilters}>
+            {t('Clear')}
+          </TaskButton>
+        )}
+        <span style={{ flex: 1 }} />
+        {view === 'board' && !isMobile && !isShowingActiveSprint && (
+          <span
+            title={`${progress.percent}%`}
+            style={{
+              color: TASK_TOKENS.textTertiary,
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 12,
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t('{done} of {total} done', {
+              done: progress.doneCount,
+              total: progress.totalCount,
+            })}
+          </span>
+        )}
+        {view === 'board' && (
+          <TaskBoardSortMenu
+            isMobile={isMobile}
+            sort={boardSort}
+            canAddRule={canAddSortRule}
+            onAddRule={() => void addSortRule()}
+            onChangeRuleField={(index, field) =>
+              void changeSortRuleField(index, field)
+            }
+            onToggleRuleDirection={(index) =>
+              void toggleSortRuleDirection(index)
+            }
+            onMoveRuleUp={(index) => void moveSortRuleUp(index)}
+            onRemoveRule={(index) => void removeSortRule(index)}
+            onClearSort={() => void clearSort()}
           />
-          <TaskBoardSelect
-            ariaLabel={t('Priority')}
-            width={isMobile ? 'calc(50% - 6px)' : 140}
-            value={priorityFilter}
-            options={[
-              { value: ALL_VALUE, label: t('All priorities') },
-              ...ISSUE_PRIORITY_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-                color: option.color,
-              })),
-            ]}
-            onChange={(value) => setPriorityFilter(value)}
+        )}
+        {view === 'board' && !isMobile && board.canManageViews && (
+          <TaskFieldsMenu
+            label={t('Card fields')}
+            buttonLabel={t('Display')}
+            fields={ISSUE_CARD_FIELDS}
+            hiddenFields={hiddenCardFields}
+            onHiddenFieldsChange={saveHiddenCardFields}
           />
-          {view === 'board' && !isShowingActiveSprint && (
-            <TaskBoardSelect
-              ariaLabel={t('Sprint')}
-              width={isMobile ? 'calc(50% - 6px)' : 170}
-              value={
-                sprintFilter === ACTIVE_SPRINT_VALUE &&
-                activeSprint === undefined
-                  ? ALL_VALUE
-                  : sprintFilter
-              }
-              options={[
-                ...(activeSprint === undefined
-                  ? []
-                  : [
-                      { value: ACTIVE_SPRINT_VALUE, label: t('Active sprint') },
-                    ]),
-                { value: ALL_VALUE, label: t('All sprints') },
-                { value: BACKLOG_VALUE, label: t('Backlog') },
-                ...board.sprints.map((sprint) => ({
-                  value: sprint.id,
-                  label:
-                    sprint.state === 'ACTIVE'
-                      ? `${sprint.name ?? sprint.id} · ${t('Active')}`
-                      : (sprint.name ?? sprint.id),
-                })),
-              ]}
-              onChange={(value) => setSprintFilter(value)}
-            />
-          )}
-          {view === 'board' && (
-            <TaskBoardSortMenu
-              isMobile={isMobile}
-              width={isMobile ? 'calc(50% - 6px)' : undefined}
-              sort={boardSort}
-              canAddRule={canAddSortRule}
-              onAddRule={() => void addSortRule()}
-              onChangeRuleField={(index, field) =>
-                void changeSortRuleField(index, field)
-              }
-              onToggleRuleDirection={(index) =>
-                void toggleSortRuleDirection(index)
-              }
-              onMoveRuleUp={(index) => void moveSortRuleUp(index)}
-              onRemoveRule={(index) => void removeSortRule(index)}
-              onClearSort={() => void clearSort()}
-            />
-          )}
-          {(isFiltered || isSorted) && (
-            <TaskButton variant="ghost" onClick={resetFilters}>
-              <IconFilterOff size={14} />
-              {t('Clear filters')}
-            </TaskButton>
-          )}
-          <span style={{ flex: 1 }} />
-          {view === 'board' && !isMobile && (
-            <span
-              style={{
-                alignItems: 'center',
-                color: TASK_TOKENS.textTertiary,
-                display: 'inline-flex',
-                fontFamily: TASK_TOKENS.fontFamily,
-                fontSize: 12,
-                gap: 10,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span>
-                {progress.totalCount === 1
-                  ? `1 ${t('issue')}`
-                  : `${progress.totalCount} ${t('issues')}`}
-              </span>
-              <span
-                title={`${progress.percent}%`}
-                style={{ alignItems: 'center', display: 'inline-flex', gap: 8 }}
-              >
-                <span style={{ color: TASK_TOKENS.textSecondary }}>
-                  {`${progress.doneCount} / ${progress.totalCount} ${t('done')}`}
-                </span>
-                <span
-                  style={{
-                    background: TASK_TOKENS.backgroundTertiary,
-                    borderRadius: 4,
-                    display: 'inline-flex',
-                    height: 6,
-                    overflow: 'hidden',
-                    width: 120,
-                  }}
-                >
-                  <span
-                    style={{
-                      background: readTagColor('green').text,
-                      display: 'block',
-                      height: '100%',
-                      width: `${progress.percent}%`,
-                    }}
-                  />
-                </span>
-                <span style={{ fontWeight: 600, minWidth: 32 }}>
-                  {`${progress.percent}%`}
-                </span>
-              </span>
-            </span>
-          )}
-          {view === 'board' && !isMobile && board.canManageViews && (
-            <TaskFieldsMenu
-              label={t('Card fields')}
-              fields={ISSUE_CARD_FIELDS}
-              hiddenFields={hiddenCardFields}
-              onHiddenFieldsChange={saveHiddenCardFields}
-            />
-          )}
-        </div>
+        )}
       </div>
 
       {view === 'board' &&
@@ -880,6 +1032,8 @@ const TaskBoard = () => {
             inset={pageInset}
             sprint={activeSprint}
             canWrite={board.canWrite}
+            isCompact={isMobile}
+            progress={progress}
             onComplete={() => setCompletingSprint(activeSprint)}
             onEdit={() => setSprintDialogSprint(activeSprint)}
             onViewAllIssues={() => setSprintFilter(ALL_VALUE)}
@@ -935,6 +1089,7 @@ const TaskBoard = () => {
               membersById={membersById}
               epicsById={epicsById}
               sprintNamesById={sprintNamesById}
+              shouldShowSprintChip={!isShowingSingleSprint}
               hiddenCardFields={hiddenCardFields}
               selectedIssueId={selectedIssueId}
               setSelectedIssueId={setSelectedIssueId}
@@ -975,6 +1130,7 @@ const TaskBoard = () => {
                 boardPath={boardPath}
                 isMobile={isMobile}
                 inset={pageInset}
+                assignableMembers={board.assignableMembers}
               />
             )
           )}

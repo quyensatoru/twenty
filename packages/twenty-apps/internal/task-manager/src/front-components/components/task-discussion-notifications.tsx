@@ -20,11 +20,9 @@ type DiscussionNotification = {
   createdAt: string;
   readAt: string | null;
 };
-type TaskDiscussionNotificationsProps = { isCompact?: boolean };
-export const TaskDiscussionNotifications = ({
-  isCompact = false,
-}: TaskDiscussionNotificationsProps) => {
+export const TaskDiscussionNotifications = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTriggerHovered, setIsTriggerHovered] = useState(false);
   const [notifications, setNotifications] = useState<DiscussionNotification[]>(
     [],
   );
@@ -53,34 +51,70 @@ export const TaskDiscussionNotifications = ({
   }, [reload]);
   return (
     <div style={{ position: 'relative' }}>
-      <TaskButton
+      <button
+        type="button"
+        aria-label={
+          unreadCount > 0
+            ? `${t('Notifications')} · ${unreadCount}`
+            : t('Notifications')
+        }
         title={t('Notifications')}
+        aria-expanded={isOpen}
         onClick={() => {
           setIsOpen(!isOpen);
           void reload();
         }}
+        onMouseEnter={() => setIsTriggerHovered(true)}
+        onMouseLeave={() => setIsTriggerHovered(false)}
+        style={{
+          alignItems: 'center',
+          background:
+            isOpen || isTriggerHovered
+              ? TASK_TOKENS.backgroundHover
+              : 'transparent',
+          border: 'none',
+          borderRadius: TASK_TOKENS.radiusSmall,
+          color: TASK_TOKENS.textSecondary,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          height: 28,
+          justifyContent: 'center',
+          position: 'relative',
+          width: 28,
+        }}
       >
-        <IconBell size={14} /> {!isCompact && t('Notifications')}
+        <IconBell size={16} />
         {unreadCount > 0 && (
           <span
+            aria-hidden
             style={{
-              fontSize: 11,
-              minWidth: 16,
-              height: 16,
+              alignItems: 'center',
+              background: TASK_TOKENS.red,
+              borderRadius: 8,
+              boxShadow: `0 0 0 2px ${TASK_TOKENS.background}`,
+              boxSizing: 'border-box',
+              color: '#ffffff',
+              display: 'inline-flex',
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 9.5,
+              fontWeight: 700,
+              height: 14,
+              justifyContent: 'center',
+              minWidth: 14,
               padding: '0 3px',
-              background: TASK_TOKENS.accentSoft,
-              color: TASK_TOKENS.accent,
-              borderRadius: TASK_TOKENS.radiusExtraSmall,
+              position: 'absolute',
+              right: 1,
+              top: 1,
             }}
           >
-            {unreadCount}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
-      </TaskButton>
+      </button>
       {isOpen && (
         <twenty-overlay
-          offsetX={isCompact ? -288 : -190}
-          offsetY={40}
+          offsetX={-292}
+          offsetY={32}
           onClose={() => setIsOpen(false)}
         >
           <div

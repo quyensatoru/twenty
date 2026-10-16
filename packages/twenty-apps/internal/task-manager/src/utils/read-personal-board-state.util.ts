@@ -12,8 +12,14 @@ export const readPersonalBoardPreferences = (
 ): PersonalBoardPreferences => {
   const stored = isObject(value) ? (value as Record<string, unknown>) : {};
   return {
-    workView: stored.workView === 'list' ? 'list' : 'desk',
-    effectsEnabled: stored.effectsEnabled !== false,
+    // My work opens as a list with effects off until the member picks the
+    // cards or turns the effects on. The retired Room view ('board') keeps
+    // reading as the cards it was replaced by.
+    workView:
+      stored.workView === 'desk' || stored.workView === 'board'
+        ? 'desk'
+        : 'list',
+    effectsEnabled: stored.effectsEnabled === true,
     density: stored.density === 'compact' ? 'compact' : 'comfortable',
     projectId: isString(stored.projectId) ? stored.projectId : null,
     collapsedColumns: Array.isArray(stored.collapsedColumns)

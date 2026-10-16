@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import { IconCheck, IconChevronDown, IconSearch } from 'twenty-ui/icon';
 
@@ -14,6 +14,7 @@ export type TaskBoardSelectOption = {
   value: string;
   label: string;
   color?: string | null;
+  icon?: ReactNode;
 };
 
 type TaskBoardSelectProps = {
@@ -24,6 +25,11 @@ type TaskBoardSelectProps = {
   placeholder?: string;
   width?: number | string;
   isDisabled?: boolean;
+  // `ghost` is the borderless trigger a toolbar uses (the project switcher);
+  // `field` is the bordered one that sits in a form row.
+  variant?: 'field' | 'ghost';
+  // Drawn before the selected label, in place of the option's own dot.
+  triggerIcon?: ReactNode;
 };
 
 const TRIGGER_HEIGHT = 32;
@@ -44,8 +50,12 @@ export const TaskBoardSelect = ({
   placeholder,
   width = 180,
   isDisabled = false,
+  variant = 'field',
+  triggerIcon,
 }: TaskBoardSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTriggerHovered, setIsTriggerHovered] = useState(false);
+  const isGhost = variant === 'ghost';
   const [search, setSearch] = useState('');
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
 
@@ -69,19 +79,34 @@ export const TaskBoardSelect = ({
   };
 
   return (
-    <div style={{ display: 'inline-flex', position: 'relative', width }}>
+    <div
+      style={{
+        display: 'inline-flex',
+        maxWidth: '100%',
+        minWidth: 0,
+        position: 'relative',
+        width,
+      }}
+    >
       <button
         type="button"
         aria-label={ariaLabel}
         aria-expanded={isOpen}
         disabled={isDisabled}
         onClick={() => (isOpen ? close() : setIsOpen(true))}
+        onMouseEnter={() => setIsTriggerHovered(true)}
+        onMouseLeave={() => setIsTriggerHovered(false)}
         style={{
           alignItems: 'center',
-          background: isOpen
-            ? TASK_TOKENS.backgroundHover
-            : TASK_TOKENS.background,
-          border: `1px solid ${isOpen ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
+          background:
+            isOpen || (isGhost && isTriggerHovered)
+              ? TASK_TOKENS.backgroundHover
+              : isGhost
+                ? 'transparent'
+                : TASK_TOKENS.background,
+          border: isGhost
+            ? '1px solid transparent'
+            : `1px solid ${isOpen ? TASK_TOKENS.accent : TASK_TOKENS.border}`,
           borderRadius: TASK_TOKENS.radiusSmall,
           boxSizing: 'border-box',
           color: TASK_TOKENS.textPrimary,
@@ -89,12 +114,12 @@ export const TaskBoardSelect = ({
           display: 'flex',
           fontFamily: TASK_TOKENS.fontFamily,
           fontSize: 13,
-          fontWeight: 500,
+          fontWeight: isGhost ? 600 : 500,
           gap: 6,
           height: TRIGGER_HEIGHT,
-          justifyContent: 'space-between',
+          justifyContent: isGhost ? 'flex-start' : 'space-between',
           opacity: isDisabled ? 0.5 : 1,
-          padding: '0 8px',
+          padding: isGhost ? '0 6px 0 4px' : '0 8px',
           textAlign: 'left',
           width: '100%',
         }}
@@ -108,7 +133,11 @@ export const TaskBoardSelect = ({
             overflow: 'hidden',
           }}
         >
-          {selected?.color !== undefined && selected?.color !== null && (
+          {triggerIcon ?? selected?.icon}
+          {triggerIcon === undefined &&
+            selected?.icon === undefined &&
+            selected?.color !== undefined &&
+            selected?.color !== null && (
             <span
               style={{
                 background: readTagColor(selected.color).text,
@@ -224,7 +253,10 @@ export const TaskBoardSelect = ({
                         overflow: 'hidden',
                       }}
                     >
-                      {option.color !== undefined && option.color !== null && (
+                      {option.icon}
+                      {option.icon === undefined &&
+                        option.color !== undefined &&
+                        option.color !== null && (
                         <span
                           style={{
                             background: readTagColor(option.color).text,

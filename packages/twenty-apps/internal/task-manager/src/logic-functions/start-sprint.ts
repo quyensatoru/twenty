@@ -18,6 +18,7 @@ type StartSprintBody = {
   sprintId?: string;
   name?: string;
   goal?: string | null;
+  capacity?: number | null;
   startDate?: string;
   endDate?: string;
 };
@@ -91,6 +92,7 @@ const handler = async (event: RoutePayload<StartSprintBody>) =>
     const name =
       typeof event.body?.name === 'string' ? event.body.name.trim() : '';
     const goal = event.body?.goal;
+    const capacity = event.body?.capacity;
 
     const result = await client.mutation({
       updateSprint: {
@@ -102,6 +104,9 @@ const handler = async (event: RoutePayload<StartSprintBody>) =>
             endDate: event.body?.endDate,
             ...(name === '' ? {} : { name }),
             ...(goal === undefined ? {} : { goal }),
+            ...(capacity === null || typeof capacity === 'number'
+              ? { capacity }
+              : {}),
           },
         },
         ...SPRINT_SELECTION,

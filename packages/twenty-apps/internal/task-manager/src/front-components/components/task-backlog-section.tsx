@@ -2,8 +2,9 @@ import { type ReactNode } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import { IconChevronDown, IconChevronRight } from 'twenty-ui/icon';
 
-import { TaskTag } from './task-tag';
-import { TASK_TOKENS } from './task-tokens';
+import { type PageInset } from '../../types/task-board';
+import { formatSprintCapacity } from '../utils/format-sprint-capacity.util';
+import { readTagColor, TASK_TOKENS } from './task-tokens';
 
 type TaskBacklogSectionProps = {
   title: string;
@@ -16,6 +17,8 @@ type TaskBacklogSectionProps = {
   isCompact: boolean;
   issueCountLabel: string;
   storyPointTotal: number;
+  // The sprint's planned points; absent or unset keeps the header as it was.
+  capacity?: number | null;
   isCollapsed: boolean;
   onToggleCollapsed: () => void;
   // Start / Complete sprint, and the "..." menu. Siblings of the collapse
@@ -29,6 +32,9 @@ type TaskBacklogSectionProps = {
   onDragOverEnd: () => void;
   onDropEnd: () => void;
   isEmpty: boolean;
+  inset: PageInset;
+  // Done / in progress, drawn as a bar for a sprint; absent for the backlog.
+  progress: ReactNode;
   children: ReactNode;
   footer: ReactNode;
 };
@@ -43,6 +49,7 @@ export const TaskBacklogSection = ({
   isCompact,
   issueCountLabel,
   storyPointTotal,
+  capacity,
   isCollapsed,
   onToggleCollapsed,
   action,
@@ -52,10 +59,13 @@ export const TaskBacklogSection = ({
   onDragOverEnd,
   onDropEnd,
   isEmpty,
+  inset,
+  progress,
   children,
   footer,
 }: TaskBacklogSectionProps) => {
   const ChevronIcon = isCollapsed ? IconChevronRight : IconChevronDown;
+  const capacitySummary = formatSprintCapacity({ storyPointTotal, capacity });
   const handleDragOverEnd = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     onDragOverEnd();
@@ -68,13 +78,12 @@ export const TaskBacklogSection = ({
   return (
     <section
       style={{
-        background: TASK_TOKENS.backgroundSecondary,
-        border: `1px solid ${isEndDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderLight}`,
-        borderRadius: TASK_TOKENS.radius,
+        boxShadow: isEndDropTarget
+          ? `inset 0 0 0 1px ${TASK_TOKENS.accent}`
+          : 'none',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
-        overflow: 'hidden',
       }}
     >
       <header
@@ -82,10 +91,19 @@ export const TaskBacklogSection = ({
         onDrop={handleDropEnd}
         style={{
           alignItems: 'center',
+          background: TASK_TOKENS.backgroundSecondary,
+          borderBottom: `1px solid ${TASK_TOKENS.border}`,
+          borderTop: `1px solid ${TASK_TOKENS.border}`,
+          boxSizing: 'border-box',
           display: 'flex',
-          gap: 8,
-          minHeight: 44,
-          padding: '0 8px 0 4px',
+          fontFamily: TASK_TOKENS.fontFamily,
+          gap: 10,
+          marginTop: -1,
+          minHeight: 40,
+          padding: `0 ${inset.right}px 0 ${Math.max(inset.left - 8, 2)}px`,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
         }}
       >
         <button
@@ -94,23 +112,25 @@ export const TaskBacklogSection = ({
           onClick={onToggleCollapsed}
           style={{
             alignItems: 'center',
+            alignSelf: 'stretch',
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             flex: 1,
             fontFamily: TASK_TOKENS.fontFamily,
+            fontSize: 12,
             gap: 8,
             minWidth: 0,
-            padding: '8px 4px',
+            padding: '0 4px',
             textAlign: 'left',
           }}
         >
-          <ChevronIcon size={16} color={TASK_TOKENS.textTertiary} />
+          <ChevronIcon size={14} color={TASK_TOKENS.textTertiary} />
           <span
             style={{
               color: TASK_TOKENS.textPrimary,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -119,50 +139,79 @@ export const TaskBacklogSection = ({
           >
             {title}
           </span>
-          {!isCompact && description !== undefined && (
+          {isActive && (
+            <span
+              style={{
+                background: readTagColor('green').background,
+                borderRadius: TASK_TOKENS.radiusExtraSmall,
+                color: readTagColor('green').text,
+                flexShrink: 0,
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '1px 6px',
+              }}
+            >
+              {t('Active')}
+            </span>
+          )}
+          {!isCompact && dateRange !== null && (
             <span
               style={{
                 color: TASK_TOKENS.textTertiary,
-                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
                 whiteSpace: 'nowrap',
               }}
             >
-              {`· ${description}`}
+              {dateRange}
             </span>
           )}
-          {isActive && <TaskTag color="purple">{t('Active')}</TaskTag>}
-          {!isCompact && dateRange !== null && (
-            <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}>
-              {dateRange}
+          {!isCompact && description !== undefined && (
+            <span
+              style={{ color: TASK_TOKENS.textTertiary, whiteSpace: 'nowrap' }}
+            >
+              {description}
             </span>
           )}
           {!isCompact && (
             <span
               style={{
                 color: TASK_TOKENS.textTertiary,
-                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
                 whiteSpace: 'nowrap',
               }}
             >
-              {`(${issueCountLabel})`}
+              {storyPointTotal > 0
+                ? `· ${issueCountLabel} · ${t('{count} pts', { count: storyPointTotal })}`
+                : `· ${issueCountLabel}`}
             </span>
           )}
         </button>
-        <span
-          title={t('Story points')}
-          style={{
-            background: TASK_TOKENS.backgroundTertiary,
-            borderRadius: 10,
-            color: TASK_TOKENS.textSecondary,
-            flexShrink: 0,
-            fontFamily: TASK_TOKENS.fontFamily,
-            fontSize: 11,
-            lineHeight: '18px',
-            padding: '0 8px',
-          }}
-        >
-          {storyPointTotal}
-        </span>
+        {!isCompact && progress}
+        {!isCompact && capacitySummary !== null && (
+          <span
+            title={
+              capacitySummary.isOverCapacity
+                ? t('Planned points exceed the sprint capacity')
+                : t('Planned points / sprint capacity')
+            }
+            style={{
+              color: capacitySummary.isOverCapacity
+                ? readTagColor('orange').text
+                : TASK_TOKENS.textTertiary,
+              flexShrink: 0,
+              fontFamily: TASK_TOKENS.fontFamily,
+              fontSize: 12,
+              fontVariantNumeric: 'tabular-nums',
+              fontWeight: capacitySummary.isOverCapacity ? 500 : 400,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t('{points} / {capacity} pts', {
+              points: capacitySummary.storyPointTotal,
+              capacity: capacitySummary.capacity,
+            })}
+          </span>
+        )}
         {action}
         {menu}
       </header>
@@ -170,7 +219,6 @@ export const TaskBacklogSection = ({
         <div
           style={{
             background: TASK_TOKENS.background,
-            borderTop: `1px solid ${TASK_TOKENS.borderLight}`,
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -183,11 +231,13 @@ export const TaskBacklogSection = ({
               style={{
                 border: `1px dashed ${isEndDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
                 borderRadius: TASK_TOKENS.radiusSmall,
-                color: isEndDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.textTertiary,
+                color: isEndDropTarget
+                  ? TASK_TOKENS.accent
+                  : TASK_TOKENS.textTertiary,
                 fontFamily: TASK_TOKENS.fontFamily,
                 fontSize: 12,
-                margin: 8,
-                padding: isEmpty ? '16px 8px' : '6px 8px',
+                margin: `8px ${inset.right}px 8px ${inset.left}px`,
+                padding: isEmpty ? '14px 8px' : '6px 8px',
                 textAlign: 'center',
               }}
             >

@@ -15,6 +15,10 @@ import { postAppRoute } from '../../utils/post-app-route.util';
 import { readErrorText } from '../../utils/read-error-text.util';
 import { InboxIconButton } from './inbox-icon-button';
 import { InboxPill } from './inbox-pill';
+import {
+  TaskStatusIcon,
+  type TaskStatusGlyph,
+} from '../../components/task-status-icon';
 import { INBOX_TOKENS, readTone } from './inbox-tokens';
 
 type LinkedIssuesSectionProps = {
@@ -23,9 +27,118 @@ type LinkedIssuesSectionProps = {
   issues: SupportInboxIssue[];
   onIssuesChange: (issues: SupportInboxIssue[]) => void;
   onOpenIssue: (issueId: string) => void;
+  // Inside an issue's side column: the section draws its own heading with
+  // "Link issue" beside it, and rows match the issue's sub-issue list.
+  isEmbedded?: boolean;
+  // The issue this panel is open from, marked rather than offered to unlink.
+  currentIssueId?: string;
 };
 
 const SEARCH_DELAY_MS = 250;
+
+// The support inbox carries a status's name and colour, not its category,
+// so the glyph is read off the name the way the default workflow spells it.
+const readGlyphFromStatusName = (name: string | null): TaskStatusGlyph => {
+  const normalized = (name ?? '').toLowerCase();
+
+  if (normalized.includes('done') || normalized.includes('complete')) {
+    return 'done';
+  }
+  if (normalized.includes('cancel')) {
+    return 'canceled';
+  }
+  if (normalized.includes('review')) {
+    return 'review';
+  }
+  if (normalized.includes('progress')) {
+    return 'started';
+  }
+  if (normalized.includes('todo') || normalized.includes('to do')) {
+    return 'unstarted';
+  }
+
+  return 'backlog';
+};
+
+const EmbeddedIssueRow = ({
+  issue,
+  trailing,
+  onClick,
+}: {
+  issue: SupportInboxIssue;
+  trailing?: ReactNode;
+  onClick: () => void;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        alignItems: 'center',
+        background: isHovered ? INBOX_TOKENS.backgroundHover : 'transparent',
+        borderBottom: `1px solid ${INBOX_TOKENS.borderLight}`,
+        borderRadius: 6,
+        display: 'flex',
+        gap: 4,
+        minHeight: 34,
+        padding: '0 6px',
+      }}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        title={issue.title ?? undefined}
+        style={{
+          alignItems: 'center',
+          alignSelf: 'stretch',
+          background: 'transparent',
+          border: 'none',
+          color: INBOX_TOKENS.textPrimary,
+          cursor: 'pointer',
+          display: 'flex',
+          flex: 1,
+          fontFamily: 'inherit',
+          fontSize: 13,
+          gap: 8,
+          minWidth: 0,
+          padding: 0,
+          textAlign: 'left',
+        }}
+      >
+        <TaskStatusIcon
+          glyph={readGlyphFromStatusName(issue.statusName)}
+          color={issue.statusColor}
+          title={issue.statusName ?? undefined}
+        />
+        {issue.issueKey !== null && (
+          <span
+            style={{
+              color: INBOX_TOKENS.textTertiary,
+              flexShrink: 0,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {issue.issueKey}
+          </span>
+        )}
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {issue.title ?? t('Untitled issue')}
+        </span>
+      </button>
+      {trailing}
+    </div>
+  );
+};
 
 export const IssueRow = ({
   issue,
@@ -112,6 +225,8 @@ export const LinkedIssuesSection = ({
   issues,
   onIssuesChange,
   onOpenIssue,
+  isEmbedded = false,
+  currentIssueId,
 }: LinkedIssuesSectionProps) => {
   const [isPicking, setIsPicking] = useState(false);
   const [results, setResults] = useState<SupportInboxIssue[]>([]);
@@ -196,8 +311,57 @@ export const LinkedIssuesSection = ({
     }
   };
 
+  const Row = isEmbedded ? EmbeddedIssueRow : IssueRow;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: isEmbedded ? 0 : 6 }}
+    >
+      {isEmbedded && (
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              color: INBOX_TOKENS.textTertiary,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              lineHeight: '16px',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('Issues')}
+          </span>
+          {!isPicking && (
+            <button
+              type="button"
+              onClick={openPicker}
+              style={{
+                alignItems: 'center',
+                background: 'transparent',
+                border: 'none',
+                color: INBOX_TOKENS.accent,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                fontFamily: 'inherit',
+                fontSize: 11.5,
+                fontWeight: 500,
+                gap: 3,
+                padding: 0,
+              }}
+            >
+              <IconPlus size={11} />
+              {t('Link issue')}
+            </button>
+          )}
+        </div>
+      )}
       {issues.length === 0 && !isPicking && (
         <span style={{ color: INBOX_TOKENS.textTertiary, fontSize: 12.5 }}>
           {t(
@@ -206,18 +370,32 @@ export const LinkedIssuesSection = ({
         </span>
       )}
       {issues.map((issue) => (
-        <IssueRow
+        <Row
           key={issue.id}
           issue={issue}
           onClick={() => onOpenIssue(issue.id)}
           trailing={
-            <InboxIconButton
-              label={t('Unlink issue')}
-              isDisabled={busyIssueId === issue.id}
-              onClick={() => void setLinked(issue.id, false)}
-            >
-              <IconX size={14} />
-            </InboxIconButton>
+            issue.id === currentIssueId ? (
+              <span
+                style={{
+                  color: INBOX_TOKENS.textTertiary,
+                  flexShrink: 0,
+                  fontSize: 11.5,
+                  paddingRight: 4,
+                }}
+              >
+                {t('This issue')}
+              </span>
+            ) : (
+              <InboxIconButton
+                label={t('Unlink issue')}
+                isDisabled={busyIssueId === issue.id}
+                size={isEmbedded ? 24 : 32}
+                onClick={() => void setLinked(issue.id, false)}
+              >
+                <IconX size={isEmbedded ? 12 : 14} />
+              </InboxIconButton>
+            )
           }
         />
       ))}
@@ -335,7 +513,7 @@ export const LinkedIssuesSection = ({
             )}
           </div>
         </div>
-      ) : (
+      ) : isEmbedded ? null : (
         <button
           type="button"
           onClick={openPicker}

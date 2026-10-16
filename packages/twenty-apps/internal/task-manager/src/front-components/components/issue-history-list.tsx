@@ -4,16 +4,17 @@ import { IconHistory } from 'twenty-ui/icon';
 import { type IssueHistoryRow, type MemberRow } from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskEmptyState } from './task-empty-state';
-import { FEED_INLINE_INSET, TaskFeedItem } from './task-feed-item';
+import { formatDateTimeLabel } from '../utils/format-date-time-label.util';
+import { formatRelativeTimeLabel } from '../utils/format-relative-time-label.util';
+import { TaskAvatar } from './task-avatar';
+import { FEED_INLINE_INSET } from './task-feed-item';
 import { TASK_TOKENS } from './task-tokens';
 
-// The same rhythm the other two tabs keep: a row already carries its own block
-// padding, so the gap between rows is the small one. History ran at 16 and read
-// as a different list from the Comments beside it.
-const FEED_GAP = 4;
-// Comments and worklogs open with a composer, which is what holds their first
-// row off the tab strip. History has none, so it pays for that space itself.
-const FEED_TOP_PADDING = 8;
+const FEED_TOP_PADDING = 0;
+const AVATAR_SIZE = 20;
+// Centres the timeline rule on the avatar column of the comment bubbles, so
+// switching tabs does not shift the left edge of the feed.
+const AVATAR_COLUMN = 24;
 
 // System events of the issue, oldest first: creation and every tracked field
 // change the triggers recorded. Read-only on purpose — history is written by
@@ -42,15 +43,16 @@ export const IssueHistoryList = ({
   }
 
   return (
-    <div
+    <ol
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: FEED_GAP,
+        listStyle: 'none',
+        margin: 0,
         padding: `${FEED_TOP_PADDING}px ${FEED_INLINE_INSET}px 0`,
       }}
     >
-      {histories.map((history) => {
+      {histories.map((history, index) => {
         const author =
           typeof history.authorId === 'string'
             ? membersById.get(history.authorId)
@@ -64,23 +66,77 @@ export const IssueHistoryList = ({
           history.authorId,
           t('System'),
         );
+        const isLast = index === histories.length - 1;
 
         return (
-          <TaskFeedItem
+          <li
             key={history.id}
-            authorName={authorName}
-            authorEmail={author?.userEmail}
-            avatarUrl={author?.avatarUrl}
-            timestamp={history.createdAt}
+            style={{
+              alignItems: 'stretch',
+              display: 'flex',
+              fontFamily: TASK_TOKENS.fontFamily,
+              gap: 10,
+              minHeight: 36,
+            }}
           >
-            <HistoryActionLine
-              history={history}
-              statusNameById={statusNameById}
-            />
-          </TaskFeedItem>
+            <span
+              style={{
+                alignItems: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                flexShrink: 0,
+                width: AVATAR_COLUMN,
+              }}
+            >
+              <span style={{ display: 'inline-flex', paddingTop: 6 }}>
+                <TaskAvatar
+                  name={authorName}
+                  avatarUrl={author?.avatarUrl}
+                  size={AVATAR_SIZE}
+                  shouldShowTitle={false}
+                />
+              </span>
+              {!isLast && (
+                <span
+                  style={{
+                    background: TASK_TOKENS.borderLight,
+                    flex: 1,
+                    marginTop: 4,
+                    width: 1,
+                  }}
+                />
+              )}
+            </span>
+            <span
+              style={{
+                color: TASK_TOKENS.textSecondary,
+                fontSize: 13,
+                lineHeight: '20px',
+                minWidth: 0,
+                padding: '6px 0 10px 0',
+              }}
+            >
+              <strong
+                style={{ color: TASK_TOKENS.textPrimary, fontWeight: 600 }}
+              >
+                {authorName}
+              </strong>{' '}
+              <HistoryActionLine
+                history={history}
+                statusNameById={statusNameById}
+              />
+              <span
+                title={formatDateTimeLabel(history.createdAt)}
+                style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}
+              >
+                {' · '}
+                {formatRelativeTimeLabel(history.createdAt)}
+              </span>
+            </span>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 };
 
@@ -91,25 +147,21 @@ const HistoryActionLine = ({
   history: IssueHistoryRow;
   statusNameById: Map<string, string>;
 }) => {
-  const lineStyle = {
-    color: TASK_TOKENS.textSecondary,
-    fontFamily: TASK_TOKENS.fontFamily,
-    fontSize: 12,
-  } as const;
+  const lineStyle = { color: TASK_TOKENS.textSecondary } as const;
 
   if (history.action === 'created') {
-    return <span style={lineStyle}>{t('Created this issue')}</span>;
+    return <span style={lineStyle}>{t('created this issue')}</span>;
   }
 
   if (history.action === 'status-changed') {
     return (
       <span style={lineStyle}>
-        {t('Status changed')}{' '}
+        {t('changed status from')}{' '}
         <StatusName
           statusId={history.fromStatusId}
           statusNameById={statusNameById}
         />{' '}
-        →{' '}
+        {t('to')}{' '}
         <StatusName
           statusId={history.toStatusId}
           statusNameById={statusNameById}
@@ -128,7 +180,7 @@ const StatusName = ({
   statusId?: string | null;
   statusNameById: Map<string, string>;
 }) => (
-  <strong style={{ fontWeight: 600 }}>
+  <strong style={{ color: TASK_TOKENS.textPrimary, fontWeight: 500 }}>
     {typeof statusId === 'string'
       ? (statusNameById.get(statusId) ?? t('Removed'))
       : '—'}

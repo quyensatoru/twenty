@@ -11,6 +11,16 @@ import { getTaskTodayWindow } from '../utils/get-task-today-window.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
+// Where the page opens: the most pressing queue that holds something, so the
+// first screen is work rather than an empty Overdue tab.
+const OPENING_SECTION_ORDER: readonly TaskTodaySection[] = [
+  'overdue',
+  'today',
+  'inProgress',
+  'upcoming',
+  'noDueDate',
+];
+
 export const useTaskToday = () => {
   const [data, setData] = useState<TaskTodayData | null>(null);
   const [section, setSection] = useState<TaskTodaySection>('overdue');
@@ -24,7 +34,10 @@ export const useTaskToday = () => {
   const isMounted = useRef(true);
 
   const load = useCallback(
-    async (nextSection: TaskTodaySection, after?: string | null) => {
+    async (
+      nextSection: TaskTodaySection,
+      after?: string | null,
+    ): Promise<TaskTodayData | null> => {
       const generation = ++requestGeneration.current;
       setSection(nextSection);
       setIsLoading(true);
@@ -38,7 +51,7 @@ export const useTaskToday = () => {
             ...(after ? { after } : {}),
           },
         );
-        if (generation !== requestGeneration.current) return;
+        if (generation !== requestGeneration.current) return null;
         setData((previous) => {
           if (
             !after ||
@@ -55,9 +68,11 @@ export const useTaskToday = () => {
             ],
           };
         });
+        return result;
       } catch (caught) {
         if (generation === requestGeneration.current)
           setError(readErrorText(caught));
+        return null;
       } finally {
         if (generation === requestGeneration.current) setIsLoading(false);
       }
@@ -67,7 +82,18 @@ export const useTaskToday = () => {
 
   useEffect(() => {
     isMounted.current = true;
-    void load('overdue');
+    const open = async () => {
+      const first = await load('overdue');
+      const opening =
+        first === null
+          ? undefined
+          : OPENING_SECTION_ORDER.find((key) => first.counts[key] > 0);
+
+      if (opening !== undefined && opening !== 'overdue') {
+        void load(opening);
+      }
+    };
+    void open();
     return () => {
       isMounted.current = false;
       requestGeneration.current++;

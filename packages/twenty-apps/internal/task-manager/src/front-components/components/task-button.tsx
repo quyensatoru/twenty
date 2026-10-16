@@ -8,9 +8,9 @@ type TaskButtonProps = {
   variant?: 'primary' | 'secondary' | 'ghost';
   isDisabled?: boolean;
   title?: string;
-  // 32 lines up with the text controls in a form row; 24 is the compact size
-  // twenty-ui uses for buttons sitting inside a list row.
-  size?: 'small' | 'medium';
+  // 32 lines up with the text controls in a form row; 28 with a toolbar's
+  // controls; 24 is the size twenty-ui uses inside a list row.
+  size?: 'small' | 'compact' | 'medium';
 };
 
 const VARIANT_STYLES = {
@@ -72,10 +72,10 @@ export const TaskButton = ({
         fontSize: 13,
         fontWeight: 500,
         gap: 4,
-        height: size === 'small' ? 24 : 32,
+        height: size === 'small' ? 24 : size === 'compact' ? 28 : 32,
         justifyContent: 'center',
         opacity: isDisabled ? 0.5 : 1,
-        padding: size === 'small' ? '0 8px' : '0 12px',
+        padding: size === 'medium' ? '0 12px' : size === 'compact' ? '0 10px' : '0 8px',
         whiteSpace: 'nowrap',
       }}
     >

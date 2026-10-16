@@ -7,6 +7,9 @@ vi.mock('twenty-sdk/front-component', () => ({
   t: (text: string) => text,
   copyToClipboard: vi.fn(),
   enqueueSnackbar: vi.fn(),
+  useFrontComponentExecutionContext: (
+    selector: (context: Record<string, unknown>) => unknown,
+  ) => selector({}),
 }));
 vi.mock('../../components/task-rich-text-editor', () => ({
   TaskRichTextEditor: ({ value }: { value: string }) =>
