@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { readTransferredFiles } from '../read-transferred-files.util';
-import { isTransferredImageFile } from '../upload-image-from-transferred-file.util';
 
 const buildTransfer = (files: unknown[]) => ({
   files: Object.assign([...files], { length: files.length }),
@@ -47,40 +46,5 @@ describe('readTransferredFiles', () => {
     const transfer = buildTransfer([{ name: 'incomplete' }, null]);
 
     expect(readTransferredFiles(transfer)).toEqual([]);
-  });
-});
-
-describe('isTransferredImageFile', () => {
-  it('accepts a non-empty image with a handle', () => {
-    expect(
-      isTransferredImageFile({
-        name: 'a.png',
-        size: 1,
-        type: 'image/png',
-        handle: 'handle-1',
-      }),
-    ).toBe(true);
-  });
-
-  it('refuses a file with no handle, no bytes, or another type', () => {
-    expect(
-      isTransferredImageFile({ name: 'a.png', size: 1, type: 'image/png' }),
-    ).toBe(false);
-    expect(
-      isTransferredImageFile({
-        name: 'a.png',
-        size: 0,
-        type: 'image/png',
-        handle: 'handle-1',
-      }),
-    ).toBe(false);
-    expect(
-      isTransferredImageFile({
-        name: 'a.pdf',
-        size: 1,
-        type: 'application/pdf',
-        handle: 'handle-1',
-      }),
-    ).toBe(false);
   });
 });

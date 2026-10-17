@@ -1,4 +1,4 @@
-import type { TransferredFile } from './upload-image-from-transferred-file.util';
+import type { TransferredFile } from './upload-file-from-transferred-file.util';
 
 // `clipboardData.files` and `dataTransfer.files` are FileList-shaped but hold
 // the host's stand-ins, not File objects — the bytes stayed on the host — so

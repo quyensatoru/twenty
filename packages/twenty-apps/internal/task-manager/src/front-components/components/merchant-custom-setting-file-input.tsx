@@ -11,7 +11,7 @@ import {
   isUploadFileByHandleAvailable,
   uploadFileByHandle,
 } from '../utils/upload-file-by-handle.util';
-import { type TransferredFile } from '../utils/upload-image-from-transferred-file.util';
+import { type TransferredFile } from '../utils/upload-file-from-transferred-file.util';
 import { TaskIconButton } from './task-icon-button';
 import { TASK_TOKENS } from './task-tokens';
 
@@ -104,9 +104,10 @@ export const MerchantCustomSettingFileInput = ({
           onMouseLeave={() => setIsHovered(false)}
           style={{
             alignItems: 'center',
-            background: isHovered && !isDisabled
-              ? TASK_TOKENS.backgroundHover
-              : TASK_TOKENS.background,
+            background:
+              isHovered && !isDisabled
+                ? TASK_TOKENS.backgroundHover
+                : TASK_TOKENS.background,
             border: `1px solid ${TASK_TOKENS.border}`,
             borderRadius: TASK_TOKENS.radiusSmall,
             boxSizing: 'border-box',

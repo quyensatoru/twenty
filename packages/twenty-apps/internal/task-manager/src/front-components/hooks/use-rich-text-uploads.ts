@@ -12,39 +12,33 @@ import {
   type RichTextUploadOutcome,
 } from '../utils/resolve-rich-text-upload.util';
 
-type UploadNotice = { message: string; variant: 'success' | 'warning' | 'info' };
+type UploadNotice = {
+  message: string;
+  variant: 'success' | 'warning' | 'info';
+};
 
 // Written as literals inside t() because the extractor only sees literals.
 const readUploadNotice = (outcome: RichTextUploadOutcome): UploadNotice => {
   switch (outcome) {
     case 'stored':
-      return { message: t('Image stored in Twenty.'), variant: 'success' };
-    case 'not-an-image':
-      // Only images become part of the document. Anything else still belongs
-      // in the Attachments field, which is where the host's picker puts it.
-      return {
-        message: t(
-          'Only an image can be pasted or dropped here. Add any other file in the Attachments field on the Issue tab.',
-        ),
-        variant: 'info',
-      };
+      return { message: t('File stored in Twenty.'), variant: 'success' };
     case 'host-too-old':
       return {
         message: t(
-          'This Twenty server cannot receive a pasted or dropped file yet. Add the image in the Attachments field on the Issue tab.',
+          'This Twenty server cannot receive a pasted or dropped file yet. Add it in the Attachments field on the Issue tab.',
         ),
         variant: 'warning',
       };
     case 'no-attachment-field':
       return {
         message: t(
-          'The Attachments field is missing, so the image could not be stored.',
+          'The Attachments field is missing, so the file could not be stored.',
         ),
         variant: 'warning',
       };
     case 'upload-failed':
       return {
-        message: t('The image could not be stored in Twenty.'),
+        message: t('The file could not be stored in Twenty.'),
         variant: 'warning',
       };
   }
@@ -55,7 +49,9 @@ export const useRichTextUploads = (issueId?: string | null) => {
     RichTextUploadResolution[]
   >([]);
 
-  const storeImage = async (file: Parameters<typeof resolveRichTextUpload>[0]) => {
+  const storeFile = async (
+    file: Parameters<typeof resolveRichTextUpload>[0],
+  ) => {
     const answer = await resolveRichTextUpload(file);
     const notice = readUploadNotice(answer.outcome);
 
@@ -88,7 +84,7 @@ export const useRichTextUploads = (issueId?: string | null) => {
 
   const handleUpload = (event: RichTextUploadEvent) => {
     for (const file of readTransferredFiles(event.detail)) {
-      void storeImage(file);
+      void storeFile(file);
     }
   };
 

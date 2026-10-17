@@ -4,7 +4,7 @@ import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import { appendIssueAttachment } from '../utils/append-issue-attachment.util';
 import { resolveAttachmentFieldMetadataId } from '../utils/resolve-attachment-field-metadata-id.util';
 import { uploadFileByHandle } from '../utils/upload-file-by-handle.util';
-import { type TransferredFile } from '../utils/upload-image-from-transferred-file.util';
+import { type TransferredFile } from '../utils/upload-file-from-transferred-file.util';
 
 type UseIssueAttachmentUploadParams = {
   issueId: string;

@@ -16,24 +16,22 @@ export type TransferredFile = {
 
 // Not named `reason`: the translation extractor treats `reason: '...'` as a
 // user-facing message and would add these discriminants to the catalogs.
-export type UploadImageFromTransferredFileFailure =
+export type UploadFileFromTransferredFileFailure =
   | 'host-too-old'
   | 'no-attachment-field'
   | 'upload-failed';
 
-export type UploadImageFromTransferredFileResult =
+export type UploadFileFromTransferredFileResult =
   | { status: 'uploaded'; url: string; name: string; fileId: string }
-  | { status: 'failed'; failure: UploadImageFromTransferredFileFailure };
+  | { status: 'failed'; failure: UploadFileFromTransferredFileFailure };
 
-export const isTransferredImageFile = (file: TransferredFile): boolean =>
-  typeof file.handle === 'string' &&
-  file.handle !== '' &&
-  file.size > 0 &&
-  file.type.startsWith('image/');
-
-export const uploadImageFromTransferredFile = async (
+// Any file type, the same route the Attachments widget's own picker uses:
+// the markdown editor has no business deciding what belongs on the issue,
+// only the block the user chose (image, file, video…) decides how the URL
+// this returns gets shown.
+export const uploadFileFromTransferredFile = async (
   file: TransferredFile,
-): Promise<UploadImageFromTransferredFileResult> => {
+): Promise<UploadFileFromTransferredFileResult> => {
   if (!isUploadFileByHandleAvailable()) {
     return { status: 'failed', failure: 'host-too-old' };
   }

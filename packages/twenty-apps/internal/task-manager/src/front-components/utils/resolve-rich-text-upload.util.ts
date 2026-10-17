@@ -1,16 +1,14 @@
 import {
-  isTransferredImageFile,
-  uploadImageFromTransferredFile,
+  uploadFileFromTransferredFile,
   type TransferredFile,
-  type UploadImageFromTransferredFileFailure,
-} from './upload-image-from-transferred-file.util';
+  type UploadFileFromTransferredFileFailure,
+} from './upload-file-from-transferred-file.util';
 
 // Not named `reason`: the translation extractor treats `reason: '...'` as a
 // user-facing message and would add these discriminants to the catalogs.
 export type RichTextUploadOutcome =
   | 'stored'
-  | 'not-an-image'
-  | UploadImageFromTransferredFileFailure;
+  | UploadFileFromTransferredFileFailure;
 
 export type RichTextUploadAnswer = {
   handle: string;
@@ -26,17 +24,15 @@ export type RichTextUploadAnswer = {
 // a handle for a file whose bytes never left the host and waits for an answer.
 // The upload itself goes through the app's own scoped route, which is the only
 // place the app's access rules live — an editor that uploaded by itself would
-// spend the signed-in user's token and walk straight around them.
+// spend the signed-in user's token and walk straight around them. Any file
+// type goes through, matching the Attachments widget's own picker: the block
+// the user chose (image, file, video…) is what decides how the stored URL
+// gets shown, not this function.
 export const resolveRichTextUpload = async (
   file: TransferredFile,
 ): Promise<RichTextUploadAnswer> => {
   const handle = file.handle ?? '';
-
-  if (!isTransferredImageFile(file)) {
-    return { handle, url: null, outcome: 'not-an-image' };
-  }
-
-  const result = await uploadImageFromTransferredFile(file);
+  const result = await uploadFileFromTransferredFile(file);
 
   if (result.status === 'failed') {
     return { handle, url: null, outcome: result.failure };
