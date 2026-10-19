@@ -1,4 +1,5 @@
 import {
+  CRISP_PLAN_DATA_ENABLED_VARIABLE,
   CRISP_PLUGIN_IDENTIFIER_VARIABLE,
   CRISP_PLUGIN_KEY_VARIABLE,
   CRISP_SHARED_WEBSITE_APP_NAMES,
@@ -16,6 +17,7 @@ export type CrispWebsite = {
 
 export type CrispSettings = {
   enabled: boolean;
+  planDataEnabled: boolean;
   identifier: string;
   key: string;
   webhookSecret: string;
@@ -31,6 +33,8 @@ export const readCrispSettings = (
   env: Record<string, string | undefined> = process.env,
 ): CrispSettings => ({
   enabled: readVariable(env, CRISP_SYNC_ENABLED_VARIABLE) !== 'false',
+  planDataEnabled:
+    readVariable(env, CRISP_PLAN_DATA_ENABLED_VARIABLE) === 'true',
   identifier: readVariable(env, CRISP_PLUGIN_IDENTIFIER_VARIABLE),
   key: readVariable(env, CRISP_PLUGIN_KEY_VARIABLE),
   webhookSecret: readVariable(env, CRISP_WEBHOOK_SECRET_VARIABLE),
@@ -53,21 +57,27 @@ export const isCrispApiConfigured = (settings: CrispSettings): boolean =>
   settings.key.length > 0 &&
   settings.websites.length > 0;
 
+export const canWritePlanData = (settings: CrispSettings): boolean =>
+  settings.enabled &&
+  settings.planDataEnabled &&
+  isCrispApiConfigured(settings);
+
 export const findCrispWebsite = (
   settings: CrispSettings,
   websiteId: string | undefined,
 ): CrispWebsite | undefined =>
   settings.websites.find((website) => website.websiteId === websiteId);
 
+// The products whose chats land in this website: its own and the ones
+// answering in it.
+export const listWebsiteAppNames = (website: CrispWebsite): string[] => [
+  website.appName,
+  ...(CRISP_SHARED_WEBSITE_APP_NAMES[website.appName as CrispWebsiteAppName] ??
+    []),
+];
+
 // Every product with chats in the configured websites, including the ones
 // answering in another product's website.
 export const listCrispAppNames = (settings: CrispSettings): string[] => [
-  ...new Set(
-    settings.websites.flatMap((website) => [
-      website.appName,
-      ...(CRISP_SHARED_WEBSITE_APP_NAMES[
-        website.appName as CrispWebsiteAppName
-      ] ?? []),
-    ]),
-  ),
+  ...new Set(settings.websites.flatMap(listWebsiteAppNames)),
 ];

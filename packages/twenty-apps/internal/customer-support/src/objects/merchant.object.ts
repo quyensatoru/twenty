@@ -2,6 +2,7 @@ import { defineObject, FieldType } from 'twenty-sdk/define';
 
 import {
   MERCHANT_CUSTOM_SETTINGS_FIELD_UID,
+  MERCHANT_PLAN_STARTED_AT_FIELD_UID,
   MERCHANT_NAME_FIELD_UID,
   MERCHANT_OBJECT_UID,
 } from '../constants/universal-identifiers';
@@ -40,6 +41,16 @@ export default defineObject({
       description:
         'Custom feature settings for this merchant, shape varies by app',
       icon: 'IconSettings',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: MERCHANT_PLAN_STARTED_AT_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'planStartedAt',
+      label: 'Plan started at',
+      description:
+        'When the merchant started its current plan: the install, a reinstall, or the last change of plan. It is written into the Crisp session data as crm_plan_started_at.',
+      icon: 'IconCalendarEvent',
       isNullable: true,
     },
   ],

@@ -55,10 +55,18 @@ export const isCrispRateLimitError = (error: unknown): boolean =>
   error instanceof CrispApiError &&
   (error.status === 429 || error.status === 420);
 
-const crispGet = async <TData>(
+const crispRequest = async <TData>(
   settings: CrispSettings,
   path: string,
-  query: Record<string, string | number | undefined> = {},
+  {
+    method = 'GET',
+    query = {},
+    body,
+  }: {
+    method?: 'GET' | 'PATCH';
+    query?: Record<string, string | number | undefined>;
+    body?: unknown;
+  } = {},
 ): Promise<TData | undefined> => {
   const url = new URL(`${CRISP_API_BASE_URL}${path}`);
 
@@ -76,11 +84,14 @@ const crispGet = async <TData>(
     await waitForRequestSlot();
 
     const response = await fetch(url, {
+      method,
       headers: {
         Authorization: authorization,
         'X-Crisp-Tier': 'plugin',
         Accept: 'application/json',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
     if (
@@ -116,7 +127,7 @@ export const getCrispConversation = (
   websiteId: string,
   sessionId: string,
 ): Promise<CrispConversationPayload | undefined> =>
-  crispGet<CrispConversationPayload>(
+  crispRequest<CrispConversationPayload>(
     settings,
     `/website/${websiteId}/conversation/${sessionId}`,
   );
@@ -132,14 +143,36 @@ export const listCrispConversations = async (
     updatedSince?: string;
   },
 ): Promise<CrispConversationPayload[]> =>
-  (await crispGet<CrispConversationPayload[]>(
+  (await crispRequest<CrispConversationPayload[]>(
     settings,
     `/website/${websiteId}/conversations/${pageNumber}`,
     {
-      per_page: CRISP_CONVERSATIONS_PER_PAGE,
-      filter_date_start: updatedSince,
-      filter_date_end:
-        updatedSince === undefined ? undefined : new Date().toISOString(),
+      query: {
+        per_page: CRISP_CONVERSATIONS_PER_PAGE,
+        filter_date_start: updatedSince,
+        filter_date_end:
+          updatedSince === undefined ? undefined : new Date().toISOString(),
+      },
+    },
+  )) ?? [];
+
+// Crisp's full-text search over every conversation of the website, however
+// old: it reads the visitor's profile as well as the messages, so callers
+// check that a result really is the chat they were after.
+export const searchCrispConversations = async (
+  settings: CrispSettings,
+  websiteId: string,
+  { pageNumber, text }: { pageNumber: number; text: string },
+): Promise<CrispConversationPayload[]> =>
+  (await crispRequest<CrispConversationPayload[]>(
+    settings,
+    `/website/${websiteId}/conversations/${pageNumber}`,
+    {
+      query: {
+        per_page: CRISP_CONVERSATIONS_PER_PAGE,
+        search_query: text,
+        search_type: 'text',
+      },
     },
   )) ?? [];
 
@@ -150,8 +183,23 @@ export const listCrispMessages = async (
   sessionId: string,
   timestampBefore?: number,
 ): Promise<CrispMessagePayload[]> =>
-  (await crispGet<CrispMessagePayload[]>(
+  (await crispRequest<CrispMessagePayload[]>(
     settings,
     `/website/${websiteId}/conversation/${sessionId}/messages`,
-    { timestamp_before: timestampBefore },
+    { query: { timestamp_before: timestampBefore } },
   )) ?? [];
+
+// Crisp does not document whether `data` is merged or replaced, so callers
+// send the session's whole data with their keys changed, never a subset.
+export const updateCrispConversationData = async (
+  settings: CrispSettings,
+  websiteId: string,
+  sessionId: string,
+  data: Record<string, unknown>,
+): Promise<void> => {
+  await crispRequest(
+    settings,
+    `/website/${websiteId}/conversation/${sessionId}/meta`,
+    { method: 'PATCH', body: { data } },
+  );
+};

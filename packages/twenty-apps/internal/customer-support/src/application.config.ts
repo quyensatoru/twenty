@@ -1,6 +1,8 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
+  CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE,
+  CRISP_PLAN_DATA_ENABLED_VARIABLE,
   CRISP_PLUGIN_IDENTIFIER_VARIABLE,
   CRISP_PLUGIN_KEY_VARIABLE,
   CRISP_SYNC_ENABLED_VARIABLE,
@@ -9,6 +11,8 @@ import {
 } from './constants/crisp';
 import {
   APPLICATION_UID,
+  CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE_UID,
+  CRISP_PLAN_DATA_ENABLED_VARIABLE_UID,
   CRISP_PLUGIN_IDENTIFIER_VARIABLE_UID,
   CRISP_PLUGIN_KEY_VARIABLE_UID,
   CRISP_SYNC_ENABLED_VARIABLE_UID,
@@ -62,6 +66,21 @@ export default defineApplication({
       type: FieldType.BOOLEAN,
       isSecret: false,
       value: true,
+    },
+    [CRISP_PLAN_DATA_ENABLED_VARIABLE]: {
+      universalIdentifier: CRISP_PLAN_DATA_ENABLED_VARIABLE_UID,
+      description:
+        "Whether the merchant's plan and plan start are written into Crisp session data (crm_plan, crm_plan_started_at). Off on install so merchants can be synced and their plan start backfilled first; plan start dates are recorded either way.",
+      type: FieldType.BOOLEAN,
+      isSecret: false,
+      value: false,
+    },
+    [CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE]: {
+      universalIdentifier: CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE_UID,
+      description:
+        'Crisp requests the plan data sweep of every chat may spend per day. Keep it well under the plugin daily quota, which the chat sync shares.',
+      isSecret: false,
+      value: '5000',
     },
   },
 });

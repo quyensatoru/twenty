@@ -23,7 +23,7 @@ type MerchantConnection = {
 
 const appIdByName = new Map<string, string | null>();
 
-const readAppId = async (
+export const readAppId = async (
   client: ApiClient,
   appName: string,
 ): Promise<string | null> => {

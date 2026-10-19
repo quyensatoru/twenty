@@ -2,6 +2,9 @@ export const CRISP_PLUGIN_IDENTIFIER_VARIABLE = 'CRISP_PLUGIN_IDENTIFIER';
 export const CRISP_PLUGIN_KEY_VARIABLE = 'CRISP_PLUGIN_KEY';
 export const CRISP_WEBHOOK_SECRET_VARIABLE = 'CRISP_WEBHOOK_SECRET';
 export const CRISP_SYNC_ENABLED_VARIABLE = 'CRISP_SYNC_ENABLED';
+export const CRISP_PLAN_DATA_ENABLED_VARIABLE = 'CRISP_PLAN_DATA_ENABLED';
+export const CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE =
+  'CRISP_PLAN_DATA_DAILY_BUDGET';
 
 // One Crisp website per product. The key is the `app.name` of the product's
 // merchants, so a chat is matched against that product's merchants first.
@@ -135,6 +138,7 @@ export const getCrispWebsiteClaimKey = (websiteId: string): string =>
   `crisp:website-claim:${websiteId}`;
 
 export const CRISP_SYNC_STATE_KEY = 'crisp:sync-state';
+export const CRISP_PLAN_DATA_SWEEP_STATE_KEY = 'crisp:plan-data-sweep';
 
 // The web hook events the CRM stores; every other namespace is acknowledged
 // and dropped.

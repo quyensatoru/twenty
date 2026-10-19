@@ -8,6 +8,7 @@ import { applyMessageToConversation } from './apply-message-to-conversation.util
 import { toConversationStatus } from './build-conversation-record.util';
 import {
   countConversationMessages,
+  findStoredConversation,
   softDeleteRecord,
   type StoredConversation,
   updateConversation,
@@ -136,6 +137,16 @@ export const processCrispEvent = async ({
     });
 
     return 'message-removed';
+  }
+
+  // Mostly the plan data sweep rewriting chats the CRM never stored;
+  // importing each one would spend several Crisp reads on a chat nobody
+  // opened. A stored chat still takes the change.
+  if (
+    event === 'session:set_data' &&
+    (await findStoredConversation(client, conversationId)) === undefined
+  ) {
+    return 'ignored';
   }
 
   const stored = await ensureConversation({
