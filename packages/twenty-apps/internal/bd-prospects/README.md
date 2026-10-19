@@ -3,6 +3,27 @@
 Khu vực **High-Value Prospects** cho team BD, đóng gói dưới dạng Twenty Application.
 Không sửa một dòng nào trong `twenty-front` / `twenty-server` / `twenty-shared`.
 
+## Export danh sách outreach
+
+1. Mở **BD Prospects → Export prospects**, hoặc action **Export prospects** trên danh sách.
+2. Thêm bộ lọc, chọn **All conditions (AND)** hoặc **Any condition (OR)**. Có thể thêm nhiều điều kiện trên cùng một field; select và multi-select cho chọn nhiều giá trị. Không có điều kiện thì xuất toàn bộ prospects.
+3. Chọn các field cần xuất, dùng nút mũi tên để đổi thứ tự cột.
+4. Bấm **Export**, kiểm tra tổng số store và preview 10 dòng, rồi chọn **CSV** hoặc **Excel (.xlsx)** để tải file.
+
+Mặc định chọn 5 cột: **Store domain, Email, LinkedIn page, Shopify plan, Our app**.
+Có thể chọn thêm hoặc bớt các trường thông tin của prospect, gồm tên shop, ngành, app khác,
+email PIC, Crisp chat, các ngày đồng bộ/enrichment và stage theo app.
+Email và LinkedIn dùng giá trị chính của prospect; ô thiếu dữ liệu để trống.
+Mỗi prospect một dòng; nhiều app nằm chung ô Our app, phân cách bằng dấu `;`.
+Không cố định app hay plan trong chức năng export. Bộ lọc của trang export độc lập với bộ lọc
+trên danh sách; các thay đổi tạm hay view đã lưu ở danh sách không tự sao chép sang trang này.
+Không cần chọn dòng hay **Select all**: hệ thống đọc hết mọi trang khớp bộ lọc export.
+Nếu một trang lỗi hoặc số bản ghi thay đổi trong khi đọc, hộp export báo lỗi để thử lại,
+không cung cấp file thiếu dòng.
+
+Action và giao diện export nằm hoàn toàn trong application. File được tạo trong trình duyệt và tải qua frame sandbox của application;
+không tạo thêm bản ghi hay lưu file lên CRM.
+
 ## Nó làm gì
 
 | Yêu cầu                                                      | Cách đáp ứng                                                                                             |

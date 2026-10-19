@@ -32,7 +32,13 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.fields,
           title: 'Fields',
           type: 'FIELDS',
-          gridPosition: { row: 0, column: 0, rowSpan: 5, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 5,
+            columnSpan: 12,
+          },
           // Explicit null rather than omitted: the server stores the key, so
           // leaving it out makes every plan show a phantom change.
           configuration: {
@@ -46,14 +52,26 @@ export default definePageLayout({
           type: 'NOTES',
           // Note tiles are a fixed 300px tall: a shorter box hides all but the
           // first one behind a scrollbar.
-          gridPosition: { row: 7, column: 0, rowSpan: 7, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 7,
+            column: 0,
+            rowSpan: 7,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'NOTES' },
         },
         {
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.linkedin,
           title: 'LinkedIn',
           type: 'FRONT_COMPONENT',
-          gridPosition: { row: 5, column: 0, rowSpan: 2, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 5,
+            column: 0,
+            rowSpan: 2,
+            columnSpan: 12,
+          },
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:
@@ -73,7 +91,13 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.notes,
           title: 'Notes',
           type: 'NOTES',
-          gridPosition: { row: 0, column: 0, rowSpan: 12, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 12,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'NOTES' },
         },
       ],
@@ -89,7 +113,13 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.tasks,
           title: 'Tasks',
           type: 'TASKS',
-          gridPosition: { row: 0, column: 0, rowSpan: 12, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 12,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'TASKS' },
         },
       ],
@@ -105,7 +135,13 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.timeline,
           title: 'Timeline',
           type: 'TIMELINE',
-          gridPosition: { row: 0, column: 0, rowSpan: 12, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 12,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'TIMELINE' },
         },
       ],
@@ -121,7 +157,13 @@ export default definePageLayout({
           universalIdentifier: PROSPECT_RECORD_PAGE_WIDGETS.files,
           title: 'Files',
           type: 'FILES',
-          gridPosition: { row: 0, column: 0, rowSpan: 12, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 12,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'FILES' },
         },
       ],

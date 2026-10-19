@@ -21,13 +21,13 @@ export default definePageLayout({
       title: 'Import',
       position: 0,
       icon: 'IconFileImport',
-      layoutMode: PageLayoutTabLayoutMode.GRID,
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgets: [
         {
           universalIdentifier: IMPORT_PAGE_LAYOUT_WIDGET_UID,
           title: 'Import prospects from CSV',
           type: 'FRONT_COMPONENT',
-          gridPosition: { row: 0, column: 0, rowSpan: 6, columnSpan: 12 },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:

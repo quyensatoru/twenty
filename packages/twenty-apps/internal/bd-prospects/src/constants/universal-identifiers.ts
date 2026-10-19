@@ -17,6 +17,14 @@ export const SUPPORT_INBOX_PAGE_LAYOUT_UID =
 // existing one, so they are never inlined at the definition site.
 
 export const PROSPECT_OBJECT_UID = '27e6b144-d8cc-4888-a404-83ee1b13c315';
+export const EXPORT_PROSPECTS_COMMAND_MENU_ITEM_UID =
+  'bb68f446-81cc-4ae4-81c6-ac7c6e02f3ac';
+export const EXPORT_PROSPECTS_FRONT_COMPONENT_UID =
+  '3607ce9d-c071-48da-9644-c65560af2156';
+export const EXPORT_PAGE_NAV_ITEM_UID = '936ad957-352a-4cb4-97a5-468e6abf77f6';
+export const EXPORT_PAGE_LAYOUT_UID = 'e4079a6e-bd15-4c7a-bd54-182a4bf50eca';
+export const EXPORT_PAGE_LAYOUT_TAB_UID = '21a750d3-25d7-456a-a10c-f45122dddf8c';
+export const EXPORT_PAGE_LAYOUT_WIDGET_UID = '9da57ae4-15d0-4f74-8e06-988f80eec7ae';
 export const UPSELL_DEAL_OBJECT_UID = 'b5675faa-44ec-4be9-b84d-da289df52547';
 
 export const PROSPECT_DOMAIN_FIELD_UID = '9ca60f80-6a7f-4589-92a9-ff99f04e4d66';

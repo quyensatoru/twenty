@@ -33,7 +33,13 @@ export default definePageLayout({
           universalIdentifier: UPSELL_DEAL_RECORD_PAGE_WIDGETS.fields,
           title: 'Fields',
           type: 'FIELDS',
-          gridPosition: { row: 0, column: 0, rowSpan: 4, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 4,
+            columnSpan: 12,
+          },
           configuration: {
             configurationType: 'FIELDS',
             // Which fields show, and in what order.
@@ -49,7 +55,13 @@ export default definePageLayout({
           type: 'NOTES',
           // A note tile is a fixed 300px tall, so a 6-row box shows one note
           // and hides the rest behind a scrollbar.
-          gridPosition: { row: 4, column: 0, rowSpan: 8, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 4,
+            column: 0,
+            rowSpan: 8,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'NOTES' },
         },
       ],
@@ -65,7 +77,13 @@ export default definePageLayout({
           universalIdentifier: UPSELL_DEAL_RECORD_PAGE_WIDGETS.timeline,
           title: 'Timeline',
           type: 'TIMELINE',
-          gridPosition: { row: 0, column: 0, rowSpan: 12, columnSpan: 12 },
+          position: {
+            layoutMode: 'GRID',
+            row: 0,
+            column: 0,
+            rowSpan: 12,
+            columnSpan: 12,
+          },
           configuration: { configurationType: 'TIMELINE' },
         },
       ],
