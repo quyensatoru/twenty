@@ -1,15 +1,7 @@
 import { type BlockNoteEditor } from '@blocknote/core';
 
 import { convertMarkdownToBlocks } from '@/front-components/host-components/utils/convertMarkdownToBlocks';
-
-// Clipboard formats BlockNote's own handler already pastes faithfully: its
-// own blocks, VS Code's code, files, and rich HTML from a web page.
-const FORMATS_LEFT_TO_BLOCKNOTE = [
-  'blocknote/html',
-  'vscode-editor-data',
-  'Files',
-  'text/html',
-];
+import { isClipboardLeftToBlockNote } from '@/front-components/host-components/utils/isClipboardLeftToBlockNote';
 
 type PasteHandlerContext = {
   event: ClipboardEvent;
@@ -35,7 +27,7 @@ export const handleMarkdownPaste = ({
   if (
     clipboard === null ||
     isInCodeBlock ||
-    FORMATS_LEFT_TO_BLOCKNOTE.some((format) => clipboard.types.includes(format))
+    isClipboardLeftToBlockNote(clipboard)
   ) {
     return defaultPasteHandler();
   }
