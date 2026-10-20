@@ -8,6 +8,7 @@ import { KeyboardShortcutMenu } from '@/keyboard-shortcut-menu/components/Keyboa
 import { LayoutCustomizationBar } from '@/layout-customization/components/LayoutCustomizationBar';
 import { MobileNavigationBar } from '@/navigation/components/MobileNavigationBar';
 import { PageDragDropProvider } from '@/navigation-menu-item/display/dnd/providers/PageDragDropProvider';
+import { TeamMomentsTodayOverlay } from '@/team-moments/components/TeamMomentsTodayOverlay';
 import { useIsMobile } from 'twenty-ui/utilities';
 import { styled } from '@linaria/react';
 import { Outlet } from 'react-router-dom';
@@ -84,6 +85,7 @@ export const DefaultLayout = () => {
               </PageDragDropProvider>
             </StyledPageContainer>
             {isMobile && <MobileNavigationBar />}
+            <TeamMomentsTodayOverlay />
           </AppErrorBoundary>
         </StyledLayout>
       </FileUploadProvider>
