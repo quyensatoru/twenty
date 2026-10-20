@@ -1,5 +1,6 @@
 import { type CardTemplate } from '../../constants/card-templates';
 import { CARD_HEIGHT, CARD_WIDTH } from '../../utils/build-card-svg.util';
+import { buildCardPalette, luminance, mixColor } from '../../utils/card-palette.util';
 import { wrapText } from '../../utils/wrap-text.util';
 
 export const CARD_THUMBNAIL_WIDTH = 1200;
@@ -38,27 +39,6 @@ const AVATARS_SHOWN = 4;
 const AVATAR_SIZE = 52;
 const AVATAR_OVERLAP = 12;
 const PETAL_ANGLES = [0, 72, 144, 216, 288];
-
-const parseHex = (hex: string): [number, number, number] => {
-  const value = Number.parseInt(hex.replace('#', ''), 16);
-
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-};
-
-const mixColor = (from: string, to: string, amount: number): string => {
-  const start = parseHex(from);
-  const end = parseHex(to);
-
-  return `#${start
-    .map((channel, index) => Math.round(channel + (end[index] - channel) * amount).toString(16).padStart(2, '0'))
-    .join('')}`;
-};
-
-const luminance = (hex: string): number => {
-  const [red, green, blue] = parseHex(hex);
-
-  return (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
-};
 
 let cardFontsLoading: Promise<void> | null = null;
 
@@ -401,12 +381,7 @@ export const renderCardThumbnail = async (input: RenderCardThumbnailInput): Prom
   const [, backgroundImage] = await Promise.all([loadCardFonts(), loadBackgroundImage(input.backgroundImageUrl)]);
 
   const { template } = input;
-  const isLight = luminance(template.ground) > 0.6;
-  const ground = isLight ? mixColor(template.ground, template.ornament, 0.15) : mixColor(template.ground, '#000000', 0.3);
-  const ink = template.ink;
-  const mutedInk = mixColor(ink, ground, 0.22);
-  const accent = isLight ? mixColor(template.ornament, '#000000', 0.35) : template.ornament;
-  const [darker, lighter] = luminance(template.ground) < luminance(ink) ? [template.ground, ink] : [ink, template.ground];
+  const { ground, ink, mutedInk, accent, darker, lighter } = buildCardPalette(template);
 
   context.fillStyle = ground;
   context.fillRect(0, 0, CARD_THUMBNAIL_WIDTH, CARD_THUMBNAIL_HEIGHT);

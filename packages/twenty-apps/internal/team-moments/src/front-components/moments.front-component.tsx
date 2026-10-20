@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { enqueueSnackbar } from 'twenty-sdk/front-component';
+import { enqueueSnackbar, useFrontComponentExecutionContext } from 'twenty-sdk/front-component';
 
 import { MOMENTS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { type TeamEventRow } from '../types/moments-records';
 import { getMissingDefaultHolidays } from '../utils/get-missing-default-holidays.util';
+import { parseMomentsCardAnchor } from '../utils/moments-card-anchor.util';
 import { EventFormModal, type TeamEventInput } from './components/event-form-modal';
 import { MembersView } from './components/members-view';
 import { MomentsButton } from './components/moments-button';
@@ -20,8 +21,12 @@ type MomentsTab = 'overview' | 'members';
 const Moments = () => {
   const data = useMomentsData();
   const { canManageEvents, canEditMemberProfiles } = useMomentsPermissions();
+  const locationHash = useFrontComponentExecutionContext(
+    (context) => (context as { locationHash?: string }).locationHash ?? '',
+  );
+  const [anchoredKey] = useState(() => parseMomentsCardAnchor(locationHash));
   const [tab, setTab] = useState<MomentsTab>('overview');
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(anchoredKey);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
@@ -119,6 +124,7 @@ const Moments = () => {
             currentMember={data.currentMember}
             memberNames={data.memberNames}
             memberCount={data.members.length}
+            initialTab={openOccurrence.key === anchoredKey ? 'card' : 'chat'}
             onBack={() => setOpenKey(null)}
           />
         ) : tab === 'overview' ? (

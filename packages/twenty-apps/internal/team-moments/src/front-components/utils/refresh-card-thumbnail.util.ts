@@ -14,7 +14,7 @@ export const refreshCardThumbnail = async (
   card: EventCardRow,
   occurrence: Occurrence,
   fallbackBackgroundImageUrl?: string | null,
-): Promise<void> => {
+): Promise<EventCardRow['thumbnail']> => {
   try {
     const isInvitation = card.cardKind === 'INVITATION';
     const template = findCardTemplate(card.templateKey);
@@ -43,15 +43,22 @@ export const refreshCardThumbnail = async (
     });
 
     if (blob === null || fieldMetadataId === null) {
-      return;
+      return null;
     }
 
     const result = await uploadFile(blob, { fieldMetadataId, fileName: 'thiep.png' });
 
-    if (result.status === 'uploaded') {
-      await updateRecord('eventCards', card.id, { thumbnail: [{ fileId: result.file.fileId, label: 'thiep.png' }] });
+    if (result.status !== 'uploaded') {
+      return null;
     }
+
+    const thumbnail = [{ fileId: result.file.fileId, label: 'thiep.png' }];
+
+    await updateRecord('eventCards', card.id, { thumbnail });
+
+    return thumbnail;
   } catch {
     // Ignored on purpose, see above.
+    return null;
   }
 };

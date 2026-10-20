@@ -1,3 +1,4 @@
+import { type CardPalette } from './card-palette.util';
 import { escapeMarkup } from './escape-markup.util';
 import { ictDateTimeToMillis } from './moments-date.util';
 
@@ -7,9 +8,10 @@ type BuildSharePageInput = {
   cardSvg: string;
   imageUrl: string | null;
   downloadUrl: string;
+  cardRoomUrl: string | null;
   eventDate: string | null;
   wishes: string[];
-  accent: string;
+  palette: CardPalette;
 };
 
 // A self-contained page for people outside the CRM: the card, a live
@@ -21,9 +23,10 @@ export const buildSharePage = ({
   cardSvg,
   imageUrl,
   downloadUrl,
+  cardRoomUrl,
   eventDate,
   wishes,
-  accent,
+  palette,
 }: BuildSharePageInput): string => {
   const target = eventDate === null ? Number.NaN : ictDateTimeToMillis(eventDate);
   const safeTitle = escapeMarkup(title);
@@ -34,6 +37,7 @@ export const buildSharePage = ({
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="${palette.ground}">
 <title>${safeTitle}</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="${safeTitle}">
@@ -51,15 +55,15 @@ ${
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#F7F4F1;color:#2B2B2B}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,sans-serif;background:${palette.ground};color:${palette.ink}}
 main{max-width:520px;margin:0 auto;padding:24px 16px 48px;display:flex;flex-direction:column;gap:18px}
-.card svg{width:100%;height:auto;display:block;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.14)}
+.card svg{width:100%;height:auto;display:block;border-radius:16px;box-shadow:0 24px 48px rgba(0,0,0,.3),0 0 0 1px ${palette.line}}
 .timer{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.timer div{background:#fff;border-radius:12px;padding:10px 0;text-align:center;box-shadow:0 0 0 1px #ECE7E2}
-.timer b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.timer span{font-size:11px;letter-spacing:.08em;color:#6B6B6B}
+.timer div{background:${palette.panel};border-radius:12px;padding:10px 0;text-align:center;box-shadow:inset 0 0 0 1px ${palette.line}}
+.timer b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.timer span{font-size:11px;letter-spacing:.08em;color:${palette.mutedInk}}
 .actions{display:flex;gap:8px}.actions a{flex:1;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:600;text-decoration:none}
-.primary{background:${accent};color:#fff}.secondary{background:#fff;color:#2B2B2B;box-shadow:inset 0 0 0 1px #DDD5CE}
-.wish{background:#fff;border-radius:12px;padding:12px 14px;font-family:'Playfair Display',Georgia,serif;font-style:italic;line-height:1.5;box-shadow:0 0 0 1px #ECE7E2}
+.primary{background:${palette.accent};color:${palette.onAccent}}.room{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;border-radius:12px;background:${palette.ink};color:${palette.ground};text-decoration:none;font-weight:600}.room small{font-weight:400;font-size:12px;opacity:.75}.secondary{background:${palette.panel};color:${palette.ink};box-shadow:inset 0 0 0 1px ${palette.line}}
+.wish{background:${palette.panel};border-radius:12px;padding:12px 14px;font-family:'Playfair Display',Georgia,serif;font-style:italic;line-height:1.5;box-shadow:inset 0 0 0 1px ${palette.line}}
 h2{font-size:15px;margin:6px 0 0}
 </style>
 </head>
@@ -67,6 +71,7 @@ h2{font-size:15px;margin:6px 0 0}
 <main>
 <div class="card">${cardSvg}</div>
 <div class="timer" id="timer" aria-live="polite"></div>
+${cardRoomUrl === null ? '' : `<a class="room" href="${escapeMarkup(cardRoomUrl)}">Ký thiệp và gửi lời chúc<small>Mở thiệp chung trong CRM</small></a>`}
 <div class="actions">
 <a class="primary" href="${escapeMarkup(downloadUrl)}" download>Tải thiệp</a>
 <a class="secondary" href="#" id="share">Chia sẻ</a>

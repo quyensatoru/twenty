@@ -68,8 +68,13 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
 
       // Cards saved before thumbnails existed get one the first time they are opened.
       if (existing !== undefined && !existing.thumbnail?.length) {
-        void refreshCardThumbnail(existing, occurrence);
+        void refreshCardThumbnail(existing, occurrence).then((thumbnail) => {
+          if (thumbnail?.length) {
+            setCard((current) => (current?.id === existing.id ? { ...current, thumbnail } : current));
+          }
+        });
       }
+
       setDraft(
         existing === undefined
           ? {
@@ -179,7 +184,10 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
 
       setCard(saved);
       setError(null);
-      await refreshCardThumbnail(saved, occurrence, draft.backgroundImage?.[0]?.url);
+
+      const thumbnail = await refreshCardThumbnail(saved, occurrence, draft.backgroundImage?.[0]?.url);
+
+      setCard({ ...saved, thumbnail });
 
       return saved;
     } catch (saveError) {
@@ -213,7 +221,32 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
     }
   };
 
-  const ensureSharedCard = async (): Promise<EventCardRow | null> => card ?? (await saveCard({}));
+  const hasUnsavedDraft =
+    card !== null &&
+    (draft?.templateKey !== card.templateKey ||
+      draft?.cardKind !== card.cardKind ||
+      (draft?.recipient ?? '') !== (card.recipient ?? '') ||
+      (draft?.message ?? '') !== (card.message ?? '') ||
+      draft?.backgroundImage?.[0]?.fileId !== card.backgroundImage?.[0]?.fileId);
+
+  // The link preview shows the stored thumbnail, so it has to match the card,
+  // background included, before the link leaves the page.
+  const ensureSharedCard = async (): Promise<EventCardRow | null> => {
+    if (card === null || hasUnsavedDraft) {
+      return saveCard({});
+    }
+
+    if (card.thumbnail?.length) {
+      return card;
+    }
+
+    const thumbnail = await refreshCardThumbnail(card, occurrence);
+    const refreshed = { ...card, thumbnail };
+
+    setCard(refreshed);
+
+    return refreshed;
+  };
 
   const copyShareLink = async () => {
     const shared = await ensureSharedCard();

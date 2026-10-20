@@ -9,9 +9,12 @@ import {
 } from '../constants/route-paths';
 import { SHARE_PAGE_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { buildSharePage } from '../utils/build-share-page.util';
+import { buildCardPalette } from '../utils/card-palette.util';
 import { describeCardSvg } from '../utils/describe-card.util';
+import { buildMomentsCardAnchor } from '../utils/moments-card-anchor.util';
 import { readCardBackground } from '../utils/read-card-background.util';
 import { resolveShareImageUrl } from '../utils/resolve-share-image-url.util';
+import { findMomentsPagePath } from './utils/find-moments-page-path.util';
 import { findSharedCard } from './utils/find-shared-card.util';
 import { httpResponse } from './utils/http-response.util';
 
@@ -58,7 +61,10 @@ const handler = async (event: RoutePayload) => {
     origin,
   );
   const signatureCount = (card.signatures ?? []).length;
-  const backgroundImageDataUrl = await readCardBackground(card.backgroundImage?.[0]?.url);
+  const [backgroundImageDataUrl, momentsPagePath] = await Promise.all([
+    readCardBackground(card.backgroundImage?.[0]?.url),
+    findMomentsPagePath(),
+  ]);
 
   return httpResponse(
     buildSharePage({
@@ -70,9 +76,10 @@ const handler = async (event: RoutePayload) => {
       cardSvg: describeCardSvg(card, storedEvent ?? {}, backgroundImageDataUrl),
       imageUrl: thumbnailUrl,
       downloadUrl: `${svgUrl}&download=1`,
+      cardRoomUrl: momentsPagePath === null ? null : `${origin ?? ''}${momentsPagePath}${buildMomentsCardAnchor(card.occurrenceKey)}`,
       eventDate: card.eventDate,
       wishes: messages.map((message) => message.body).filter((body) => body.trim().length > 0),
-      accent: findCardTemplate(card.templateKey).ornament,
+      palette: buildCardPalette(findCardTemplate(card.templateKey)),
     }),
     {
       'content-type': 'text/html; charset=utf-8',

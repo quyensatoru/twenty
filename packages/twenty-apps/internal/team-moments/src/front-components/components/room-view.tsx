@@ -20,13 +20,14 @@ type RoomViewProps = {
   currentMember: MemberSummary | null;
   memberNames: Record<string, string>;
   memberCount: number;
+  initialTab?: RoomTab;
   onBack: () => void;
 };
 
-type RoomTab = 'chat' | 'card';
+export type RoomTab = 'chat' | 'card';
 
-export const RoomView = ({ occurrence, currentMember, memberNames, memberCount, onBack }: RoomViewProps) => {
-  const [tab, setTab] = useState<RoomTab>('chat');
+export const RoomView = ({ occurrence, currentMember, memberNames, memberCount, initialTab = 'chat', onBack }: RoomViewProps) => {
+  const [tab, setTab] = useState<RoomTab>(initialTab);
   const style = KIND_STYLES[occurrence.kind];
   // Surprise mode: the honoree cannot open their own room before the day.
   const isSurprise = occurrence.memberId !== null && occurrence.daysLeft > 0;
