@@ -105,6 +105,7 @@ export const useWidgetRendererState = (widget: PageLayoutWidget) => {
   const variant = getWidgetCardVariant({
     isSideColumnContext,
     pageLayoutType: currentPageLayout.type,
+    presentation,
   });
 
   return {

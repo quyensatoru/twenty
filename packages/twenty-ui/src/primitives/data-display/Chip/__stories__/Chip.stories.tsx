@@ -25,6 +25,17 @@ const meta: Meta<typeof Chip> = {
 export default meta;
 type Story = StoryObj<typeof Chip>;
 
+export const Display: Story = {
+  args: {
+    children: 'Jane',
+    variant: 'soft',
+    startElement: (
+      <Avatar name="Jane" size="sm" shape="circle" imageProps={{ alt: '' }} />
+    ),
+  },
+  decorators: [ComponentDecorator],
+};
+
 export const Default: Story = {
   args: {
     children: 'Chip test',
@@ -32,18 +43,6 @@ export const Default: Story = {
     variant: 'soft',
     color: 'primary',
     maxWidth: 200,
-  },
-  decorators: [ComponentDecorator],
-};
-
-export const WithLeftAvatar: Story = {
-  args: {
-    children: 'John Doe',
-    clickable: true,
-    variant: 'ghost',
-    startElement: (
-      <Avatar name="JD" colorSeed="John Doe" size="sm" shape="circle" />
-    ),
   },
   decorators: [ComponentDecorator],
 };
@@ -74,7 +73,7 @@ export const CallerFallback: Story = {
 };
 
 export const Catalog: CatalogStory<Story, typeof Chip> = {
-  args: { clickable: true, children: 'Hello' },
+  args: { children: 'Jane' },
   argTypes: {
     size: { control: false },
     variant: { control: false },
@@ -85,34 +84,18 @@ export const Catalog: CatalogStory<Story, typeof Chip> = {
   },
   parameters: {
     a11y: A11Y_DEFER_COLOR_CONTRAST,
-    pseudo: { hover: ['.hover'], active: ['.active'] },
     catalog: {
       options: { elementContainer: { style: { width: 110 } } },
       dimensions: [
         {
           name: 'variants',
-          values: ['ghost', 'soft', 'solid'],
+          values: ['ghost', 'soft', 'solid', 'plain'],
           props: (variant: ChipVariant) => ({ variant }),
         },
         {
           name: 'sizes',
           values: ['sm', 'md'],
           props: (size: ChipSize) => ({ size }),
-        },
-        {
-          name: 'states',
-          values: ['default', 'hover', 'active', 'disabled'],
-          props: (state: string) => {
-            switch (state) {
-              case 'hover':
-              case 'active':
-                return { className: state };
-              case 'disabled':
-                return { render: <button type="button" disabled /> };
-              default:
-                return {};
-            }
-          },
         },
       ],
     },
@@ -144,7 +127,7 @@ export const WithAvatarCatalog: CatalogStory<Story, typeof Chip> = {
       dimensions: [
         {
           name: 'variants',
-          values: ['ghost', 'soft', 'solid'],
+          values: ['ghost', 'soft', 'solid', 'plain'],
           props: (variant: ChipVariant) => ({ variant }),
         },
         {
@@ -247,7 +230,16 @@ export const ContentAndSlots: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText('Rich content')).toBeVisible();
-    await userEvent.click(canvas.getByRole('button', { name: 'Remove' }));
+    const removeButton = canvas.getByRole('button', { name: 'Remove' });
+    const chip = removeButton.parentElement;
+    if (!isDefined(chip)) {
+      throw new Error('Chip end element must have a root');
+    }
+    await userEvent.tab();
+    await expect(removeButton).toHaveFocus();
+    await expect(getComputedStyle(removeButton).outlineStyle).toBe('solid');
+    await expect(getComputedStyle(chip).overflow).toBe('visible');
+    await userEvent.click(removeButton);
   },
 };
 
@@ -320,6 +312,13 @@ export const TruncationAndTooltip: Story = {
     }
     await expect(content.scrollWidth).toBeGreaterThan(content.clientWidth);
     await expect(getComputedStyle(content).textOverflow).toBe('ellipsis');
+    const chip = content.parentElement;
+    if (!isDefined(chip)) {
+      throw new Error('Chip content must have a root');
+    }
+    await expect(content.getBoundingClientRect().right).toBeLessThanOrEqual(
+      chip.getBoundingClientRect().right,
+    );
     await userEvent.hover(content);
     await expect(
       await within(document.body).findByRole('tooltip'),
@@ -340,5 +339,59 @@ export const WithoutTruncation: Story = {
       throw new Error('Chip content must have a root');
     }
     await expect(getComputedStyle(chip).overflow).not.toBe('hidden');
+  },
+};
+
+export const Plain: Story = {
+  decorators: [ComponentDecorator],
+  args: {
+    children: 'Open Jane',
+    variant: 'plain',
+    clickable: true,
+    onClick: fn(),
+    render: <button type="button" />,
+    startElement: <Avatar name="Jane" size="sm" />,
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const chip = canvas.getByRole('button', { name: 'Open Jane' });
+
+    await expect(getComputedStyle(chip).paddingInlineStart).toBe('0px');
+    await expect(getComputedStyle(chip).paddingInlineEnd).toBe('4px');
+    await userEvent.tab();
+    await expect(chip).toHaveFocus();
+    await expect(getComputedStyle(chip).outlineStyle).toBe('solid');
+    await expect(getComputedStyle(chip).cursor).toBe('pointer');
+    await userEvent.click(chip);
+    await expect(args.onClick).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const ExactMaximumWidth: Story = {
+  decorators: [ComponentDecorator],
+  render: () => (
+    <Text style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {(['ghost', 'soft', 'solid', 'plain'] as const).map((variant) => (
+        <Chip
+          key={variant}
+          variant={variant}
+          maxWidth={120}
+          aria-label={variant}
+          startElement={<Avatar name="Jane" size="sm" />}
+        >
+          A long label that needs to be truncated
+        </Chip>
+      ))}
+    </Text>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    for (const variant of ['ghost', 'soft', 'solid', 'plain']) {
+      const chip = canvas.getByLabelText(variant);
+
+      await expect(chip.getBoundingClientRect().width).toBe(120);
+      await expect(chip.getBoundingClientRect().height).toBe(20);
+    }
   },
 };

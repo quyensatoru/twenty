@@ -1919,9 +1919,19 @@ export const ALL_ENTITY_PROPERTIES_CONFIGURATION_BY_METADATA_NAME = {
     },
     logo: { toCompare: true, toStringify: false, universalProperty: undefined },
     type: { toCompare: true, toStringify: false, universalProperty: undefined },
+    scope: {
+      toCompare: true,
+      toStringify: false,
+      universalProperty: undefined,
+    },
     oauthConfig: {
       toCompare: true,
       toStringify: true,
+      universalProperty: undefined,
+    },
+    identifyAccountLogicFunctionUniversalIdentifier: {
+      toCompare: true,
+      toStringify: false,
       universalProperty: undefined,
     },
     onConnectLogicFunctionUniversalIdentifier: {

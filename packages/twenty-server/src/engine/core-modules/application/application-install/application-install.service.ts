@@ -25,6 +25,7 @@ import {
   VERSION_PROGRESSION_REASON_TO_INSTALL_EXCEPTION_CODE,
   VERSION_REASON_TO_APPLICATION_EXCEPTION_CODE,
 } from 'src/engine/core-modules/application/application-package/constants/version-reason-to-exception-code.constant';
+import { ApplicationRegistrationVersionService } from 'src/engine/core-modules/application/application-registration-version/application-registration-version.service';
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
 import { ApplicationRegistrationSourceType } from 'src/engine/core-modules/application/application-registration/enums/application-registration-source-type.enum';
 import { isImageFilePath } from 'src/engine/core-modules/application/application-registration/utils/is-image-file-path.util';
@@ -52,10 +53,10 @@ import {
   type ApplicationLifecycleHookJobData,
 } from 'src/engine/core-modules/logic-function/logic-function-trigger/jobs/application-lifecycle-hook.job';
 import {
-  WARM_UP_APPLICATION_LOGIC_FUNCTIONS_JOB_NAME,
-  WARM_UP_APPLICATION_LOGIC_FUNCTIONS_JOB_OPTIONS,
-  type WarmUpApplicationLogicFunctionsJobData,
-} from 'src/engine/core-modules/logic-function/logic-function-prebuilt-warm-up/jobs/warm-up-application-logic-functions.job-constants';
+  WARM_UP_LOGIC_FUNCTION_JOB_NAME,
+  WARM_UP_LOGIC_FUNCTION_JOB_OPTIONS,
+  type WarmUpLogicFunctionJobData,
+} from 'src/engine/core-modules/logic-function/logic-function-prebuilt-warm-up/jobs/warm-up-logic-function.job-constants';
 import { findLogicFunctionUniversalIdentifiersToWarmUp } from 'src/engine/core-modules/logic-function/logic-function-prebuilt-warm-up/utils/find-logic-function-universal-identifiers-to-warm-up.util';
 import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
 import { type MessageQueueJobProgressContext } from 'src/engine/core-modules/message-queue/interfaces/message-queue-job.interface';
@@ -76,6 +77,7 @@ export class ApplicationInstallService {
     private readonly applicationLookupService: ApplicationLookupService,
     private readonly applicationPackageFetcherService: ApplicationPackageFetcherService,
     private readonly applicationVersionValidationService: ApplicationVersionValidationService,
+    private readonly applicationRegistrationVersionService: ApplicationRegistrationVersionService,
     private readonly applicationSyncService: ApplicationSyncService,
     private readonly applicationManifestApplyService: ApplicationManifestApplyService,
     private readonly fileStorageService: FileStorageService,
@@ -83,8 +85,8 @@ export class ApplicationInstallService {
     private readonly cacheLockService: CacheLockService,
     @InjectMessageQueue(MessageQueue.applicationLifecycleHookQueue)
     private readonly messageQueueService: MessageQueueService,
-    @InjectMessageQueue(MessageQueue.workspaceQueue)
-    private readonly workspaceQueueService: MessageQueueService,
+    @InjectMessageQueue(MessageQueue.lambdaManagementQueue)
+    private readonly lambdaManagementQueueService: MessageQueueService,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly metricsService: MetricsService,
   ) {}
@@ -345,10 +347,6 @@ export class ApplicationInstallService {
       universalIdentifier,
       name: resolvedPackage.manifest.application.displayName,
       grantedCapabilities,
-      logo:
-        resolvedPackage.manifest.application.logo ??
-        resolvedPackage.manifest.application.logoUrl ??
-        null,
       workspaceId: params.workspaceId,
       applicationRegistrationId: appRegistration.id,
       sourceType: appRegistration.sourceType,
@@ -385,6 +383,18 @@ export class ApplicationInstallService {
         }
       }
 
+      if (
+        appRegistration.sourceType === ApplicationRegistrationSourceType.NPM &&
+        isDefined(resolvedPackage.registryTarballUrl)
+      ) {
+        await this.applicationRegistrationVersionService.ensureNpmVersion({
+          applicationRegistrationId: appRegistration.id,
+          version: newVersion,
+          sourcePackage: appRegistration.sourcePackage,
+          tarballUrl: resolvedPackage.registryTarballUrl,
+        });
+      }
+
       if (isVersionUpgrade && shouldApplyApprovedCapabilities) {
         await this.applicationService.update(application.id, {
           grantedCapabilities,
@@ -399,16 +409,22 @@ export class ApplicationInstallService {
         params.workspaceId,
       );
 
+      const logo =
+        resolvedPackage.manifest.application.logo ??
+        resolvedPackage.manifest.application.logoUrl ??
+        null;
+
       const logoFileId = await this.importLogoFile({
         extractedDir: resolvedPackage.extractedDir,
-        manifest: resolvedPackage.manifest,
+        logo,
         applicationUniversalIdentifier: universalIdentifier,
         workspaceId: params.workspaceId,
       });
 
-      if (application.logoFileId !== logoFileId) {
+      if (application.logo !== logo || application.logoFileId !== logoFileId) {
         await this.applicationService.update(application.id, {
-          logoFileId: logoFileId ?? null,
+          logo,
+          logoFileId,
           workspaceId: params.workspaceId,
         });
       }
@@ -599,22 +615,36 @@ export class ApplicationInstallService {
     }
   }
 
-  private async enqueueLogicFunctionWarmUp(
-    data: WarmUpApplicationLogicFunctionsJobData,
-  ): Promise<void> {
-    if (data.logicFunctionUniversalIdentifiers.length === 0) {
+  private async enqueueLogicFunctionWarmUp({
+    workspaceId,
+    applicationId,
+    logicFunctionUniversalIdentifiers,
+  }: {
+    workspaceId: string;
+    applicationId: string;
+    logicFunctionUniversalIdentifiers: string[];
+  }): Promise<void> {
+    if (logicFunctionUniversalIdentifiers.length === 0) {
       return;
     }
 
     try {
-      await this.workspaceQueueService.add<WarmUpApplicationLogicFunctionsJobData>(
-        WARM_UP_APPLICATION_LOGIC_FUNCTIONS_JOB_NAME,
-        data,
-        WARM_UP_APPLICATION_LOGIC_FUNCTIONS_JOB_OPTIONS,
+      await this.lambdaManagementQueueService.bulkAdd<WarmUpLogicFunctionJobData>(
+        WARM_UP_LOGIC_FUNCTION_JOB_NAME,
+        logicFunctionUniversalIdentifiers.map(
+          (logicFunctionUniversalIdentifier) => ({
+            data: {
+              workspaceId,
+              applicationId,
+              logicFunctionUniversalIdentifier,
+            },
+          }),
+        ),
+        WARM_UP_LOGIC_FUNCTION_JOB_OPTIONS,
       );
     } catch (error) {
       this.logger.error(
-        `Failed to enqueue prebuilt warm-up for application ${data.applicationId} in workspace ${data.workspaceId}: ` +
+        `Failed to enqueue prebuilt warm-up for application ${applicationId} in workspace ${workspaceId}: ` +
           `${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
@@ -798,17 +828,15 @@ export class ApplicationInstallService {
 
   private async importLogoFile({
     extractedDir,
-    manifest,
+    logo,
     applicationUniversalIdentifier,
     workspaceId,
   }: {
     extractedDir: string;
-    manifest: Manifest;
+    logo: string | null;
     applicationUniversalIdentifier: string;
     workspaceId: string;
   }): Promise<string | null> {
-    const logo = manifest.application.logo ?? manifest.application.logoUrl;
-
     if (
       !isDefined(logo) ||
       logo.startsWith('http://') ||
@@ -856,7 +884,6 @@ export class ApplicationInstallService {
     universalIdentifier,
     name,
     grantedCapabilities,
-    logo,
     workspaceId,
     applicationRegistrationId,
     sourceType,
@@ -865,7 +892,6 @@ export class ApplicationInstallService {
     universalIdentifier: string;
     name: string;
     grantedCapabilities: ApplicationCapability[];
-    logo: string | null;
     workspaceId: string;
     applicationRegistrationId: string;
     sourceType: ApplicationRegistrationSourceType;
@@ -878,7 +904,6 @@ export class ApplicationInstallService {
       universalIdentifier,
       name,
       grantedCapabilities,
-      logo,
       sourcePath: universalIdentifier,
       sourceType,
       applicationRegistrationId,

@@ -12,10 +12,12 @@ import { WorkflowStepActionDrawerDecorator } from '~/testing/decorators/Workflow
 import { WorkflowStepDecorator } from '~/testing/decorators/WorkflowStepDecorator';
 import { WorkspaceDecorator } from '~/testing/decorators/WorkspaceDecorator';
 import { graphqlMocks } from '~/testing/graphqlMocks';
+import { IMAGE_URL_MOCK } from '~/testing/mock-data/image-url';
 import { MemoryRouterDecorator } from '~/testing/decorators/MemoryRouterDecorator';
 
 const STORY_RICH_TEXT_PROFILE = {
   chrome: 'document',
+  variant: 'app',
   minHeight: 200,
   enableFullScreen: false,
   buildExtensions: buildFullRichTextWithVariableTagExtensions,
@@ -23,6 +25,7 @@ const STORY_RICH_TEXT_PROFILE = {
 
 const STORY_MINIMAL_PROFILE = {
   chrome: 'document',
+  variant: 'app',
   minHeight: 200,
   enableFullScreen: false,
   buildExtensions: () => [],
@@ -55,12 +58,7 @@ const EditorWrapper = ({
       const jsonContent = editor.getJSON();
       onUpdate(JSON.stringify(jsonContent));
     },
-    onImageUpload: async (file: File) => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return {
-        url: `https://via.placeholder.com/400x200?text=${encodeURIComponent(file.name)}`,
-      };
-    },
+    onImageUpload: async () => ({ url: IMAGE_URL_MOCK }),
     onImageUploadError: (_error: Error, _file: File) => {},
   });
 
@@ -73,6 +71,7 @@ const EditorWrapper = ({
       editor={editor}
       readonly={readonly}
       minHeight={minHeight}
+      variant="app"
     />
   );
 };
@@ -502,7 +501,7 @@ export const TurnIntoHeading: Story = {
     );
     const editor = canvasElement.querySelector<HTMLElement>('.tiptap')!;
     await userEvent.tripleClick(within(editor).getByText('World'));
-    const trigger = await body.findByRole('button', { name: 'Paragraph' });
+    const trigger = await body.findByRole('button', { name: 'Text' });
     await userEvent.click(trigger);
     await userEvent.click(
       await body.findByRole('button', { name: 'Heading 1' }),

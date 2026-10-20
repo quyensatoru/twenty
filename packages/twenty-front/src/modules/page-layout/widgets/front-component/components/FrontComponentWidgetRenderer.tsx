@@ -8,14 +8,10 @@ import { usePageLayoutContentContext } from '@/page-layout/contexts/PageLayoutCo
 import { useIsPageLayoutInEditMode } from '@/page-layout/hooks/useIsPageLayoutInEditMode';
 import { type PageLayoutWidget } from '@/page-layout/types/PageLayoutWidget';
 import { PageLayoutWidgetNoDataDisplay } from '@/page-layout/widgets/components/PageLayoutWidgetNoDataDisplay';
+import { isFullPageWidget } from '@/page-layout/widgets/utils/isFullPageWidget';
 import { isWidgetConfigurationOfType } from '@/side-panel/pages/page-layout/utils/isWidgetConfigurationOfType';
 import { useLayoutRenderingContext } from '@/ui/layout/contexts/LayoutRenderingContext';
 
-// No border of its own. StyledWidgetContentFrame drew one around every front
-// component, and no other widget type has one — a FIELDS widget beside this one
-// on the same record page sits on the card with nothing around it, so an app
-// panel next to it read as a box bolted onto the page. The containment that
-// frame existed for is the sizing and the overflow rule below, both kept.
 const StyledContainer = styled.div<{
   isInEditMode: boolean;
   isSoloLayout: boolean;
@@ -45,7 +41,7 @@ export const FrontComponentWidgetRenderer = ({
 }: FrontComponentWidgetRendererProps) => {
   const isPageLayoutInEditMode = useIsPageLayoutInEditMode();
   const { presentation } = usePageLayoutContentContext();
-  const { targetRecordIdentifier } = useLayoutRenderingContext();
+  const { layoutType, targetRecordIdentifier } = useLayoutRenderingContext();
 
   const configuration = widget.configuration;
 
@@ -60,18 +56,25 @@ export const FrontComponentWidgetRenderer = ({
   const selectedRecordIds = isDefined(targetRecordIdentifier?.id)
     ? [targetRecordIdentifier.id]
     : undefined;
+  const isFullPageFrontComponent = isFullPageWidget({
+    pageLayoutType: layoutType,
+    presentation,
+  });
+  const loadingFallback = isFullPageFrontComponent ? null : (
+    <FrontComponentSkeletonLoader />
+  );
 
   return (
     <StyledContainer
       isInEditMode={isPageLayoutInEditMode}
       isSoloLayout={presentation === 'solo'}
     >
-      <Suspense fallback={<FrontComponentSkeletonLoader />}>
+      <Suspense fallback={loadingFallback}>
         <FrontComponentRenderer
           frontComponentId={frontComponentId}
           selectedRecordIds={selectedRecordIds}
           objectNameSingular={targetRecordIdentifier?.targetObjectNameSingular}
-          loadingFallback={<FrontComponentSkeletonLoader />}
+          loadingFallback={loadingFallback}
         />
       </Suspense>
     </StyledContainer>
