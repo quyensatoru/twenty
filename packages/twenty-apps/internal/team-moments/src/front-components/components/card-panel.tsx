@@ -235,7 +235,14 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
 
     try {
       const shareUrl = resolveAppRouteUrl(SHARE_PAGE_ROUTE_PATH, { t: shared.shareToken });
-      const imageUrl = resolveShareImageUrl(null, getPublicAssetUrl('team-moments-preview.png'), new URL(shareUrl).origin);
+      // Re-read for a freshly signed thumbnail URL, including one the save above just rendered.
+      // The signature expires after FILE_TOKEN_EXPIRES_IN unless Mattermost's image proxy caches it.
+      const [latest] = await listRecords<EventCardRow>('eventCards', { filter: `id[eq]:"${shared.id}"`, limit: 1 });
+      const imageUrl = resolveShareImageUrl(
+        latest?.thumbnail?.[0]?.url,
+        getPublicAssetUrl('team-moments-preview.png'),
+        new URL(shareUrl).origin,
+      );
 
       await copyToClipboard(buildMattermostShareText({ imageUrl, shareUrl }));
       void enqueueSnackbar({ message: 'Đã copy thiệp cho Mattermost.', variant: 'success' });
