@@ -12,12 +12,14 @@ import { MOMENTS_TOKENS } from './components/moments-tokens';
 import { OverviewView } from './components/overview-view';
 import { RoomView } from './components/room-view';
 import { useMomentsData } from './hooks/use-moments-data';
+import { useMomentsPermissions } from './hooks/use-moments-permissions';
 import { createRecord, readErrorText } from './utils/moments-rest.util';
 
 type MomentsTab = 'overview' | 'members';
 
 const Moments = () => {
   const data = useMomentsData();
+  const { canManageEvents, canEditMemberProfiles } = useMomentsPermissions();
   const [tab, setTab] = useState<MomentsTab>('overview');
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
@@ -94,12 +96,14 @@ const Moments = () => {
           {tabButton('members', 'Thành viên')}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginLeft: 'auto', padding: '6px 0' }}>
-          {missingHolidays.length === 0 || data.isLoading ? null : (
+          {!canManageEvents || missingHolidays.length === 0 || data.isLoading ? null : (
             <MomentsButton variant="secondary" isDisabled={isSeeding} onClick={() => void seedHolidays()}>
               {`Thêm ${missingHolidays.length} ngày lễ Việt Nam`}
             </MomentsButton>
           )}
-          <MomentsButton variant="primary" onClick={() => setIsCreatingEvent(true)}>+ Thêm sự kiện</MomentsButton>
+          {canManageEvents ? (
+            <MomentsButton variant="primary" onClick={() => setIsCreatingEvent(true)}>+ Thêm sự kiện</MomentsButton>
+          ) : null}
         </div>
       </header>
 
@@ -125,12 +129,13 @@ const Moments = () => {
             profiles={data.profiles}
             todayIso={data.todayIso}
             currentMemberId={data.currentMember?.id ?? null}
+            canEditProfiles={canEditMemberProfiles}
             onSaved={data.reload}
           />
         )}
       </div>
 
-      {isCreatingEvent ? (
+      {isCreatingEvent && canManageEvents ? (
         <EventFormModal todayIso={data.todayIso} onClose={() => setIsCreatingEvent(false)} onSubmit={createEvent} />
       ) : null}
     </div>

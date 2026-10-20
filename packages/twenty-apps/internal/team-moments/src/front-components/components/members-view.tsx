@@ -16,6 +16,7 @@ type MembersViewProps = {
   profiles: MemberProfileRow[];
   todayIso: string;
   currentMemberId: string | null;
+  canEditProfiles: boolean;
   onSaved: () => Promise<void>;
 };
 
@@ -92,7 +93,7 @@ const buildRow = (member: MemberSummary, profile: MemberProfileRow | null, today
 const cellStyle = { borderBottom: `1px solid ${MOMENTS_TOKENS.borderLight}`, color: MOMENTS_TOKENS.textPrimary, fontSize: 13, padding: '10px 14px' } as const;
 const headerCellStyle = { borderBottom: `1px solid ${MOMENTS_TOKENS.border}`, color: MOMENTS_TOKENS.textSecondary, fontSize: 12, fontWeight: 500, padding: '9px 14px', textAlign: 'left' } as const;
 
-export const MembersView = ({ members, profiles, todayIso, currentMemberId, onSaved }: MembersViewProps) => {
+export const MembersView = ({ members, profiles, todayIso, currentMemberId, canEditProfiles, onSaved }: MembersViewProps) => {
   const [sortKey, setSortKey] = useState<SortKey>('next');
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<MemberRow | null>(null);
@@ -266,7 +267,7 @@ export const MembersView = ({ members, profiles, todayIso, currentMemberId, onSa
               <th style={headerCellStyle}>Ngày vào làm</th>
               <th style={headerCellStyle}>Thâm niên</th>
               <th style={headerCellStyle}>Mốc tiếp theo</th>
-              <th style={headerCellStyle} />
+              {canEditProfiles ? <th style={headerCellStyle} /> : null}
             </tr>
           </thead>
           <tbody>
@@ -288,9 +289,11 @@ export const MembersView = ({ members, profiles, todayIso, currentMemberId, onSa
                 <td style={{ ...cellStyle, color: row.profile?.joinedAt ? MOMENTS_TOKENS.textPrimary : MOMENTS_TOKENS.textTertiary }}>{formatJoinedAt(row)}</td>
                 <td style={cellStyle}>{formatTenure(row.tenureMonths)}</td>
                 <td style={cellStyle}>{row.nextLabel}</td>
-                <td style={{ ...cellStyle, textAlign: 'right' }}>
-                  <MomentsButton variant="ghost" size="small" onClick={() => openEditor(row)}>Sửa</MomentsButton>
-                </td>
+                {canEditProfiles ? (
+                  <td style={{ ...cellStyle, textAlign: 'right' }}>
+                    <MomentsButton variant="ghost" size="small" onClick={() => openEditor(row)}>Sửa</MomentsButton>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
