@@ -80,13 +80,27 @@ const loadCardFonts = (): Promise<void> => {
   return cardFontsLoading;
 };
 
+// The sandbox routes fetch() to the Twenty server through a host bridge that reads
+// bodies as text, which corrupts image bytes. XHR is not bridged; the signed file
+// URL needs no auth header and the server allows any origin.
+const readImageBlob = (url: string): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+
+    request.open('GET', url);
+    request.responseType = 'blob';
+    request.onload = () => (request.status === 200 ? resolve(request.response as Blob) : reject(new Error(`HTTP ${request.status}`)));
+    request.onerror = () => reject(new Error('Network error'));
+    request.send();
+  });
+
 const loadBackgroundImage = async (url: string | null | undefined): Promise<ImageBitmap | null> => {
   if (!url || typeof createImageBitmap !== 'function') {
     return null;
   }
 
   try {
-    return await createImageBitmap(await (await fetch(url)).blob());
+    return await createImageBitmap(await readImageBlob(url));
   } catch {
     return null;
   }
