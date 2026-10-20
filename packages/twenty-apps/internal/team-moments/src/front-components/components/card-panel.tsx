@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { copyToClipboard, enqueueSnackbar, uploadFile } from 'twenty-sdk/front-component';
+import { copyToClipboard, enqueueSnackbar } from 'twenty-sdk/front-component';
 import { getPublicAssetUrl } from 'twenty-sdk/utils';
 import { IconPhoto } from 'twenty-ui/icon';
 
-import { CARD_TEMPLATES, findCardTemplate } from '../../constants/card-templates';
+import { CARD_TEMPLATES } from '../../constants/card-templates';
 import { CARD_IMAGE_ROUTE_PATH, SHARE_PAGE_ROUTE_PATH } from '../../constants/route-paths';
-import { EVENT_CARD_BACKGROUND_IMAGE_FIELD_UID, EVENT_CARD_OBJECT_UID, EVENT_CARD_THUMBNAIL_FIELD_UID } from '../../constants/universal-identifiers';
+import { EVENT_CARD_BACKGROUND_IMAGE_FIELD_UID, EVENT_CARD_OBJECT_UID } from '../../constants/universal-identifiers';
 import { type Occurrence } from '../../types/occurrence';
 import { type CardSignature, type EventCardRow, type MemberSummary } from '../../types/moments-records';
 import { type TransferredFile } from '../../types/transferred-file';
-import { formatSignerLine, formatVietnameseDate } from '../../utils/describe-card.util';
+import { formatVietnameseDate } from '../../utils/describe-card.util';
 import { resolveShareImageUrl } from '../../utils/resolve-share-image-url.util';
 import { buildMattermostShareText } from '../utils/build-mattermost-share-text.util';
 import { createShareToken } from '../utils/create-share-token.util';
-import { renderCardThumbnail } from '../utils/render-card-thumbnail.util';
+import { refreshCardThumbnail } from '../utils/refresh-card-thumbnail.util';
 import { readTransferredFiles } from '../utils/read-transferred-files.util';
 import { resolveFieldMetadataId } from '../utils/resolve-field-metadata-id.util';
 import { isUploadFileByHandleAvailable, uploadFileByHandle } from '../utils/upload-file-by-handle.util';
@@ -65,6 +65,11 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
       });
 
       setCard(existing ?? null);
+
+      // Cards saved before thumbnails existed get one the first time they are opened.
+      if (existing !== undefined && !existing.thumbnail?.length) {
+        void refreshCardThumbnail(existing, occurrence);
+      }
       setDraft(
         existing === undefined
           ? {
@@ -98,36 +103,6 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
 
   const signatures = card?.signatures ?? [];
   const hasSigned = currentMember !== null && signatures.some((signature) => signature.memberId === currentMember.id);
-
-  // A failed thumbnail only costs the link preview its image, never the card save.
-  const refreshThumbnail = async (saved: EventCardRow) => {
-    try {
-      const signatures = saved.signatures ?? [];
-      const blob = await renderCardThumbnail({
-        template: findCardTemplate(saved.templateKey),
-        eyebrow: saved.cardKind === 'INVITATION' ? `THIỆP MỜI · ${formatVietnameseDate(saved.eventDate)}` : formatVietnameseDate(saved.eventDate),
-        recipient: saved.recipient ?? '',
-        footer: signatures.length > 0 ? formatSignerLine(signatures.map((signature) => signature.name)) : 'MIDA · TEAM MOMENTS',
-        backgroundImageUrl: saved.backgroundImage?.[0]?.url ?? draft?.backgroundImage?.[0]?.url,
-      });
-      const fieldMetadataId = await resolveFieldMetadataId({
-        objectUniversalIdentifier: EVENT_CARD_OBJECT_UID,
-        fieldUniversalIdentifier: EVENT_CARD_THUMBNAIL_FIELD_UID,
-      });
-
-      if (blob === null || fieldMetadataId === null) {
-        return;
-      }
-
-      const result = await uploadFile(blob, { fieldMetadataId, fileName: 'thiep.png' });
-
-      if (result.status === 'uploaded') {
-        await updateRecord('eventCards', saved.id, { thumbnail: [{ fileId: result.file.fileId, label: 'thiep.png' }] });
-      }
-    } catch {
-      // Ignored on purpose, see above.
-    }
-  };
 
   const uploadBackground = async (files: TransferredFile[]) => {
     const file = files[0];
@@ -204,7 +179,7 @@ export const CardPanel = ({ occurrence, currentMember }: CardPanelProps) => {
 
       setCard(saved);
       setError(null);
-      await refreshThumbnail(saved);
+      await refreshCardThumbnail(saved, occurrence, draft.backgroundImage?.[0]?.url);
 
       return saved;
     } catch (saveError) {
