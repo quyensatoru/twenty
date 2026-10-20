@@ -18,8 +18,8 @@ let root: Root;
 let container: HTMLDivElement;
 let reload: () => Promise<void>;
 let react: (active: boolean) => Promise<void>;
-const Harness = () => {
-  const discussion = useDiscussionState('issue');
+const Harness = ({ targetCommentId = null }: { targetCommentId?: string | null }) => {
+  const discussion = useDiscussionState('issue', targetCommentId);
   reload = discussion.reload;
   react = (active) =>
     discussion.act('react', { commentId: 'comment', emoji: '👍', active });
@@ -54,6 +54,27 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 describe('discussion snapshot concurrency', () => {
+  it('loads earlier pages until a linked comment is present', async () => {
+    post
+      .mockResolvedValueOnce({
+        ...snapshot,
+        comments: [{ id: 'recent-comment' }],
+        nextCursor: 'older-page',
+      })
+      .mockResolvedValueOnce({
+        ...snapshot,
+        comments: [{ id: 'linked-comment' }],
+        nextCursor: null,
+      });
+
+    await act(async () => root.render(createElement(Harness, { targetCommentId: 'linked-comment' })));
+
+    const rendered = getByRole(container, 'status').textContent ?? '';
+    expect(rendered).toContain('recent-comment');
+    expect(rendered).toContain('linked-comment');
+    expect(post.mock.calls[1][1]).toMatchObject({ cursor: 'older-page' });
+  });
+
   it('resolves image URLs from signed BlockNote data and keeps unchanged image previews stable', async () => {
     const fileUrl =
       'https://example.com/file/workspace/12345678-1234-1234-1234-123456789abc';

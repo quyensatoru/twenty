@@ -35,7 +35,10 @@ export type DiscussionSnapshot = {
   nextCursor?: string | null;
 };
 
-export const useDiscussionState = (issueId: string | null) => {
+export const useDiscussionState = (
+  issueId: string | null,
+  targetCommentId: string | null = null,
+) => {
   const [snapshot, setSnapshot] = useState<DiscussionSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshotIssueId = useRef<string | null>(null);
@@ -53,10 +56,12 @@ export const useDiscussionState = (issueId: string | null) => {
         DISCUSSION_ROUTE_PATH,
         { issueId, action: 'snapshot' },
       );
-      for (
-        let page = 1;
-        page < loadedPageCount.current && result.nextCursor;
-        page += 1
+      let page = 1;
+      while (
+        result.nextCursor &&
+        (page < loadedPageCount.current ||
+          (targetCommentId !== null &&
+            !result.comments.some((comment) => comment.id === targetCommentId)))
       ) {
         const earlier = await postAppRoute<DiscussionSnapshot>(
           DISCUSSION_ROUTE_PATH,
@@ -64,6 +69,7 @@ export const useDiscussionState = (issueId: string | null) => {
         );
         result.comments.push(...earlier.comments);
         result.nextCursor = earlier.nextCursor;
+        page += 1;
       }
       if (
         issueIdRef.current !== issueId ||
@@ -71,6 +77,7 @@ export const useDiscussionState = (issueId: string | null) => {
       )
         return;
       setIsPermissionDenied(false);
+      loadedPageCount.current = Math.max(loadedPageCount.current, page);
       snapshotIssueId.current = issueId;
       setSnapshot((previous) => ({
         ...result,
@@ -109,7 +116,7 @@ export const useDiscussionState = (issueId: string | null) => {
         setSnapshot(null);
       }
     }
-  }, [issueId]);
+  }, [issueId, targetCommentId]);
 
   useEffect(() => {
     setSnapshot(null);

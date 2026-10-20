@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { formatDateTimeLabel } from '../utils/format-date-time-label.util';
 import { formatRelativeTimeLabel } from '../utils/format-relative-time-label.util';
@@ -40,9 +40,7 @@ type TaskFeedItemProps = {
   // Addresses the row from a copy-link fragment. Also the DOM id, so a link
   // somebody keeps is still a valid anchor on the page itself.
   anchorId?: string;
-  // The row a deep link asked for. The feed cannot scroll to it — the sandbox's
-  // elements have no scrollIntoView — so being marked is the whole of what
-  // "the link landed here" can say.
+  // The row a deep link asked for.
   isHighlighted?: boolean;
   authorName: string;
   authorEmail?: string | null;
@@ -110,6 +108,41 @@ export const TaskFeedItem = ({
   children,
 }: TaskFeedItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const articleRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!isHighlighted) return;
+    const article = articleRef.current;
+    if (article === null) return;
+
+    const alignIfOutsideView = () => {
+      if (document.activeElement !== article) return;
+      for (
+        let parent = article.parentElement;
+        parent !== null && parent !== document.body;
+        parent = parent.parentElement
+      ) {
+        if (parent.scrollHeight <= parent.clientHeight + 1) continue;
+        const articleBounds = article.getBoundingClientRect();
+        const parentBounds = parent.getBoundingClientRect();
+        const inset = 24;
+        if (
+          articleBounds.top >= parentBounds.top + inset &&
+          articleBounds.bottom <= parentBounds.bottom - inset
+        )
+          return;
+        const desiredTop =
+          parentBounds.top + Math.min(parent.clientHeight * 0.2, 120);
+        parent.scrollTop += articleBounds.top - desiredTop;
+        return;
+      }
+    };
+
+    article.focus();
+    const timers = [0, 150, 450].map((delay) =>
+      window.setTimeout(alignIfOutsideView, delay),
+    );
+    return () => timers.forEach(window.clearTimeout);
+  }, [isHighlighted]);
   // Hover-only buttons cannot take focus while hidden, so tabbing onto the
   // row's first button reveals the rest.
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
@@ -136,19 +169,21 @@ export const TaskFeedItem = ({
   return (
     <article
       id={anchorId}
+      ref={articleRef}
+      tabIndex={isHighlighted ? -1 : undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setHasFocusWithin(true)}
       onBlur={() => setHasFocusWithin(false)}
       style={{
         alignItems: 'flex-start',
-        containIntrinsicSize: 'auto 80px',
-        contentVisibility: 'auto',
         display: 'flex',
         fontFamily: TASK_TOKENS.fontFamily,
         gap: AVATAR_GAP,
         minWidth: 0,
+        outline: 'none',
         position: 'relative',
+        scrollMarginBlock: 'min(22vh, 140px)',
         userSelect: 'text',
       }}
     >
@@ -209,6 +244,10 @@ export const TaskFeedItem = ({
               ? TASK_TOKENS.backgroundHover
               : 'transparent',
           borderRadius: TASK_TOKENS.radius,
+          boxShadow:
+            isHighlighted && hasFocusWithin
+              ? `inset 0 0 0 1px ${TASK_TOKENS.accent}`
+              : undefined,
           boxSizing: 'border-box',
           display: 'flex',
           flex: 1,

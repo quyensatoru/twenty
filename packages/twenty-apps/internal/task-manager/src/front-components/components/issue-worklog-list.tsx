@@ -30,6 +30,7 @@ import { TASK_TOKENS } from './task-tokens';
 type IssueWorklogListProps = {
   issueId: string;
   baseUrl: string | undefined;
+  boardPath?: string | null;
   worklogs: WorklogRow[];
   membersById: Map<string, MemberRow>;
   currentMemberId: string | null;
@@ -162,6 +163,7 @@ const WorklogSummary = ({
 export const IssueWorklogList = ({
   issueId,
   baseUrl,
+  boardPath,
   worklogs,
   membersById,
   currentMemberId,
@@ -411,7 +413,7 @@ export const IssueWorklogList = ({
                         setOpenMenuWorklogId(isOpen ? worklog.id : null)
                       }
                       items={[
-                        {
+                        ...(boardPath === null ? [] : [{
                           key: 'copy-link',
                           label: t('Copy link'),
                           icon: <IconLink size={14} />,
@@ -421,9 +423,10 @@ export const IssueWorklogList = ({
                                 baseUrl,
                                 issueId,
                                 worklogId: worklog.id,
+                                boardPath,
                               }),
                             ),
-                        },
+                        }]),
                         ...(canDelete
                           ? [
                               {

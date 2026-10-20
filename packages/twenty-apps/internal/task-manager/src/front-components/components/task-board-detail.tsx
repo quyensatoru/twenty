@@ -7,6 +7,7 @@ import {
   openSidePanelPage,
   SidePanelPages,
   t,
+  useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
 import {
   IconArrowsDiagonal,
@@ -62,6 +63,8 @@ import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
 import { readRecordPageBaseUrl } from '../utils/read-record-page-base-url.util';
+import { parseActivityAnchor } from '../utils/parse-activity-anchor.util';
+import { parseBoardActivityAnchor } from '../utils/parse-board-anchor.util';
 import { useDiscussionState } from '../hooks/use-discussion-state';
 import { buildMembersById } from '../utils/build-members-by-id.util';
 import { isPlainPrimaryPress } from '../utils/is-plain-primary-press.util';
@@ -141,8 +144,18 @@ export const TaskBoardDetail = ({
   boardPath,
   onCardChanged,
 }: TaskBoardDetailProps) => {
+  const locationHash = useFrontComponentExecutionContext(
+    (context) => (context as { locationHash?: string }).locationHash ?? '',
+  );
+  const boardAnchor = parseBoardActivityAnchor(locationHash);
+  const activityAnchor = presentation === 'page'
+    ? parseActivityAnchor(locationHash)
+    : boardAnchor?.issueId === issueId ? boardAnchor.activity : null;
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
-  const discussion = useDiscussionState(issueId);
+  const discussion = useDiscussionState(
+    issueId,
+    activityAnchor?.kind === 'comment' ? activityAnchor.id : null,
+  );
   const isMobile = useIsMobile();
   const [recordPreview, setRecordPreview] = useState<
     (IssueRecordPreviewTarget & { issueId: string }) | null
@@ -164,7 +177,7 @@ export const TaskBoardDetail = ({
   currentIssueIdRef.current = issueId;
   const [activityTab, setActivityTab] = useState<
     'comments' | 'worklogs' | 'history' | 'ai'
-  >('comments');
+  >(activityAnchor?.kind === 'worklog' ? 'worklogs' : 'comments');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -346,6 +359,7 @@ export const TaskBoardDetail = ({
       <TaskBoardDetailFrame
         onClose={onClose}
         focusKey={issueId}
+        shouldFocusDialog={activityAnchor === null}
         isMobile={isMobile}
       >
         {placeholder}
@@ -1104,6 +1118,7 @@ export const TaskBoardDetail = ({
             key={issueId}
             issueId={issueId}
             baseUrl={readRecordPageBaseUrl()}
+            boardPath={presentation === 'modal' ? boardPath : undefined}
             comments={
               discussion.isPermissionDenied
                 ? []
@@ -1114,7 +1129,7 @@ export const TaskBoardDetail = ({
               discussion.snapshot?.currentMemberId ??
               data.currentWorkspaceMemberId
             }
-            highlightedCommentId={null}
+            highlightedCommentId={activityAnchor?.kind === 'comment' ? activityAnchor.id : null}
             canWrite={
               !discussion.isPermissionDenied &&
               (discussion.snapshot?.canWrite ?? data.canWrite)
@@ -1173,10 +1188,11 @@ export const TaskBoardDetail = ({
         <IssueWorklogList
           issueId={issueId}
           baseUrl={readRecordPageBaseUrl()}
+          boardPath={presentation === 'modal' ? boardPath : undefined}
           worklogs={data.worklogs}
           membersById={membersById}
           currentMemberId={data.currentWorkspaceMemberId}
-          highlightedWorklogId={null}
+          highlightedWorklogId={activityAnchor?.kind === 'worklog' ? activityAnchor.id : null}
           canWrite={data.canWrite}
           canSoftDelete={data.canSoftDelete}
           totalMinutes={issue.timeSpentMinutes}
@@ -1475,6 +1491,7 @@ export const TaskBoardDetail = ({
     <TaskBoardDetailFrame
       onClose={onClose}
       focusKey={issueId}
+      shouldFocusDialog={activityAnchor === null}
       isMobile={isMobile}
       onEscape={preview === null ? onClose : () => setRecordPreview(null)}
     >
@@ -1622,12 +1639,14 @@ const TaskBoardDetailFrame = ({
   onClose,
   onEscape,
   focusKey,
+  shouldFocusDialog = true,
   isMobile,
 }: {
   onEscape?: () => void;
   children: React.ReactNode;
   onClose: () => void;
   focusKey: string;
+  shouldFocusDialog?: boolean;
   // A phone gets the whole screen.
   isMobile: boolean;
 }) => {
@@ -1638,8 +1657,8 @@ const TaskBoardDetailFrame = ({
   // to another issue re-renders the header buttons and drops focus to the
   // body, hence the key.
   useEffect(() => {
-    dialogRef.current?.focus();
-  }, [focusKey]);
+    if (shouldFocusDialog) dialogRef.current?.focus();
+  }, [focusKey, shouldFocusDialog]);
 
   return (
     <div

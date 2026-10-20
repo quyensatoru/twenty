@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   parseBoardIssueAnchor,
+  parseBoardActivityAnchor,
   parseBoardViewAnchor,
 } from '../parse-board-anchor.util';
 
@@ -23,6 +24,23 @@ describe('parseBoardIssueAnchor', () => {
 
   it('returns nothing for a prefix with no id behind it', () => {
     expect(parseBoardIssueAnchor('issue-')).toBeNull();
+  });
+
+  it('opens the issue modal for a linked comment', () => {
+    expect(parseBoardIssueAnchor('issue-issue-1/comment-comment-1')).toBe('issue-1');
+  });
+});
+
+describe('parseBoardActivityAnchor', () => {
+  it('finds the comment or worklog within an issue modal', () => {
+    expect(parseBoardActivityAnchor('issue-issue-1/comment-comment-1')).toEqual({
+      issueId: 'issue-1',
+      activity: { kind: 'comment', id: 'comment-1' },
+    });
+    expect(parseBoardActivityAnchor('issue-issue-1/worklog-worklog-1')).toEqual({
+      issueId: 'issue-1',
+      activity: { kind: 'worklog', id: 'worklog-1' },
+    });
   });
 });
 

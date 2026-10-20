@@ -56,6 +56,7 @@ import { TASK_CIRCLE_STYLE, TASK_TOKENS } from './task-tokens';
 type IssueCommentListProps = {
   issueId: string;
   baseUrl: string | undefined;
+  boardPath?: string | null;
   comments: IssueCommentRow[];
   membersById: Map<string, MemberRow>;
   currentMemberId: string | null;
@@ -166,6 +167,7 @@ const ThreadMoreRepliesButton = ({
 export const IssueCommentList = ({
   issueId,
   baseUrl,
+  boardPath,
   comments,
   membersById,
   currentMemberId,
@@ -460,7 +462,7 @@ export const IssueCommentList = ({
                     setOpenMenuCommentId(isOpen ? comment.id : null)
                   }
                   items={[
-                    {
+                    ...(boardPath === null ? [] : [{
                       key: 'copy-link',
                       label: t('Copy link'),
                       icon: <IconLink size={14} />,
@@ -470,9 +472,10 @@ export const IssueCommentList = ({
                             baseUrl,
                             issueId,
                             commentId: comment.id,
+                            boardPath,
                           }),
                         ),
-                    },
+                    }]),
                     ...(canDelete
                       ? [
                           {

@@ -1,4 +1,5 @@
 import { type BoardViewMode } from '../../types/task-board';
+import { type ActivityAnchor, parseActivityAnchor } from './parse-activity-anchor.util';
 
 // The other half of the board deep link: the modal copies
 // `<board path>#issue-<id>`, this reads the fragment back so opening that URL
@@ -20,9 +21,21 @@ export const parseBoardIssueAnchor = (
     return null;
   }
 
-  const issueId = fragment.slice('issue-'.length);
+  const issueId = fragment.slice('issue-'.length).split('/')[0];
 
   return issueId === '' ? null : issueId;
+};
+
+export const parseBoardActivityAnchor = (
+  locationHash: string | null | undefined,
+): { issueId: string; activity: ActivityAnchor } | null => {
+  const issueId = parseBoardIssueAnchor(locationHash);
+  const fragment = locationHash?.trim().replace(/^#/, '') ?? '';
+  const activity = parseActivityAnchor(fragment.slice(fragment.indexOf('/') + 1));
+
+  return issueId === null || !fragment.includes('/') || activity === null
+    ? null
+    : { issueId, activity };
 };
 
 // `#backlog` opens the page on the backlog, so a link can point at either

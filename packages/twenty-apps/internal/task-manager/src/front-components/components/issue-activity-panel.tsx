@@ -83,7 +83,10 @@ export const IssueActivity = () => {
   );
   const anchor = parseActivityAnchor(locationHash);
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
-  const discussion = useDiscussionState(issueId);
+  const discussion = useDiscussionState(
+    issueId,
+    anchor?.kind === 'comment' ? anchor.id : null,
+  );
   const [actionError, setActionError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   // The fork put comments and worklogs behind two tabs rather than stacking

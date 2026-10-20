@@ -23,42 +23,46 @@ export const buildRecordUrl = ({
   return trimmedBaseUrl === '' ? path : `${trimmedBaseUrl}${path}`;
 };
 
-// Neither a comment nor a worklog is a record page of its own, so both are
-// addressed as a fragment on the issue's. Nothing scrolls to them yet; the
-// fragment identifies which row a link was taken from, which is what somebody
-// pasting it into a thread means.
 const buildIssueFragmentUrl = ({
   baseUrl,
   issueId,
   fragment,
+  boardPath,
 }: {
   baseUrl: string | undefined;
   issueId: string;
   fragment: string;
+  boardPath?: string;
 }): string =>
-  `${buildRecordUrl({ baseUrl, objectNameSingular: 'issue', recordId: issueId })}#${fragment}`;
+  boardPath === undefined
+    ? `${buildRecordUrl({ baseUrl, objectNameSingular: 'issue', recordId: issueId })}#${fragment}`
+    : `${buildBoardIssueUrl({ baseUrl, boardPath, issueId })}/${fragment}`;
 
 export const buildIssueCommentUrl = ({
   baseUrl,
   issueId,
   commentId,
+  boardPath,
 }: {
   baseUrl: string | undefined;
   issueId: string;
   commentId: string;
+  boardPath?: string;
 }): string =>
-  buildIssueFragmentUrl({ baseUrl, issueId, fragment: `comment-${commentId}` });
+  buildIssueFragmentUrl({ baseUrl, issueId, fragment: `comment-${commentId}`, boardPath });
 
 export const buildIssueWorklogUrl = ({
   baseUrl,
   issueId,
   worklogId,
+  boardPath,
 }: {
   baseUrl: string | undefined;
   issueId: string;
   worklogId: string;
+  boardPath?: string;
 }): string =>
-  buildIssueFragmentUrl({ baseUrl, issueId, fragment: `worklog-${worklogId}` });
+  buildIssueFragmentUrl({ baseUrl, issueId, fragment: `worklog-${worklogId}`, boardPath });
 
 // A board deep link: the board page with the issue's modal open. `boardPageUrl`
 // is the host page URL without fragment, assembled from the base URL and the
