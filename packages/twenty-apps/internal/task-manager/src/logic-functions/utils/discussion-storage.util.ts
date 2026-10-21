@@ -7,7 +7,9 @@ import { type CallerScope } from '../../types/caller-scope';
 import { readRichTextPlainValue } from '../../utils/read-rich-text-plain-value.util';
 import { AppScopePermissionDeniedError } from '../app-scope/app-scope-error';
 import { assertRecordInScope } from '../app-scope/assert-record-in-scope.util';
+import { buildIssueCommentEmail, type NotificationIssue } from './build-notification-email.util';
 import { listScopedRecords } from './list-scoped-records.util';
+import { sendNotificationEmail } from './send-notification-email.util';
 import { getDevelopmentRecordId } from './upsert-development-links.util';
 
 export type DiscussionComment = {
@@ -76,10 +78,22 @@ export const readDiscussionBody = (body: unknown): string => {
   return markdown;
 };
 
+export type DiscussionMember = {
+  id: string;
+  name?: { firstName?: string; lastName?: string };
+  avatarUrl?: string | null;
+  userEmail?: string | null;
+};
+
+export const formatMemberName = (member: DiscussionMember | undefined): string => {
+  const fullName = `${member?.name?.firstName ?? ''} ${member?.name?.lastName ?? ''}`.trim();
+  return fullName === '' ? 'Someone' : fullName;
+};
+
 export const listDiscussionMembers = async (
   client: ApiClient,
   appId: string,
-) => {
+): Promise<DiscussionMember[]> => {
   const grants = await listScopedRecords<{
     memberId: string;
     permissions?: string[];
@@ -100,12 +114,7 @@ export const listDiscussionMembers = async (
   ];
   return memberIds.length === 0
     ? []
-    : listScopedRecords<{
-        id: string;
-        name?: { firstName?: string; lastName?: string };
-        avatarUrl?: string | null;
-        userEmail?: string | null;
-      }>({
+    : listScopedRecords<DiscussionMember>({
         client,
         pluralName: 'workspaceMembers',
         filter: { id: { in: memberIds } },
@@ -165,19 +174,29 @@ export const notifyDiscussionRecipients = async ({
   appId,
   comment,
   recipients,
+  issue,
+  mentionedMemberIds = [],
 }: {
   client: ApiClient;
   scope: CallerScope;
   appId: string;
   comment: DiscussionComment;
   recipients: string[];
+  // Email only fires when the caller has the issue's context on hand — a
+  // caller that doesn't (there is none today) just keeps the in-app row.
+  issue?: NotificationIssue;
+  mentionedMemberIds?: string[];
 }): Promise<void> => {
   const actorId = requireDiscussionMember(scope);
   const members = await listDiscussionMembers(client, appId);
-  const accessibleMembers = new Set(members.map((member) => member.id));
+  const memberById = new Map(members.map((member) => [member.id, member]));
+  const actorName = formatMemberName(memberById.get(actorId));
+  const commentExcerpt = readRichTextPlainValue(comment.bodyV2).slice(0, 300);
+  const mentionedSet = new Set(mentionedMemberIds);
+
   for (const recipientId of new Set(recipients)) {
-    if (recipientId === actorId || !accessibleMembers.has(recipientId))
-      continue;
+    const member = memberById.get(recipientId);
+    if (recipientId === actorId || member === undefined) continue;
     await createDiscussionRowOnce<DiscussionNotification>({
       client,
       singularName: 'issueNotification',
@@ -193,11 +212,28 @@ export const notifyDiscussionRecipients = async ({
         recipientId,
         actorId,
         commentId: comment.id,
-        body: readRichTextPlainValue(comment.bodyV2).slice(0, 300),
+        body: commentExcerpt,
         readAt: null,
       },
       selection: DISCUSSION_NOTIFICATION_SELECTION,
     });
+
+    if (issue !== undefined && isNonEmptyString(member.userEmail)) {
+      try {
+        const email = buildIssueCommentEmail({
+          issue,
+          actorName,
+          commentExcerpt,
+          isMention: mentionedSet.has(recipientId),
+        });
+        const result = await sendNotificationEmail(member.userEmail, email);
+        if (!result.ok) {
+          console.error('Issue comment notification email failed', result.error);
+        }
+      } catch (error) {
+        console.error('Issue comment notification email failed', error);
+      }
+    }
   }
 };
 

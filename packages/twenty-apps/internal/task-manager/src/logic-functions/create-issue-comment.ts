@@ -19,6 +19,7 @@ import {
   readDiscussionComment,
   requireDiscussionMember,
 } from './utils/discussion-storage.util';
+import { fetchIssueNotificationContext } from './utils/fetch-issue-notification-context.util';
 import { getDevelopmentRecordId } from './utils/upsert-development-links.util';
 import { buildRichTextValue } from '../utils/read-rich-text-plain-value.util';
 import { AppScopePermissionDeniedError } from './app-scope/app-scope-error';
@@ -102,14 +103,24 @@ const handler = async (event: RoutePayload<CreateIssueCommentBody>) =>
       comment.parentCommentId == null
         ? null
         : await readDiscussionComment(client, issueId, comment.parentCommentId);
+    const issue = await fetchIssueNotificationContext(client, issueId);
     await notifyDiscussionRecipients({
       client,
       scope,
       appId,
       comment,
+      issue: issue ?? undefined,
+      mentionedMemberIds: comment.mentionMemberIds ?? [],
       recipients: [
         ...(comment.mentionMemberIds ?? []),
         ...(savedParent?.authorId == null ? [] : [savedParent.authorId]),
+        // Everyone with a stake in the issue hears about a new top-level
+        // comment too, not just whoever it directly replies to or @mentions.
+        ...(comment.parentCommentId == null
+          ? [issue?.reporterId, issue?.assigneeId].filter(
+              (id): id is string => typeof id === 'string',
+            )
+          : []),
       ],
     });
     return { issueComment: comment };

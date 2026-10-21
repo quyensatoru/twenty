@@ -544,6 +544,31 @@ export const ISSUE_MERCHANT_RECORD_PAGE_FIELDS_VIEW_UID =
 export const RECORD_PAGE_BASE_URL_VARIABLE_UID =
   'e41137ec-0dac-46c1-8a7e-5cf1c53a0def';
 
+// Issue notification emails (assigned, commented, mentioned): which
+// transport sends them, and that transport's own settings.
+export const NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID =
+  '82d5ef4b-d980-4657-847c-0eba75cb6450';
+export const NOTIFICATION_RESEND_API_KEY_VARIABLE_UID =
+  '99fd5f09-01f3-4746-825c-3721d3d0eb39';
+export const NOTIFICATION_FROM_EMAIL_VARIABLE_UID =
+  'adcd98eb-3617-45c4-b344-ca33c093d088';
+export const NOTIFICATION_WORKFLOW_WEBHOOK_URL_VARIABLE_UID =
+  'ffaee6d0-e9b4-4b7a-99b4-61b330ee6121';
+// SMTP sends directly, bypassing the core sendEmail mutation entirely:
+// that mutation requires a token bound to a workspace member, which a pure
+// application-token logic function call never has, regardless of the
+// application's own role permissions (confirmed against this server).
+export const NOTIFICATION_SMTP_HOST_VARIABLE_UID =
+  '09e0a2a1-2794-4ac8-be90-5da4352725e8';
+export const NOTIFICATION_SMTP_PORT_VARIABLE_UID =
+  '4a77f813-6bf2-4d1d-945b-64284e7b5bca';
+export const NOTIFICATION_SMTP_USERNAME_VARIABLE_UID =
+  '3be0f804-9e1e-4beb-9d9b-f4f21474c22e';
+export const NOTIFICATION_SMTP_PASSWORD_VARIABLE_UID =
+  '7fb5e981-1d35-48f8-8ddd-3cad6d3dddf0';
+export const NOTIFICATION_SMTP_FROM_VARIABLE_UID =
+  '03b38e46-d758-4165-a5dc-891d88bf7d15';
+
 // The copy-link button the host draws in the Description widget's own header,
 // beside its title. A FRONT_COMPONENT widget reaches that row only through
 // headerCommandMenuItemUniversalIdentifiers, and a command menu item can only

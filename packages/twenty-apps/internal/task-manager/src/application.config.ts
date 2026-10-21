@@ -1,7 +1,16 @@
-import { defineApplication } from 'twenty-sdk/define';
+import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
   APPLICATION_UID,
+  NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID,
+  NOTIFICATION_FROM_EMAIL_VARIABLE_UID,
+  NOTIFICATION_RESEND_API_KEY_VARIABLE_UID,
+  NOTIFICATION_SMTP_FROM_VARIABLE_UID,
+  NOTIFICATION_SMTP_HOST_VARIABLE_UID,
+  NOTIFICATION_SMTP_PASSWORD_VARIABLE_UID,
+  NOTIFICATION_SMTP_PORT_VARIABLE_UID,
+  NOTIFICATION_SMTP_USERNAME_VARIABLE_UID,
+  NOTIFICATION_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
   RECORD_PAGE_BASE_URL_VARIABLE_UID,
 } from './constants/universal-identifiers';
 
@@ -17,6 +26,79 @@ export default defineApplication({
       description:
         'Origin this workspace is browsed at, with no trailing slash — https://crm.example.com. The copy-link buttons prefix it to the record path. Left empty they use the API server origin, which is right whenever the server also serves the front end; set it when the front end lives on another origin.',
       value: '',
+    },
+    NOTIFICATION_EMAIL_PROVIDER: {
+      universalIdentifier: NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID,
+      label: 'Notification email provider',
+      description:
+        // No CONNECTED_ACCOUNT option: the core sendEmail mutation requires a
+        // token bound to a workspace member, which a pure application-token
+        // logic function call never has — confirmed by hitting "This endpoint
+        // requires a token bound to a user workspace" regardless of the
+        // app's own role permissions.
+        'How issue notification emails (assigned, commented, mentioned) are sent. SMTP sends directly through a mail server (e.g. Gmail SMTP relay). RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
+      type: FieldType.SELECT,
+      options: [
+        { label: 'SMTP', value: 'SMTP' },
+        { label: 'Resend', value: 'RESEND' },
+        { label: 'Workflow webhook', value: 'WORKFLOW_WEBHOOK' },
+      ],
+      value: 'SMTP',
+    },
+    NOTIFICATION_SMTP_HOST: {
+      universalIdentifier: NOTIFICATION_SMTP_HOST_VARIABLE_UID,
+      label: 'SMTP host',
+      description:
+        'For example smtp.gmail.com. Only used when the provider is SMTP.',
+      value: '',
+    },
+    NOTIFICATION_SMTP_PORT: {
+      universalIdentifier: NOTIFICATION_SMTP_PORT_VARIABLE_UID,
+      label: 'SMTP port',
+      description:
+        '587 for STARTTLS, 465 for implicit TLS. Only used when the provider is SMTP.',
+      value: '587',
+    },
+    NOTIFICATION_SMTP_USERNAME: {
+      universalIdentifier: NOTIFICATION_SMTP_USERNAME_VARIABLE_UID,
+      label: 'SMTP username',
+      description:
+        'Usually the full sending address. Only used when the provider is SMTP.',
+      value: '',
+    },
+    NOTIFICATION_SMTP_PASSWORD: {
+      universalIdentifier: NOTIFICATION_SMTP_PASSWORD_VARIABLE_UID,
+      label: 'SMTP password',
+      description:
+        'For Gmail/Google Workspace this must be an App Password, not the account password. Only used when the provider is SMTP.',
+      isSecret: true,
+    },
+    NOTIFICATION_SMTP_FROM: {
+      universalIdentifier: NOTIFICATION_SMTP_FROM_VARIABLE_UID,
+      label: 'From address (SMTP)',
+      description:
+        'For example "Task Manager <notify@example.com>". Only used when the provider is SMTP.',
+      value: '',
+    },
+    NOTIFICATION_RESEND_API_KEY: {
+      universalIdentifier: NOTIFICATION_RESEND_API_KEY_VARIABLE_UID,
+      label: 'Resend API key',
+      description: 'Only used when the provider is RESEND.',
+      isSecret: true,
+    },
+    NOTIFICATION_FROM_EMAIL: {
+      universalIdentifier: NOTIFICATION_FROM_EMAIL_VARIABLE_UID,
+      label: 'From address (Resend)',
+      description:
+        'For example "Task Manager <notify@example.com>". The domain must be verified in Resend. Only used when the provider is RESEND.',
+      value: '',
+    },
+    NOTIFICATION_WORKFLOW_WEBHOOK_URL: {
+      universalIdentifier: NOTIFICATION_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
+      label: 'Workflow webhook URL',
+      description:
+        'Only used when the provider is WORKFLOW_WEBHOOK. Receives a POST with to, subject and text.',
+      isSecret: true,
     },
   },
   // OAuth client credentials for the Development git integrations. The server

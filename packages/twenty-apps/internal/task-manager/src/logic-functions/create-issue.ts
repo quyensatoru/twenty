@@ -11,6 +11,7 @@ import { createIssueWithReservedKey } from './utils/create-issue-with-reserved-k
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
 import { assertIssuePlanningTargets } from './utils/assert-issue-planning-targets.util';
 import { fetchIssuePlanning } from './utils/issue-planning.util';
+import { notifyIssueAssigned } from './utils/notify-issue-assigned.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -87,6 +88,23 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
         client,
         issueId: issue.id,
         merchantIds,
+      });
+    }
+
+    if (
+      typeof issue?.id === 'string' &&
+      typeof data.assigneeId === 'string'
+    ) {
+      await notifyIssueAssigned({
+        client,
+        issue: {
+          id: issue.id,
+          title: typeof issue.title === 'string' ? issue.title : '',
+          issueKey:
+            typeof issue.issueKey === 'string' ? issue.issueKey : null,
+        },
+        assigneeId: data.assigneeId,
+        actorId: scope.workspaceMemberId,
       });
     }
 

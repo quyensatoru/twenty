@@ -1473,6 +1473,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/nodemailer@npm:^7.0.4":
+  version: 7.0.12
+  resolution: "@types/nodemailer@npm:7.0.12"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/12c22af0a9d7bc251897e0dbb840d97cf232736ec89675b390bad395a62234ea787d3eda7804460abf22074d6056a061bf69d8c0c333adaab7fa8eff8aaab567
+  languageName: node
+  linkType: hard
+
 "@types/qs@npm:^6.9.0":
   version: 6.15.1
   resolution: "@types/qs@npm:6.15.1"
@@ -3631,6 +3640,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nodemailer@npm:^7.0.9":
+  version: 7.0.13
+  resolution: "nodemailer@npm:7.0.13"
+  checksum: 10c0/b26aa5b9fa4a033bbc1e1c16ef75ee2a9c8641fd290c00a8361d6a251b3c1b8bad545a23efa627f59cb266340a448891ea8aa49d8a9307c767b8505219d95079
+  languageName: node
+  linkType: hard
+
 "nopt@npm:^10.0.0":
   version: 10.0.1
   resolution: "nopt@npm:10.0.1"
@@ -4402,9 +4418,11 @@ __metadata:
     "@types/hast": "npm:^3.0.5"
     "@types/mdast": "npm:^4.0.4"
     "@types/node": "npm:^24.7.2"
+    "@types/nodemailer": "npm:^7.0.4"
     "@types/react": "npm:^19.0.0"
     jsdom: "npm:^30.0.1"
     linkifyjs: "npm:^4.3.3"
+    nodemailer: "npm:^7.0.9"
     oxlint: "npm:^0.16.0"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"

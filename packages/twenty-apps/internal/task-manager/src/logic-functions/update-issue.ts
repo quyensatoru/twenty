@@ -18,6 +18,7 @@ import {
   SUBTASK_PLANNING_MESSAGE,
 } from './utils/issue-planning.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
+import { notifyIssueAssigned } from './utils/notify-issue-assigned.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 import { writeWithReservedIssueKey } from './utils/write-with-reserved-issue-key.util';
@@ -118,6 +119,16 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
       });
     }
 
+    // Read before the mutation overwrites it — the comparison that decides
+    // whether this is a reassignment needs the value being replaced.
+    const hasAssigneeChange = Object.prototype.hasOwnProperty.call(
+      data,
+      'assigneeId',
+    );
+    const previousAssigneeId = hasAssigneeChange
+      ? await fetchRecordColumn(client, 'issues', issueId, 'assigneeId')
+      : null;
+
     const updateIssue = (issueKey: string | null) =>
       client.mutation({
         updateIssue: {
@@ -159,7 +170,33 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
       });
     }
 
-    return { issue: result?.updateIssue };
+    const updatedIssue = result?.updateIssue as
+      | Record<string, unknown>
+      | undefined;
+
+    if (
+      hasAssigneeChange &&
+      typeof data.assigneeId === 'string' &&
+      data.assigneeId !== previousAssigneeId &&
+      typeof updatedIssue?.id === 'string'
+    ) {
+      await notifyIssueAssigned({
+        client,
+        issue: {
+          id: updatedIssue.id,
+          title:
+            typeof updatedIssue.title === 'string' ? updatedIssue.title : '',
+          issueKey:
+            typeof updatedIssue.issueKey === 'string'
+              ? updatedIssue.issueKey
+              : null,
+        },
+        assigneeId: data.assigneeId,
+        actorId: scope.workspaceMemberId,
+      });
+    }
+
+    return { issue: updatedIssue };
   });
 
 export default defineLogicFunction({
