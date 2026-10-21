@@ -3,6 +3,7 @@ import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 import {
   ALERT_CONNECTED_ACCOUNT_VARIABLE,
   ALERT_FROM_EMAIL_VARIABLE,
+  ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   RESEND_API_KEY_VARIABLE,
 } from '../../constants/application-variable-names';
@@ -87,14 +88,48 @@ const sendThroughResend = async (
       };
 };
 
+const sendThroughWorkflowWebhook = async (
+  to: string,
+  email: AlertEmail,
+): Promise<AlertSendResult> => {
+  const webhookUrl = readVariable(ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE);
+
+  if (webhookUrl.length === 0) {
+    return { ok: false, error: 'ALERT_WORKFLOW_WEBHOOK_URL is not set.' };
+  }
+
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ to, subject: email.subject, text: email.text }),
+  });
+
+  return response.ok
+    ? { ok: true }
+    : {
+        ok: false,
+        error: `Workflow webhook HTTP ${response.status}: ${await response.text()}`,
+      };
+};
+
+const SENDER_BY_PROVIDER: Record<
+  string,
+  (to: string, email: AlertEmail) => Promise<AlertSendResult>
+> = {
+  RESEND: sendThroughResend,
+  WORKFLOW_WEBHOOK: sendThroughWorkflowWebhook,
+};
+
 export const sendAlertEmail = async (
   to: string,
   email: AlertEmail,
 ): Promise<AlertSendResult> => {
   try {
-    return readVariable(EMAIL_PROVIDER_VARIABLE).toUpperCase() === 'RESEND'
-      ? await sendThroughResend(to, email)
-      : await sendThroughConnectedAccount(to, email);
+    const send =
+      SENDER_BY_PROVIDER[readVariable(EMAIL_PROVIDER_VARIABLE).toUpperCase()] ??
+      sendThroughConnectedAccount;
+
+    return await send(to, email);
   } catch (error) {
     return { ok: false, error: readErrorMessage(error) };
   }

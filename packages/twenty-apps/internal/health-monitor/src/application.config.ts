@@ -4,6 +4,7 @@ import {
   ALERT_CONNECTED_ACCOUNT_VARIABLE,
   ALERT_EMAIL_LANGUAGE_VARIABLE,
   ALERT_FROM_EMAIL_VARIABLE,
+  ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   PUBLIC_BASE_URL_VARIABLE,
   RESEND_API_KEY_VARIABLE,
@@ -11,6 +12,7 @@ import {
 import {
   ALERT_CONNECTED_ACCOUNT_VARIABLE_UID,
   ALERT_FROM_EMAIL_VARIABLE_UID,
+  ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
   APPLICATION_UID,
   EMAIL_PROVIDER_VARIABLE_UID,
   HEALTH_ALERT_EMAIL_LANGUAGE_VARIABLE_UID,
@@ -28,11 +30,12 @@ export default defineApplication({
       universalIdentifier: EMAIL_PROVIDER_VARIABLE_UID,
       label: 'Email provider',
       description:
-        'CONNECTED_ACCOUNT sends through a workspace-shared connected email account. RESEND sends through Resend.',
+        'CONNECTED_ACCOUNT sends through a workspace-shared connected email account. RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
       type: FieldType.SELECT,
       options: [
         { label: 'Connected account', value: 'CONNECTED_ACCOUNT' },
         { label: 'Resend', value: 'RESEND' },
+        { label: 'Workflow webhook', value: 'WORKFLOW_WEBHOOK' },
       ],
       value: 'CONNECTED_ACCOUNT',
     },
@@ -55,6 +58,13 @@ export default defineApplication({
       description:
         'For example "MIDA Health <health@mida.so>". The domain must be verified in Resend.',
       value: '',
+    },
+    [ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE]: {
+      universalIdentifier: ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
+      label: 'Workflow webhook URL',
+      description:
+        'Only used when the provider is WORKFLOW_WEBHOOK. Receives a POST with to, subject and text.',
+      isSecret: true,
     },
     [ALERT_EMAIL_LANGUAGE_VARIABLE]: {
       universalIdentifier: HEALTH_ALERT_EMAIL_LANGUAGE_VARIABLE_UID,
