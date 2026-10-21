@@ -1,8 +1,11 @@
-import { MetadataApiClient } from 'twenty-client-sdk/metadata';
+import { createTransport } from 'nodemailer';
 
 import {
-  ALERT_CONNECTED_ACCOUNT_VARIABLE,
   ALERT_FROM_EMAIL_VARIABLE,
+  ALERT_SMTP_HOST_VARIABLE,
+  ALERT_SMTP_PASSWORD_VARIABLE,
+  ALERT_SMTP_PORT_VARIABLE,
+  ALERT_SMTP_USERNAME_VARIABLE,
   ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   RESEND_API_KEY_VARIABLE,
@@ -14,41 +17,49 @@ export type AlertSendResult = { ok: true } | { ok: false; error: string };
 
 const readVariable = (name: string): string => process.env[name]?.trim() ?? '';
 
-const sendThroughConnectedAccount = async (
+// Direct SMTP, not the core sendEmail mutation: that mutation requires a
+// token bound to a workspace member, which a pure application-token logic
+// function call never has, regardless of the app's own role permissions.
+const sendThroughSmtp = async (
   to: string,
   email: AlertEmail,
 ): Promise<AlertSendResult> => {
-  const connectedAccountId = readVariable(ALERT_CONNECTED_ACCOUNT_VARIABLE);
+  const host = readVariable(ALERT_SMTP_HOST_VARIABLE);
+  const port = Number(readVariable(ALERT_SMTP_PORT_VARIABLE) || '587');
+  const username = readVariable(ALERT_SMTP_USERNAME_VARIABLE);
+  const password = readVariable(ALERT_SMTP_PASSWORD_VARIABLE);
+  const from = readVariable(ALERT_FROM_EMAIL_VARIABLE) || username;
 
-  if (connectedAccountId.length === 0) {
-    return { ok: false, error: 'ALERT_CONNECTED_ACCOUNT_ID is not set.' };
+  if (host.length === 0 || username.length === 0 || password.length === 0) {
+    return {
+      ok: false,
+      error: 'ALERT_SMTP_HOST, ALERT_SMTP_USERNAME or ALERT_SMTP_PASSWORD is not set.',
+    };
   }
 
-  const client = new MetadataApiClient({ runAs: 'application' }) as unknown as {
-    mutation: (
-      selection: Record<string, unknown>,
-    ) => Promise<{ sendEmail?: { success?: boolean; error?: string | null } }>;
-  };
-  // The composer turns a plain string body into paragraphs, so the text
-  // version is what goes out here; HTML would arrive as visible markup.
-  const result = await client.mutation({
-    sendEmail: {
-      __args: {
-        input: {
-          connectedAccountId,
-          to,
-          subject: email.subject,
-          body: email.text,
-        },
-      },
-      success: true,
-      error: true,
-    },
+  const transport = createTransport({
+    host,
+    port,
+    // Implicit TLS only below the STARTTLS cutover port; everything else
+    // upgrades in-band, which is how 587 (Gmail's default) and most
+    // providers run.
+    secure: port === 465,
+    auth: { user: username, pass: password },
   });
 
-  return result.sendEmail?.success === true
-    ? { ok: true }
-    : { ok: false, error: result.sendEmail?.error ?? 'sendEmail failed' };
+  try {
+    await transport.sendMail({
+      from,
+      to,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: readErrorMessage(error) };
+  }
 };
 
 const sendThroughResend = async (
@@ -127,7 +138,7 @@ export const sendAlertEmail = async (
   try {
     const send =
       SENDER_BY_PROVIDER[readVariable(EMAIL_PROVIDER_VARIABLE).toUpperCase()] ??
-      sendThroughConnectedAccount;
+      sendThroughSmtp;
 
     return await send(to, email);
   } catch (error) {

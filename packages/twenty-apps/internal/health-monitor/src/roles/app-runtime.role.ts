@@ -7,7 +7,6 @@ import {
   HEALTH_INCIDENT_OBJECT_UID,
   HEALTH_MONITOR_OBJECT_UID,
   HEALTH_SNAPSHOT_OBJECT_UID,
-  SEND_EMAIL_TOOL_PERMISSION_FLAG_UID,
   WORKSPACE_MEMBER_OBJECT_UID,
 } from '../constants/universal-identifiers';
 
@@ -45,5 +44,4 @@ export default defineApplicationRole({
     { objectUniversalIdentifier: APP_ACCESS_OBJECT_UID, ...readOnly },
     { objectUniversalIdentifier: WORKSPACE_MEMBER_OBJECT_UID, ...readOnly },
   ],
-  permissionFlagUniversalIdentifiers: [SEND_EMAIL_TOOL_PERMISSION_FLAG_UID],
 });

@@ -1,17 +1,23 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
-  ALERT_CONNECTED_ACCOUNT_VARIABLE,
   ALERT_EMAIL_LANGUAGE_VARIABLE,
   ALERT_FROM_EMAIL_VARIABLE,
+  ALERT_SMTP_HOST_VARIABLE,
+  ALERT_SMTP_PASSWORD_VARIABLE,
+  ALERT_SMTP_PORT_VARIABLE,
+  ALERT_SMTP_USERNAME_VARIABLE,
   ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   PUBLIC_BASE_URL_VARIABLE,
   RESEND_API_KEY_VARIABLE,
 } from './constants/application-variable-names';
 import {
-  ALERT_CONNECTED_ACCOUNT_VARIABLE_UID,
   ALERT_FROM_EMAIL_VARIABLE_UID,
+  ALERT_SMTP_HOST_VARIABLE_UID,
+  ALERT_SMTP_PASSWORD_VARIABLE_UID,
+  ALERT_SMTP_PORT_VARIABLE_UID,
+  ALERT_SMTP_USERNAME_VARIABLE_UID,
   ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
   APPLICATION_UID,
   EMAIL_PROVIDER_VARIABLE_UID,
@@ -30,21 +36,47 @@ export default defineApplication({
       universalIdentifier: EMAIL_PROVIDER_VARIABLE_UID,
       label: 'Email provider',
       description:
-        'CONNECTED_ACCOUNT sends through a workspace-shared connected email account. RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
+        // No CONNECTED_ACCOUNT option: the core sendEmail mutation requires a
+        // token bound to a workspace member, which a pure application-token
+        // logic function call never has — confirmed by hitting "This endpoint
+        // requires a token bound to a user workspace" regardless of the
+        // app's own role permissions.
+        'SMTP sends directly through a mail server (e.g. Gmail SMTP relay). RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
       type: FieldType.SELECT,
       options: [
-        { label: 'Connected account', value: 'CONNECTED_ACCOUNT' },
+        { label: 'SMTP', value: 'SMTP' },
         { label: 'Resend', value: 'RESEND' },
         { label: 'Workflow webhook', value: 'WORKFLOW_WEBHOOK' },
       ],
-      value: 'CONNECTED_ACCOUNT',
+      value: 'SMTP',
     },
-    [ALERT_CONNECTED_ACCOUNT_VARIABLE]: {
-      universalIdentifier: ALERT_CONNECTED_ACCOUNT_VARIABLE_UID,
-      label: 'Connected account id',
+    [ALERT_SMTP_HOST_VARIABLE]: {
+      universalIdentifier: ALERT_SMTP_HOST_VARIABLE_UID,
+      label: 'SMTP host',
       description:
-        'Id of the connected account alerts are sent from. It must be shared with the workspace: the app has no user of its own.',
+        'For example smtp.gmail.com. Only used when the provider is SMTP.',
       value: '',
+    },
+    [ALERT_SMTP_PORT_VARIABLE]: {
+      universalIdentifier: ALERT_SMTP_PORT_VARIABLE_UID,
+      label: 'SMTP port',
+      description:
+        '587 for STARTTLS, 465 for implicit TLS. Only used when the provider is SMTP.',
+      value: '587',
+    },
+    [ALERT_SMTP_USERNAME_VARIABLE]: {
+      universalIdentifier: ALERT_SMTP_USERNAME_VARIABLE_UID,
+      label: 'SMTP username',
+      description:
+        'Usually the full sending address. Only used when the provider is SMTP.',
+      value: '',
+    },
+    [ALERT_SMTP_PASSWORD_VARIABLE]: {
+      universalIdentifier: ALERT_SMTP_PASSWORD_VARIABLE_UID,
+      label: 'SMTP password',
+      description:
+        'For Gmail/Google Workspace this must be an App Password, not the account password. Only used when the provider is SMTP.',
+      isSecret: true,
     },
     [RESEND_API_KEY_VARIABLE]: {
       universalIdentifier: RESEND_API_KEY_VARIABLE_UID,
@@ -54,9 +86,9 @@ export default defineApplication({
     },
     [ALERT_FROM_EMAIL_VARIABLE]: {
       universalIdentifier: ALERT_FROM_EMAIL_VARIABLE_UID,
-      label: 'From address (Resend)',
+      label: 'From address',
       description:
-        'For example "MIDA Health <health@mida.so>". The domain must be verified in Resend.',
+        'For example "MIDA Health <health@mida.so>". For RESEND the domain must be verified in Resend. Used by both the SMTP and RESEND providers.',
       value: '',
     },
     [ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE]: {

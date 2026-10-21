@@ -177,8 +177,18 @@ export const HEALTH_ACKNOWLEDGE_LOGIC_FUNCTION_UID =
   'f91fe00f-704f-41c7-91d4-55f61c12fff7';
 export const EMAIL_PROVIDER_VARIABLE_UID =
   '77c0a9fa-9f87-4ad7-89e4-9c7420a42081';
-export const ALERT_CONNECTED_ACCOUNT_VARIABLE_UID =
-  '29b07777-68c9-4733-abf3-d7f2d610878d';
+// SMTP sends directly, bypassing the core sendEmail mutation entirely: that
+// mutation requires a token bound to a workspace member, which a pure
+// application-token logic function call never has, regardless of the
+// application's own role permissions (confirmed against this server).
+export const ALERT_SMTP_HOST_VARIABLE_UID =
+  '2bcb24b6-889a-48c6-b348-751426279859';
+export const ALERT_SMTP_PORT_VARIABLE_UID =
+  '66a5c9d9-9a08-457d-bf4d-666d2e0df347';
+export const ALERT_SMTP_USERNAME_VARIABLE_UID =
+  '302eb955-be0d-45e8-b808-86f0edc1d8cd';
+export const ALERT_SMTP_PASSWORD_VARIABLE_UID =
+  '87eb4012-0d50-4f10-be78-a942abfa1816';
 export const RESEND_API_KEY_VARIABLE_UID =
   'f051ad60-af49-4a86-883d-0e2441055594';
 export const ALERT_FROM_EMAIL_VARIABLE_UID =
