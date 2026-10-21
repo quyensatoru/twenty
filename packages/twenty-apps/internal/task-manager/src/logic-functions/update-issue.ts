@@ -3,7 +3,7 @@ import { defineLogicFunction, type RoutePayload } from 'twenty-sdk/define';
 import { ISSUE_SELECTION } from '../constants/record-selections';
 import { UPDATE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
 import { UPDATE_ISSUE_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
-import { buildIssueKey, hasIssueKey } from '../utils/build-issue-key.util';
+import { hasIssueKey } from '../utils/build-issue-key.util';
 import { assertAppScopeWriteAccess } from './app-scope/assert-app-scope-write-access.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { assertRelationTargetAppScope } from './app-scope/assert-relation-target-app-scope.util';
@@ -19,8 +19,8 @@ import {
 } from './utils/issue-planning.util';
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
 import { requireString } from './utils/require-string.util';
-import { reserveProjectIssueNumbers } from './utils/reserve-project-issue-numbers.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
+import { writeWithReservedIssueKey } from './utils/write-with-reserved-issue-key.util';
 
 type UpdateIssueBody = {
   issueId?: string;
@@ -118,35 +118,34 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
       });
     }
 
+    const updateIssue = (issueKey: string | null) =>
+      client.mutation({
+        updateIssue: {
+          __args: {
+            id: issueId,
+            data: issueKey === null ? data : { ...data, issueKey },
+          },
+          ...ISSUE_SELECTION,
+        },
+      });
+
     // The key is generated once, on the project assignment that first makes it
     // possible.
-    if (projectId !== undefined && !hasIssueKey(data.issueKey as string)) {
-      const currentIssueKey = await fetchRecordColumn(
-        client,
-        'issues',
-        issueId,
-        'issueKey',
+    const needsIssueKey =
+      projectId !== undefined &&
+      !hasIssueKey(data.issueKey as string) &&
+      !hasIssueKey(
+        await fetchRecordColumn(client, 'issues', issueId, 'issueKey'),
       );
 
-      if (!hasIssueKey(currentIssueKey)) {
-        const reservation = await reserveProjectIssueNumbers({
-          client,
-          projectId,
-          count: 1,
-        });
-
-        if (reservation !== null) {
-          data.issueKey = buildIssueKey(
-            reservation.key,
-            reservation.firstIssueNumber,
-          );
-        }
-      }
-    }
-
-    const result = await client.mutation({
-      updateIssue: { __args: { id: issueId, data }, ...ISSUE_SELECTION },
-    });
+    const result =
+      needsIssueKey && projectId !== undefined
+        ? await writeWithReservedIssueKey({
+            client,
+            projectId,
+            write: updateIssue,
+          })
+        : await updateIssue(null);
 
     if (merchantIds !== undefined) {
       await linkIssueMerchants({ client, issueId, merchantIds });

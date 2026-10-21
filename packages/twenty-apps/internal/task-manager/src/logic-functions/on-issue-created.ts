@@ -3,10 +3,10 @@ import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
 
 import { ON_ISSUE_CREATED_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type ApiClient } from '../types/api-client';
-import { buildIssueKey, hasIssueKey } from '../utils/build-issue-key.util';
+import { hasIssueKey } from '../utils/build-issue-key.util';
 import { resolveEffectiveAppId } from './app-scope/resolve-effective-app-id.util';
 import { createAppClient } from './utils/create-app-client.util';
-import { reserveProjectIssueNumbers } from './utils/reserve-project-issue-numbers.util';
+import { writeWithReservedIssueKey } from './utils/write-with-reserved-issue-key.util';
 
 type IssueRow = {
   issueKey?: string | null;
@@ -31,21 +31,6 @@ const handler = async (event: DatabaseEventPayload<IssueCreateEvent>) => {
   const projectId = issue.projectId ?? null;
   const data: Record<string, unknown> = {};
 
-  if (projectId !== null && !hasIssueKey(issue.issueKey)) {
-    const reservation = await reserveProjectIssueNumbers({
-      client,
-      projectId,
-      count: 1,
-    });
-
-    if (reservation !== null) {
-      data.issueKey = buildIssueKey(
-        reservation.key,
-        reservation.firstIssueNumber,
-      );
-    }
-  }
-
   // The app-scope mirror. A member could not have created this row without it
   // — the predicate refuses a row it cannot see — so this is for rows created
   // by somebody who bypasses app-scope, whose issues would otherwise be
@@ -65,15 +50,43 @@ const handler = async (event: DatabaseEventPayload<IssueCreateEvent>) => {
     data.reporterId = event.workspaceMemberId;
   }
 
-  if (Object.keys(data).length === 0) {
+  const updateIssue = async (issueKey: string | null) => {
+    const payload = issueKey === null ? data : { ...data, issueKey };
+
+    if (Object.keys(payload).length > 0) {
+      await client.mutation({
+        updateIssue: {
+          __args: { id: event.recordId, data: payload },
+          id: true,
+        },
+      });
+    }
+  };
+
+  const needsIssueKey = projectId !== null && !hasIssueKey(issue.issueKey);
+
+  if (!needsIssueKey && Object.keys(data).length === 0) {
     await recordIssueCreated({ client, event, appId: issue.appId ?? null });
 
     return { updated: false };
   }
 
-  await client.mutation({
-    updateIssue: { __args: { id: event.recordId, data }, id: true },
-  });
+  if (needsIssueKey) {
+    try {
+      await writeWithReservedIssueKey({
+        client,
+        projectId,
+        write: updateIssue,
+      });
+    } catch (error) {
+      // Still apply the app-scope mirror: without it the issue is invisible.
+      await updateIssue(null);
+
+      throw error;
+    }
+  } else {
+    await updateIssue(null);
+  }
 
   await recordIssueCreated({
     client,
@@ -84,7 +97,12 @@ const handler = async (event: DatabaseEventPayload<IssueCreateEvent>) => {
         : (issue.appId ?? null),
   });
 
-  return { updated: true, fields: Object.keys(data) };
+  return {
+    updated: true,
+    fields: needsIssueKey
+      ? [...Object.keys(data), 'issueKey']
+      : Object.keys(data),
+  };
 };
 
 // The History tab's `created` entry. Written here rather than in the

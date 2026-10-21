@@ -13,19 +13,16 @@ type ProjectCounterNode = {
 // read-then-write here is NOT atomic, so two simultaneous creates can reserve
 // the same number. The unique index on `issue.issueKey` is what actually
 // guarantees correctness — a loser gets a unique violation and
-// createIssueWithReservedKey retries with a higher `attempt`, which offsets
-// the reservation past the collision. `nextIssueNumber` holds the last number
-// handed out.
+// writeWithReservedIssueKey retries with a fresh read of the counter.
+// `nextIssueNumber` holds the last number handed out.
 export const reserveProjectIssueNumbers = async ({
   client,
   projectId,
   count,
-  attempt = 0,
 }: {
   client: ApiClient;
   projectId: string;
   count: number;
-  attempt?: number;
 }): Promise<IssueNumberReservation | null> => {
   const result = await client.query({
     projects: {
@@ -35,8 +32,7 @@ export const reserveProjectIssueNumbers = async ({
   });
 
   const connection = result?.projects as
-    | Connection<ProjectCounterNode>
-    | undefined;
+    Connection<ProjectCounterNode> | undefined;
   const project = connection?.edges?.[0]?.node;
 
   if (project === undefined || typeof project.key !== 'string') {
@@ -45,7 +41,7 @@ export const reserveProjectIssueNumbers = async ({
 
   const lastIssueNumber =
     typeof project.nextIssueNumber === 'number' ? project.nextIssueNumber : 0;
-  const firstIssueNumber = lastIssueNumber + 1 + attempt * count;
+  const firstIssueNumber = lastIssueNumber + 1;
 
   await client.mutation({
     updateProject: {
