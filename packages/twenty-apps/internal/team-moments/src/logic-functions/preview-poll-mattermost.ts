@@ -46,10 +46,6 @@ const handler = async (event: RoutePayload) => {
   const thumbnailUrl = `${origin ?? ''}/s${POLL_THUMBNAIL_ROUTE_PATH}?id=${poll.id}`;
   const voteCount = (poll.votes ?? []).length;
 
-  const optionsHtml = (poll.options ?? [])
-    .map((option) => `<li>${option.emoji === null ? '' : `${escapeHtml(option.emoji)} `}${escapeHtml(option.label)}</li>`)
-    .join('');
-
   const html = `<!doctype html>
 <html lang="vi">
 <head>
@@ -69,11 +65,9 @@ const handler = async (event: RoutePayload) => {
   .author .bot-tag { background: #e8e8e8; color: #666; font-size: 10px; font-weight: 600; border-radius: 3px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
   .timestamp { color: #8a8a8a; font-size: 12px; margin-left: 6px; }
   .message { color: #171a21; font-size: 14.5px; line-height: 1.4; margin: 4px 0 0; }
-  .message ul { margin: 6px 0 0; padding-left: 20px; }
   .attachment { border-left: 4px solid #ff6353; background: #fafafa; border-radius: 0 3px 3px 0; margin-top: 10px; padding: 10px 12px; }
-  .attachment img { max-width: 100%; display: block; border-radius: 4px; margin-top: 8px; }
-  .attachment a { color: #166de0; text-decoration: none; font-weight: 600; font-size: 13.5px; }
-  .attachment a:hover { text-decoration: underline; }
+  .attachment a { display: block; }
+  .attachment img { max-width: 100%; display: block; border-radius: 4px; }
   .note { color: #8a8a8a; font-size: 12px; margin-top: 16px; }
 </style>
 </head>
@@ -85,13 +79,13 @@ const handler = async (event: RoutePayload) => {
       <div class="avatar">TM</div>
       <div class="body">
         <span class="author">Team Moments Bot<span class="bot-tag">BOT</span></span><span class="timestamp">vừa xong</span>
-        <p class="message">
-          <strong>${escapeHtml(poll.question)}</strong>
-          <ul>${optionsHtml}</ul>
-        </p>
+        <p class="message">📊 <strong>${escapeHtml(poll.question)}</strong></p>
         <div class="attachment">
-          ${voteUrl === null ? '<span>Vote trong Twenty để tham gia.</span>' : `<a href="${escapeHtml(voteUrl)}">Vote trong Twenty</a>`}
-          <img src="${escapeHtml(thumbnailUrl)}" alt="Biểu đồ kết quả poll" />
+          ${
+            voteUrl === null
+              ? `<img src="${escapeHtml(thumbnailUrl)}" alt="Biểu đồ kết quả poll" />`
+              : `<a href="${escapeHtml(voteUrl)}"><img src="${escapeHtml(thumbnailUrl)}" alt="Bấm để vote trong Twenty" /></a>`
+          }
         </div>
       </div>
     </div>

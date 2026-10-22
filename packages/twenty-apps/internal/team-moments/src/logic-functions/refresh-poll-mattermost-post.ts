@@ -52,14 +52,19 @@ const handler = async (event: RoutePayload<RefreshPollBody>) => {
     const thumbnailUrl = `${origin ?? ''}/s${POLL_THUMBNAIL_ROUTE_PATH}?id=${poll.id}&v=${Date.now()}`;
 
     const voteCount = (poll.votes ?? []).length;
-    const optionLines = (poll.options ?? []).map((option) => `• ${option.emoji ?? ''} ${option.label}`.trim()).join('\n');
-    const message = `**${poll.question}**\n${optionLines}\n\n👥 ${voteCount} người đã vote`;
+    // The question and a running total only: the per-option breakdown already
+    // lives in the thumbnail image, so repeating it as plain text just doubles the post.
+    const message = `📊 **${poll.question}**\n👥 ${voteCount} người đã vote`;
 
+    // A linked image, same as the publish route: `image_url` can't carry a
+    // click-through URL, only a linked Markdown image can.
     const result = await patchMattermostPost(poll.mattermostPostId, message, [
       {
         color: '#FF6353',
-        text: voteUrl === null ? 'Vote trong Twenty để tham gia.' : `[Vote trong Twenty](${voteUrl})`,
-        image_url: thumbnailUrl,
+        text:
+          voteUrl === null
+            ? `![Kết quả poll](${thumbnailUrl})`
+            : `[![Kết quả poll](${thumbnailUrl})](${voteUrl})`,
       },
     ]);
 

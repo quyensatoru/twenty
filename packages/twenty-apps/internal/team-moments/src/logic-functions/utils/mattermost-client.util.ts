@@ -9,7 +9,6 @@ const readVariable = (name: string): string => process.env[name]?.trim() ?? '';
 export type MattermostAttachment = {
   color?: string;
   text?: string;
-  image_url?: string;
 };
 
 export type MattermostResult =

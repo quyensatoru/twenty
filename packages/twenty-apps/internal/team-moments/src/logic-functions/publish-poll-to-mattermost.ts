@@ -47,14 +47,20 @@ const handler = async (event: RoutePayload<PublishPollBody>) => {
     const voteUrl = pollsPagePath === null ? null : `${origin ?? ''}${pollsPagePath}${buildPollAnchor(poll.id)}`;
     const thumbnailUrl = `${origin ?? ''}/s${POLL_THUMBNAIL_ROUTE_PATH}?id=${poll.id}`;
 
-    const optionLines = (poll.options ?? []).map((option) => `• ${option.emoji ?? ''} ${option.label}`.trim()).join('\n');
-    const message = `**${poll.question}**\n${optionLines}`;
+    // The question only: the option list and live tally already live in the
+    // thumbnail image, so repeating them as plain text just doubles the post.
+    const message = `📊 **${poll.question}**`;
 
+    // A linked image (`[![alt](src)](href)`), not the `image_url` attachment
+    // field: Mattermost renders that field as a plain thumbnail that only
+    // opens a lightbox on click, with no way to attach a URL to it.
     const result = await postToMattermost(event.body?.channelId ?? null, message, [
       {
         color: '#FF6353',
-        text: voteUrl === null ? 'Vote trong Twenty để tham gia.' : `[Vote trong Twenty](${voteUrl})`,
-        image_url: thumbnailUrl,
+        text:
+          voteUrl === null
+            ? `![Kết quả poll](${thumbnailUrl})`
+            : `[![Kết quả poll](${thumbnailUrl})](${voteUrl})`,
       },
     ]);
 
