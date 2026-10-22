@@ -1,5 +1,7 @@
+import { type AudienceMode } from './audience-mode';
 import { type CampaignStatus } from './campaign-status';
 import { type CampaignType } from './campaign-type';
+import { type ManualRecipient } from './manual-recipient';
 import { type MerchantTrigger } from './merchant-trigger';
 
 export type CampaignRow = {
@@ -13,6 +15,8 @@ export type CampaignRow = {
   eventName?: string | null;
   delayMinutes?: number | null;
   audienceFilter?: unknown;
+  audienceMode?: AudienceMode | null;
+  manualRecipients?: ManualRecipient[] | null;
   fromEmail?: string | null;
   replyTo?: string | null;
   sendOncePerMerchant?: boolean | null;

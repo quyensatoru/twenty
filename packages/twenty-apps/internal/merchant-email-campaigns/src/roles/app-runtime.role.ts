@@ -5,6 +5,7 @@ import {
   APP_RUNTIME_ROLE_UID,
   EMAIL_CAMPAIGN_OBJECT_UID,
   EMAIL_SEND_OBJECT_UID,
+  EMAIL_SUPPRESSION_OBJECT_UID,
   EMAIL_TEMPLATE_OBJECT_UID,
   MERCHANT_EVENT_OBJECT_UID,
   MERCHANT_OBJECT_UID,
@@ -51,6 +52,7 @@ export default defineApplicationRole({
       ...readWriteDelete,
     },
     { objectUniversalIdentifier: EMAIL_SEND_OBJECT_UID, ...readWrite },
+    { objectUniversalIdentifier: EMAIL_SUPPRESSION_OBJECT_UID, ...readWrite },
     {
       objectUniversalIdentifier: EMAIL_TEMPLATE_OBJECT_UID,
       ...readWriteDelete,

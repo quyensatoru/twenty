@@ -13,14 +13,18 @@ export const prepareMerchantEmail = ({
   template,
   merchant,
   eventProperties,
+  unsubscribeUrl: unsubscribeUrlOverride,
 }: {
   campaign: CampaignRow;
   template: TemplateRow;
   merchant: MerchantRow;
   eventProperties?: Record<string, string>;
+  // A manual-list recipient with no matching merchant has no merchant id for
+  // the unsubscribe link to carry, so the caller signs one by email instead.
+  unsubscribeUrl?: string;
 }): MerchantEmailBuildResult => {
   const { from, replyTo } = resolveSender(campaign);
-  const unsubscribeUrl = buildUnsubscribeUrl(merchant.id);
+  const unsubscribeUrl = unsubscribeUrlOverride ?? buildUnsubscribeUrl(merchant.id);
 
   return buildMerchantEmail({
     template,

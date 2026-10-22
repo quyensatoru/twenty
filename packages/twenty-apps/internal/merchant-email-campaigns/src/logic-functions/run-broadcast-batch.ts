@@ -3,22 +3,126 @@ import { defineLogicFunction } from 'twenty-sdk/define';
 import { BROADCAST_BATCH_SIZE } from '../constants/send-limits';
 import { RUN_BROADCAST_BATCH_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { sendManyEmails } from '../email-provider/send-many-emails';
+import { type ApiClient } from '../types/api-client';
+import { type AudienceFilter } from '../types/audience-filter';
 import { type BroadcastBatchPayload } from '../types/broadcast-batch-payload';
+import { type CampaignRow } from '../types/campaign-row';
 import { type EmailSendDraft } from '../types/email-send-draft';
+import { type MerchantEmailBuildResult } from '../types/merchant-email-build-result';
+import { type MerchantRow } from '../types/merchant-row';
 import { type OutgoingEmail } from '../types/outgoing-email';
+import { type TemplateRow } from '../types/template-row';
 import { parseAudienceFilter } from '../utils/parse-audience-filter.util';
 import { readErrorMessage } from '../utils/read-error-message.util';
+import { buildEmailUnsubscribeUrl } from './utils/build-email-unsubscribe-url.util';
 import { createEmailSendRecords } from './utils/create-email-send-records.util';
 import { enqueueBroadcastBatch } from './utils/enqueue-broadcast-batch.util';
 import { fetchCampaign } from './utils/fetch-campaign.util';
 import { fetchMerchantPage } from './utils/fetch-merchant-page.util';
+import { fetchMerchantsByEmail } from './utils/fetch-merchants-by-email.util';
+import { fetchSuppressedEmails } from './utils/fetch-suppressed-emails.util';
 import { fetchTemplate } from './utils/fetch-template.util';
 import { findAlreadyEmailedAddresses } from './utils/find-already-emailed-addresses.util';
 import { prepareMerchantEmail } from './utils/prepare-merchant-email.util';
 import { updateCampaign } from './utils/update-campaign.util';
 import { createAppClient } from './utils/create-app-client.util';
 
-const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
+type PreparedEntry = { merchantId: string | null; result: MerchantEmailBuildResult };
+
+// The audience filter page: each merchant is its own recipient and owns its
+// own unsubscribe link and merchant id.
+const prepareFilterPage = async ({
+  client,
+  campaign,
+  template,
+  audienceFilter,
+  after,
+}: {
+  client: ApiClient;
+  campaign: CampaignRow;
+  template: TemplateRow;
+  audienceFilter: AudienceFilter;
+  after?: string;
+}): Promise<{ prepared: PreparedEntry[]; hasNextPage: boolean; nextAfter?: string }> => {
+  const page = await fetchMerchantPage({
+    client,
+    audienceFilter,
+    first: BROADCAST_BATCH_SIZE,
+    after,
+  });
+  const merchants = (page.edges ?? []).map((edge) => edge.node);
+  const prepared = merchants.map((merchant) => ({
+    merchantId: merchant.id,
+    result: prepareMerchantEmail({ campaign, template, merchant }),
+  }));
+
+  return {
+    prepared,
+    hasNextPage: page.pageInfo?.hasNextPage === true,
+    nextAfter: page.pageInfo?.endCursor,
+  };
+};
+
+// The manual list page: an address with a matching merchant uses that
+// merchant's data and its existing unsubscribe link, same as a filtered
+// broadcast would. One with no match gets a stub built from the sheet's own
+// name column and an email-keyed unsubscribe link, since there is no
+// merchant row for either to live on.
+const prepareManualListPage = async ({
+  client,
+  campaign,
+  template,
+  pageIndex,
+}: {
+  client: ApiClient;
+  campaign: CampaignRow;
+  template: TemplateRow;
+  pageIndex: number;
+}): Promise<{ prepared: PreparedEntry[]; hasNextPage: boolean }> => {
+  const allRecipients = campaign.manualRecipients ?? [];
+  const pageStart = pageIndex * BROADCAST_BATCH_SIZE;
+  const pageRecipients = allRecipients.slice(pageStart, pageStart + BROADCAST_BATCH_SIZE);
+  const emails = pageRecipients.map((recipient) => recipient.email);
+
+  const [merchantsByEmail, suppressedEmails] = await Promise.all([
+    fetchMerchantsByEmail(client, emails),
+    fetchSuppressedEmails(client, emails),
+  ]);
+
+  const prepared = pageRecipients.map((recipient) => {
+    const matchedMerchant = merchantsByEmail.get(recipient.email);
+
+    if (matchedMerchant !== undefined) {
+      return {
+        merchantId: matchedMerchant.id,
+        result: prepareMerchantEmail({ campaign, template, merchant: matchedMerchant }),
+      };
+    }
+
+    const stub: MerchantRow = {
+      id: `manual:${recipient.email}`,
+      name: recipient.name ?? undefined,
+      contactName: recipient.name ?? undefined,
+      storeName: recipient.name ?? undefined,
+      email: { primaryEmail: recipient.email },
+      emailUnsubscribed: suppressedEmails.has(recipient.email),
+    };
+
+    return {
+      merchantId: null,
+      result: prepareMerchantEmail({
+        campaign,
+        template,
+        merchant: stub,
+        unsubscribeUrl: buildEmailUnsubscribeUrl(recipient.email),
+      }),
+    };
+  });
+
+  return { prepared, hasNextPage: pageStart + BROADCAST_BATCH_SIZE < allRecipients.length };
+};
+
+const runBatch = async (client: ApiClient, payload: BroadcastBatchPayload) => {
   const { campaignId, runId, pageIndex, after } = payload;
   const campaign = await fetchCampaign(client, campaignId);
 
@@ -39,17 +143,17 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
     throw new Error('The campaign has no template.');
   }
 
-  const page = await fetchMerchantPage({
-    client,
-    audienceFilter: parseAudienceFilter(campaign.audienceFilter),
-    first: BROADCAST_BATCH_SIZE,
-    after,
-  });
-  const merchants = (page.edges ?? []).map((edge) => edge.node);
-  const prepared = merchants.map((merchant) => ({
-    merchant,
-    result: prepareMerchantEmail({ campaign, template, merchant }),
-  }));
+  const isManualList = campaign.audienceMode === 'MANUAL_LIST';
+  const { prepared, hasNextPage, nextAfter } = isManualList
+    ? { ...(await prepareManualListPage({ client, campaign, template, pageIndex })), nextAfter: undefined }
+    : await prepareFilterPage({
+        client,
+        campaign,
+        template,
+        audienceFilter: parseAudienceFilter(campaign.audienceFilter),
+        after,
+      });
+
   const alreadyEmailed = await findAlreadyEmailedAddresses({
     client,
     campaignId,
@@ -59,14 +163,14 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
   });
 
   const outgoing: {
-    merchantId: string;
+    merchantId: string | null;
     to: string;
     subject: string;
     email: OutgoingEmail;
   }[] = [];
   const records: EmailSendDraft[] = [];
 
-  for (const { merchant, result } of prepared) {
+  for (const { merchantId, result } of prepared) {
     if (result.kind === 'SKIPPED') {
       records.push({
         name: result.to,
@@ -77,7 +181,7 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
         errorMessage: result.reason,
         sentAt: null,
         campaignId,
-        merchantId: merchant.id,
+        merchantId,
       });
       continue;
     }
@@ -88,7 +192,7 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
 
     alreadyEmailed.add(result.to);
     outgoing.push({
-      merchantId: merchant.id,
+      merchantId,
       to: result.to,
       subject: result.subject,
       email: result.email,
@@ -140,16 +244,12 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
     return { pageIndex, stopped: true, reason: firstFailure.error };
   }
 
-  const nextCursor = page.pageInfo?.hasNextPage
-    ? page.pageInfo.endCursor
-    : undefined;
-
-  if (nextCursor !== undefined) {
+  if (hasNextPage) {
     await enqueueBroadcastBatch({
       campaignId,
       runId,
       pageIndex: pageIndex + 1,
-      after: nextCursor,
+      ...(nextAfter === undefined ? {} : { after: nextAfter }),
     });
   } else {
     await updateCampaign(client, campaignId, {
@@ -163,7 +263,7 @@ const runBatch = async (client: unknown, payload: BroadcastBatchPayload) => {
     sent: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
     skipped: records.filter((record) => record.status === 'SKIPPED').length,
-    hasNextPage: nextCursor !== undefined,
+    hasNextPage,
   };
 };
 
@@ -195,7 +295,7 @@ export default defineLogicFunction({
   universalIdentifier: RUN_BROADCAST_BATCH_LOGIC_FUNCTION_UID,
   name: 'run-broadcast-batch',
   description:
-    'Job: sends one page of a broadcast through Resend, logs every send, then queues the next page.',
+    'Job: sends one page of a broadcast (audience filter or manual list) through Resend, logs every send, then queues the next page.',
   timeoutSeconds: 120,
   handler,
 });

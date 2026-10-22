@@ -19,12 +19,18 @@ export const resolveCampaignTransition = ({
   const fail = (error: string): CampaignTransition => ({ ok: false, error });
 
   // An automation with no event name can never fire, so it is refused here
-  // rather than sitting ACTIVE and silent.
+  // rather than sitting ACTIVE and silent. Same for a manual-list broadcast
+  // with an empty list: it would "send" and immediately complete, reaching
+  // nobody.
   const readinessError = !campaign.templateId
     ? 'Pick a template first.'
     : isAutomation && resolveCampaignEventName(campaign) === null
       ? 'Pick or type the event this automation answers.'
-      : null;
+      : !isAutomation &&
+          campaign.audienceMode === 'MANUAL_LIST' &&
+          (campaign.manualRecipients ?? []).length === 0
+        ? 'Add at least one recipient to the manual list.'
+        : null;
 
   switch (action) {
     case 'ACTIVATE':

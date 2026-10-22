@@ -7,6 +7,8 @@ export const CAMPAIGN_SELECTION = {
   eventName: true,
   delayMinutes: true,
   audienceFilter: true,
+  audienceMode: true,
+  manualRecipients: true,
   fromEmail: true,
   replyTo: true,
   sendOncePerMerchant: true,

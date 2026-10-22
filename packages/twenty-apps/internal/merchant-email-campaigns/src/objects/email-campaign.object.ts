@@ -5,11 +5,15 @@ import { CAMPAIGN_TYPE_OPTIONS } from '../constants/campaign-type-options';
 import { MERCHANT_TRIGGER_OPTIONS } from '../constants/merchant-trigger-options';
 import {
   EMAIL_CAMPAIGN_AUDIENCE_FILTER_FIELD_UID,
+  EMAIL_CAMPAIGN_AUDIENCE_MODE_FIELD_UID,
+  EMAIL_CAMPAIGN_AUDIENCE_MODE_FILTER_OPTION_UID,
+  EMAIL_CAMPAIGN_AUDIENCE_MODE_MANUAL_OPTION_UID,
   EMAIL_CAMPAIGN_COMPLETED_AT_FIELD_UID,
   EMAIL_CAMPAIGN_DELAY_MINUTES_FIELD_UID,
   EMAIL_CAMPAIGN_EVENT_NAME_FIELD_UID,
   EMAIL_CAMPAIGN_FROM_EMAIL_FIELD_UID,
   EMAIL_CAMPAIGN_LAST_ERROR_FIELD_UID,
+  EMAIL_CAMPAIGN_MANUAL_RECIPIENTS_FIELD_UID,
   EMAIL_CAMPAIGN_NAME_FIELD_UID,
   EMAIL_CAMPAIGN_OBJECT_UID,
   EMAIL_CAMPAIGN_REPLY_TO_FIELD_UID,
@@ -101,6 +105,41 @@ export default defineObject({
       description:
         'Apps, install status, plans and countries the campaign targets',
       icon: 'IconFilter',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: EMAIL_CAMPAIGN_AUDIENCE_MODE_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'audienceMode',
+      label: 'Audience mode',
+      description:
+        'Broadcasts only: the audience filter above, or a manually typed/imported list of recipients',
+      icon: 'IconUsers',
+      defaultValue: "'FILTER'",
+      options: [
+        {
+          id: EMAIL_CAMPAIGN_AUDIENCE_MODE_FILTER_OPTION_UID,
+          label: 'Audience filter',
+          value: 'FILTER',
+          color: 'blue',
+          position: 0,
+        },
+        {
+          id: EMAIL_CAMPAIGN_AUDIENCE_MODE_MANUAL_OPTION_UID,
+          label: 'Manual list',
+          value: 'MANUAL_LIST',
+          color: 'orange',
+          position: 1,
+        },
+      ],
+    },
+    {
+      universalIdentifier: EMAIL_CAMPAIGN_MANUAL_RECIPIENTS_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'manualRecipients',
+      label: 'Manual recipients',
+      description: '[{ email, name }], used when audience mode is Manual list',
+      icon: 'IconList',
       isNullable: true,
     },
     {

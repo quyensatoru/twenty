@@ -4,6 +4,7 @@ import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import { SEND_STATUS_LABELS } from '../../constants/send-status-labels';
 import { LAUNCH_CAMPAIGN_ROUTE_PATH } from '../../constants/route-paths';
 import { type AudienceFilter } from '../../types/audience-filter';
+import { type AudienceMode } from '../../types/audience-mode';
 import { type CampaignActionButton } from '../../types/campaign-action-button';
 import { type CampaignRow } from '../../types/campaign-row';
 import { type EventNameSuggestion } from '../../types/event-name-suggestion';
@@ -19,6 +20,10 @@ import {
 import { fromDatetimeLocalValue } from '../utils/from-datetime-local-value.util';
 import { getCampaignActions } from '../utils/get-campaign-actions.util';
 import { listEventNames } from '../utils/list-event-names.util';
+import {
+  formatManualRecipients,
+  parseManualRecipients,
+} from '../utils/parse-manual-recipients.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { toDatetimeLocalValue } from '../utils/to-datetime-local-value.util';
@@ -26,10 +31,12 @@ import { updateCampaignDraft } from '../utils/update-campaign-draft.util';
 import { AudienceFilterEditor } from './audience-filter-editor';
 import { CampaignStatusBadge } from './campaign-status-badge';
 import { EventNameField } from './event-name-field';
+import { ManualRecipientsEditor } from './manual-recipients-editor';
 import { StudioButton } from './studio-button';
 import { StudioCheckbox } from './studio-checkbox';
 import { StudioField } from './studio-field';
 import { StudioPanel } from './studio-panel';
+import { StudioSegmentedControl } from './studio-segmented-control';
 import { StudioSelect } from './studio-select';
 import { StudioTextInput } from './studio-text-input';
 import { STUDIO_TOKENS } from './studio-tokens';
@@ -66,6 +73,12 @@ export const CampaignEditor = ({
   );
   const [audienceFilter, setAudienceFilter] = useState<AudienceFilter>(() =>
     parseAudienceFilter(campaign.audienceFilter),
+  );
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>(
+    campaign.audienceMode ?? 'FILTER',
+  );
+  const [manualRecipientsText, setManualRecipientsText] = useState(() =>
+    formatManualRecipients(campaign.manualRecipients ?? []),
   );
   const [templateId, setTemplateId] = useState(campaign.templateId ?? '');
   const [fromEmail, setFromEmail] = useState(campaign.fromEmail ?? '');
@@ -133,6 +146,13 @@ export const CampaignEditor = ({
       eventName: isAutomation ? (normalizeEventName(eventName) ?? '') : '',
       delayMinutes: Math.max(0, Math.round(Number(delayMinutes) || 0)),
       audienceFilter,
+      // Automations always target the filter: a merchant event has no list of
+      // one-off addresses to check against.
+      audienceMode: isAutomation ? 'FILTER' : audienceMode,
+      manualRecipients:
+        !isAutomation && audienceMode === 'MANUAL_LIST'
+          ? parseManualRecipients(manualRecipientsText).recipients
+          : [],
       templateId: templateId === '' ? null : templateId,
       fromEmail: fromEmail.trim(),
       replyTo: replyTo.trim(),
@@ -403,12 +423,32 @@ export const CampaignEditor = ({
         </StudioPanel>
 
         <StudioPanel title={t('Audience')}>
-          <AudienceFilterEditor
-            filter={audienceFilter}
-            apps={apps}
-            isAutomation={isAutomation}
-            onChange={markDirty(setAudienceFilter)}
-          />
+          {!isAutomation && (
+            <div style={{ marginBottom: 14 }}>
+              <StudioSegmentedControl
+                ariaLabel={t('Audience mode')}
+                value={audienceMode}
+                options={[
+                  { value: 'FILTER', label: t('Audience filter') },
+                  { value: 'MANUAL_LIST', label: t('Manual list') },
+                ]}
+                onChange={markDirty(setAudienceMode)}
+              />
+            </div>
+          )}
+          {isAutomation || audienceMode === 'FILTER' ? (
+            <AudienceFilterEditor
+              filter={audienceFilter}
+              apps={apps}
+              isAutomation={isAutomation}
+              onChange={markDirty(setAudienceFilter)}
+            />
+          ) : (
+            <ManualRecipientsEditor
+              text={manualRecipientsText}
+              onChange={markDirty(setManualRecipientsText)}
+            />
+          )}
         </StudioPanel>
 
         <StudioPanel
