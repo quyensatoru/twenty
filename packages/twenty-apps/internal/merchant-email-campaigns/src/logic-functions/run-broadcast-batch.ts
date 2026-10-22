@@ -83,9 +83,10 @@ const prepareManualListPage = async ({
   const pageStart = pageIndex * BROADCAST_BATCH_SIZE;
   const pageRecipients = allRecipients.slice(pageStart, pageStart + BROADCAST_BATCH_SIZE);
   const emails = pageRecipients.map((recipient) => recipient.email);
+  const appIds = parseAudienceFilter(campaign.audienceFilter).appIds;
 
-  const [merchantsByEmail, suppressedEmails] = await Promise.all([
-    fetchMerchantsByEmail(client, emails),
+  const [{ byEmail: merchantsByEmail }, suppressedEmails] = await Promise.all([
+    fetchMerchantsByEmail(client, emails, appIds),
     fetchSuppressedEmails(client, emails),
   ]);
 

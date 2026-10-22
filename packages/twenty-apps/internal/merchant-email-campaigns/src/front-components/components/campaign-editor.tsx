@@ -444,10 +444,43 @@ export const CampaignEditor = ({
               onChange={markDirty(setAudienceFilter)}
             />
           ) : (
-            <ManualRecipientsEditor
-              text={manualRecipientsText}
-              onChange={markDirty(setManualRecipientsText)}
-            />
+            <>
+              <div style={{ marginBottom: 14 }}>
+                <StudioField
+                  label={t('Apps')}
+                  hint={t(
+                    'A shop owner can install more than one app, and each install has its own merchant record with the same email. Pick which app an address should match when that happens; leave empty to match any.',
+                  )}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    {apps.map((app) => {
+                      const isSelected = audienceFilter.appIds.includes(app.id);
+
+                      return (
+                        <StudioCheckbox
+                          key={app.id}
+                          checked={isSelected}
+                          label={app.name || t('Unnamed app')}
+                          onChange={() =>
+                            markDirty(setAudienceFilter)({
+                              ...audienceFilter,
+                              appIds: isSelected
+                                ? audienceFilter.appIds.filter((id) => id !== app.id)
+                                : [...audienceFilter.appIds, app.id],
+                            })
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                </StudioField>
+              </div>
+              <ManualRecipientsEditor
+                text={manualRecipientsText}
+                appIds={audienceFilter.appIds}
+                onChange={markDirty(setManualRecipientsText)}
+              />
+            </>
           )}
         </StudioPanel>
 

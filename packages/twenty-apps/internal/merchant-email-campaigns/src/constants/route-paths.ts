@@ -1,6 +1,8 @@
 export const LAUNCH_CAMPAIGN_ROUTE_PATH = '/email-campaigns/launch';
 export const SEND_TEST_EMAIL_ROUTE_PATH = '/email-campaigns/test-send';
 export const PREVIEW_AUDIENCE_ROUTE_PATH = '/email-campaigns/audience-preview';
+export const ESTIMATE_MANUAL_AUDIENCE_ROUTE_PATH =
+  '/email-campaigns/manual-audience-estimate';
 export const UNSUBSCRIBE_ROUTE_PATH = '/email-campaigns/unsubscribe';
 export const LIST_APPS_ROUTE_PATH = '/email-campaigns/apps';
 export const CAMPAIGN_STATS_ROUTE_PATH = '/email-campaigns/stats';
