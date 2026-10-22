@@ -3,8 +3,6 @@ import { defineApplication, FieldType } from 'twenty-sdk/define';
 import {
   APPLICATION_UID,
   NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID,
-  NOTIFICATION_FROM_EMAIL_VARIABLE_UID,
-  NOTIFICATION_RESEND_API_KEY_VARIABLE_UID,
   NOTIFICATION_SMTP_FROM_VARIABLE_UID,
   NOTIFICATION_SMTP_HOST_VARIABLE_UID,
   NOTIFICATION_SMTP_PASSWORD_VARIABLE_UID,
@@ -36,11 +34,10 @@ export default defineApplication({
         // logic function call never has — confirmed by hitting "This endpoint
         // requires a token bound to a user workspace" regardless of the
         // app's own role permissions.
-        'How issue notification emails (assigned, commented, mentioned) are sent. SMTP sends directly through a mail server (e.g. Gmail SMTP relay). RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
+        'How issue notification emails (assigned, commented, mentioned) are sent. SMTP sends directly through a mail server (e.g. Gmail SMTP relay). WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
       type: FieldType.SELECT,
       options: [
         { label: 'SMTP', value: 'SMTP' },
-        { label: 'Resend', value: 'RESEND' },
         { label: 'Workflow webhook', value: 'WORKFLOW_WEBHOOK' },
       ],
       value: 'SMTP',
@@ -78,19 +75,6 @@ export default defineApplication({
       label: 'From address (SMTP)',
       description:
         'For example "Task Manager <notify@example.com>". Only used when the provider is SMTP.',
-      value: '',
-    },
-    NOTIFICATION_RESEND_API_KEY: {
-      universalIdentifier: NOTIFICATION_RESEND_API_KEY_VARIABLE_UID,
-      label: 'Resend API key',
-      description: 'Only used when the provider is RESEND.',
-      isSecret: true,
-    },
-    NOTIFICATION_FROM_EMAIL: {
-      universalIdentifier: NOTIFICATION_FROM_EMAIL_VARIABLE_UID,
-      label: 'From address (Resend)',
-      description:
-        'For example "Task Manager <notify@example.com>". The domain must be verified in Resend. Only used when the provider is RESEND.',
       value: '',
     },
     NOTIFICATION_WORKFLOW_WEBHOOK_URL: {

@@ -2,8 +2,6 @@ import { createTransport } from 'nodemailer';
 
 import {
   NOTIFICATION_EMAIL_PROVIDER_VARIABLE,
-  NOTIFICATION_FROM_EMAIL_VARIABLE,
-  NOTIFICATION_RESEND_API_KEY_VARIABLE,
   NOTIFICATION_SMTP_FROM_VARIABLE,
   NOTIFICATION_SMTP_HOST_VARIABLE,
   NOTIFICATION_SMTP_PASSWORD_VARIABLE,
@@ -64,43 +62,6 @@ const sendThroughSmtp = async (
   }
 };
 
-const sendThroughResend = async (
-  to: string,
-  email: NotificationEmail,
-): Promise<NotificationSendResult> => {
-  const apiKey = readVariable(NOTIFICATION_RESEND_API_KEY_VARIABLE);
-  const from = readVariable(NOTIFICATION_FROM_EMAIL_VARIABLE);
-
-  if (apiKey.length === 0 || from.length === 0) {
-    return {
-      ok: false,
-      error: 'NOTIFICATION_RESEND_API_KEY or NOTIFICATION_FROM_EMAIL is not set.',
-    };
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-    }),
-  });
-
-  return response.ok
-    ? { ok: true }
-    : {
-        ok: false,
-        error: `Resend HTTP ${response.status}: ${await response.text()}`,
-      };
-};
-
 const sendThroughWorkflowWebhook = async (
   to: string,
   email: NotificationEmail,
@@ -129,7 +90,6 @@ const SENDER_BY_PROVIDER: Record<
   string,
   (to: string, email: NotificationEmail) => Promise<NotificationSendResult>
 > = {
-  RESEND: sendThroughResend,
   WORKFLOW_WEBHOOK: sendThroughWorkflowWebhook,
 };
 

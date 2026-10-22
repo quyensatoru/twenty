@@ -548,10 +548,6 @@ export const RECORD_PAGE_BASE_URL_VARIABLE_UID =
 // transport sends them, and that transport's own settings.
 export const NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID =
   '82d5ef4b-d980-4657-847c-0eba75cb6450';
-export const NOTIFICATION_RESEND_API_KEY_VARIABLE_UID =
-  '99fd5f09-01f3-4746-825c-3721d3d0eb39';
-export const NOTIFICATION_FROM_EMAIL_VARIABLE_UID =
-  'adcd98eb-3617-45c4-b344-ca33c093d088';
 export const NOTIFICATION_WORKFLOW_WEBHOOK_URL_VARIABLE_UID =
   'ffaee6d0-e9b4-4b7a-99b4-61b330ee6121';
 // SMTP sends directly, bypassing the core sendEmail mutation entirely:
