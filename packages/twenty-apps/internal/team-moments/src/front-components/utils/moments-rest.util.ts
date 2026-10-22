@@ -35,8 +35,10 @@ export const createRecord = async <TRow>(namePlural: string, body: Record<string
 export const updateRecord = async <TRow>(namePlural: string, id: string, body: Record<string, unknown>): Promise<TRow> =>
   readSingle<TRow>(await client.request('PATCH', `/rest/${namePlural}/${id}`, { body }));
 
+// soft_delete=true: the app runtime role only grants soft-delete, and a
+// plain DELETE defaults to a hard destroy, which it would reject.
 export const deleteRecord = async (namePlural: string, id: string): Promise<void> => {
-  await client.request('DELETE', `/rest/${namePlural}/${id}`);
+  await client.request('DELETE', `/rest/${namePlural}/${id}`, { query: { soft_delete: true } });
 };
 
 export const resolveAppRouteUrl = (routePath: string, query: RestQuery): string =>

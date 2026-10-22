@@ -1,0 +1,107 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+
+import {
+  POLL_CLOSES_AT_FIELD_UID,
+  POLL_CREATED_BY_ID_FIELD_UID,
+  POLL_MATTERMOST_CHANNEL_ID_FIELD_UID,
+  POLL_MATTERMOST_POST_ID_FIELD_UID,
+  POLL_OBJECT_UID,
+  POLL_OPTIONS_FIELD_UID,
+  POLL_QUESTION_FIELD_UID,
+  POLL_STATUS_CLOSED_OPTION_UID,
+  POLL_STATUS_FIELD_UID,
+  POLL_STATUS_OPEN_OPTION_UID,
+  POLL_VOTES_FIELD_UID,
+} from '../constants/universal-identifiers';
+
+// A team poll. Options and votes are inline JSON, like eventCard's
+// signatures: a poll never needs its own relation, just a question with a
+// handful of choices and one vote per member.
+export default defineObject({
+  universalIdentifier: POLL_OBJECT_UID,
+  nameSingular: 'poll',
+  namePlural: 'polls',
+  labelSingular: 'Poll',
+  labelPlural: 'Polls',
+  description: 'A poll posted to Mattermost, voted on from Twenty',
+  icon: 'IconChartBar',
+  isSearchable: true,
+  labelIdentifierFieldMetadataUniversalIdentifier: POLL_QUESTION_FIELD_UID,
+  fields: [
+    {
+      universalIdentifier: POLL_QUESTION_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'question',
+      label: 'Question',
+      icon: 'IconHelpCircle',
+      isNullable: false,
+      defaultValue: "''",
+      isSearchable: true,
+    },
+    {
+      universalIdentifier: POLL_STATUS_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'status',
+      label: 'Status',
+      icon: 'IconToggleRight',
+      isNullable: false,
+      defaultValue: "'OPEN'",
+      options: [
+        { id: POLL_STATUS_OPEN_OPTION_UID, label: 'Open', value: 'OPEN', color: 'green', position: 0 },
+        { id: POLL_STATUS_CLOSED_OPTION_UID, label: 'Closed', value: 'CLOSED', color: 'gray', position: 1 },
+      ],
+    },
+    {
+      universalIdentifier: POLL_OPTIONS_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'options',
+      label: 'Options',
+      description: '[{ id, label, emoji }]',
+      icon: 'IconList',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: POLL_VOTES_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'votes',
+      label: 'Votes',
+      description: '[{ memberId, optionId, votedAt }], one entry per member',
+      icon: 'IconCheckbox',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: POLL_CREATED_BY_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'createdById',
+      label: 'Created by member id',
+      icon: 'IconUser',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: POLL_CLOSES_AT_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'closesAt',
+      label: 'Closes at',
+      icon: 'IconClock',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: POLL_MATTERMOST_CHANNEL_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'mattermostChannelId',
+      label: 'Mattermost channel id',
+      description: 'Empty uses the app default channel',
+      icon: 'IconBrandSlack',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: POLL_MATTERMOST_POST_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'mattermostPostId',
+      label: 'Mattermost post id',
+      description: 'Set once published; lets later votes patch the same message',
+      icon: 'IconId',
+      isNullable: true,
+    },
+  ],
+});

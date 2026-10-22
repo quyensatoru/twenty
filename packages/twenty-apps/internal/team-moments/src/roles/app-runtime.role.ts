@@ -6,6 +6,7 @@ import {
   EVENT_MESSAGE_OBJECT_UID,
   MEMBER_PROFILE_OBJECT_UID,
   OCCASION_PLAN_OBJECT_UID,
+  POLL_OBJECT_UID,
   TEAM_EVENT_OBJECT_UID,
   WORKSPACE_MEMBER_OBJECT_UID,
 } from '../constants/universal-identifiers';
@@ -42,6 +43,7 @@ export default defineApplicationRole({
     { objectUniversalIdentifier: MEMBER_PROFILE_OBJECT_UID, ...readWrite },
     { objectUniversalIdentifier: TEAM_EVENT_OBJECT_UID, ...readWrite },
     { objectUniversalIdentifier: OCCASION_PLAN_OBJECT_UID, ...readWrite },
+    { objectUniversalIdentifier: POLL_OBJECT_UID, ...readWrite },
     { objectUniversalIdentifier: WORKSPACE_MEMBER_OBJECT_UID, ...readOnly },
   ],
 });

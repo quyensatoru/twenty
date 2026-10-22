@@ -1,6 +1,9 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import {
+  MATTERMOST_BASE_URL_VARIABLE,
+  MATTERMOST_BOT_TOKEN_VARIABLE,
+  MATTERMOST_DEFAULT_CHANNEL_ID_VARIABLE,
   NOTIFICATION_EMAIL_PROVIDER_VARIABLE,
   NOTIFICATION_SMTP_FROM_VARIABLE,
   NOTIFICATION_SMTP_HOST_VARIABLE,
@@ -12,6 +15,9 @@ import {
 } from './constants/application-variable-names';
 import {
   APPLICATION_UID,
+  MATTERMOST_BASE_URL_VARIABLE_UID,
+  MATTERMOST_BOT_TOKEN_VARIABLE_UID,
+  MATTERMOST_DEFAULT_CHANNEL_ID_VARIABLE_UID,
   NOTIFICATION_EMAIL_PROVIDER_VARIABLE_UID,
   NOTIFICATION_SMTP_FROM_VARIABLE_UID,
   NOTIFICATION_SMTP_HOST_VARIABLE_UID,
@@ -88,6 +94,24 @@ export default defineApplication({
       description:
         'Only used when the provider is WORKFLOW_WEBHOOK. Receives a POST with to, subject and text.',
       isSecret: true,
+    },
+    [MATTERMOST_BASE_URL_VARIABLE]: {
+      universalIdentifier: MATTERMOST_BASE_URL_VARIABLE_UID,
+      label: 'Mattermost server URL',
+      description: 'For example https://chat.example.com, no trailing slash.',
+      value: '',
+    },
+    [MATTERMOST_BOT_TOKEN_VARIABLE]: {
+      universalIdentifier: MATTERMOST_BOT_TOKEN_VARIABLE_UID,
+      label: 'Mattermost bot token',
+      description: 'Personal access token of the bot account that posts and edits poll messages.',
+      isSecret: true,
+    },
+    [MATTERMOST_DEFAULT_CHANNEL_ID_VARIABLE]: {
+      universalIdentifier: MATTERMOST_DEFAULT_CHANNEL_ID_VARIABLE_UID,
+      label: 'Default Mattermost channel id',
+      description: 'Used when a poll does not set its own channel.',
+      value: '',
     },
   },
 });

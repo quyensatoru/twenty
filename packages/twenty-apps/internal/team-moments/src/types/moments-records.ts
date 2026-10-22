@@ -81,6 +81,33 @@ export type GiftContribution = {
   contributedAt: string;
 };
 
+export type PollOption = {
+  id: string;
+  label: string;
+  emoji: string | null;
+};
+
+export type PollVote = {
+  memberId: string;
+  optionId: string;
+  votedAt: string;
+};
+
+export type PollStatus = 'OPEN' | 'CLOSED';
+
+export type PollRow = {
+  id: string;
+  question: string;
+  status: PollStatus;
+  options: PollOption[] | null;
+  votes: PollVote[] | null;
+  createdById: string | null;
+  closesAt: string | null;
+  mattermostChannelId: string | null;
+  mattermostPostId: string | null;
+  createdAt: string;
+};
+
 export type OccasionPlanRow = {
   id: string;
   occurrenceKey: string;
