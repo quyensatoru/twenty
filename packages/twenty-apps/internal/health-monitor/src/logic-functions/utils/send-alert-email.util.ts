@@ -8,7 +8,6 @@ import {
   ALERT_SMTP_USERNAME_VARIABLE,
   ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
-  RESEND_API_KEY_VARIABLE,
 } from '../../constants/application-variable-names';
 import { type AlertEmail } from '../../utils/build-alert-email.util';
 import { readErrorMessage } from './read-error-message.util';
@@ -62,43 +61,6 @@ const sendThroughSmtp = async (
   }
 };
 
-const sendThroughResend = async (
-  to: string,
-  email: AlertEmail,
-): Promise<AlertSendResult> => {
-  const apiKey = readVariable(RESEND_API_KEY_VARIABLE);
-  const from = readVariable(ALERT_FROM_EMAIL_VARIABLE);
-
-  if (apiKey.length === 0 || from.length === 0) {
-    return {
-      ok: false,
-      error: 'RESEND_API_KEY or ALERT_FROM_EMAIL is not set.',
-    };
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-    }),
-  });
-
-  return response.ok
-    ? { ok: true }
-    : {
-        ok: false,
-        error: `Resend HTTP ${response.status}: ${await response.text()}`,
-      };
-};
-
 const sendThroughWorkflowWebhook = async (
   to: string,
   email: AlertEmail,
@@ -127,7 +89,6 @@ const SENDER_BY_PROVIDER: Record<
   string,
   (to: string, email: AlertEmail) => Promise<AlertSendResult>
 > = {
-  RESEND: sendThroughResend,
   WORKFLOW_WEBHOOK: sendThroughWorkflowWebhook,
 };
 

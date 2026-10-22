@@ -10,7 +10,6 @@ import {
   ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   PUBLIC_BASE_URL_VARIABLE,
-  RESEND_API_KEY_VARIABLE,
 } from './constants/application-variable-names';
 import {
   ALERT_FROM_EMAIL_VARIABLE_UID,
@@ -23,7 +22,6 @@ import {
   EMAIL_PROVIDER_VARIABLE_UID,
   HEALTH_ALERT_EMAIL_LANGUAGE_VARIABLE_UID,
   PUBLIC_BASE_URL_VARIABLE_UID,
-  RESEND_API_KEY_VARIABLE_UID,
 } from './constants/universal-identifiers';
 
 export default defineApplication({
@@ -41,11 +39,10 @@ export default defineApplication({
         // logic function call never has — confirmed by hitting "This endpoint
         // requires a token bound to a user workspace" regardless of the
         // app's own role permissions.
-        'SMTP sends directly through a mail server (e.g. Gmail SMTP relay). RESEND sends through Resend. WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
+        'SMTP sends directly through a mail server (e.g. Gmail SMTP relay). WORKFLOW_WEBHOOK posts each email to a workflow webhook that sends it.',
       type: FieldType.SELECT,
       options: [
         { label: 'SMTP', value: 'SMTP' },
-        { label: 'Resend', value: 'RESEND' },
         { label: 'Workflow webhook', value: 'WORKFLOW_WEBHOOK' },
       ],
       value: 'SMTP',
@@ -78,17 +75,11 @@ export default defineApplication({
         'For Gmail/Google Workspace this must be an App Password, not the account password. Only used when the provider is SMTP.',
       isSecret: true,
     },
-    [RESEND_API_KEY_VARIABLE]: {
-      universalIdentifier: RESEND_API_KEY_VARIABLE_UID,
-      label: 'Resend API key',
-      description: 'Only used when the provider is RESEND.',
-      isSecret: true,
-    },
     [ALERT_FROM_EMAIL_VARIABLE]: {
       universalIdentifier: ALERT_FROM_EMAIL_VARIABLE_UID,
       label: 'From address',
       description:
-        'For example "MIDA Health <health@mida.so>". For RESEND the domain must be verified in Resend. Used by both the SMTP and RESEND providers.',
+        'For example "MIDA Health <health@mida.so>". Only used when the provider is SMTP.',
       value: '',
     },
     [ALERT_WORKFLOW_WEBHOOK_URL_VARIABLE]: {
