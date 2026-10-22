@@ -74,7 +74,10 @@ export const readDiscussionBody = (body: unknown): string => {
   ).trim();
   if (!isNonEmptyString(markdown))
     throw new Error('A message cannot be empty.');
-  if (markdown.length > 50000) throw new Error('The message is too long.');
+  if (markdown.length > 50000)
+    throw new Error(
+      `The message is too long (${markdown.length.toLocaleString('en-US')} characters, max 50,000). Pasted content often carries hidden formatting far longer than what is shown — try pasting as plain text instead.`,
+    );
   return markdown;
 };
 
