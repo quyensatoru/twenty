@@ -26,13 +26,18 @@ const sendThroughSmtp = async (
   const host = readVariable(ALERT_SMTP_HOST_VARIABLE);
   const port = Number(readVariable(ALERT_SMTP_PORT_VARIABLE) || '587');
   const username = readVariable(ALERT_SMTP_USERNAME_VARIABLE);
-  const password = readVariable(ALERT_SMTP_PASSWORD_VARIABLE);
+  // Google shows app passwords in groups of four separated by spaces.
+  const password = readVariable(ALERT_SMTP_PASSWORD_VARIABLE).replace(
+    /\s+/g,
+    '',
+  );
   const from = readVariable(ALERT_FROM_EMAIL_VARIABLE) || username;
 
   if (host.length === 0 || username.length === 0 || password.length === 0) {
     return {
       ok: false,
-      error: 'ALERT_SMTP_HOST, ALERT_SMTP_USERNAME or ALERT_SMTP_PASSWORD is not set.',
+      error:
+        'ALERT_SMTP_HOST, ALERT_SMTP_USERNAME or ALERT_SMTP_PASSWORD is not set.',
     };
   }
 
