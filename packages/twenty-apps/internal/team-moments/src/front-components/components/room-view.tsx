@@ -113,7 +113,7 @@ export const RoomView = ({ occurrence, currentMember, memberNames, memberCount, 
               })}
             </div>
             {tab === 'chat' ? (
-              <ChatPanel occurrenceKey={occurrence.key} currentMember={currentMember} memberNames={memberNames} />
+              <ChatPanel occurrenceKey={occurrence.key} eventTitle={occurrence.title} currentMember={currentMember} memberNames={memberNames} />
             ) : (
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 <CardPanel occurrence={occurrence} currentMember={currentMember} />

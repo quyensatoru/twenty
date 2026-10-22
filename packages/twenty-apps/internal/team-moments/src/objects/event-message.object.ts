@@ -6,6 +6,7 @@ import {
   EVENT_MESSAGE_AUTHOR_ID_FIELD_UID,
   EVENT_MESSAGE_BODY_FIELD_UID,
   EVENT_MESSAGE_HEART_MEMBER_IDS_FIELD_UID,
+  EVENT_MESSAGE_MENTION_MEMBER_IDS_FIELD_UID,
   EVENT_MESSAGE_OBJECT_UID,
   EVENT_MESSAGE_OCCURRENCE_KEY_FIELD_UID,
 } from '../constants/universal-identifiers';
@@ -55,6 +56,14 @@ export default defineObject({
       name: 'heartMemberIds',
       label: 'Hearted by',
       icon: 'IconHeart',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: EVENT_MESSAGE_MENTION_MEMBER_IDS_FIELD_UID,
+      type: FieldType.ARRAY,
+      name: 'mentionMemberIds',
+      label: 'Mentioned',
+      icon: 'IconAt',
       isNullable: true,
     },
     {

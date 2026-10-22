@@ -42,5 +42,20 @@ export const deleteRecord = async (namePlural: string, id: string): Promise<void
 export const resolveAppRouteUrl = (routePath: string, query: RestQuery): string =>
   client.resolveUrl(`/s${routePath}`, { query });
 
+// App routes answer 200 with `success: false` for business errors, so both the
+// transport error and that flag are turned into one thrown message.
+export const postAppRoute = async <TResult extends { success?: boolean; error?: string }>(
+  routePath: string,
+  body: Record<string, unknown>,
+): Promise<TResult> => {
+  const result = (await client.request('POST', `/s${routePath}`, { body })) as TResult;
+
+  if (result?.success !== true) {
+    throw new Error(result?.error ?? 'The request failed.');
+  }
+
+  return result;
+};
+
 export const readErrorText = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);

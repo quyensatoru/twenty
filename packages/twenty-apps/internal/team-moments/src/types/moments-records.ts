@@ -31,6 +31,7 @@ export type EventMessageRow = {
   body: string;
   authorId: string | null;
   heartMemberIds: string[] | null;
+  mentionMemberIds: string[] | null;
   media: MessageAttachment[] | null;
   createdAt: string;
 };

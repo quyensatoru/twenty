@@ -4,9 +4,10 @@ import { IconPhoto, IconX } from 'twenty-ui/icon';
 import { EVENT_MESSAGE_ATTACHMENT_MAX_BYTES, EVENT_MESSAGE_ATTACHMENTS_MAX } from '../../constants/event-message-attachments';
 import { EVENT_MESSAGE_ATTACHMENTS_FIELD_UID, EVENT_MESSAGE_OBJECT_UID } from '../../constants/universal-identifiers';
 import { MESSAGE_QUERY_LIMIT } from '../../constants/query-limits';
+import { NOTIFY_EVENT_MESSAGE_MENTION_ROUTE_PATH } from '../../constants/route-paths';
 import { type EventMessageRow, type MemberSummary, type MessageAttachment } from '../../types/moments-records';
 import { type TransferredFile } from '../../types/transferred-file';
-import { createRecord, listRecords, readErrorText, updateRecord } from '../utils/moments-rest.util';
+import { createRecord, listRecords, postAppRoute, readErrorText, updateRecord } from '../utils/moments-rest.util';
 import { getChatMentionQuery, insertChatMention } from '../utils/chat-mentions.util';
 import { readAttachmentKind, readFileExtension } from '../utils/read-attachment-kind.util';
 import { readTransferredFiles } from '../utils/read-transferred-files.util';
@@ -29,6 +30,7 @@ const WISH_SUGGESTIONS = [
 
 type ChatPanelProps = {
   occurrenceKey: string;
+  eventTitle: string;
   currentMember: MemberSummary | null;
   memberNames: Record<string, string>;
 };
@@ -45,9 +47,13 @@ const formatTime = (isoDateTime: string): string => {
   return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', hour: '2-digit', minute: '2-digit', month: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' }).format(date);
 };
 
-export const ChatPanel = ({ occurrenceKey, currentMember, memberNames }: ChatPanelProps) => {
+export const ChatPanel = ({ occurrenceKey, eventTitle, currentMember, memberNames }: ChatPanelProps) => {
   const [messages, setMessages] = useState<EventMessageRow[]>([]);
   const [draft, setDraft] = useState('');
+  // Picked ids, tracked alongside the spliced "@Name " text: `insertChatMention`
+  // only edits the draft string, so without this a mention would have no
+  // structured member reference for the notification route to read.
+  const [mentionedMemberIds, setMentionedMemberIds] = useState<string[]>([]);
   const [pending, setPending] = useState<PendingAttachment[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +75,13 @@ export const ChatPanel = ({ occurrenceKey, currentMember, memberNames }: ChatPan
     if (composerKey > 0) composerRef.current?.focus();
   }, [composerKey]);
 
-  const selectMention = (name: string) => {
-    setDraft((current) => insertChatMention(current, name));
+  const selectMention = (option: { id: string; name: string }) => {
+    setDraft((current) => insertChatMention(current, option.name));
+    if (option.id !== 'everyone') {
+      setMentionedMemberIds((current) =>
+        current.includes(option.id) ? current : [...current, option.id],
+      );
+    }
     setIsMentionDismissed(true);
     setComposerKey((current) => current + 1);
   };
@@ -177,21 +188,37 @@ export const ChatPanel = ({ occurrenceKey, currentMember, memberNames }: ChatPan
 
     setIsSending(true);
 
+    const trimmedBody = draft.trim();
+    const recipients = mentionedMemberIds;
+
     try {
       const created = await createRecord<EventMessageRow>('eventMessages', {
         occurrenceKey,
-        body: draft.trim(),
+        body: trimmedBody,
         authorId: currentMember?.id ?? null,
         heartMemberIds: [],
+        mentionMemberIds: recipients,
         media: pending.map(({ fileId, label }) => ({ fileId, label })),
       });
 
       setMessages((current) => [...current, { ...created, media: created.media ?? pending }]);
       setDraft('');
       setIsMentionDismissed(false);
+      setMentionedMemberIds([]);
       setPending([]);
       setComposerKey((current) => current + 1);
       setError(null);
+
+      // Best-effort: a failed notification should never surface as a failed
+      // send, since the message itself is already saved by this point.
+      if (recipients.length > 0 && currentMember !== null) {
+        void postAppRoute(NOTIFY_EVENT_MESSAGE_MENTION_ROUTE_PATH, {
+          actorMemberId: currentMember.id,
+          eventTitle,
+          excerpt: trimmedBody,
+          mentionMemberIds: recipients,
+        }).catch(() => {});
+      }
     } catch (sendError) {
       setError(readErrorText(sendError));
     } finally {
@@ -307,7 +334,7 @@ export const ChatPanel = ({ occurrenceKey, currentMember, memberNames }: ChatPan
               {mentionOptions.length === 0 ? (
                 <div style={{ color: MOMENTS_TOKENS.textSecondary, fontSize: 13, padding: 10 }}>Không tìm thấy thành viên</div>
               ) : mentionOptions.map((option, index) => (
-                <button key={option.id} type="button" role="option" aria-selected={index === selectedMentionIndex} onClick={() => selectMention(option.name)} style={{ alignItems: 'center', background: index === selectedMentionIndex ? MOMENTS_TOKENS.accentSoft : 'transparent', border: 'none', color: MOMENTS_TOKENS.textPrimary, cursor: 'pointer', display: 'flex', fontFamily: MOMENTS_TOKENS.fontFamily, fontSize: 13, gap: 8, padding: '7px 10px', textAlign: 'left', width: '100%' }}>
+                <button key={option.id} type="button" role="option" aria-selected={index === selectedMentionIndex} onClick={() => selectMention(option)} style={{ alignItems: 'center', background: index === selectedMentionIndex ? MOMENTS_TOKENS.accentSoft : 'transparent', border: 'none', color: MOMENTS_TOKENS.textPrimary, cursor: 'pointer', display: 'flex', fontFamily: MOMENTS_TOKENS.fontFamily, fontSize: 13, gap: 8, padding: '7px 10px', textAlign: 'left', width: '100%' }}>
                   {option.id === 'everyone' ? <span aria-hidden="true">@</span> : <MemberAvatar name={option.name} seed={option.id} size={22} />}
                   {option.name}
                 </button>
@@ -339,7 +366,7 @@ export const ChatPanel = ({ occurrenceKey, currentMember, memberNames }: ChatPan
               }
               if (event.key === 'Enter') {
                 event.preventDefault();
-                if (mentionOptions[selectedMentionIndex]) selectMention(mentionOptions[selectedMentionIndex].name);
+                if (mentionOptions[selectedMentionIndex]) selectMention(mentionOptions[selectedMentionIndex]);
                 return true;
               }
               return false;
