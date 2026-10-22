@@ -12,6 +12,11 @@ import { listScopedRecords } from './list-scoped-records.util';
 import { sendNotificationEmail } from './send-notification-email.util';
 import { getDevelopmentRecordId } from './upsert-development-links.util';
 
+// A guard rail against pathological payloads, not a real editing limit:
+// pasted content (Word, Notion, Docs) can carry hidden formatting many times
+// longer than what is shown on screen.
+export const DISCUSSION_BODY_MAX_LENGTH = 200000;
+
 export type DiscussionComment = {
   id: string;
   issueId: string;
@@ -74,9 +79,9 @@ export const readDiscussionBody = (body: unknown): string => {
   ).trim();
   if (!isNonEmptyString(markdown))
     throw new Error('A message cannot be empty.');
-  if (markdown.length > 50000)
+  if (markdown.length > DISCUSSION_BODY_MAX_LENGTH)
     throw new Error(
-      `The message is too long (${markdown.length.toLocaleString('en-US')} characters, max 50,000). Pasted content often carries hidden formatting far longer than what is shown — try pasting as plain text instead.`,
+      `The message is too long (${markdown.length.toLocaleString('en-US')} characters, max ${DISCUSSION_BODY_MAX_LENGTH.toLocaleString('en-US')}). Pasted content often carries hidden formatting far longer than what is shown — try pasting as plain text instead.`,
     );
   return markdown;
 };
