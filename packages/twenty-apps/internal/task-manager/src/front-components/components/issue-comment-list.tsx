@@ -71,7 +71,7 @@ type IssueCommentListProps = {
   reactions?: DiscussionReaction[];
   readStates?: DiscussionReadState[];
   onReact?: (commentId: string, emoji: string, active: boolean) => void;
-  onRead?: (commentId: string) => Promise<void> | void;
+  onRead?: (commentIds: string[]) => Promise<void> | void;
   onUpdate: (commentId: string, markdown: string) => void;
   onDelete: (commentId: string) => void;
   // Set by a caller that shows the sort toggle itself (on its tab row); the

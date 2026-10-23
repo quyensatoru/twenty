@@ -293,7 +293,7 @@ export const IssueActivity = () => {
                 .act('react', { commentId, emoji, active })
                 .catch(() => undefined)
             }
-            onRead={(commentId) => discussion.act('read', { commentId })}
+            onRead={(commentIds) => discussion.act('read', { commentIds })}
             onCreate={async (input) => {
               const result = await postAppRoute<{
                 issueComment: IssueCommentRow;

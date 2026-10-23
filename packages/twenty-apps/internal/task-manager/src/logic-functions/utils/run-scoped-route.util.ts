@@ -4,6 +4,7 @@ import { type CallerScope } from '../../types/caller-scope';
 import { resolveCallerScope } from '../app-scope/resolve-caller-scope.util';
 import { isAppScopePermissionDeniedError } from '../app-scope/app-scope-error';
 import { createAppClient } from './create-app-client.util';
+import { enableRecordColumnCache } from './fetch-record-column.util';
 import { readErrorMessage } from './read-error-message.util';
 
 export type ScopedRouteResult =
@@ -21,6 +22,7 @@ export const runScopedRoute = async (
 ): Promise<ScopedRouteResult> => {
   try {
     const client = createAppClient();
+    enableRecordColumnCache(client);
     const scope = await resolveCallerScope(client);
     const payload = await run({ client, scope });
 

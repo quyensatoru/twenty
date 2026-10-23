@@ -31,6 +31,7 @@ type DiscussionBody = {
   issueId?: string;
   cursor?: string;
   commentId?: string;
+  commentIds?: string[];
   emoji?: string;
   active?: boolean;
   notificationId?: string;
@@ -60,6 +61,26 @@ const REACTION_SELECTION = {
   commentId: true,
   emoji: true,
 } as const;
+
+const MAX_READ_COMMENT_IDS = 100;
+
+// `commentId` is still accepted from a front bundle cached before batching.
+const readCommentIds = (body: DiscussionBody): string[] => {
+  const commentIds = [
+    ...new Set(
+      Array.isArray(body.commentIds)
+        ? body.commentIds
+        : [requireString(body.commentId, 'commentId')],
+    ),
+  ];
+  if (
+    commentIds.length === 0 ||
+    commentIds.length > MAX_READ_COMMENT_IDS ||
+    commentIds.some((commentId) => typeof commentId !== 'string')
+  )
+    throw new Error('Invalid commentIds.');
+  return commentIds;
+};
 
 const handler = async (event: RoutePayload<DiscussionBody>) =>
   runScopedRoute(async ({ client, scope }) => {
@@ -214,6 +235,57 @@ const handler = async (event: RoutePayload<DiscussionBody>) =>
         canSoftDelete: hasAppGrant(scope, appId, 'softDelete'),
       };
     }
+    if (action === 'read') {
+      const commentIds = readCommentIds(body);
+      const comments = await listScopedRecords<{
+        id: string;
+        createdAt: string;
+      }>({
+        client,
+        pluralName: 'issueComments',
+        filter: { id: { in: commentIds }, issueId: { eq: issueId } },
+        selection: { id: true, createdAt: true },
+        maxRecords: commentIds.length,
+      });
+      if (comments.length !== commentIds.length)
+        throw new AppScopePermissionDeniedError();
+      if (
+        comments.some(
+          (comment) => !Number.isFinite(new Date(comment.createdAt).getTime()),
+        )
+      )
+        throw new Error('The message has no valid timestamp.');
+      // Per-comment receipts do not acknowledge older messages the viewer has not seen.
+      const readStates = await Promise.all(
+        comments.map(async (comment) => {
+          await createDiscussionRowOnce({
+            client,
+            singularName: 'issueReadState',
+            pluralName: 'issueReadStates',
+            data: {
+              id: getDevelopmentRecordId([
+                'discussion-read',
+                issueId,
+                memberId,
+                comment.id,
+              ]),
+              issueId,
+              appId,
+              memberId,
+              commentId: comment.id,
+              lastReadAt: comment.createdAt,
+            },
+            selection: READ_STATE_SELECTION,
+          });
+          return {
+            memberId,
+            commentId: comment.id,
+            lastReadAt: comment.createdAt,
+          };
+        }),
+      );
+      return { issueId, readStates };
+    }
     const commentId = requireString(body.commentId, 'commentId');
     const comment = await readDiscussionComment(client, issueId, commentId);
     if (action === 'react') {
@@ -262,38 +334,6 @@ const handler = async (event: RoutePayload<DiscussionBody>) =>
         });
       }
       return { issueId };
-    }
-    if (action === 'read') {
-      if (!Number.isFinite(new Date(comment.createdAt).getTime()))
-        throw new Error('The message has no valid timestamp.');
-      // Per-comment receipts do not acknowledge older messages the viewer has not seen.
-      await createDiscussionRowOnce({
-        client,
-        singularName: 'issueReadState',
-        pluralName: 'issueReadStates',
-        data: {
-          id: getDevelopmentRecordId([
-            'discussion-read',
-            issueId,
-            memberId,
-            comment.id,
-          ]),
-          issueId,
-          appId,
-          memberId,
-          commentId: comment.id,
-          lastReadAt: comment.createdAt,
-        },
-        selection: READ_STATE_SELECTION,
-      });
-      return {
-        issueId,
-        readState: {
-          memberId,
-          commentId: comment.id,
-          lastReadAt: comment.createdAt,
-        },
-      };
     }
     throw new Error('Unknown discussion action.');
   });

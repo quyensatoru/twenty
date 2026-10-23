@@ -84,9 +84,28 @@ describe('automatic discussion read receipts', () => {
     await act(async () => vi.advanceTimersByTimeAsync(1500));
     expect(read).not.toHaveBeenCalled();
     await act(async () => vi.advanceTimersByTimeAsync(1000));
-    expect(read).toHaveBeenCalledWith('comment');
+    expect(read).toHaveBeenCalledWith(['comment']);
     await act(async () => vi.advanceTimersByTimeAsync(5000));
     expect(read).toHaveBeenCalledTimes(1);
+  });
+  it('acknowledges messages that become due together in one call', async () => {
+    const read = vi.fn().mockResolvedValue(undefined);
+    const comments = [
+      ...props.comments,
+      {
+        ...props.comments[0],
+        id: 'second-comment',
+        createdAt: '2026-01-01T00:01:00Z',
+      },
+    ];
+    await act(async () =>
+      root.render(
+        createElement(IssueCommentList, { ...props, comments, onRead: read }),
+      ),
+    );
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledWith(['comment', 'second-comment']);
   });
   it('does not acknowledge offscreen or background messages', async () => {
     const read = vi.fn().mockResolvedValue(undefined);
@@ -162,7 +181,7 @@ describe('automatic discussion read receipts', () => {
       root.render(createElement(IssueCommentList, { ...props, onRead: read })),
     );
     await act(async () => vi.advanceTimersByTimeAsync(2500));
-    expect(read).toHaveBeenCalledWith('comment');
+    expect(read).toHaveBeenCalledWith(['comment']);
   });
   it('a receipt for a different newer comment does not mark this comment read', async () => {
     const read = vi.fn().mockResolvedValue(undefined);
@@ -183,7 +202,7 @@ describe('automatic discussion read receipts', () => {
     );
     expect(container.textContent).not.toContain('Read by Viewer');
     await act(async () => vi.advanceTimersByTimeAsync(2500));
-    expect(read).toHaveBeenCalledWith('comment');
+    expect(read).toHaveBeenCalledWith(['comment']);
   });
   it('shows a confirmed read-by receipt without sending again', async () => {
     const read = vi.fn().mockResolvedValue(undefined);

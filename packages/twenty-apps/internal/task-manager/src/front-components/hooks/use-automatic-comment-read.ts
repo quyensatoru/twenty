@@ -12,7 +12,7 @@ type AutomaticCommentReadInput = {
   comments: IssueCommentRow[];
   readStates: DiscussionReadState[];
   currentMemberId: string | null;
-  onRead?: (commentId: string) => Promise<void> | void;
+  onRead?: (commentIds: string[]) => Promise<void> | void;
 };
 
 const isCommentVisible = (element: HTMLElement): boolean => {
@@ -79,6 +79,7 @@ export const useAutomaticCommentRead = (input: AutomaticCommentReadInput) => {
         (typeof document.hasFocus === 'function' && !document.hasFocus())
       )
         return;
+      const dueCommentIds: string[] = [];
       for (const comment of current.comments) {
         if (
           comment.authorId === current.currentMemberId ||
@@ -100,15 +101,21 @@ export const useAutomaticCommentRead = (input: AutomaticCommentReadInput) => {
         visibleSince.set(comment.id, startedAt);
         if (now - startedAt < READ_DWELL_MS) continue;
         acknowledged.add(comment.id);
-        void Promise.resolve()
-          .then(() => current.onRead?.(comment.id))
-          .catch(() => {
-            if (disposed) return;
-            acknowledged.delete(comment.id);
-            visibleSince.delete(comment.id);
-            retryAfter.set(comment.id, Date.now() + FAILED_READ_RETRY_MS);
-          });
+        dueCommentIds.push(comment.id);
       }
+      if (dueCommentIds.length === 0) return;
+      // One route call per tick: each call runs in its own server process.
+      void Promise.resolve()
+        .then(() => current.onRead?.(dueCommentIds))
+        .catch(() => {
+          if (disposed) return;
+          const retryAt = Date.now() + FAILED_READ_RETRY_MS;
+          for (const commentId of dueCommentIds) {
+            acknowledged.delete(commentId);
+            visibleSince.delete(commentId);
+            retryAfter.set(commentId, retryAt);
+          }
+        });
     };
     check();
     const interval = setInterval(check, VISIBILITY_CHECK_MS);

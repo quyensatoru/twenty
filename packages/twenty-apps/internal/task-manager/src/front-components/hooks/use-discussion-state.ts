@@ -156,16 +156,15 @@ export const useDiscussionState = (
           if (completed && issueIdRef.current === issueId) void reload();
           return;
         }
-        const result = await postAppRoute<{ readState?: DiscussionReadState }>(
-          DISCUSSION_ROUTE_PATH,
-          {
-            issueId,
-            action,
-            ...input,
-          },
-        );
-        const readState = result.readState;
-        if (action === 'read' && readState !== undefined) {
+        const result = await postAppRoute<{
+          readStates?: DiscussionReadState[];
+        }>(DISCUSSION_ROUTE_PATH, {
+          issueId,
+          action,
+          ...input,
+        });
+        const readStates = result.readStates;
+        if (action === 'read' && readStates !== undefined) {
           if (issueIdRef.current === issueId)
             setSnapshot((previous) =>
               previous === null
@@ -175,12 +174,13 @@ export const useDiscussionState = (
                     readStates: [
                       ...previous.readStates.filter(
                         (state) =>
-                          !(
-                            state.memberId === readState.memberId &&
-                            state.commentId === readState.commentId
+                          !readStates.some(
+                            (readState) =>
+                              state.memberId === readState.memberId &&
+                              state.commentId === readState.commentId,
                           ),
                       ),
-                      readState,
+                      ...readStates,
                     ],
                   },
             );
