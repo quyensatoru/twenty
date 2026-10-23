@@ -9,6 +9,7 @@ import {
   CRISP_WEBHOOK_SECRET_VARIABLE,
   getCrispWebsiteIdVariable,
 } from './constants/crisp';
+import { DISCOUNT_SYNC_ENABLED_VARIABLE } from './constants/discount';
 import {
   APPLICATION_UID,
   CRISP_PLAN_DATA_DAILY_BUDGET_VARIABLE_UID,
@@ -21,6 +22,7 @@ import {
   CRISP_WEBSITE_ID_EU_VARIABLE_UID,
   CRISP_WEBSITE_ID_FRAUD_VARIABLE_UID,
   CRISP_WEBSITE_ID_MIDA_VARIABLE_UID,
+  DISCOUNT_SYNC_ENABLED_VARIABLE_UID,
 } from './constants/universal-identifiers';
 
 const websiteIdVariable = (appName: string, universalIdentifier: string) => ({
@@ -35,7 +37,7 @@ export default defineApplication({
   universalIdentifier: APPLICATION_UID,
   displayName: 'Customer Support',
   description:
-    'Merchant master data shared across apps, and the support inbox that mirrors every Crisp chat next to the merchant it belongs to.',
+    'Merchant master data shared across apps, the support inbox that mirrors every Crisp chat next to the merchant it belongs to, and the plan discount codes sent to each app.',
   applicationVariables: {
     [CRISP_PLUGIN_IDENTIFIER_VARIABLE]: {
       universalIdentifier: CRISP_PLUGIN_IDENTIFIER_VARIABLE_UID,
@@ -81,6 +83,14 @@ export default defineApplication({
         'Crisp requests the plan data sweep of every chat may spend per day. Keep it well under the plugin daily quota, which the chat sync shares.',
       isSecret: false,
       value: '5000',
+    },
+    [DISCOUNT_SYNC_ENABLED_VARIABLE]: {
+      universalIdentifier: DISCOUNT_SYNC_ENABLED_VARIABLE_UID,
+      description:
+        'Whether discounts are sent to the apps. Turn off to stop every delivery and retry; discounts saved meanwhile stay pending and can be resent.',
+      type: FieldType.BOOLEAN,
+      isSecret: false,
+      value: true,
     },
   },
 });

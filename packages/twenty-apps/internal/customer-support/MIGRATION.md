@@ -168,3 +168,54 @@ shop-beta. Log server sau khi apply không có lỗi metadata nào.
 (`14162f45-2d08-571f-b4e1-81c222d625a5`) vì không khớp công thức dẫn xuất nào. Diễn tập cho thấy
 `apply` **không** vướng nó, nhưng nó vẫn đang mang UID thuộc namespace không xác định. Chưa gây hại,
 cần theo dõi ở lần đổi chủ tiếp theo.
+
+# Discount: đưa custom object `discount` về Customer Support
+
+`discount` trên production là custom object tạo bằng UI (chủ là application "Custom" của
+workspace). App này nhận nó, thêm trang Discounts và tự gửi discount sang server của từng app
+thay cho webhook `discount.*` của Twenty. Không dòng dữ liệu nào di chuyển; bảng `_discount`
+giữ nguyên tên. Hợp đồng với các app server ở `DISCOUNTS.md`.
+
+## Đổi chủ gì
+
+`scripts/05-reparent-discount.mjs` đọc chủ hiện tại từ DB rồi chuyển, trong một transaction:
+
+- `objectMetadata` của discount;
+- mọi field mà chủ cũ sở hữu trên discount hoặc trỏ vào discount: field tạo tay (giữ UID, app
+  khai lại đúng UID đó), field hệ thống và `name` (UID dẫn xuất, viết lại theo namespace mới),
+  quan hệ hệ thống hai phía (`timelineActivities` ↔ `timelineActivity.targetDiscount`, notes,
+  tasks, attachments, chats; luôn đặt lại theo công thức `systemRelation`), và `app.discounts`;
+- index dẫn xuất (searchVector) và `searchFieldMetadata`.
+
+Ở lại chủ cũ: index literal của cột `appId` (app không khai nó, chuyển sang thì apply sẽ xoá),
+các view `All Discounts` và navigation item cũ trong folder Customer Support. Hai thứ này là phần
+người dùng tự tạo; nav item cũ có thể ẩn sau khi có trang Discounts mới.
+
+## Thứ tự chạy — đã diễn tập trên DB dev 2026-10-23
+
+Bản diễn tập dựng lại `discount` bằng metadata API rồi đặt UID object và field giống hệt
+production, có 3 record mẫu.
+
+```
+node scripts/05-reparent-discount.mjs            # đọc kế hoạch
+node scripts/05-reparent-discount.mjs --apply
+# flush cache metadata (cache:flush, hoặc xoá key engine:workspace:* và engine:core-entity:* trong Redis)
+npx twenty plan     # cổng kiểm tra: 0 to destroy
+npx twenty apply
+```
+
+Kết quả diễn tập: `plan` 108 add, 19 change (mô tả, icon, nhãn option), **0 destroy**; 3 record
+còn nguyên giá trị; object và log thuộc Customer Support.
+
+Sau apply:
+
+1. Admin mở trang Discounts > App connections, điền endpoint và secret cho từng app. Secret lấy
+   từ webhook discount cũ của app đó để app khỏi đổi cách kiểm chữ ký. Cấu hình lưu theo app
+   (kho key-value của Customer Support), nên app mới thêm ở Task Manager tự hiện ra, không cần
+   biến hay deploy. App chưa điền thì discount của nó hiện "Chưa kết nối".
+2. Xoá hai webhook `discount.*` cũ (MIDA `/crm/admin/discount`, BLOY `/crm/webhooks/discounts`).
+   Để cả hai thì mỗi thay đổi bị gửi hai lần.
+3. Khi MIDA đã nhận phần trăm dạng số nguyên: sửa `HANIF10`, `NIKKI10`, `RACHEL` từ `0.1`
+   thành `10`, rồi bấm "Gửi lại" trên 13 discount MIDA.
+4. Cho role Admin và CSE quyền sửa object Discounts (Settings > Roles). Trang Discounts chỉ
+   cho tạo, sửa, xoá khi role của người dùng có quyền đó.
