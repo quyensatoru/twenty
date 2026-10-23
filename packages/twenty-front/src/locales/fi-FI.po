@@ -273,6 +273,12 @@ msgstr "{0, plural, one {# jonossa} other {# jonossa}}"
 msgid "{0, plural, one {# workspace failed or behind} other {# workspaces failed or behind}}"
 msgstr "{0, plural, one {# työtila epäonnistui tai on jäljessä} other {# työtilaa epäonnistui tai on jäljessä}}"
 
+#. js-lingui-id: aovTBO
+#. placeholder {0}: moments.length
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{0, plural, one {A special day for the team} other {# special occasions today}}"
+msgstr ""
+
 #. js-lingui-id: fkfOKg
 #. placeholder {0}: agentIds.length
 #: src/modules/ai/components/AiChatMessageReactions.tsx
@@ -744,6 +750,16 @@ msgstr "{heading}: {contextLabel}"
 msgid "{hiddenFieldCount, plural, one {# more populated field available} other {# more populated fields available}}"
 msgstr "{hiddenFieldCount, plural, one {# täytetty kenttä lisää käytettävissä} other {# täytettyä kenttää lisää käytettävissä}}"
 
+#. js-lingui-id: yzfsYF
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{honoreeCount, plural, one {Celebrating # female teammate} other {Celebrating # female teammates}}"
+msgstr ""
+
+#. js-lingui-id: 10x6xP
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{honoreeCount, plural, one {Celebrating # male teammate} other {Celebrating # male teammates}}"
+msgstr ""
+
 #. js-lingui-id: pEl0a0
 #: src/pages/settings/admin-panel/SettingsAdminQueueDetail.tsx
 msgid "{hours, plural, one {{hours} hour} other {{hours} hours}}"
@@ -825,6 +841,16 @@ msgstr "{label}, lukematon"
 #: src/modules/settings/roles/role-settings/components/SettingsRoleSettingsDeleteRoleConfirmationModalSubtitle.tsx
 msgid "{memberCount, plural, one {{memberCount} member} other {{memberCount} members}}"
 msgstr "{memberCount, plural, one {{memberCount} jäsen} other {{memberCount} jäsentä}}"
+
+#. js-lingui-id: o6yHaX
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{memberName}'s birthday"
+msgstr ""
+
+#. js-lingui-id: aBItCl
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{memberName}'s work anniversary"
+msgstr ""
 
 #. js-lingui-id: Y32cMj
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadIntermediaryMessages.tsx
@@ -1130,6 +1156,11 @@ msgstr "{workspaceCreditsSeats, plural, one {Sisältää {seatCreditsDisplay} kr
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentConfirmationModalSubtitle.tsx
 msgid "{workspaceMemberName} will be unassigned from the following role:"
 msgstr "{workspaceMemberName} poistetaan seuraavasta roolista:"
+
+#. js-lingui-id: E+YbS6
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{years, plural, one {# year with the team} other {# years with the team}}"
+msgstr ""
 
 #. js-lingui-id: h5WHNQ
 #: src/modules/settings/billing/components/SettingsBillingCreditsSection.tsx
@@ -3459,6 +3490,8 @@ msgstr "Sovelluslokit"
 #: src/modules/settings/hooks/useSettingsNavigationItems.tsx
 #: src/pages/settings/accounts/SettingsAccountDetail.tsx
 #: src/pages/settings/accounts/SettingsAccounts.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
 #: src/pages/settings/accounts/SettingsApplicationPreferencesDetail.tsx
 #: src/pages/settings/accounts/SettingsNativeAccountApp.tsx
 msgid "App preferences"
@@ -5756,6 +5789,7 @@ msgstr "Leikepöytä edellyttää suojattua yhteyttä (HTTPS). Avaa tämä sovel
 #: src/modules/onboarding/components/OnboardingSkipDialog.tsx
 #: src/modules/settings/applications/components/SettingsApplicationScreenshotLightbox.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-level-permissions/components/SettingsRolePermissionsObjectLevelRecordLevelPermissionMeValueSelect.tsx
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
 #: src/modules/ui/feedback/toast/components/__tests__/AppToaster.test.tsx
 #: src/modules/ui/feedback/toast/utils/getLocalizedToastProps.ts
 #: src/modules/workflow/workflow-steps/components/WorkflowDropdownStepOutputItems.tsx
@@ -6190,9 +6224,9 @@ msgid "Configuration of this timeline activity type"
 msgstr "Tämän aikajanatapahtumatyypin määritys"
 
 #. js-lingui-id: iAL9tI
+#: src/modules/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 #: src/pages/settings/admin-panel/SettingsAdminAiProviderDetail.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationConfigurationIssues.tsx
-#: src/pages/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 msgid "Configure"
 msgstr "Määritä"
 
@@ -13076,6 +13110,11 @@ msgstr "Korostettu lainaus"
 msgid "Hire a partner to help you implement and customize Twenty."
 msgstr "Palkkaa kumppani auttamaan Twentyn käyttöönotossa ja räätälöinnissä."
 
+#. js-lingui-id: UG8DCt
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Holiday"
+msgstr ""
+
 #. js-lingui-id: i0qMbr
 #: src/modules/navigation/hooks/useMobileNavigationBarItems.ts
 #: src/modules/navigation/hooks/useNavigationDrawerModes.ts
@@ -14737,6 +14776,11 @@ msgstr "Viimeksi päivitetty"
 msgid "Last Updated: {0}"
 msgstr "Viimeksi päivitetty: {0}"
 
+#. js-lingui-id: FIq1Ba
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Later"
+msgstr ""
+
 #. js-lingui-id: p9uaTd
 #: src/modules/ai/utils/getAgentChatThreadSnoozeOptions.ts
 msgid "Later today"
@@ -16158,8 +16202,13 @@ msgstr "Valtuutus-URL puuttuu"
 msgid "Missing calendar permission."
 msgstr "Kalenterin käyttöoikeus puuttuu."
 
+#. js-lingui-id: XLNNcv
+#: src/modules/settings/app-preferences/components/SettingsAppPreferencesAppStatusCell.tsx
+msgid "Missing configuration"
+msgstr ""
+
 #. js-lingui-id: kgDu74
-#: src/pages/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
+#: src/modules/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 msgid "Missing configuration: {missingLabels}"
 msgstr "Puuttuva määritys: {missingLabels}"
 
@@ -18651,6 +18700,11 @@ msgstr "Avaa lokikonsoli"
 #: src/modules/command-menu-item/display/hooks/useCommandMenuAppActions.ts
 msgid "Open logs console"
 msgstr "Avaa lokikonsoli"
+
+#. js-lingui-id: 1YhPUA
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Open my wishes"
+msgstr ""
 
 #. js-lingui-id: xGd6Ih
 #: src/modules/auth/sign-in-up/components/EmailVerificationSent.tsx
@@ -21442,12 +21496,12 @@ msgstr "Säilytysaika"
 #: src/modules/page-layout/widgets/call-recording-transcript/components/CallRecordingVideoPlayer.tsx
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminQueueJobRowDropdownMenu.tsx
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminRetryJobsConfirmationModal.tsx
+#: src/modules/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 #: src/modules/settings/security/components/SettingsSecurityIframeOrigins.tsx
 #: src/pages/object-core/WorkflowCoreShowPage.tsx
 #: src/pages/object-core/WorkflowCoreShowPage.tsx
 #: src/pages/onboarding/PaymentSuccess.tsx
 #: src/pages/onboarding/WorkspaceActivation.tsx
-#: src/pages/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 msgid "Retry"
 msgstr "Yritä uudelleen"
 
@@ -22969,6 +23023,11 @@ msgstr "Lähetä testisähköposti"
 #: src/modules/workflow/workflow-steps/workflow-actions/constants/actions/SendChatMessageAction.ts
 msgid "Send to Inbox"
 msgstr "Lähetä saapuneisiin"
+
+#. js-lingui-id: wXUV4G
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Send wishes"
+msgstr ""
 
 #. js-lingui-id: LFupHB
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -24749,6 +24808,11 @@ msgstr "Taulukko-widget"
 msgid "Table, Kanban, Calendar"
 msgstr "Taulukko, Kanban, kalenteri"
 
+#. js-lingui-id: D+nV7p
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Take a minute to send your wishes."
+msgstr ""
+
 #. js-lingui-id: DBxdLI
 #: src/pages/settings/applications/components/SettingsClaimApplicationSection.tsx
 msgid "Take ownership of an app you published to npm. Enter its exact package name (or universal identifier) to find it."
@@ -24792,6 +24856,11 @@ msgstr "Tehtävän otsikko"
 #: src/pages/settings/members/SettingsWorkspaceMembers.tsx
 msgid "Team"
 msgstr "Tiimi"
+
+#. js-lingui-id: I+EPVE
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Team event"
+msgstr ""
 
 #. js-lingui-id: nLqMRA
 #: src/modules/activities/emails/recipients/components/EmailRecipientChipMenuContent.tsx
@@ -25431,7 +25500,7 @@ msgid "This application could not be found. It may have been removed from the ma
 msgstr "Tätä sovellusta ei löytynyt. Se on voitu poistaa markkinapaikan luettelosta."
 
 #. js-lingui-id: TtWqER
-#: src/pages/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
+#: src/modules/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 msgid "This application could not be loaded. Check your connection and try again."
 msgstr "Tätä sovellusta ei voitu ladata. Tarkista yhteytesi ja yritä uudelleen."
 
@@ -25533,6 +25602,11 @@ msgstr "Tätä mukautettua verkkotunnusta ei ole olemassa tai se ei kuulu tälle
 #: src/modules/settings/admin-panel/config-variables/components/ConfigVariableHelpText.tsx
 msgid "This database value overrides environment settings. "
 msgstr "Tämä tietokanta-arvo ohittaa ympäristöasetukset."
+
+#. js-lingui-id: 5Z0hVK
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "This day is all about you!"
+msgstr ""
 
 #. js-lingui-id: pmDHTY
 #: src/modules/settings/profile/devices/components/SettingsDeviceSessionRowRightComponent.tsx
@@ -25977,6 +26051,11 @@ msgstr "Vastaanottaja"
 #: src/utils/date-utils.ts
 msgid "Today"
 msgstr "Tänään"
+
+#. js-lingui-id: eKrNqC
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Today · {today}"
+msgstr ""
 
 #. js-lingui-id: TNXmKt
 #: src/modules/ai/hooks/useFormatAgentChatThreadDate.ts
@@ -26437,6 +26516,11 @@ msgstr "Muunna muotoon"
 #: src/modules/settings/admin-panel/constants/SettingsAdminFeatureFlagMetadata.ts
 msgid "Turn the AI tab into an inbox to triage, assign, snooze and follow chats, let workflows send messages and agent questions to a member's inbox, and show a Conversations tab on record pages."
 msgstr "Muuta AI-välilehti saapuneiksi, jotta voit luokitella, osoittaa, torkuttaa ja seurata keskusteluja, anna työnkulkujen lähettää viestejä ja agenttikysymyksiä jäsenen saapuneisiin sekä näytä Keskustelut-välilehti tietuesivuilla."
+
+#. js-lingui-id: 989xsJ
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Turns {years} today"
+msgstr ""
 
 #. js-lingui-id: 2JBBhG
 #: src/modules/validation-rules/constants/ValidationRuleKeywords.ts
@@ -27690,6 +27774,7 @@ msgstr "Hyödyllinen pivot-/liitostauluille"
 #: src/pages/settings/accounts/SettingsAccountsEditImapSmtpCaldavConnection.tsx
 #: src/pages/settings/accounts/SettingsAccountsEmails.tsx
 #: src/pages/settings/accounts/SettingsAccountsNewImapSmtpCaldavConnection.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
 #: src/pages/settings/accounts/SettingsApplicationPreferencesDetail.tsx
 #: src/pages/settings/accounts/SettingsNativeAccountApp.tsx
 #: src/pages/settings/accounts/SettingsNewAccount.tsx
@@ -29221,6 +29306,11 @@ msgstr "Muokkaat käännöstä kielelle {currentLanguageLabel}. Uudelleennimeäm
 msgid "You are not allowed to create records for this object"
 msgstr "Et voi luoda tietueita tälle objektille"
 
+#. js-lingui-id: BWhAQC
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "You are one of the people celebrated today"
+msgstr ""
+
 #. js-lingui-id: iibZbD
 #: src/pages/settings/developers/tabs/SettingsDevelopersAppsTab.tsx
 msgid "You can either create a private app or share it to others"
@@ -29348,6 +29438,11 @@ msgstr "Laskutuksesi vaihtuu välittömästi vuosilaskutukseen. Uusi vuosijakso 
 msgid "Your billing switches to monthly on {0}, at the end of your current billing period."
 msgstr "Laskutuksesi vaihtuu kuukausilaskutukseen {0}, nykyisen laskutusjaksosi päättyessä."
 
+#. js-lingui-id: Z0UbVO
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your birthday"
+msgstr ""
+
 #. js-lingui-id: u1O1GV
 #: src/modules/settings/billing/hooks/useWaitForPaymentRecovery.tsx
 msgid "Your card was saved, but the payment still needs attention."
@@ -29377,6 +29472,11 @@ msgstr "Käsittelijäsi saa tämän objektin. body sisältää asiakkaan lähett
 #: src/modules/settings/logic-functions/components/triggers/SettingsLogicFunctionHttpTriggerSection.tsx
 msgid "Your handler receives this object. The body is empty because GET requests carry no payload."
 msgstr "Käsittelijäsi saa tämän objektin. body on tyhjä, koska GET-pyynnöt eivät sisällä tietosisältöä."
+
+#. js-lingui-id: RVi4Cv
+#: src/modules/settings/app-preferences/components/SettingsAppPreferencesAppsSection.tsx
+msgid "Your installed apps could not be loaded. Check your connection and try again."
+msgstr ""
 
 #. js-lingui-id: 9ivpwk
 #: src/pages/settings/profile/SettingsProfile.tsx
@@ -29486,6 +29586,16 @@ msgstr "Tilauksesi määritys ei valmistunut."
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Your subscription status is: {statusLabel}"
 msgstr "Tilauksesi tila on: {statusLabel}"
+
+#. js-lingui-id: kBqd+0
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your teammates have something waiting for you."
+msgstr ""
+
+#. js-lingui-id: Hn5AjV
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your work anniversary"
+msgstr ""
 
 #. js-lingui-id: oC6WBs
 #: src/modules/information-banner/components/billing/InformationBannerNoBillingSubscription.tsx

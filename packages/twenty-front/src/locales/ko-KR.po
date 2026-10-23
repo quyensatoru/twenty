@@ -273,6 +273,12 @@ msgstr "{0, plural, other {#개 대기 중}}"
 msgid "{0, plural, one {# workspace failed or behind} other {# workspaces failed or behind}}"
 msgstr "{0, plural, other {실패했거나 뒤처진 워크스페이스 #개}}"
 
+#. js-lingui-id: aovTBO
+#. placeholder {0}: moments.length
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{0, plural, one {A special day for the team} other {# special occasions today}}"
+msgstr ""
+
 #. js-lingui-id: fkfOKg
 #. placeholder {0}: agentIds.length
 #: src/modules/ai/components/AiChatMessageReactions.tsx
@@ -744,6 +750,16 @@ msgstr "{heading}: {contextLabel}"
 msgid "{hiddenFieldCount, plural, one {# more populated field available} other {# more populated fields available}}"
 msgstr "{hiddenFieldCount, plural, other {입력된 필드 #개를 더 사용할 수 있습니다}}"
 
+#. js-lingui-id: yzfsYF
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{honoreeCount, plural, one {Celebrating # female teammate} other {Celebrating # female teammates}}"
+msgstr ""
+
+#. js-lingui-id: 10x6xP
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{honoreeCount, plural, one {Celebrating # male teammate} other {Celebrating # male teammates}}"
+msgstr ""
+
 #. js-lingui-id: pEl0a0
 #: src/pages/settings/admin-panel/SettingsAdminQueueDetail.tsx
 msgid "{hours, plural, one {{hours} hour} other {{hours} hours}}"
@@ -825,6 +841,16 @@ msgstr "{label}, 읽지 않음"
 #: src/modules/settings/roles/role-settings/components/SettingsRoleSettingsDeleteRoleConfirmationModalSubtitle.tsx
 msgid "{memberCount, plural, one {{memberCount} member} other {{memberCount} members}}"
 msgstr "{memberCount, plural, one {{memberCount}명 구성원} other {{memberCount}명 구성원}}"
+
+#. js-lingui-id: o6yHaX
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{memberName}'s birthday"
+msgstr ""
+
+#. js-lingui-id: aBItCl
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{memberName}'s work anniversary"
+msgstr ""
 
 #. js-lingui-id: Y32cMj
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadIntermediaryMessages.tsx
@@ -1130,6 +1156,11 @@ msgstr "{workspaceCreditsSeats, plural, other {각 기간마다 재설정되는 
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentConfirmationModalSubtitle.tsx
 msgid "{workspaceMemberName} will be unassigned from the following role:"
 msgstr "{workspaceMemberName}님이 다음 역할에서 재할당 해제됩니다:"
+
+#. js-lingui-id: E+YbS6
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "{years, plural, one {# year with the team} other {# years with the team}}"
+msgstr ""
 
 #. js-lingui-id: h5WHNQ
 #: src/modules/settings/billing/components/SettingsBillingCreditsSection.tsx
@@ -3459,6 +3490,8 @@ msgstr "앱 로그"
 #: src/modules/settings/hooks/useSettingsNavigationItems.tsx
 #: src/pages/settings/accounts/SettingsAccountDetail.tsx
 #: src/pages/settings/accounts/SettingsAccounts.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
 #: src/pages/settings/accounts/SettingsApplicationPreferencesDetail.tsx
 #: src/pages/settings/accounts/SettingsNativeAccountApp.tsx
 msgid "App preferences"
@@ -5756,6 +5789,7 @@ msgstr "클립보드는 보안 연결(HTTPS)이 필요합니다. 복사 기능�
 #: src/modules/onboarding/components/OnboardingSkipDialog.tsx
 #: src/modules/settings/applications/components/SettingsApplicationScreenshotLightbox.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-level-permissions/components/SettingsRolePermissionsObjectLevelRecordLevelPermissionMeValueSelect.tsx
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
 #: src/modules/ui/feedback/toast/components/__tests__/AppToaster.test.tsx
 #: src/modules/ui/feedback/toast/utils/getLocalizedToastProps.ts
 #: src/modules/workflow/workflow-steps/components/WorkflowDropdownStepOutputItems.tsx
@@ -6190,9 +6224,9 @@ msgid "Configuration of this timeline activity type"
 msgstr "이 타임라인 활동 유형의 설정"
 
 #. js-lingui-id: iAL9tI
+#: src/modules/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 #: src/pages/settings/admin-panel/SettingsAdminAiProviderDetail.tsx
 #: src/pages/settings/admin-panel/SettingsAdminApplicationRegistrationConfigurationIssues.tsx
-#: src/pages/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 msgid "Configure"
 msgstr "구성"
 
@@ -13076,6 +13110,11 @@ msgstr "강조된 인용문"
 msgid "Hire a partner to help you implement and customize Twenty."
 msgstr "Twenty의 구현 및 맞춤 설정을 도와줄 파트너를 고용하세요."
 
+#. js-lingui-id: UG8DCt
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Holiday"
+msgstr ""
+
 #. js-lingui-id: i0qMbr
 #: src/modules/navigation/hooks/useMobileNavigationBarItems.ts
 #: src/modules/navigation/hooks/useNavigationDrawerModes.ts
@@ -14737,6 +14776,11 @@ msgstr "마지막 업데이트"
 msgid "Last Updated: {0}"
 msgstr "마지막 업데이트: {0}"
 
+#. js-lingui-id: FIq1Ba
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Later"
+msgstr ""
+
 #. js-lingui-id: p9uaTd
 #: src/modules/ai/utils/getAgentChatThreadSnoozeOptions.ts
 msgid "Later today"
@@ -16158,8 +16202,13 @@ msgstr "인증 URL이 없습니다"
 msgid "Missing calendar permission."
 msgstr "캘린더 권한이 없습니다."
 
+#. js-lingui-id: XLNNcv
+#: src/modules/settings/app-preferences/components/SettingsAppPreferencesAppStatusCell.tsx
+msgid "Missing configuration"
+msgstr ""
+
 #. js-lingui-id: kgDu74
-#: src/pages/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
+#: src/modules/settings/applications/components/SettingsApplicationMissingConfigurationBanner.tsx
 msgid "Missing configuration: {missingLabels}"
 msgstr "구성 누락: {missingLabels}"
 
@@ -18651,6 +18700,11 @@ msgstr "로그 콘솔 열기"
 #: src/modules/command-menu-item/display/hooks/useCommandMenuAppActions.ts
 msgid "Open logs console"
 msgstr "로그 콘솔 열기"
+
+#. js-lingui-id: 1YhPUA
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Open my wishes"
+msgstr ""
 
 #. js-lingui-id: xGd6Ih
 #: src/modules/auth/sign-in-up/components/EmailVerificationSent.tsx
@@ -21442,12 +21496,12 @@ msgstr "보존 기간"
 #: src/modules/page-layout/widgets/call-recording-transcript/components/CallRecordingVideoPlayer.tsx
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminQueueJobRowDropdownMenu.tsx
 #: src/modules/settings/admin-panel/health-status/components/SettingsAdminRetryJobsConfirmationModal.tsx
+#: src/modules/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 #: src/modules/settings/security/components/SettingsSecurityIframeOrigins.tsx
 #: src/pages/object-core/WorkflowCoreShowPage.tsx
 #: src/pages/object-core/WorkflowCoreShowPage.tsx
 #: src/pages/onboarding/PaymentSuccess.tsx
 #: src/pages/onboarding/WorkspaceActivation.tsx
-#: src/pages/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 msgid "Retry"
 msgstr "재시도"
 
@@ -22969,6 +23023,11 @@ msgstr "테스트 이메일 보내기"
 #: src/modules/workflow/workflow-steps/workflow-actions/constants/actions/SendChatMessageAction.ts
 msgid "Send to Inbox"
 msgstr "받은편지함으로 보내기"
+
+#. js-lingui-id: wXUV4G
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Send wishes"
+msgstr ""
 
 #. js-lingui-id: LFupHB
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -24749,6 +24808,11 @@ msgstr "테이블 위젯"
 msgid "Table, Kanban, Calendar"
 msgstr "테이블, 칸반, 캘린더"
 
+#. js-lingui-id: D+nV7p
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Take a minute to send your wishes."
+msgstr ""
+
 #. js-lingui-id: DBxdLI
 #: src/pages/settings/applications/components/SettingsClaimApplicationSection.tsx
 msgid "Take ownership of an app you published to npm. Enter its exact package name (or universal identifier) to find it."
@@ -24792,6 +24856,11 @@ msgstr "작업 제목"
 #: src/pages/settings/members/SettingsWorkspaceMembers.tsx
 msgid "Team"
 msgstr "팀"
+
+#. js-lingui-id: I+EPVE
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Team event"
+msgstr ""
 
 #. js-lingui-id: nLqMRA
 #: src/modules/activities/emails/recipients/components/EmailRecipientChipMenuContent.tsx
@@ -25431,7 +25500,7 @@ msgid "This application could not be found. It may have been removed from the ma
 msgstr "이 애플리케이션을 찾을 수 없습니다. 마켓플레이스 카탈로그에서 제거되었을 수 있습니다."
 
 #. js-lingui-id: TtWqER
-#: src/pages/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
+#: src/modules/settings/applications/components/SettingsApplicationLoadErrorBanner.tsx
 msgid "This application could not be loaded. Check your connection and try again."
 msgstr "이 애플리케이션을 불러올 수 없습니다. 연결을 확인하고 다시 시도하세요."
 
@@ -25533,6 +25602,11 @@ msgstr "이 사용자 지정 도메인이 존재하지 않거나 이 애플리�
 #: src/modules/settings/admin-panel/config-variables/components/ConfigVariableHelpText.tsx
 msgid "This database value overrides environment settings. "
 msgstr "이 데이터베이스 값은 환경 설정을 덮어씁니다."
+
+#. js-lingui-id: 5Z0hVK
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "This day is all about you!"
+msgstr ""
 
 #. js-lingui-id: pmDHTY
 #: src/modules/settings/profile/devices/components/SettingsDeviceSessionRowRightComponent.tsx
@@ -25977,6 +26051,11 @@ msgstr "받는 사람"
 #: src/utils/date-utils.ts
 msgid "Today"
 msgstr "오늘"
+
+#. js-lingui-id: eKrNqC
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Today · {today}"
+msgstr ""
 
 #. js-lingui-id: TNXmKt
 #: src/modules/ai/hooks/useFormatAgentChatThreadDate.ts
@@ -26437,6 +26516,11 @@ msgstr "변환"
 #: src/modules/settings/admin-panel/constants/SettingsAdminFeatureFlagMetadata.ts
 msgid "Turn the AI tab into an inbox to triage, assign, snooze and follow chats, let workflows send messages and agent questions to a member's inbox, and show a Conversations tab on record pages."
 msgstr "AI 탭을 분류, 할당, 다시 알림 및 채팅 팔로업을 위한 받은편지함으로 전환하고, 워크플로에서 구성원의 받은편지함으로 메시지와 에이전트 질문을 보내며, 레코드 페이지에 대화 탭을 표시합니다."
+
+#. js-lingui-id: 989xsJ
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Turns {years} today"
+msgstr ""
 
 #. js-lingui-id: 2JBBhG
 #: src/modules/validation-rules/constants/ValidationRuleKeywords.ts
@@ -27690,6 +27774,7 @@ msgstr "피벗/정션 테이블에 유용합니다"
 #: src/pages/settings/accounts/SettingsAccountsEditImapSmtpCaldavConnection.tsx
 #: src/pages/settings/accounts/SettingsAccountsEmails.tsx
 #: src/pages/settings/accounts/SettingsAccountsNewImapSmtpCaldavConnection.tsx
+#: src/pages/settings/accounts/SettingsApplicationPreferences.tsx
 #: src/pages/settings/accounts/SettingsApplicationPreferencesDetail.tsx
 #: src/pages/settings/accounts/SettingsNativeAccountApp.tsx
 #: src/pages/settings/accounts/SettingsNewAccount.tsx
@@ -29221,6 +29306,11 @@ msgstr "{currentLanguageLabel} 번역을 편집하고 있습니다. 대신 이�
 msgid "You are not allowed to create records for this object"
 msgstr "이 개체에 기록을 생성할 수 있는 권한이 없습니다"
 
+#. js-lingui-id: BWhAQC
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "You are one of the people celebrated today"
+msgstr ""
+
 #. js-lingui-id: iibZbD
 #: src/pages/settings/developers/tabs/SettingsDevelopersAppsTab.tsx
 msgid "You can either create a private app or share it to others"
@@ -29348,6 +29438,11 @@ msgstr "청구가 즉시 연간으로 전환됩니다. 오늘부터 새로운 �
 msgid "Your billing switches to monthly on {0}, at the end of your current billing period."
 msgstr "현재 청구 기간이 끝나는 {0}에 청구가 월간으로 전환됩니다."
 
+#. js-lingui-id: Z0UbVO
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your birthday"
+msgstr ""
+
 #. js-lingui-id: u1O1GV
 #: src/modules/settings/billing/hooks/useWaitForPaymentRecovery.tsx
 msgid "Your card was saved, but the payment still needs attention."
@@ -29377,6 +29472,11 @@ msgstr "핸들러는 이 객체를 받습니다. body에는 클라이언트가 �
 #: src/modules/settings/logic-functions/components/triggers/SettingsLogicFunctionHttpTriggerSection.tsx
 msgid "Your handler receives this object. The body is empty because GET requests carry no payload."
 msgstr "핸들러는 이 객체를 받습니다. GET 요청은 페이로드를 포함하지 않기 때문에 body는 비어 있습니다."
+
+#. js-lingui-id: RVi4Cv
+#: src/modules/settings/app-preferences/components/SettingsAppPreferencesAppsSection.tsx
+msgid "Your installed apps could not be loaded. Check your connection and try again."
+msgstr ""
 
 #. js-lingui-id: 9ivpwk
 #: src/pages/settings/profile/SettingsProfile.tsx
@@ -29486,6 +29586,16 @@ msgstr "구독 설정이 완료되지 않았습니다."
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Your subscription status is: {statusLabel}"
 msgstr "구독 상태: {statusLabel}"
+
+#. js-lingui-id: kBqd+0
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your teammates have something waiting for you."
+msgstr ""
+
+#. js-lingui-id: Hn5AjV
+#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
+msgid "Your work anniversary"
+msgstr ""
 
 #. js-lingui-id: oC6WBs
 #: src/modules/information-banner/components/billing/InformationBannerNoBillingSubscription.tsx
