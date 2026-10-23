@@ -15,48 +15,10 @@ export type DiscountCaller = {
 };
 
 // Twenty's built-in Admin role. Settings permission alone is not enough:
-// roles such as "Full Read Only Access" also carry it.
+// roles such as "Full Read Only Access" also carry it. Read from the member's
+// own roles: getRoles needs the ROLES flag, which the delegated token
+// (member intersected with the app role) never has.
 const ADMIN_ROLE_UNIVERSAL_IDENTIFIER = '20202020-02c2-43f2-b94d-cab1f2b532eb';
-
-// Admins hold every settings flag, so anyone without them is not one and the
-// roles query (which they could not run) is skipped.
-const SETTINGS_PERMISSION_FLAGS = ['WORKSPACE', 'ROLES'];
-
-const isWorkspaceAdmin = async (
-  workspaceMemberId: string | null,
-  permissionFlags: string[],
-): Promise<boolean> => {
-  if (
-    workspaceMemberId === null ||
-    !SETTINGS_PERMISSION_FLAGS.every((flag) => permissionFlags.includes(flag))
-  ) {
-    return false;
-  }
-
-  try {
-    const result = (await new MetadataApiClient().query({
-      getRoles: {
-        universalIdentifier: true,
-        workspaceMembers: { id: true },
-      },
-    })) as {
-      getRoles?: {
-        universalIdentifier?: string | null;
-        workspaceMembers?: { id?: string }[] | null;
-      }[];
-    };
-
-    return (result.getRoles ?? []).some(
-      (role) =>
-        role.universalIdentifier === ADMIN_ROLE_UNIVERSAL_IDENTIFIER &&
-        (role.workspaceMembers ?? []).some(
-          (member) => member.id === workspaceMemberId,
-        ),
-    );
-  } catch {
-    return false;
-  }
-};
 
 // The routes write with the app's role, so the member's own role is checked
 // here: whoever may edit discounts in Settings > Roles (Admin and CSE) may
@@ -64,9 +26,12 @@ const isWorkspaceAdmin = async (
 export const resolveDiscountCaller = async (): Promise<DiscountCaller> => {
   const result = (await new MetadataApiClient().query({
     currentUser: {
-      workspaceMember: { id: true, name: { firstName: true, lastName: true } },
+      workspaceMember: {
+        id: true,
+        name: { firstName: true, lastName: true },
+        roles: { universalIdentifier: true },
+      },
       currentUserWorkspace: {
-        permissionFlags: true,
         objectPermissions: {
           objectMetadataId: true,
           canUpdateObjectRecords: true,
@@ -85,9 +50,9 @@ export const resolveDiscountCaller = async (): Promise<DiscountCaller> => {
       workspaceMember?: {
         id?: string;
         name?: { firstName?: string; lastName?: string } | null;
+        roles?: { universalIdentifier?: string | null }[] | null;
       } | null;
       currentUserWorkspace?: {
-        permissionFlags?: string[] | null;
         objectPermissions?: ObjectPermissionNode[] | null;
       } | null;
     } | null;
@@ -110,9 +75,8 @@ export const resolveDiscountCaller = async (): Promise<DiscountCaller> => {
           permission.objectMetadataId === discountObjectId &&
           permission.canUpdateObjectRecords === true,
       ),
-    canConfigure: await isWorkspaceAdmin(
-      member?.id ?? null,
-      result.currentUser?.currentUserWorkspace?.permissionFlags ?? [],
+    canConfigure: (member?.roles ?? []).some(
+      (role) => role.universalIdentifier === ADMIN_ROLE_UNIVERSAL_IDENTIFIER,
     ),
   };
 };

@@ -68,6 +68,7 @@ export default defineObject({
       icon: 'IconTypography',
       isNullable: true,
       isSearchable: true,
+      isUnique: true,
     },
     {
       universalIdentifier: DISCOUNT_TYPE_FIELD_UID,
@@ -169,6 +170,7 @@ export default defineObject({
       description: 'Shops allowed to use the code',
       icon: 'IconBracketsContain',
       isNullable: true,
+      isUnique: true,
       universalSettings: { maxNumberOfValues: 20 },
     },
     {
