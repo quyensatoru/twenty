@@ -170,7 +170,6 @@ export default defineObject({
       description: 'Shops allowed to use the code',
       icon: 'IconBracketsContain',
       isNullable: true,
-      isUnique: true,
       universalSettings: { maxNumberOfValues: 20 },
     },
     {
