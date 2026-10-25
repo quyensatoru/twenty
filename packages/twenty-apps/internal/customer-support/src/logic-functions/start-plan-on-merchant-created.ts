@@ -18,6 +18,7 @@ const handler = async (
   >,
 ) => {
   if ((event.properties.after.planStartedAt ?? null) === null) {
+    // start-plan-on-merchant-updated reacts to this write and syncs the chats.
     await executeWithRetry(() =>
       createAppClient().mutation({
         updateMerchant: {
@@ -29,6 +30,8 @@ const handler = async (
         },
       }),
     );
+
+    return { planStarted: true };
   }
 
   // Chats linked before the plan start was written have no plan data yet.

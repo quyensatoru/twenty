@@ -2,7 +2,7 @@ import {
   defineLogicFunction,
   type ObjectRecordUpdateEvent,
 } from 'twenty-sdk/define';
-import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
+import { type DatabaseEventBatchPayload } from 'twenty-sdk/logic-function';
 import { CoreApiClient } from 'twenty-client-sdk/core';
 
 import { SYNC_DEAL_STAGES_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
@@ -14,22 +14,27 @@ type UpsellDealChange = {
 };
 
 const handler = async (
-  event: DatabaseEventPayload<ObjectRecordUpdateEvent<UpsellDealChange>>,
-): Promise<{
-  prospectId: string | null;
-  stageColumns: Record<string, string | null>;
-}> => {
-  const prospectId =
-    event.properties.after?.prospectId ?? event.properties.before?.prospectId;
+  batch: DatabaseEventBatchPayload<ObjectRecordUpdateEvent<UpsellDealChange>>,
+): Promise<
+  { prospectId: string; stageColumns: Record<string, string | null> }[]
+> => {
+  // A deal moved to another prospect leaves a stale stage on the old one.
+  const prospectIds = new Set(
+    batch.events
+      .flatMap((event) => [
+        event.properties.before?.prospectId,
+        event.properties.after?.prospectId,
+      ])
+      .filter((prospectId): prospectId is string => !!prospectId),
+  );
+  const client = new CoreApiClient();
+  const results = [];
 
-  if (!prospectId) {
-    return { prospectId: null, stageColumns: {} };
+  for (const prospectId of prospectIds) {
+    results.push(await refreshDealStagesForProspect({ client, prospectId }));
   }
 
-  return refreshDealStagesForProspect({
-    client: new CoreApiClient(),
-    prospectId,
-  });
+  return results;
 };
 
 // Keeps prospect.dealStages in step with the deals, so the prospect list can
@@ -40,9 +45,13 @@ export default defineLogicFunction({
   name: 'refresh-prospect-deal-stages',
   description:
     'Rewrites the per-app stage columns on a prospect whenever one of its deals is updated.',
-  timeoutSeconds: 60,
+  timeoutSeconds: 300,
   databaseEventTriggerSettings: {
     eventName: 'upsellDeal.updated',
+    // suggest-close-deals rewrites suggestedClose on every app change; those
+    // writes must not rebuild the stage columns.
+    updatedFields: ['stage', 'targetAppId', 'prospectId'],
+    batchMode: true,
   },
   handler,
 });

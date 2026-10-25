@@ -304,13 +304,15 @@ describe('conversation changes', () => {
       ['merchant-1', 'merchant-2'],
     );
     merchantProspectIds.set('merchant-2', 'prospect-2');
-    const result = refreshProspectOnConversationChanged(client, {
-      recordId: 'conversation-1',
-      properties: {
-        before: { merchantId: 'merchant-1' },
-        after: { merchantId: 'merchant-2' },
+    const result = refreshProspectOnConversationChanged(client, [
+      {
+        recordId: 'conversation-1',
+        properties: {
+          before: { merchantId: 'merchant-1' },
+          after: { merchantId: 'merchant-2' },
+        },
       },
-    });
+    ]);
     await vi.runAllTimersAsync();
     await result;
     expect(readFields('prospect-1').crispChat).toEqual({
@@ -330,10 +332,12 @@ describe('conversation changes', () => {
 
   it('clears the projection after the last linked conversation is deleted', async () => {
     const { client, readFields } = makeClient([]);
-    const result = refreshProspectOnConversationChanged(client, {
-      recordId: 'conversation-1',
-      properties: { before: { merchantId: 'merchant-1' } },
-    });
+    const result = refreshProspectOnConversationChanged(client, [
+      {
+        recordId: 'conversation-1',
+        properties: { before: { merchantId: 'merchant-1' } },
+      },
+    ]);
     await vi.runAllTimersAsync();
     await result;
     expect(readFields().crispChat).toEqual({
@@ -349,13 +353,15 @@ describe('conversation changes', () => {
 
   it('populates both columns when an existing conversation merchant is linked to a prospect later', async () => {
     const { client, readFields } = makeClient([conversation()]);
-    const result = refreshProspectOnMerchantChanged(client, {
-      recordId: 'merchant-1',
-      properties: {
-        before: { prospectId: null },
-        after: { prospectId: 'prospect-1' },
+    const result = refreshProspectOnMerchantChanged(client, [
+      {
+        recordId: 'merchant-1',
+        properties: {
+          before: { prospectId: null },
+          after: { prospectId: 'prospect-1' },
+        },
       },
-    });
+    ]);
     await vi.runAllTimersAsync();
     await result;
     expect(readFields().crispEmail).toEqual({

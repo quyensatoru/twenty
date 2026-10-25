@@ -179,6 +179,38 @@ export const refreshProspectFromMerchants = async ({
   };
 };
 
+// A bulk sync writes several rows of one shop at once; rebuilding it once per
+// batch gives the same result as once per row.
+export const refreshProspectsFromMerchants = async ({
+  client,
+  merchants,
+  merchantStillExists,
+}: {
+  client: ApiClient;
+  merchants: MerchantChange[];
+  merchantStillExists: boolean;
+}): Promise<RefreshResult[]> => {
+  const merchantByDomain = new Map<string | null, MerchantChange>();
+
+  for (const merchant of merchants) {
+    merchantByDomain.set(normalizeDomain(merchant.name ?? ''), merchant);
+  }
+
+  const results: RefreshResult[] = [];
+
+  for (const merchant of merchantByDomain.values()) {
+    results.push(
+      await refreshProspectFromMerchants({
+        client,
+        merchant,
+        merchantStillExists,
+      }),
+    );
+  }
+
+  return results;
+};
+
 const collectAppKeysById = async (
   client: ApiClient,
 ): Promise<Map<string, string>> => {

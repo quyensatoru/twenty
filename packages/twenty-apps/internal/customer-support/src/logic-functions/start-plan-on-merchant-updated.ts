@@ -2,7 +2,7 @@ import {
   defineLogicFunction,
   type ObjectRecordUpdateEvent,
 } from 'twenty-sdk/define';
-import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
+import { type DatabaseEventBatchPayload } from 'twenty-sdk/logic-function';
 
 import { START_PLAN_ON_MERCHANT_UPDATED_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type PlanDataMerchant, startsNewPlan } from './utils/plan-data.util';
@@ -13,16 +13,34 @@ import { syncMerchantPlanDataFromEvent } from './utils/sync-conversation-plan-da
 // Updates the chats right away instead of waiting for the daily scan, so a
 // cancellation or an upgrade shows in the Crisp filters the same day.
 const handler = async (
-  event: DatabaseEventPayload<
+  batch: DatabaseEventBatchPayload<
     ObjectRecordUpdateEvent<Partial<PlanDataMerchant>>
   >,
 ) => {
-  if (startsNewPlan(event.properties.before, event.properties.after)) {
+  const merchantIdsStartingPlan = new Set(
+    batch.events
+      .filter((event) =>
+        startsNewPlan(event.properties.before, event.properties.after),
+      )
+      .map((event) => event.recordId),
+  );
+  const results = [];
+
+  for (const merchantId of new Set(
+    batch.events.map((event) => event.recordId),
+  )) {
+    if (!merchantIdsStartingPlan.has(merchantId)) {
+      results.push(await syncMerchantPlanDataFromEvent(merchantId));
+      continue;
+    }
+
+    // The planStartedAt write triggers this function again, and that run
+    // syncs: syncing here too would search Crisp twice per plan change.
     await executeWithRetry(() =>
       createAppClient().mutation({
         updateMerchant: {
           __args: {
-            id: event.recordId,
+            id: merchantId,
             data: { planStartedAt: new Date().toISOString() },
           },
           id: true,
@@ -31,7 +49,7 @@ const handler = async (
     );
   }
 
-  return syncMerchantPlanDataFromEvent(event.recordId);
+  return results;
 };
 
 export default defineLogicFunction({
@@ -39,13 +57,14 @@ export default defineLogicFunction({
   name: 'start-plan-on-merchant-updated',
   description:
     "Restarts the plan clock on a plan change or reinstall, and rewrites the plan session data of the merchant's Crisp conversations whenever its plan or plan start changes.",
-  timeoutSeconds: 60,
+  timeoutSeconds: 300,
   databaseEventTriggerSettings: {
     eventName: 'merchant.updated',
     // planStartedAt is listed so a backfill or a manual fix reaches Crisp at
     // once. The write below fires this again, but with the plan unchanged
     // that run only syncs, so it does not loop.
     updatedFields: ['pricingPlan', 'using', 'planStartedAt'],
+    batchMode: true,
   },
   handler,
 });

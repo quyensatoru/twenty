@@ -2,34 +2,57 @@ import {
   defineLogicFunction,
   type ObjectRecordUpdateEvent,
 } from 'twenty-sdk/define';
-import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
+import { type DatabaseEventBatchPayload } from 'twenty-sdk/logic-function';
 
 import { ON_MERCHANT_UPDATED_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { type MerchantRow } from '../types/merchant-row';
 import { buildMerchantChangeProperties } from '../utils/build-merchant-change-properties.util';
+import { readErrorMessage } from '../utils/read-error-message.util';
 import { detectMerchantEventNames } from '../utils/detect-merchant-event-names.util';
 import { scheduleEventEmails } from './utils/schedule-event-emails.util';
 import { createAppClient } from './utils/create-app-client.util';
 
 const handler = async (
-  event: DatabaseEventPayload<ObjectRecordUpdateEvent<MerchantRow>>,
+  batch: DatabaseEventBatchPayload<ObjectRecordUpdateEvent<MerchantRow>>,
 ) => {
-  const before = event.properties.before;
-  const merchant = { ...event.properties.after, id: event.recordId };
-  const eventNames = detectMerchantEventNames({
-    before,
-    after: merchant,
-  });
+  const client = createAppClient();
+  const results = [];
 
-  return {
-    eventNames,
-    queued: await scheduleEventEmails({
-      client: createAppClient(),
-      eventNames,
-      merchants: [merchant],
-      eventProperties: buildMerchantChangeProperties({ before, after: merchant }),
-    }),
-  };
+  // Each event keeps its own before/after: two changes to one merchant in a
+  // batch are two distinct email events. One failing merchant must not drop
+  // the emails of the others.
+  for (const event of batch.events) {
+    const before = event.properties.before;
+    const merchant = { ...event.properties.after, id: event.recordId };
+    const eventNames = detectMerchantEventNames({ before, after: merchant });
+
+    try {
+      results.push({
+        merchantId: event.recordId,
+        eventNames,
+        queued: await scheduleEventEmails({
+          client,
+          eventNames,
+          merchants: [merchant],
+          eventProperties: buildMerchantChangeProperties({
+            before,
+            after: merchant,
+          }),
+        }),
+      });
+    } catch (error) {
+      console.error(
+        `Merchant ${event.recordId} emails not queued: ${readErrorMessage(error)}`,
+      );
+      results.push({
+        merchantId: event.recordId,
+        eventNames,
+        error: readErrorMessage(error),
+      });
+    }
+  }
+
+  return results;
 };
 
 export default defineLogicFunction({
@@ -37,7 +60,7 @@ export default defineLogicFunction({
   name: 'queue-emails-on-merchant-updated',
   description:
     'Queues the automations bound to merchant.uninstalled, merchant.installed and the plan-change events when a merchant row changes.',
-  timeoutSeconds: 60,
+  timeoutSeconds: 300,
   databaseEventTriggerSettings: {
     eventName: 'merchant.updated',
     // MIDA flips only `using` on uninstall, so it has to be listed; the sync
@@ -52,6 +75,7 @@ export default defineLogicFunction({
       'email',
       'emailUnsubscribed',
     ],
+    batchMode: true,
   },
   handler,
 });

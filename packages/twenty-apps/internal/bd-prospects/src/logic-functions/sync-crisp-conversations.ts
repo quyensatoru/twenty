@@ -1,5 +1,5 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
-import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
+import { type DatabaseEventBatchPayload } from 'twenty-sdk/logic-function';
 
 import { SYNC_CRISP_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { createConversationAppClient } from '../utils/create-conversation-app-client';
@@ -103,14 +103,16 @@ export const syncCrispConversations = async ({
 
 export const refreshProspectOnConversationChanged = async (
   client: ProspectConversationClient,
-  event: ConversationChangeEvent,
+  events: ConversationChangeEvent[],
 ) => {
-  const merchantIds = [
-    event.properties.before?.merchantId,
-    event.properties.after?.merchantId,
-  ].filter(
-    (merchantId): merchantId is string => typeof merchantId === 'string',
-  );
+  const merchantIds = events
+    .flatMap((event) => [
+      event.properties.before?.merchantId,
+      event.properties.after?.merchantId,
+    ])
+    .filter(
+      (merchantId): merchantId is string => typeof merchantId === 'string',
+    );
 
   return {
     prospectIds: await refreshConversationProspects(client, merchantIds),
@@ -127,16 +129,18 @@ type MerchantChangeEvent = {
 
 export const refreshProspectOnMerchantChanged = async (
   client: ProspectConversationClient,
-  event: MerchantChangeEvent,
+  events: MerchantChangeEvent[],
 ) => {
   const prospectIds = [
     ...new Set(
-      [
-        event.properties.before?.prospectId,
-        event.properties.after?.prospectId,
-      ].filter(
-        (prospectId): prospectId is string => typeof prospectId === 'string',
-      ),
+      events
+        .flatMap((event) => [
+          event.properties.before?.prospectId,
+          event.properties.after?.prospectId,
+        ])
+        .filter(
+          (prospectId): prospectId is string => typeof prospectId === 'string',
+        ),
     ),
   ];
 
@@ -147,24 +151,24 @@ export const refreshProspectOnMerchantChanged = async (
   return { prospectIds };
 };
 
-const handler = (event: DatabaseEventPayload<ConversationChangeEvent>) =>
-  refreshProspectOnConversationChanged(createConversationAppClient(), event);
+const handler = (batch: DatabaseEventBatchPayload<ConversationChangeEvent>) =>
+  refreshProspectOnConversationChanged(
+    createConversationAppClient(),
+    batch.events,
+  );
 
 export default defineLogicFunction({
   universalIdentifier: SYNC_CRISP_LOGIC_FUNCTION_UID,
   name: 'sync-crisp-conversations',
   description:
     'Updates BD chat links and Email PIC from stored conversations when a conversation changes.',
-  timeoutSeconds: 60,
+  timeoutSeconds: 300,
   databaseEventTriggerSettings: {
     eventName: 'crispConversation.*',
-    updatedFields: [
-      'merchantId',
-      'visitorName',
-      'visitorEmail',
-      'appName',
-      'lastMessageAt',
-    ],
+    // lastMessageAt is left out on purpose: every Crisp message rewrites it,
+    // and it only reorders the links of an existing prospect.
+    updatedFields: ['merchantId', 'visitorName', 'visitorEmail', 'appName'],
+    batchMode: true,
   },
   handler,
 });

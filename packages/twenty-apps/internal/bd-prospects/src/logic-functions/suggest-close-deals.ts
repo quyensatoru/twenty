@@ -2,7 +2,7 @@ import {
   defineLogicFunction,
   type ObjectRecordUpdateEvent,
 } from 'twenty-sdk/define';
-import { type DatabaseEventPayload } from 'twenty-sdk/logic-function';
+import { type DatabaseEventBatchPayload } from 'twenty-sdk/logic-function';
 import { CoreApiClient } from 'twenty-client-sdk/core';
 
 import { UPSELL_DEAL_CLOSED_STAGES } from '../constants/pipeline-stages';
@@ -24,17 +24,37 @@ type ProspectUpdate = {
 type ApiClient = any;
 
 const handler = async (
-  event: DatabaseEventPayload<ObjectRecordUpdateEvent<ProspectUpdate>>,
+  batch: DatabaseEventBatchPayload<ObjectRecordUpdateEvent<ProspectUpdate>>,
 ): Promise<{ suggested: number; withdrawn: number }> => {
-  const prospect = event.properties.after;
-  const prospectId = prospect.id;
-  const appsUsed = [...(prospect.ourApps ?? []), ...(prospect.otherApps ?? [])];
+  const latestProspectById = new Map<string, ProspectUpdate>();
 
-  if (!prospectId) {
-    return { suggested: 0, withdrawn: 0 };
+  for (const event of batch.events) {
+    const prospect = event.properties.after;
+
+    if (prospect.id) {
+      latestProspectById.set(prospect.id, prospect);
+    }
   }
 
   const client: ApiClient = new CoreApiClient();
+  const total = { suggested: 0, withdrawn: 0 };
+
+  for (const [prospectId, prospect] of latestProspectById) {
+    const result = await suggestCloseForProspect(client, prospectId, prospect);
+
+    total.suggested += result.suggested;
+    total.withdrawn += result.withdrawn;
+  }
+
+  return total;
+};
+
+const suggestCloseForProspect = async (
+  client: ApiClient,
+  prospectId: string,
+  prospect: ProspectUpdate,
+): Promise<{ suggested: number; withdrawn: number }> => {
+  const appsUsed = [...(prospect.ourApps ?? []), ...(prospect.otherApps ?? [])];
 
   const { upsellDeals } = await executeWithRetry<{
     upsellDeals: Connection<UpsellDealRow>;
@@ -133,10 +153,11 @@ export default defineLogicFunction({
   name: 'suggest-close-deals',
   description:
     'Flags an open deal as "suggested close" once the shop is detected on its target app, and withdraws the flag if the shop later uninstalls.',
-  timeoutSeconds: 60,
+  timeoutSeconds: 300,
   databaseEventTriggerSettings: {
     eventName: 'prospect.updated',
     updatedFields: ['ourApps', 'otherApps'],
+    batchMode: true,
   },
   handler,
 });
