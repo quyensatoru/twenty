@@ -213,7 +213,8 @@ export const MESSAGE_QUEUE_WORKER_CONFIG: Record<
   [MessageQueue.logicFunctionQueue]: {
     priority: 4,
     workerOptions: {
-      concurrency: 20,
+      // each job spawns a ~150MB node process, so this bounds worker memory
+      concurrency: 4,
       lockDuration: 30_000,
       maxStalledCount: 1,
       boundedShutdownDrain: false,
