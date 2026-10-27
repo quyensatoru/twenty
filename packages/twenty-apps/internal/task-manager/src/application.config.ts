@@ -11,6 +11,10 @@ import {
   NOTIFICATION_WORKFLOW_WEBHOOK_URL_VARIABLE_UID,
   RECORD_PAGE_BASE_URL_VARIABLE_UID,
 } from './constants/universal-identifiers';
+import {
+  PRODUCT_BACKLOG_EDITOR_ROLES_VARIABLE_UID,
+  PRODUCT_BACKLOG_HIDDEN_ROLES_VARIABLE_UID,
+} from './constants/product-backlog';
 
 export default defineApplication({
   universalIdentifier: APPLICATION_UID,
@@ -83,6 +87,20 @@ export default defineApplication({
       description:
         'Only used when the provider is WORKFLOW_WEBHOOK. Receives a POST with to, subject and text.',
       isSecret: true,
+    },
+    PRODUCT_BACKLOG_EDITOR_ROLES: {
+      universalIdentifier: PRODUCT_BACKLOG_EDITOR_ROLES_VARIABLE_UID,
+      label: 'Product Backlog editor roles',
+      description:
+        'Workspace roles, by id or name and comma separated, that may change the Product Backlog. Admins always may; other roles only read it. Pick them in the Product Backlog Settings tab.',
+      value: 'PMA',
+    },
+    PRODUCT_BACKLOG_HIDDEN_ROLES: {
+      universalIdentifier: PRODUCT_BACKLOG_HIDDEN_ROLES_VARIABLE_UID,
+      label: 'Product Backlog hidden roles',
+      description:
+        'Workspace roles, by id or name and comma separated, that may neither see nor change the Product Backlog. Pick them in the Product Backlog Settings tab.',
+      value: 'CSE',
     },
   },
   // OAuth client credentials for the Development git integrations. The server

@@ -11,6 +11,10 @@ import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { countIssues } from './utils/count-issues.util';
 import { fetchSprint } from './utils/fetch-sprint.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
+import {
+  ensurePlannedStatusId,
+  moveIssueFamiliesToStage,
+} from './utils/product-backlog-stage.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -94,12 +98,45 @@ const handler = async (event: RoutePayload<StartSprintBody>) =>
     const goal = event.body?.goal;
     const capacity = event.body?.capacity;
 
+    // Starting the sprint is what puts its backlog items on the Board, and
+    // what it holds now is its commitment, against which scope change and
+    // velocity are measured.
+    const sprintIssues = await listScopedRecords<{
+      id: string;
+      stage?: string | null;
+      storyPoints?: number | null;
+    }>({
+      client,
+      pluralName: 'issues',
+      filter: { sprintId: { eq: sprintId }, parentId: { is: 'NULL' } },
+      selection: { id: true, stage: true, storyPoints: true },
+    });
+    const itemIds = sprintIssues
+      .filter((issue) => issue.stage === 'ITEM')
+      .map((issue) => issue.id);
+
+    if (itemIds.length > 0) {
+      await moveIssueFamiliesToStage({
+        client,
+        issueIds: itemIds,
+        stage: 'ISSUE',
+        extraData: {
+          statusId: await ensurePlannedStatusId(client, sprint.projectId),
+        },
+      });
+    }
+
     const result = await client.mutation({
       updateSprint: {
         __args: {
           id: sprintId,
           data: {
             state: 'ACTIVE',
+            committedIssueIds: sprintIssues.map((issue) => issue.id),
+            committedPoints: sprintIssues.reduce(
+              (sum, issue) => sum + (issue.storyPoints ?? 0),
+              0,
+            ),
             startDate: event.body?.startDate,
             endDate: event.body?.endDate,
             ...(name === '' ? {} : { name }),

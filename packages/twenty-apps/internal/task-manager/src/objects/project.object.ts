@@ -1,5 +1,6 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
 
+import { PROJECT_PRODUCT_BACKLOG_SETTINGS_FIELD_UID } from '../constants/product-backlog';
 import { PROJECT_CATEGORY_OPTIONS } from '../constants/project-category-options';
 import {
   PROJECT_CATEGORY_FIELD_UID,
@@ -87,6 +88,17 @@ export default defineObject({
       isNullable: true,
       // Written through the update-issue-view-settings route, which checks
       // the role's Manage Views; the raw JSON is not for hand editing.
+      isUIEditable: false,
+    },
+    {
+      universalIdentifier: PROJECT_PRODUCT_BACKLOG_SETTINGS_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'productBacklogSettings',
+      label: 'Product backlog settings',
+      description:
+        'Strategic goals, Definition of Ready and the prioritization template of the Product Backlog',
+      icon: 'IconAdjustments',
+      isNullable: true,
       isUIEditable: false,
     },
   ],

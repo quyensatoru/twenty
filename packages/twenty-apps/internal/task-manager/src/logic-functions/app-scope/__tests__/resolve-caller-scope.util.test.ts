@@ -21,7 +21,9 @@ const answerCurrentUser = ({
     currentUser: {
       id: 'user-1',
       workspaceMember:
-        workspaceMemberId === null ? null : { id: workspaceMemberId },
+        workspaceMemberId === null
+          ? null
+          : { id: workspaceMemberId, roles: [{ id: 'role-1', label: 'PMA' }] },
       currentUserWorkspace: { permissionFlags },
     },
   });
@@ -74,6 +76,7 @@ describe('resolveCallerScope', () => {
       grantsByAppId: { 'app-1': ['read', 'write'], 'app-2': ['read'] },
       canBypassAppScope: false,
       canManageViews: false,
+      roles: [{ id: 'role-1', label: 'PMA' }],
     });
   });
 
@@ -102,6 +105,7 @@ describe('resolveCallerScope', () => {
       grantsByAppId: {},
       canBypassAppScope: true,
       canManageViews: true,
+      roles: [],
     });
     expect(client.query).not.toHaveBeenCalled();
   });

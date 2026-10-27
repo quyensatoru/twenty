@@ -1,0 +1,107 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+
+import {
+  IDEA_DESCRIPTION_FIELD_UID,
+  IDEA_OBJECT_UID,
+  IDEA_PROJECT_ID_FIELD_UID,
+  IDEA_PROMOTED_ISSUE_ID_FIELD_UID,
+  IDEA_QUOTE_FIELD_UID,
+  IDEA_REQUEST_COUNT_FIELD_UID,
+  IDEA_REQUESTER_FIELD_UID,
+  IDEA_SOURCE_FIELD_UID,
+  IDEA_STATUS_FIELD_UID,
+  IDEA_STATUS_OPTIONS,
+  IDEA_TITLE_FIELD_UID,
+  REQUEST_SOURCE_OPTIONS,
+} from '../constants/product-backlog';
+
+// An idea before it is worth a backlog item. Reached only through the
+// Product Backlog routes, which check the project's app scope, like the
+// personal board state: plain id columns, no relation or app mirror.
+export default defineObject({
+  universalIdentifier: IDEA_OBJECT_UID,
+  nameSingular: 'idea',
+  namePlural: 'ideas',
+  labelSingular: 'Idea',
+  labelPlural: 'Ideas',
+  description: 'A product idea or request waiting to enter the backlog',
+  icon: 'IconBulb',
+  labelIdentifierFieldMetadataUniversalIdentifier: IDEA_TITLE_FIELD_UID,
+  fields: [
+    {
+      universalIdentifier: IDEA_TITLE_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'title',
+      label: 'Title',
+      icon: 'IconBulb',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_PROJECT_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'projectId',
+      label: 'Project Id',
+      icon: 'IconListDetails',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_DESCRIPTION_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'description',
+      label: 'Description',
+      icon: 'IconFilePencil',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_SOURCE_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'source',
+      label: 'Source',
+      icon: 'IconSpeakerphone',
+      isNullable: true,
+      options: [...REQUEST_SOURCE_OPTIONS],
+    },
+    {
+      universalIdentifier: IDEA_REQUESTER_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'requester',
+      label: 'Requester',
+      icon: 'IconUser',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_REQUEST_COUNT_FIELD_UID,
+      type: FieldType.NUMBER,
+      name: 'requestCount',
+      label: 'Times requested',
+      icon: 'IconPlus',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_QUOTE_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'quote',
+      label: 'Customer quote',
+      icon: 'IconQuote',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: IDEA_STATUS_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'status',
+      label: 'Status',
+      icon: 'IconProgress',
+      isNullable: true,
+      defaultValue: "'INBOX'",
+      options: [...IDEA_STATUS_OPTIONS],
+    },
+    {
+      universalIdentifier: IDEA_PROMOTED_ISSUE_ID_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'promotedIssueId',
+      label: 'Backlog item Id',
+      icon: 'IconArrowRight',
+      isNullable: true,
+    },
+  ],
+});

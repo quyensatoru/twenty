@@ -1,5 +1,7 @@
 import { type AppScopeGrantsByAppId } from './app-scope-operation';
 
+export type CallerRole = { id: string; label: string };
+
 export type CallerScope = {
   // null for a machine caller (application or API-key token): there is no
   // workspace member behind the request.
@@ -11,4 +13,6 @@ export type CallerScope = {
   // The caller's role holds "Manage Views": changing what everyone sees of a
   // board (its column order), as opposed to the records on it.
   canManageViews: boolean;
+  // The caller's workspace roles, for features gated by role.
+  roles: CallerRole[];
 };

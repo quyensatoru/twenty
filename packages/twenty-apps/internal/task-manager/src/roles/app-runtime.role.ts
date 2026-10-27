@@ -1,3 +1,4 @@
+import { IDEA_OBJECT_UID } from '../constants/product-backlog';
 import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../constants/task-personal-board';
 import { TASK_AI_RUN_LOCK_OBJECT_UID } from '../constants/task-ai-run-lock';
 import {
@@ -77,8 +78,14 @@ export default defineApplicationRole({
   // application exactly as for a person (ViewAccessService.canUserCreateView).
   // Without it the trigger fails with "You do not have permission to create
   // workspace-level views" and a new project silently has no board.
+  //
+  // ROLES and APPLICATIONS let an admin pick the Product Backlog roles from the
+  // page: a member's token is intersected with this role, so only callers who
+  // hold both flags themselves can list roles or save app variables.
   permissionFlagUniversalIdentifiers: [
     SystemPermissionFlag.AI,
+    SystemPermissionFlag.APPLICATIONS,
+    SystemPermissionFlag.ROLES,
     SystemPermissionFlag.VIEWS,
     SystemPermissionFlag.WORKSPACE_MEMBERS,
   ],
@@ -89,6 +96,7 @@ export default defineApplicationRole({
       ISSUE_NOTIFICATION_OBJECT_UID,
       TASK_AI_RUN_LOCK_OBJECT_UID,
       TASK_PERSONAL_BOARD_OBJECT_UID,
+      IDEA_OBJECT_UID,
     ].map((objectUniversalIdentifier) => ({
       objectUniversalIdentifier,
       ...readWriteDelete,

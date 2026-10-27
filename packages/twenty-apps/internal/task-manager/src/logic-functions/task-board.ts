@@ -9,6 +9,7 @@ import {
 } from '../constants/record-selections';
 import { TASK_BOARD_ROUTE_PATH } from '../constants/route-paths';
 import { TASK_BOARD_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
+import { PRODUCT_BACKLOG_PAGE_LAYOUT_UID } from '../constants/product-backlog';
 import { buildProjectScopeFilter } from './app-scope/build-project-scope-filter.util';
 import { hasAppGrant } from './app-scope/has-app-grant.util';
 import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util';
@@ -29,6 +30,7 @@ import {
   readBoardIssueQuery,
 } from './utils/read-board-issue-query.util';
 import { readPersonalBoardPreferencesForMember } from './utils/personal-board-storage.util';
+import { readPageLayoutId } from './utils/read-page-layout-id.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type TaskBoardBody = BoardIssueQueryBody & {
@@ -74,7 +76,10 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
     });
 
     if (visibleProjectIds !== null && visibleProjectIds.length === 0) {
-      return { ...EMPTY_BOARD, currentWorkspaceMemberId: scope.workspaceMemberId };
+      return {
+        ...EMPTY_BOARD,
+        currentWorkspaceMemberId: scope.workspaceMemberId,
+      };
     }
 
     const projects = await listScopedRecords({
@@ -86,7 +91,10 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
     });
 
     if (projects.length === 0) {
-      return { ...EMPTY_BOARD, currentWorkspaceMemberId: scope.workspaceMemberId };
+      return {
+        ...EMPTY_BOARD,
+        currentWorkspaceMemberId: scope.workspaceMemberId,
+      };
     }
 
     const requestedProjectId =
@@ -221,7 +229,10 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       }),
     );
 
-    const members = await listIssueMembers({ client, issues });
+    const [members, productBacklogPageLayoutId] = await Promise.all([
+      listIssueMembers({ client, issues }),
+      readPageLayoutId(PRODUCT_BACKLOG_PAGE_LAYOUT_UID),
+    ]);
 
     return {
       projects,
@@ -236,6 +247,7 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
       assignableMembers,
       hiddenDoneIssueCount,
       boardSort: query.sort,
+      productBacklogPageLayoutId,
       currentWorkspaceMemberId: scope.workspaceMemberId,
       // What the board may offer on this project, by the rule its write
       // routes enforce. Only hides controls; the routes still decide.

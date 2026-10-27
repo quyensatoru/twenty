@@ -79,7 +79,7 @@ export const IssueTypeGlyph = ({
 
   return (
     <span
-      title={option?.label}
+      title={option === undefined ? undefined : t(option.label)}
       style={{
         display: 'inline-flex',
         flexShrink: 0,

@@ -9,6 +9,7 @@ const runtime = vi.hoisted(() => ({
     workspaceMemberId: 'me',
     canBypassAppScope: false,
     canManageViews: false,
+    roles: [],
     grantsByAppId: { app: ['read'] },
   } as CallerScope,
   query: vi.fn(),
@@ -111,6 +112,7 @@ beforeEach(() => {
       {
         id: 'overdue',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-11',
         statusId: null,
@@ -118,6 +120,7 @@ beforeEach(() => {
       {
         id: 'today',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-12',
         statusId: 'started',
@@ -125,6 +128,7 @@ beforeEach(() => {
       {
         id: 'tomorrow',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-13',
         statusId: 'todo',
@@ -132,6 +136,7 @@ beforeEach(() => {
       {
         id: 'next-week',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-19',
         statusId: 'todo',
@@ -139,6 +144,7 @@ beforeEach(() => {
       {
         id: 'later',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-20',
         statusId: 'todo',
@@ -146,6 +152,7 @@ beforeEach(() => {
       {
         id: 'undated',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: null,
         statusId: 'todo',
@@ -153,6 +160,7 @@ beforeEach(() => {
       {
         id: 'finished',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-10',
         statusId: 'done',
@@ -168,6 +176,7 @@ beforeEach(() => {
       {
         id: 'private',
         projectId: 'private-project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-10',
         statusId: 'todo',
@@ -215,24 +224,28 @@ describe('Today personal queue', () => {
       {
         id: 'before',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-11T16:59:59Z',
       },
       {
         id: 'midnight',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-11T17:00:00Z',
       },
       {
         id: 'evening',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-12T16:59:59Z',
       },
       {
         id: 'tomorrow',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-10-12T17:00:00Z',
       },
@@ -270,6 +283,7 @@ describe('Today personal queue', () => {
       {
         id: 'today',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2026-12-31',
         statusId: 'todo',
@@ -277,6 +291,7 @@ describe('Today personal queue', () => {
       {
         id: 'next-year',
         projectId: 'project',
+        stage: 'ISSUE',
         assigneeId: 'me',
         dueDate: '2027-01-01',
         statusId: 'todo',
@@ -312,6 +327,7 @@ describe('Today personal queue', () => {
     runtime.records.issues = Array.from({ length: 19 }, (_, index) => ({
       id: `issue-${index}`,
       projectId: 'project',
+      stage: 'ISSUE',
       assigneeId: 'me',
       dueDate: '2026-10-11',
     }));

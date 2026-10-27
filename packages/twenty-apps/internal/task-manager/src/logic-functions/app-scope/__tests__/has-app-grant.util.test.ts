@@ -8,6 +8,7 @@ const buildScope = (overrides: Partial<CallerScope> = {}): CallerScope => ({
   grantsByAppId: { 'app-1': ['read', 'write'], 'app-2': ['read'] },
   canBypassAppScope: false,
   canManageViews: false,
+  roles: [],
   ...overrides,
 });
 

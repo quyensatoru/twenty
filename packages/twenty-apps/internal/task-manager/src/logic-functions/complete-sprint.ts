@@ -11,6 +11,7 @@ import { fetchRecordColumn } from './utils/fetch-record-column.util';
 import { fetchSprint } from './utils/fetch-sprint.util';
 import { listDoneStatusIds } from './utils/list-done-status-ids.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
+import { moveIssueFamiliesToStage } from './utils/product-backlog-stage.util';
 import { requireString } from './utils/require-string.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
@@ -22,12 +23,16 @@ type CompleteSprintBody = {
   createNewSprint?: boolean;
   // Counts what would move without changing anything, for the dialog.
   dryRun?: boolean;
+  // Unfinished top-level issues that go back to the Product Backlog as items
+  // instead of the target, picked one by one in Sprint Planning.
+  backlogIssueIds?: unknown;
 };
 
 type SprintIssue = {
   id: string;
   statusId?: string | null;
   parentId?: string | null;
+  storyPoints?: number | null;
 };
 
 const createFollowUpSprint = async ({
@@ -131,7 +136,12 @@ const handler = async (event: RoutePayload<CompleteSprintBody>) =>
         client,
         pluralName: 'issues',
         filter: { sprintId: { eq: sprintId } },
-        selection: { id: true, statusId: true, parentId: true },
+        selection: {
+          id: true,
+          statusId: true,
+          parentId: true,
+          storyPoints: true,
+        },
       }),
     ]);
     const movedIssueIds = pickSprintFamiliesToMove({ issues, doneStatusIds });
@@ -144,12 +154,42 @@ const handler = async (event: RoutePayload<CompleteSprintBody>) =>
       return counts;
     }
 
+    const requestedBacklogIds = new Set(
+      Array.isArray(event.body?.backlogIssueIds)
+        ? event.body.backlogIssueIds.filter(
+            (issueId): issueId is string => typeof issueId === 'string',
+          )
+        : [],
+    );
+    const movedIdSet = new Set(movedIssueIds);
+    const topLevelMovedIds = issues
+      .filter(
+        (issue) =>
+          movedIdSet.has(issue.id) && typeof issue.parentId !== 'string',
+      )
+      .map((issue) => issue.id);
+    // Unfinished work leaving for the backlog is backlog material again.
+    const backlogParentIds =
+      requestedTargetSprintId === null && !shouldCreateNewSprint
+        ? topLevelMovedIds
+        : topLevelMovedIds.filter((issueId) =>
+            requestedBacklogIds.has(issueId),
+          );
+    const backlogParentIdSet = new Set(backlogParentIds);
+    const carriedIssueIds = movedIssueIds.filter((issueId) => {
+      const parentId = issues.find((issue) => issue.id === issueId)?.parentId;
+
+      return !backlogParentIdSet.has(
+        typeof parentId === 'string' ? parentId : issueId,
+      );
+    });
+
     const targetSprintId =
-      shouldCreateNewSprint && movedIssueIds.length > 0
+      shouldCreateNewSprint && carriedIssueIds.length > 0
         ? await createFollowUpSprint({ client, projectId })
         : requestedTargetSprintId;
 
-    for (const issueId of movedIssueIds) {
+    for (const issueId of carriedIssueIds) {
       await client.mutation({
         updateIssue: {
           __args: { id: issueId, data: { sprintId: targetSprintId } },
@@ -158,17 +198,45 @@ const handler = async (event: RoutePayload<CompleteSprintBody>) =>
       });
     }
 
+    await moveIssueFamiliesToStage({
+      client,
+      issueIds: backlogParentIds,
+      stage: 'ITEM',
+      extraData: { sprintId: null },
+    });
+
+    const sumPoints = (sprintIssues: readonly SprintIssue[]) =>
+      sprintIssues
+        .filter((issue) => typeof issue.parentId !== 'string')
+        .reduce((sum, issue) => sum + (issue.storyPoints ?? 0), 0);
+    const doneStatusIdSet = new Set(doneStatusIds);
+
     await client.mutation({
       updateSprint: {
         __args: {
           id: sprintId,
-          data: { state: 'CLOSED', completeDate: new Date().toISOString() },
+          data: {
+            state: 'CLOSED',
+            completeDate: new Date().toISOString(),
+            completedPoints: sumPoints(
+              issues.filter((issue) =>
+                doneStatusIdSet.has(issue.statusId ?? ''),
+              ),
+            ),
+            ...(typeof sprint.committedPoints === 'number'
+              ? {}
+              : { committedPoints: sumPoints(issues) }),
+          },
         },
         id: true,
       },
     });
 
-    return { ...counts, targetSprintId };
+    return {
+      ...counts,
+      targetSprintId,
+      backlogIssueCount: backlogParentIds.length,
+    };
   });
 
 export default defineLogicFunction({

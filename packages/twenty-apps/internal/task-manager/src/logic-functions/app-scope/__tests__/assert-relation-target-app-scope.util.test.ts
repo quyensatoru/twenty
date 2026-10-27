@@ -9,6 +9,7 @@ const scope: CallerScope = {
   grantsByAppId: { 'app-1': ['read', 'write'] },
   canBypassAppScope: false,
   canManageViews: false,
+  roles: [],
 };
 
 const buildClient = ({
@@ -29,7 +30,9 @@ const buildClient = ({
       );
 
       return {
-        appAccesses: { edges: matches.map((row) => ({ node: { id: 'x', ...row } })) },
+        appAccesses: {
+          edges: matches.map((row) => ({ node: { id: 'x', ...row } })),
+        },
       };
     }
 
@@ -102,7 +105,11 @@ describe('assertRelationTargetAppScope', () => {
         objectNameSingular: 'issue',
         projectId: 'project-1',
         targets: [
-          { fieldName: 'merchantIds', kind: 'merchant', targetId: 'merchant-ok' },
+          {
+            fieldName: 'merchantIds',
+            kind: 'merchant',
+            targetId: 'merchant-ok',
+          },
         ],
       }),
     ).resolves.toBeUndefined();

@@ -6,6 +6,7 @@ export type SprintRecord = {
   name?: string | null;
   state?: string | null;
   projectId?: string | null;
+  committedPoints?: number | null;
 };
 
 export const fetchSprint = async (
@@ -15,7 +16,15 @@ export const fetchSprint = async (
   const result = await client.query({
     sprints: {
       __args: { filter: { id: { eq: sprintId } }, first: 1 },
-      edges: { node: { id: true, name: true, state: true, projectId: true } },
+      edges: {
+        node: {
+          id: true,
+          name: true,
+          state: true,
+          projectId: true,
+          committedPoints: true,
+        },
+      },
     },
   });
 

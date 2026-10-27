@@ -8,6 +8,7 @@ const runtime = vi.hoisted(() => ({
     workspaceMemberId: 'me',
     canBypassAppScope: false,
     canManageViews: false,
+    roles: [],
     grantsByAppId: { app: ['read'] },
   } as CallerScope,
   query: vi.fn(),

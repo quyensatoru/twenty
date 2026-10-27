@@ -1,5 +1,10 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
 
+import {
+  SPRINT_COMMITTED_ISSUE_IDS_FIELD_UID,
+  SPRINT_COMMITTED_POINTS_FIELD_UID,
+  SPRINT_COMPLETED_POINTS_FIELD_UID,
+} from '../constants/product-backlog';
 import { SPRINT_STATE_OPTIONS } from '../constants/sprint-state-options';
 import {
   SPRINT_CAPACITY_FIELD_UID,
@@ -87,6 +92,39 @@ export default defineObject({
       description: 'Story points the team plans to finish in the sprint',
       icon: 'IconGauge',
       isNullable: true,
+    },
+    // Snapshots for velocity and burndown: issues move out of a sprint when
+    // it completes, so its own rows cannot tell what it committed to.
+    {
+      universalIdentifier: SPRINT_COMMITTED_POINTS_FIELD_UID,
+      type: FieldType.NUMBER,
+      name: 'committedPoints',
+      label: 'Committed points',
+      description: 'Story points in the sprint when it started',
+      icon: 'IconTarget',
+      isNullable: true,
+      isUIEditable: false,
+    },
+    {
+      universalIdentifier: SPRINT_COMPLETED_POINTS_FIELD_UID,
+      type: FieldType.NUMBER,
+      name: 'completedPoints',
+      label: 'Completed points',
+      description: 'Story points done when the sprint completed',
+      icon: 'IconCircleCheck',
+      isNullable: true,
+      isUIEditable: false,
+    },
+    {
+      universalIdentifier: SPRINT_COMMITTED_ISSUE_IDS_FIELD_UID,
+      type: FieldType.RAW_JSON,
+      name: 'committedIssueIds',
+      label: 'Committed issues',
+      description:
+        'Issues in the sprint when it started; later ones are scope change',
+      icon: 'IconListCheck',
+      isNullable: true,
+      isUIEditable: false,
     },
   ],
 });

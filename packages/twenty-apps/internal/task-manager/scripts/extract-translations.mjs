@@ -53,6 +53,13 @@ const LABEL_MAP_FILES = new Set([
   'provider-labels.ts',
 ]);
 const LABEL_MAP_PATTERN = /^\s+[A-Z_a-z]+: '((?:[^'\\]|\\.)*)',$/gm;
+// The Product Backlog's scoring templates and defaults carry their copy as
+// plain data shared with the server; the page translates it at render time.
+const PRODUCT_BACKLOG_COPY_PATTERNS = [
+  /\b(?:label|name|description|hint|formula|source|text|suggestedMoscow):\s*'((?:[^'\\]|\\.)*)'/g,
+  /\b(?:label|name|description|hint|formula|source|text|suggestedMoscow):\s*"((?:[^"\\]|\\.)*)"/g,
+  /^\s+\d+: '((?:[^'\\]|\\.)*)',$/gm,
+];
 
 const collectSourceStrings = () => {
   const strings = new Set();
@@ -61,7 +68,10 @@ const collectSourceStrings = () => {
     const content = readFileSync(file, 'utf8');
     const patterns = LABEL_MAP_FILES.has(path.basename(file))
       ? [...PATTERNS, LABEL_MAP_PATTERN]
-      : PATTERNS;
+      : file.includes(`${path.sep}product-backlog`) &&
+          !file.includes(`${path.sep}front-components${path.sep}`)
+        ? [...PATTERNS, ...PRODUCT_BACKLOG_COPY_PATTERNS]
+        : PATTERNS;
 
     for (const pattern of patterns) {
       for (const match of content.matchAll(pattern)) {

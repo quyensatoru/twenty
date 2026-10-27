@@ -27,7 +27,7 @@ export const resolveCallerScope = async (
   const { currentUser } = await new MetadataApiClient().query({
     currentUser: {
       id: true,
-      workspaceMember: { id: true },
+      workspaceMember: { id: true, roles: { id: true, label: true } },
       currentUserWorkspace: { permissionFlags: true },
     },
   });
@@ -40,6 +40,7 @@ export const resolveCallerScope = async (
       grantsByAppId: {},
       canBypassAppScope: true,
       canManageViews: true,
+      roles: [],
     };
   }
 
@@ -60,6 +61,16 @@ export const resolveCallerScope = async (
     canBypassAppScope,
     canManageViews: callerPermissionFlags.includes(
       MANAGE_VIEWS_PERMISSION_FLAG,
+    ),
+    roles: (
+      (currentUser?.workspaceMember?.roles ?? []) as {
+        id?: string | null;
+        label?: string | null;
+      }[]
+    ).flatMap((role) =>
+      typeof role.id === 'string'
+        ? [{ id: role.id, label: role.label ?? '' }]
+        : [],
     ),
   };
 };
@@ -85,7 +96,10 @@ const listMemberAppAccessRows = async ({
           first: APP_ACCESS_PAGE_SIZE,
           ...(after === undefined ? {} : { after }),
         },
-        edges: { cursor: true, node: { id: true, appId: true, permissions: true } },
+        edges: {
+          cursor: true,
+          node: { id: true, appId: true, permissions: true },
+        },
       },
     });
 

@@ -1,5 +1,9 @@
-import { t } from 'twenty-sdk/front-component';
-import { IconCalendarEvent, IconPencil, IconCalendarRepeat } from 'twenty-ui/icon';
+import { t, useLocale } from 'twenty-sdk/front-component';
+import {
+  IconCalendarEvent,
+  IconPencil,
+  IconCalendarRepeat,
+} from 'twenty-ui/icon';
 
 import { type BoardSprint, type PageInset } from '../../types/task-board';
 import { computeSprintRemainingDays } from '../../utils/compute-sprint-remaining-days.util';
@@ -68,9 +72,11 @@ export const TaskSprintHeader = ({
   onEdit,
   onViewAllIssues,
 }: TaskSprintHeaderProps) => {
+  const locale = useLocale();
   const dateRange = formatSprintDateRange({
     startDate: sprint.startDate,
     endDate: sprint.endDate,
+    locale,
   });
   const remainingLabel = readRemainingLabel(sprint);
   const isOverdue =
@@ -121,7 +127,9 @@ export const TaskSprintHeader = ({
         <span
           style={{
             alignItems: 'center',
-            color: isOverdue ? TASK_TOKENS.textDanger : TASK_TOKENS.textTertiary,
+            color: isOverdue
+              ? TASK_TOKENS.textDanger
+              : TASK_TOKENS.textTertiary,
             display: 'inline-flex',
             fontVariantNumeric: 'tabular-nums',
             gap: 6,
@@ -208,22 +216,25 @@ export const TaskSprintHeader = ({
 
 type TaskNoActiveSprintBannerProps = {
   inset: PageInset;
-  onOpenBacklog: () => void;
+  // Opens the Product Backlog, where sprints are planned. Null hides it.
+  onPlanSprint: (() => void) | null;
 };
 
 // What a sprint board says between sprints. The board still shows every
 // issue, so a project that does not run sprints keeps working.
 export const TaskNoActiveSprintBanner = ({
   inset,
-  onOpenBacklog,
+  onPlanSprint,
 }: TaskNoActiveSprintBannerProps) => (
   <div style={{ ...STRIP_STYLE(inset), color: TASK_TOKENS.textSecondary }}>
     <IconCalendarRepeat size={15} color={TASK_TOKENS.textTertiary} />
     <span style={{ flex: 1 }}>
       {t('No active sprint. Showing every issue in the project.')}
     </span>
-    <TaskButton size="small" variant="ghost" onClick={onOpenBacklog}>
-      {t('Plan a sprint')}
-    </TaskButton>
+    {onPlanSprint !== null && (
+      <TaskButton size="small" variant="ghost" onClick={onPlanSprint}>
+        {t('Plan a sprint')}
+      </TaskButton>
+    )}
   </div>
 );

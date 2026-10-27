@@ -20,6 +20,7 @@ import {
 import { linkIssueMerchants } from './utils/link-issue-merchants.util';
 import { notifyIssueAssigned } from './utils/notify-issue-assigned.util';
 import { requireString } from './utils/require-string.util';
+import { assertIssueWriteAllowed } from './utils/resolve-product-backlog-access.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 import { writeWithReservedIssueKey } from './utils/write-with-reserved-issue-key.util';
 
@@ -42,6 +43,8 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
       recordId: issueId,
       operation: 'write',
     });
+
+    await assertIssueWriteAllowed({ client, scope, issueId, data });
 
     const projectId =
       typeof data.projectId === 'string' ? data.projectId : undefined;
@@ -171,8 +174,7 @@ const handler = async (event: RoutePayload<UpdateIssueBody>) =>
     }
 
     const updatedIssue = result?.updateIssue as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
 
     if (
       hasAssigneeChange &&

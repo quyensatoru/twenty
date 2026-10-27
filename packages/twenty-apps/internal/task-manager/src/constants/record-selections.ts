@@ -28,6 +28,55 @@ export const ISSUE_SELECTION = {
   files: { fileId: true, label: true, extension: true, url: true },
   createdAt: true,
   updatedAt: true,
+  stage: true,
+  strategicGoalId: true,
+  requestSource: true,
+  bugSeverity: true,
+  whyNow: true,
+  successMetric: true,
+  userStory: true,
+  acceptanceCriteria: true,
+  readinessChecks: true,
+  blockedByIssueIds: true,
+  priorityScores: true,
+  scoreReasoning: true,
+  refinedAt: true,
+} as const;
+
+// A Product Backlog row: the board row plus every product field, without the
+// rich text body, which the backlog never renders for a whole list.
+export const PRODUCT_ITEM_SELECTION = {
+  id: true,
+  title: true,
+  issueKey: true,
+  issueType: true,
+  priority: true,
+  storyPoints: true,
+  dueDate: true,
+  labels: true,
+  statusId: true,
+  projectId: true,
+  sprintId: true,
+  epicId: true,
+  parentId: true,
+  assigneeId: true,
+  reporterId: true,
+  position: true,
+  createdAt: true,
+  updatedAt: true,
+  stage: true,
+  strategicGoalId: true,
+  requestSource: true,
+  bugSeverity: true,
+  whyNow: true,
+  successMetric: true,
+  userStory: true,
+  acceptanceCriteria: true,
+  readinessChecks: true,
+  blockedByIssueIds: true,
+  priorityScores: true,
+  scoreReasoning: true,
+  refinedAt: true,
 } as const;
 
 // Cross-project search renders a row, not a card, so it deliberately leaves
@@ -98,6 +147,9 @@ export const SPRINT_SELECTION = {
   ownerId: true,
   projectId: true,
   position: true,
+  committedPoints: true,
+  completedPoints: true,
+  committedIssueIds: true,
 } as const;
 
 export const EPIC_SELECTION = {
@@ -107,6 +159,7 @@ export const EPIC_SELECTION = {
   assigneeId: true,
   projectId: true,
   position: true,
+  strategicGoalId: true,
 } as const;
 
 export const ISSUE_COMMENT_SELECTION = {

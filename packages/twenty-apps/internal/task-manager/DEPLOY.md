@@ -827,3 +827,35 @@ retry không nhân đôi comment, ảnh trong discussion, read receipt và thôn
 app rồi kiểm tra mất quyền truy cập. Với AI, kiểm tra task-only, repo GitHub/GitLab, SHA/ref,
 hai request đồng thời, cancel, lịch sử riêng và preview chia sẻ. Build và unit tests không
 thay thế kiểm tra OAuth/provider thực tế này.
+
+## 9. Product Backlog
+
+Trang **Product Backlog** (sidebar, dưới Board) tách việc của PM khỏi Bảng: Idea → item → issue.
+Thiết kế gốc là prototype `product-backlog-crm` (README + PLAN.md, V1.3.6).
+
+- `issue.stage`: `ITEM` nằm ở Product Backlog, `ISSUE` chạy trên Bảng, `ARCHIVED` là item đã lưu trữ.
+  Board, board-column-issues và My work chỉ đọc `ISSUE`. Field mới có default `ISSUE`, nên mọi issue
+  cũ vẫn ở Bảng sau khi apply.
+- Lần đầu Product Backlog mở một project, issue top-level chưa có sprint và đang ở status
+  `UNSTARTED` (hoặc không có status) chuyển thành item, kèm subtask. Mỗi project chạy một lần, đánh
+  dấu bằng `project.productBacklogSettings.migratedAt`; project mới tạo được đánh dấu ngay. Muốn
+  chuyển hết một lượt khi deploy, gọi route `/task-manager/migrate-product-backlog` bằng tài khoản
+  bypass app-scope.
+- Đẩy item sang Bảng (nút trong modal, hoặc Start sprint) đưa nó vào status `PLANNED`, tự tạo ở đầu
+  cột nếu project chưa có, và vào sprint đang chạy nếu có.
+- Hoàn thành sprint: issue chưa xong về Backlog thì thành item lại. Sprint lưu `committedPoints`,
+  `committedIssueIds` lúc start và `completedPoints` lúc complete để tính velocity, scope change và
+  burndown. Sprint cũ không có snapshot thì lấy số từ issue còn trong sprint.
+- Goals, Definition of Ready và template ưu tiên lưu trong `project.productBacklogSettings`.
+  Ideas là object `idea`, member không đọc trực tiếp, chỉ qua route của Product Backlog.
+- Tab Backlog cũ trong Board đã bỏ (route `backlog`, `backlog-section-issues`). Board còn Kanban và
+  Insights.
+- Quyền theo role (cho cả workspace, app access vẫn quyết định project nào): admin (cờ WORKSPACE
+  hoặc ROLES) luôn sửa được; role trong `PRODUCT_BACKLOG_EDITOR_ROLES` sửa được; role trong
+  `PRODUCT_BACKLOG_HIDDEN_ROLES` không thấy trang và panel Product trong modal (Insights trên Bảng
+  vẫn chạy); các role khác chỉ xem. Hai biến nhận ID hoặc tên role, phân cách bằng dấu phẩy, mặc định
+  `PMA` và `CSE`. Admin chọn trực tiếp trong tab Cài đặt của Product Backlog (lưu theo ID, đổi tên
+  role không ảnh hưởng). Việc này cần role runtime có cờ **ROLES** và **APPLICATIONS**; token gọi
+  route là giao của quyền member với role app, nên chỉ người tự có hai cờ đó mới đọc/lưu được.
+- Production: tạo role **PMA** trong Settings → Roles rồi gán người, sau đó vào tab Cài đặt kiểm tra
+  hai cột. Role CSE đã có sẵn nên mặc định đã bị ẩn.

@@ -20,7 +20,9 @@ export type BoardIssueQuery = {
 };
 
 const readDoneCutoff = (now: Date): string =>
-  new Date(now.getTime() - BOARD_DONE_ISSUE_VISIBLE_DAYS * DAY_IN_MS).toISOString();
+  new Date(
+    now.getTime() - BOARD_DONE_ISSUE_VISIBLE_DAYS * DAY_IN_MS,
+  ).toISOString();
 
 const buildAssigneeFilter = (assigneeIds: readonly string[]): IssueFilter => {
   const memberIds = assigneeIds.filter(
@@ -37,7 +39,9 @@ const buildAssigneeFilter = (assigneeIds: readonly string[]): IssueFilter => {
   }
 
   return includesUnassigned
-    ? { or: [{ assigneeId: { in: memberIds } }, { assigneeId: { is: 'NULL' } }] }
+    ? {
+        or: [{ assigneeId: { in: memberIds } }, { assigneeId: { is: 'NULL' } }],
+      }
     : { assigneeId: { in: memberIds } };
 };
 
@@ -53,6 +57,8 @@ export const buildBoardScopeFilter = ({
   priority,
 }: BoardIssueQuery): IssueFilter => ({
   projectId: { eq: projectId },
+  // Backlog items and archived ones belong to the Product Backlog, not here.
+  stage: { eq: 'ISSUE' },
   ...(sprintId === undefined
     ? {}
     : sprintId === null

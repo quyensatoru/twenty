@@ -38,6 +38,7 @@ describe('buildBoardScopeFilter', () => {
   it('scopes to the project alone by default', () => {
     expect(buildBoardScopeFilter(BASE_QUERY)).toEqual({
       projectId: { eq: 'p1' },
+      stage: { eq: 'ISSUE' },
     });
   });
 
@@ -59,6 +60,7 @@ describe('buildBoardScopeFilter', () => {
       }),
     ).toEqual({
       projectId: { eq: 'p1' },
+      stage: { eq: 'ISSUE' },
       assigneeId: { in: ['m1', 'm2'] },
       issueType: { eq: 'BUG' },
     });
@@ -70,7 +72,11 @@ describe('buildBoardScopeFilter', () => {
         ...BASE_QUERY,
         assigneeIds: [BOARD_UNASSIGNED_ASSIGNEE],
       }),
-    ).toEqual({ projectId: { eq: 'p1' }, assigneeId: { is: 'NULL' } });
+    ).toEqual({
+      projectId: { eq: 'p1' },
+      stage: { eq: 'ISSUE' },
+      assigneeId: { is: 'NULL' },
+    });
 
     expect(
       buildBoardScopeFilter({
@@ -79,6 +85,7 @@ describe('buildBoardScopeFilter', () => {
       }),
     ).toEqual({
       projectId: { eq: 'p1' },
+      stage: { eq: 'ISSUE' },
       or: [{ assigneeId: { in: ['m1'] } }, { assigneeId: { is: 'NULL' } }],
     });
   });

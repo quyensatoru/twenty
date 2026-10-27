@@ -287,8 +287,8 @@ export const IssueDetailsPanel = ({
   ): TaskRelationOption[] =>
     options.map((option) => ({
       value: option.value,
-      label: option.label,
-      chip: <TaskTag color={option.color}>{option.label}</TaskTag>,
+      label: t(option.label),
+      chip: <TaskTag color={option.color}>{t(option.label)}</TaskTag>,
     }));
 
   const buildGlyphOptions = (
@@ -297,10 +297,10 @@ export const IssueDetailsPanel = ({
   ): TaskRelationOption[] =>
     options.map((option) => ({
       value: option.value,
-      label: option.label,
+      label: t(option.label),
       chip: (
         <TaskGlyphValue glyph={renderGlyph(option.value)}>
-          {option.label}
+          {t(option.label)}
         </TaskGlyphValue>
       ),
     }));

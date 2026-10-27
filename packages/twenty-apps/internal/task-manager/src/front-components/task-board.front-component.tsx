@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
+  AppPath,
   enqueueSnackbar,
+  navigate,
   t,
   useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
@@ -28,7 +30,6 @@ import {
   UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH,
 } from '../constants/route-paths';
 import { TASK_BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
-import { BACKLOG_SECTION_KEY } from '../types/backlog';
 import {
   type BoardData,
   type BoardEpic,
@@ -47,7 +48,7 @@ import {
   UNASSIGNED_ASSIGNEE_VALUE,
 } from './components/task-board-assignee-filter';
 import { TaskAvatar } from './components/task-avatar';
-import { TaskBacklogView } from './components/task-backlog-view';
+import { TaskBoardInsights } from './components/task-board-insights';
 import { IssueTypeGlyph, UnassignedAvatar } from './components/task-board-card';
 import { TaskBoardSelect } from './components/task-board-select';
 import { TaskBoardSortMenu } from './components/task-board-sort-menu';
@@ -116,7 +117,7 @@ const storeValue = (key: string, value: string) => {
 };
 
 const readStoredView = (): BoardViewMode =>
-  readStoredValue(VIEW_STORAGE_KEY) === 'backlog' ? 'backlog' : 'board';
+  readStoredValue(VIEW_STORAGE_KEY) === 'insights' ? 'insights' : 'board';
 
 // The Jira-style planning page: one project at a time, seen as its Backlog
 // (sprints and backlog as ranked lists) or its Board (the active sprint as
@@ -181,9 +182,6 @@ const TaskBoard = () => {
     parseBoardIssueAnchor(locationHash),
   );
   const [composerStatusId, setComposerStatusId] = useState<string | null>(null);
-  const [composerSectionKey, setComposerSectionKey] = useState<string | null>(
-    null,
-  );
   // A backlog row in flight, shared with the epic panel's drop targets.
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [sprintDialogSprint, setSprintDialogSprint] =
@@ -283,6 +281,10 @@ const TaskBoard = () => {
         currentWorkspaceMemberId: result.currentWorkspaceMemberId ?? null,
         hiddenDoneIssueCount: result.hiddenDoneIssueCount ?? 0,
         boardSort: readBoardIssueSort(result.boardSort),
+        productBacklogPageLayoutId:
+          typeof result.productBacklogPageLayoutId === 'string'
+            ? result.productBacklogPageLayoutId
+            : null,
         canWrite: result.canWrite === true,
         canSoftDelete: result.canSoftDelete === true,
         canManageViews: result.canManageViews === true,
@@ -309,7 +311,6 @@ const TaskBoard = () => {
     setView(nextView);
     storeValue(VIEW_STORAGE_KEY, nextView);
     setComposerStatusId(null);
-    setComposerSectionKey(null);
   };
 
   const toggleEpicPanel = () => {
@@ -538,7 +539,7 @@ const TaskBoard = () => {
     return (
       <TaskBoardFrame>
         <TaskBoardSkeleton
-          view={view}
+          view="board"
           isMobile={isMobile}
           isEpicPanelOpen={isEpicPanelOpen}
           inset={pageInset}
@@ -605,15 +606,10 @@ const TaskBoard = () => {
 
   // On a phone the epic panel takes the whole page, like a screen of its own,
   // since there is no room beside the view for it.
-  const isEpicPanelFullScreen = isMobile && isEpicPanelOpen;
+  const isEpicPanelFullScreen = isMobile && isEpicPanelOpen && view === 'board';
 
   const openCreateIssue = () => {
-    if (view === 'backlog') {
-      setComposerSectionKey(BACKLOG_SECTION_KEY);
-
-      return;
-    }
-
+    changeView('board');
     setComposerStatusId(statuses[0]?.id ?? NO_STATUS_VALUE);
   };
 
@@ -681,7 +677,7 @@ const TaskBoard = () => {
       selectedValues: priorityFilter === ALL_VALUE ? [] : [priorityFilter],
       options: [...ISSUE_PRIORITY_OPTIONS].reverse().map((option) => ({
         value: option.value,
-        label: option.label,
+        label: t(option.label),
         icon: <TaskPriorityGlyph priority={option.value} />,
       })),
       onToggle: toggleSingleValue(priorityFilter, setPriorityFilter),
@@ -694,7 +690,7 @@ const TaskBoard = () => {
       selectedValues: typeFilter === ALL_VALUE ? [] : [typeFilter],
       options: ISSUE_TYPE_OPTIONS.map((option) => ({
         value: option.value,
-        label: option.label,
+        label: t(option.label),
         icon: <IssueTypeGlyph issueType={option.value} />,
       })),
       onToggle: toggleSingleValue(typeFilter, setTypeFilter),
@@ -823,7 +819,6 @@ const TaskBoard = () => {
                 storeValue(PROJECT_STORAGE_KEY, value);
                 setSelectedIssueId(null);
                 setComposerStatusId(null);
-                setComposerSectionKey(null);
                 setSelectedAssigneeIds([]);
                 setSprintFilter(ACTIVE_SPRINT_VALUE);
                 setEpicFilter(undefined);
@@ -886,146 +881,155 @@ const TaskBoard = () => {
         )}
       </header>
 
-      <div
-        style={{
-          alignItems: 'center',
-          borderBottom: `1px solid ${TASK_TOKENS.border}`,
-          boxSizing: 'border-box',
-          display: 'flex',
-          flexShrink: 0,
-          flexWrap: 'wrap',
-          gap: 6,
-          minHeight: 40,
-          padding: `6px ${pageInset.right}px 6px ${pageInset.left}px`,
-        }}
-      >
-        {board.activeProjectId !== null && (
-          <TaskToolbarToggle
-            label={isEpicPanelOpen ? t('Hide epics') : t('Show epics')}
-            isActive={isEpicPanelOpen}
-            onClick={toggleEpicPanel}
-          >
-            <IconLayoutSidebar size={16} />
-          </TaskToolbarToggle>
-        )}
-        <TaskFilterMenu fields={filterFields} isCompact={isMobile} />
-        {selectedAssigneeIds.length > 0 && (
-          <TaskFilterChip
-            label={t('Assignee')}
-            value={
-              selectedAssigneeNames.length > 2
-                ? `${selectedAssigneeNames.slice(0, 2).join(', ')} +${selectedAssigneeNames.length - 2}`
-                : selectedAssigneeNames.join(', ')
-            }
-            onRemove={() => setSelectedAssigneeIds([])}
-          />
-        )}
-        {selectedPriorityOption !== undefined && (
-          <TaskFilterChip
-            label={t('Priority')}
-            value={selectedPriorityOption.label}
-            icon={
-              <TaskPriorityGlyph
-                priority={selectedPriorityOption.value}
-                size={12}
-              />
-            }
-            onRemove={() => setPriorityFilter(ALL_VALUE)}
-          />
-        )}
-        {selectedTypeOption !== undefined && (
-          <TaskFilterChip
-            label={t('Type')}
-            value={selectedTypeOption.label}
-            icon={<IssueTypeGlyph issueType={selectedTypeOption.value} />}
-            onRemove={() => setTypeFilter(ALL_VALUE)}
-          />
-        )}
-        {selectedEpicLabel !== null && (
-          <TaskFilterChip
-            label={t('Epic')}
-            value={selectedEpicLabel}
-            onRemove={() => setEpicFilter(undefined)}
-          />
-        )}
-        {view === 'board' && sprintFilter !== ACTIVE_SPRINT_VALUE && (
-          <TaskFilterChip
-            label={t('Sprint')}
-            value={readSprintFilterLabel()}
-            onRemove={() => setSprintFilter(ACTIVE_SPRINT_VALUE)}
-          />
-        )}
-        {board.currentWorkspaceMemberId !== null && (
-          <TaskFilterToggle
-            label={t('Only mine')}
-            isActive={isOnlyMine}
-            onToggle={toggleOnlyMine}
-          />
-        )}
-        {!isMobile && (
-          <TaskBoardAssigneeFilter
-            options={assigneeOptions}
-            selectedIds={selectedAssigneeIds}
-            onToggle={toggleAssignee}
-          />
-        )}
-        {(isFiltered || isSorted) && (
-          <TaskButton variant="ghost" size="compact" onClick={resetFilters}>
-            {t('Clear')}
-          </TaskButton>
-        )}
-        <span style={{ flex: 1 }} />
-        {view === 'board' && !isMobile && !isShowingActiveSprint && (
-          <span
-            title={`${progress.percent}%`}
-            style={{
-              color: TASK_TOKENS.textTertiary,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 12,
-              fontVariantNumeric: 'tabular-nums',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('{done} of {total} done', {
-              done: progress.doneCount,
-              total: progress.totalCount,
-            })}
-          </span>
-        )}
-        {view === 'board' && (
-          <TaskBoardSortMenu
-            isMobile={isMobile}
-            sort={boardSort}
-            canAddRule={canAddSortRule}
-            onAddRule={() => void addSortRule()}
-            onChangeRuleField={(index, field) =>
-              void changeSortRuleField(index, field)
-            }
-            onToggleRuleDirection={(index) =>
-              void toggleSortRuleDirection(index)
-            }
-            onMoveRuleUp={(index) => void moveSortRuleUp(index)}
-            onRemoveRule={(index) => void removeSortRule(index)}
-            onClearSort={() => void clearSort()}
-          />
-        )}
-        {view === 'board' && !isMobile && board.canManageViews && (
-          <TaskFieldsMenu
-            label={t('Card fields')}
-            buttonLabel={t('Display')}
-            fields={ISSUE_CARD_FIELDS}
-            hiddenFields={hiddenCardFields}
-            onHiddenFieldsChange={saveHiddenCardFields}
-          />
-        )}
-      </div>
+      {view === 'board' && (
+        <div
+          style={{
+            alignItems: 'center',
+            borderBottom: `1px solid ${TASK_TOKENS.border}`,
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: 6,
+            minHeight: 40,
+            padding: `6px ${pageInset.right}px 6px ${pageInset.left}px`,
+          }}
+        >
+          {board.activeProjectId !== null && (
+            <TaskToolbarToggle
+              label={isEpicPanelOpen ? t('Hide epics') : t('Show epics')}
+              isActive={isEpicPanelOpen}
+              onClick={toggleEpicPanel}
+            >
+              <IconLayoutSidebar size={16} />
+            </TaskToolbarToggle>
+          )}
+          <TaskFilterMenu fields={filterFields} isCompact={isMobile} />
+          {selectedAssigneeIds.length > 0 && (
+            <TaskFilterChip
+              label={t('Assignee')}
+              value={
+                selectedAssigneeNames.length > 2
+                  ? `${selectedAssigneeNames.slice(0, 2).join(', ')} +${selectedAssigneeNames.length - 2}`
+                  : selectedAssigneeNames.join(', ')
+              }
+              onRemove={() => setSelectedAssigneeIds([])}
+            />
+          )}
+          {selectedPriorityOption !== undefined && (
+            <TaskFilterChip
+              label={t('Priority')}
+              value={t(selectedPriorityOption.label)}
+              icon={
+                <TaskPriorityGlyph
+                  priority={selectedPriorityOption.value}
+                  size={12}
+                />
+              }
+              onRemove={() => setPriorityFilter(ALL_VALUE)}
+            />
+          )}
+          {selectedTypeOption !== undefined && (
+            <TaskFilterChip
+              label={t('Type')}
+              value={t(selectedTypeOption.label)}
+              icon={<IssueTypeGlyph issueType={selectedTypeOption.value} />}
+              onRemove={() => setTypeFilter(ALL_VALUE)}
+            />
+          )}
+          {selectedEpicLabel !== null && (
+            <TaskFilterChip
+              label={t('Epic')}
+              value={selectedEpicLabel}
+              onRemove={() => setEpicFilter(undefined)}
+            />
+          )}
+          {view === 'board' && sprintFilter !== ACTIVE_SPRINT_VALUE && (
+            <TaskFilterChip
+              label={t('Sprint')}
+              value={readSprintFilterLabel()}
+              onRemove={() => setSprintFilter(ACTIVE_SPRINT_VALUE)}
+            />
+          )}
+          {board.currentWorkspaceMemberId !== null && (
+            <TaskFilterToggle
+              label={t('Only mine')}
+              isActive={isOnlyMine}
+              onToggle={toggleOnlyMine}
+            />
+          )}
+          {!isMobile && (
+            <TaskBoardAssigneeFilter
+              options={assigneeOptions}
+              selectedIds={selectedAssigneeIds}
+              onToggle={toggleAssignee}
+            />
+          )}
+          {(isFiltered || isSorted) && (
+            <TaskButton variant="ghost" size="compact" onClick={resetFilters}>
+              {t('Clear')}
+            </TaskButton>
+          )}
+          <span style={{ flex: 1 }} />
+          {view === 'board' && !isMobile && !isShowingActiveSprint && (
+            <span
+              title={`${progress.percent}%`}
+              style={{
+                color: TASK_TOKENS.textTertiary,
+                fontFamily: TASK_TOKENS.fontFamily,
+                fontSize: 12,
+                fontVariantNumeric: 'tabular-nums',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t('{done} of {total} done', {
+                done: progress.doneCount,
+                total: progress.totalCount,
+              })}
+            </span>
+          )}
+          {view === 'board' && (
+            <TaskBoardSortMenu
+              isMobile={isMobile}
+              sort={boardSort}
+              canAddRule={canAddSortRule}
+              onAddRule={() => void addSortRule()}
+              onChangeRuleField={(index, field) =>
+                void changeSortRuleField(index, field)
+              }
+              onToggleRuleDirection={(index) =>
+                void toggleSortRuleDirection(index)
+              }
+              onMoveRuleUp={(index) => void moveSortRuleUp(index)}
+              onRemoveRule={(index) => void removeSortRule(index)}
+              onClearSort={() => void clearSort()}
+            />
+          )}
+          {view === 'board' && !isMobile && board.canManageViews && (
+            <TaskFieldsMenu
+              label={t('Card fields')}
+              buttonLabel={t('Display')}
+              fields={ISSUE_CARD_FIELDS}
+              hiddenFields={hiddenCardFields}
+              onHiddenFieldsChange={saveHiddenCardFields}
+            />
+          )}
+        </div>
+      )}
 
       {view === 'board' &&
         sprintFilter === ACTIVE_SPRINT_VALUE &&
         (activeSprint === undefined ? (
           <TaskNoActiveSprintBanner
             inset={pageInset}
-            onOpenBacklog={() => changeView('backlog')}
+            onPlanSprint={
+              board.productBacklogPageLayoutId === null
+                ? null
+                : () =>
+                    void navigate(AppPath.PageLayoutPage, {
+                      pageLayoutId: board.productBacklogPageLayoutId,
+                    })
+            }
           />
         ) : (
           <TaskSprintHeader
@@ -1041,32 +1045,34 @@ const TaskBoard = () => {
         ))}
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {isEpicPanelOpen && board.activeProjectId !== null && (
-          <TaskEpicPanel
-            isFullScreen={isEpicPanelFullScreen}
-            inset={pageInset}
-            projectId={board.activeProjectId}
-            epics={board.epics}
-            epicFilter={epicFilter}
-            onEpicFilterChange={(nextEpicFilter) => {
-              setEpicFilter(nextEpicFilter);
+        {view === 'board' &&
+          isEpicPanelOpen &&
+          board.activeProjectId !== null && (
+            <TaskEpicPanel
+              isFullScreen={isEpicPanelFullScreen}
+              inset={pageInset}
+              projectId={board.activeProjectId}
+              epics={board.epics}
+              epicFilter={epicFilter}
+              onEpicFilterChange={(nextEpicFilter) => {
+                setEpicFilter(nextEpicFilter);
 
-              // Full screen, the panel hides what the filter changes.
-              if (isEpicPanelFullScreen) {
-                toggleEpicPanel();
+                // Full screen, the panel hides what the filter changes.
+                if (isEpicPanelFullScreen) {
+                  toggleEpicPanel();
+                }
+              }}
+              canWrite={board.canWrite}
+              canSoftDelete={board.canSoftDelete}
+              refreshKey={refreshKey}
+              refreshBoard={refreshBoard}
+              draggingIssueId={draggingIssueId}
+              onAssignIssueToEpic={(issueId, epicId) =>
+                void assignIssueToEpic(issueId, epicId)
               }
-            }}
-            canWrite={board.canWrite}
-            canSoftDelete={board.canSoftDelete}
-            refreshKey={refreshKey}
-            refreshBoard={refreshBoard}
-            draggingIssueId={draggingIssueId}
-            onAssignIssueToEpic={(issueId, epicId) =>
-              void assignIssueToEpic(issueId, epicId)
-            }
-            onClose={toggleEpicPanel}
-          />
-        )}
+              onClose={toggleEpicPanel}
+            />
+          )}
         <div
           style={{
             display: isEpicPanelFullScreen ? 'none' : 'flex',
@@ -1108,29 +1114,19 @@ const TaskBoard = () => {
             />
           ) : (
             board.activeProjectId !== null && (
-              <TaskBacklogView
+              <TaskBoardInsights
                 projectId={board.activeProjectId}
-                projectKey={activeProject?.key ?? null}
-                allSprints={board.sprints}
-                statuses={statuses}
-                doneStatusIds={doneStatusIds}
-                epicsById={epicsById}
-                queryBody={sharedQueryBody}
-                newIssueEpicId={newIssueEpicId}
-                canWrite={board.canWrite}
-                canSoftDelete={board.canSoftDelete}
                 refreshKey={refreshKey}
-                refreshBoard={refreshBoard}
-                selectedIssueId={selectedIssueId}
-                setSelectedIssueId={setSelectedIssueId}
-                draggingIssueId={draggingIssueId}
-                setDraggingIssueId={setDraggingIssueId}
-                composerSectionKey={composerSectionKey}
-                setComposerSectionKey={setComposerSectionKey}
-                boardPath={boardPath}
-                isMobile={isMobile}
                 inset={pageInset}
-                assignableMembers={board.assignableMembers}
+                isMobile={isMobile}
+                onPlanSprint={
+                  board.productBacklogPageLayoutId === null
+                    ? null
+                    : () =>
+                        void navigate(AppPath.PageLayoutPage, {
+                          pageLayoutId: board.productBacklogPageLayoutId,
+                        })
+                }
               />
             )
           )}

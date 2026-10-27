@@ -50,9 +50,6 @@ export const SEARCH_ISSUES_ROUTE_PATH = '/task-manager/search-issues';
 export const TASK_BOARD_ROUTE_PATH = '/task-manager/task-board';
 export const BOARD_COLUMN_ISSUES_ROUTE_PATH =
   '/task-manager/board-column-issues';
-export const BACKLOG_ROUTE_PATH = '/task-manager/backlog';
-export const BACKLOG_SECTION_ISSUES_ROUTE_PATH =
-  '/task-manager/backlog-section-issues';
 export const RANK_ISSUE_ROUTE_PATH = '/task-manager/rank-issue';
 
 export const ATTACHMENT_FIELD_ROUTE_PATH = '/task-manager/attachment-field';

@@ -1,5 +1,8 @@
 import { type BoardViewMode } from '../../types/task-board';
-import { type ActivityAnchor, parseActivityAnchor } from './parse-activity-anchor.util';
+import {
+  type ActivityAnchor,
+  parseActivityAnchor,
+} from './parse-activity-anchor.util';
 
 // The other half of the board deep link: the modal copies
 // `<board path>#issue-<id>`, this reads the fragment back so opening that URL
@@ -31,14 +34,16 @@ export const parseBoardActivityAnchor = (
 ): { issueId: string; activity: ActivityAnchor } | null => {
   const issueId = parseBoardIssueAnchor(locationHash);
   const fragment = locationHash?.trim().replace(/^#/, '') ?? '';
-  const activity = parseActivityAnchor(fragment.slice(fragment.indexOf('/') + 1));
+  const activity = parseActivityAnchor(
+    fragment.slice(fragment.indexOf('/') + 1),
+  );
 
   return issueId === null || !fragment.includes('/') || activity === null
     ? null
     : { issueId, activity };
 };
 
-// `#backlog` opens the page on the backlog, so a link can point at either
+// `#insights` opens the page on Insights, so a link can point at either
 // view. Anything else leaves the choice to what the reader last used.
 export const parseBoardViewAnchor = (
   locationHash: string | null | undefined,
@@ -49,5 +54,9 @@ export const parseBoardViewAnchor = (
 
   const fragment = locationHash.trim().replace(/^#/, '');
 
-  return fragment === 'backlog' ? 'backlog' : fragment === 'board' ? 'board' : null;
+  return fragment === 'insights'
+    ? 'insights'
+    : fragment === 'board'
+      ? 'board'
+      : null;
 };

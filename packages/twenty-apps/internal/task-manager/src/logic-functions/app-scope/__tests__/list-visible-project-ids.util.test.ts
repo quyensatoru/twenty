@@ -27,6 +27,7 @@ describe('listVisibleProjectIds', () => {
           grantsByAppId: {},
           canBypassAppScope: true,
           canManageViews: false,
+          roles: [],
         },
         operation: 'read',
       }),
@@ -44,6 +45,7 @@ describe('listVisibleProjectIds', () => {
           grantsByAppId: {},
           canBypassAppScope: false,
           canManageViews: false,
+          roles: [],
         },
         operation: 'read',
       }),
@@ -56,6 +58,7 @@ describe('listVisibleProjectIds', () => {
       grantsByAppId: { 'app-1': ['read'], 'app-2': ['read', 'write'] },
       canBypassAppScope: false,
       canManageViews: false,
+      roles: [],
     };
     const client = buildClient({
       'app-1': ['project-1'],

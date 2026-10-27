@@ -7,6 +7,7 @@ const runtime = vi.hoisted(() => ({
     workspaceMemberId: 'me',
     canBypassAppScope: false,
     canManageViews: false,
+    roles: [],
     grantsByAppId: { app: ['read'] },
   } as CallerScope,
   query: vi.fn(),
@@ -57,9 +58,9 @@ const connection = (nodes: unknown[]) => ({
 const callRoute = (merchantId: string) =>
   (
     merchantPreview as unknown as {
-      handler: (event: { body: { merchantId: string } }) => Promise<
-        Record<string, unknown>
-      >;
+      handler: (event: {
+        body: { merchantId: string };
+      }) => Promise<Record<string, unknown>>;
     }
   ).handler({ body: { merchantId } });
 

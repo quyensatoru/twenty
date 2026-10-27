@@ -13,6 +13,7 @@ import { assertIssuePlanningTargets } from './utils/assert-issue-planning-target
 import { fetchIssuePlanning } from './utils/issue-planning.util';
 import { notifyIssueAssigned } from './utils/notify-issue-assigned.util';
 import { requireString } from './utils/require-string.util';
+import { assertIssueWriteAllowed } from './utils/resolve-product-backlog-access.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type CreateIssueBody = {
@@ -29,6 +30,8 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
       projectId,
     };
     const merchantIds = event.body?.merchantIds ?? [];
+
+    await assertIssueWriteAllowed({ client, scope, issueId: null, data });
 
     await assertAppScopeWriteAccess({
       client,
@@ -91,17 +94,13 @@ const handler = async (event: RoutePayload<CreateIssueBody>) =>
       });
     }
 
-    if (
-      typeof issue?.id === 'string' &&
-      typeof data.assigneeId === 'string'
-    ) {
+    if (typeof issue?.id === 'string' && typeof data.assigneeId === 'string') {
       await notifyIssueAssigned({
         client,
         issue: {
           id: issue.id,
           title: typeof issue.title === 'string' ? issue.title : '',
-          issueKey:
-            typeof issue.issueKey === 'string' ? issue.issueKey : null,
+          issueKey: typeof issue.issueKey === 'string' ? issue.issueKey : null,
         },
         assigneeId: data.assigneeId,
         actorId: scope.workspaceMemberId,

@@ -35,6 +35,7 @@ import {
 } from './task-detail-layout';
 import { TaskChip } from './task-chip';
 import { TaskPriorityGlyph } from './task-priority-glyph';
+import { type ProductItem } from '../../types/product-backlog';
 import { type BoardIssue } from '../../types/task-board';
 import {
   CREATE_ISSUE_COMMENT_ROUTE_PATH,
@@ -73,6 +74,7 @@ import { TaskActionMenu } from './task-action-menu';
 import { IssueCommentList } from './issue-comment-list';
 import { IssueDevelopment } from './issue-development-panel';
 import { IssueDetailsPanel } from './issue-details-panel';
+import { IssueProductPanel } from './issue-product-panel';
 import {
   IssueRecordPreview,
   type IssueRecordPreviewTarget,
@@ -148,9 +150,12 @@ export const TaskBoardDetail = ({
     (context) => (context as { locationHash?: string }).locationHash ?? '',
   );
   const boardAnchor = parseBoardActivityAnchor(locationHash);
-  const activityAnchor = presentation === 'page'
-    ? parseActivityAnchor(locationHash)
-    : boardAnchor?.issueId === issueId ? boardAnchor.activity : null;
+  const activityAnchor =
+    presentation === 'page'
+      ? parseActivityAnchor(locationHash)
+      : boardAnchor?.issueId === issueId
+        ? boardAnchor.activity
+        : null;
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
   const discussion = useDiscussionState(
     issueId,
@@ -1129,7 +1134,9 @@ export const TaskBoardDetail = ({
               discussion.snapshot?.currentMemberId ??
               data.currentWorkspaceMemberId
             }
-            highlightedCommentId={activityAnchor?.kind === 'comment' ? activityAnchor.id : null}
+            highlightedCommentId={
+              activityAnchor?.kind === 'comment' ? activityAnchor.id : null
+            }
             canWrite={
               !discussion.isPermissionDenied &&
               (discussion.snapshot?.canWrite ?? data.canWrite)
@@ -1192,7 +1199,9 @@ export const TaskBoardDetail = ({
           worklogs={data.worklogs}
           membersById={membersById}
           currentMemberId={data.currentWorkspaceMemberId}
-          highlightedWorklogId={activityAnchor?.kind === 'worklog' ? activityAnchor.id : null}
+          highlightedWorklogId={
+            activityAnchor?.kind === 'worklog' ? activityAnchor.id : null
+          }
           canWrite={data.canWrite}
           canSoftDelete={data.canSoftDelete}
           totalMinutes={issue.timeSpentMinutes}
@@ -1368,6 +1377,18 @@ export const TaskBoardDetail = ({
           {descriptionBlock}
         </TaskRichTextLinkChipsScope>
       </div>
+      <IssueProductPanel
+        key={`product-${issueId}`}
+        item={issue as ProductItem}
+        onUpdate={(patch) =>
+          void update({ data: patch }, { refreshBoard: true })
+        }
+        onStageChanged={() => {
+          onCardChanged();
+          void reload();
+        }}
+        onOpenIssue={onSelectIssue}
+      />
       {subIssuesBlock}
       {activityBlock}
     </div>

@@ -1273,7 +1273,7 @@ export const TaskBoardView = ({
                               value={composerType}
                               options={ISSUE_TYPE_OPTIONS.map((option) => ({
                                 value: option.value,
-                                label: option.label,
+                                label: t(option.label),
                                 color: option.color,
                               }))}
                               onChange={setComposerType}

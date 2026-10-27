@@ -1,3 +1,5 @@
+import { t } from 'twenty-sdk/front-component';
+
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
 import { readTagColor, TASK_TOKENS } from './task-tokens';
 
@@ -41,7 +43,7 @@ export const TaskPriorityGlyph = ({
     return null;
   }
 
-  const label = option?.label;
+  const label = option === undefined ? undefined : t(option.label);
 
   return (
     <span

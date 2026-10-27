@@ -38,11 +38,20 @@ const handler = async (event: DatabaseEventPayload<ProjectCreateEvent>) => {
       ? project.key
       : await generateUniqueProjectKey({ client, name: project.name ?? '' });
 
-  if (key !== (project.key ?? '')) {
-    await client.mutation({
-      updateProject: { __args: { id: projectId, data: { key } }, id: true },
-    });
-  }
+  // A new project has nothing to sort into backlog items, so the Product
+  // Backlog's one-off migration is marked done from the start.
+  await client.mutation({
+    updateProject: {
+      __args: {
+        id: projectId,
+        data: {
+          ...(key === (project.key ?? '') ? {} : { key }),
+          productBacklogSettings: { migratedAt: new Date().toISOString() },
+        },
+      },
+      id: true,
+    },
+  });
 
   const statuses = await seedDefaultIssueStatuses({ client, projectId });
 

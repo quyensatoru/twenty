@@ -331,7 +331,9 @@ export const IssueDescription = () => {
           <TaskTag color={status.color}>{status.name}</TaskTag>
         )}
         {priorityOption !== undefined && (
-          <TaskTag color={priorityOption.color}>{priorityOption.label}</TaskTag>
+          <TaskTag color={priorityOption.color}>
+            {t(priorityOption.label)}
+          </TaskTag>
         )}
         <span style={{ flex: 1 }} />
         <TaskIconButton label={t('Copy link to issue')} onClick={copyIssueLink}>

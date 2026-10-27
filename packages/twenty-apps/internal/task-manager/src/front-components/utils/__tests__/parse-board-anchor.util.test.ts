@@ -27,26 +27,32 @@ describe('parseBoardIssueAnchor', () => {
   });
 
   it('opens the issue modal for a linked comment', () => {
-    expect(parseBoardIssueAnchor('issue-issue-1/comment-comment-1')).toBe('issue-1');
+    expect(parseBoardIssueAnchor('issue-issue-1/comment-comment-1')).toBe(
+      'issue-1',
+    );
   });
 });
 
 describe('parseBoardActivityAnchor', () => {
   it('finds the comment or worklog within an issue modal', () => {
-    expect(parseBoardActivityAnchor('issue-issue-1/comment-comment-1')).toEqual({
-      issueId: 'issue-1',
-      activity: { kind: 'comment', id: 'comment-1' },
-    });
-    expect(parseBoardActivityAnchor('issue-issue-1/worklog-worklog-1')).toEqual({
-      issueId: 'issue-1',
-      activity: { kind: 'worklog', id: 'worklog-1' },
-    });
+    expect(parseBoardActivityAnchor('issue-issue-1/comment-comment-1')).toEqual(
+      {
+        issueId: 'issue-1',
+        activity: { kind: 'comment', id: 'comment-1' },
+      },
+    );
+    expect(parseBoardActivityAnchor('issue-issue-1/worklog-worklog-1')).toEqual(
+      {
+        issueId: 'issue-1',
+        activity: { kind: 'worklog', id: 'worklog-1' },
+      },
+    );
   });
 });
 
 describe('parseBoardViewAnchor', () => {
-  it('reads the backlog and board fragments', () => {
-    expect(parseBoardViewAnchor('#backlog')).toBe('backlog');
+  it('reads the insights and board fragments', () => {
+    expect(parseBoardViewAnchor('#insights')).toBe('insights');
     expect(parseBoardViewAnchor(' #board')).toBe('board');
   });
 

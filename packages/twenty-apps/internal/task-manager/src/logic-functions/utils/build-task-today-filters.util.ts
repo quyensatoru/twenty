@@ -27,6 +27,8 @@ export const buildTaskTodayFilters = ({
   const personalFilter = {
     ...buildProjectScopeFilter(visibleProjectIds),
     assigneeId: { eq: memberId },
+    // My work is what is running; backlog items are still being planned.
+    stage: { eq: 'ISSUE' },
   };
   // SQL NOT IN excludes NULL, but an issue without a status is still open.
   const openFilter = {

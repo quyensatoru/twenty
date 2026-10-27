@@ -20,6 +20,7 @@ import {
   ISSUE_READ_STATE_OBJECT_UID,
   ISSUE_NOTIFICATION_OBJECT_UID,
 } from '../../constants/discussion';
+import { IDEA_OBJECT_UID } from '../../constants/product-backlog';
 import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../../constants/task-personal-board';
 import appRuntimeRole from '../app-runtime.role';
 import appScopedMemberRole from '../app-scoped-member.role';
@@ -106,6 +107,27 @@ describe('app-scoped member role', () => {
       canReadObjectRecords: true,
       canUpdateObjectRecords: true,
       canDestroyObjectRecords: false,
+    });
+  });
+
+  it('keeps ideas reachable only through the Product Backlog routes', () => {
+    expect(
+      appScopedMemberRole.config.objectPermissions?.find(
+        (permission) =>
+          permission.objectUniversalIdentifier === IDEA_OBJECT_UID,
+      ),
+    ).toMatchObject({
+      canReadObjectRecords: false,
+      canUpdateObjectRecords: false,
+    });
+    expect(
+      appRuntimeRole.config.objectPermissions?.find(
+        (permission) =>
+          permission.objectUniversalIdentifier === IDEA_OBJECT_UID,
+      ),
+    ).toMatchObject({
+      canReadObjectRecords: true,
+      canUpdateObjectRecords: true,
     });
   });
 

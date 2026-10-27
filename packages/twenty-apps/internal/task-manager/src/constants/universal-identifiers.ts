@@ -645,10 +645,6 @@ export const DELETE_EPIC_LOGIC_FUNCTION_UID =
   '6bd7839e-cce7-4336-b85a-a0acb014a0ba';
 export const EPIC_SUMMARIES_LOGIC_FUNCTION_UID =
   '6a626fc2-1958-44cf-8653-420078051f1d';
-export const BACKLOG_LOGIC_FUNCTION_UID =
-  '799e79fd-4153-45e6-87ec-8cbf5db68a07';
-export const BACKLOG_SECTION_ISSUES_LOGIC_FUNCTION_UID =
-  '32f31c95-37f5-4324-9996-e16c5e2b3ec2';
 
 // Development panel, Jira-style: repositories linked to a project and the
 // branch / commit / pull-request links resolved onto issues by issue key.

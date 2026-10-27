@@ -71,7 +71,7 @@ export type EpicSummary = {
   totalCount: number;
 };
 
-export type BoardViewMode = 'board' | 'backlog';
+export type BoardViewMode = 'board' | 'insights';
 
 // The page's side padding. The host frame already adds a strip on the left,
 // beside the sidebar, so the left one is smaller to look the same.
@@ -117,6 +117,8 @@ export type BoardData = {
   // The order the columns were read in: the viewer's saved choice unless the
   // request named one.
   boardSort: BoardIssueSort;
+  // Where "Plan a sprint" leads; null when the page could not be found.
+  productBacklogPageLayoutId: string | null;
   // What the caller may change on the active project's board.
   canWrite: boolean;
   canSoftDelete: boolean;

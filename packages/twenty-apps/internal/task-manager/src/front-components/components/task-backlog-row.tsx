@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
   IconCalendarEvent,
@@ -61,6 +61,8 @@ type TaskBacklogRowProps = {
   onDragEndRow: () => void;
   onDragOverRow: () => void;
   onDropRow: () => void;
+  // Extra glyphs before the points, such as the Product Backlog's readiness.
+  trailing?: ReactNode;
 };
 
 export const UNASSIGNED_OPTION_VALUE = 'UNASSIGNED';
@@ -97,6 +99,7 @@ export const TaskBacklogRow = ({
   onDragEndRow,
   onDragOverRow,
   onDropRow,
+  trailing,
 }: TaskBacklogRowProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const dueLabel = readShortDate(issue.dueDate);
@@ -340,6 +343,7 @@ export const TaskBacklogRow = ({
       </button>
       {!isCompact && (
         <>
+          {trailing}
           <span
             title={t('Story points')}
             style={{

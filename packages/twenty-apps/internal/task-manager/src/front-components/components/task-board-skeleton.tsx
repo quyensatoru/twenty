@@ -1,6 +1,6 @@
 import { type CSSProperties } from 'react';
 
-import { type BoardViewMode, type PageInset } from '../../types/task-board';
+import { type PageInset } from '../../types/task-board';
 import { readStoredSideColumnWidth } from '../hooks/use-side-column-resize';
 import { readStoredColumnWidth } from './task-board-view';
 import {
@@ -57,7 +57,7 @@ export const TaskBoardSkeleton = ({
   isEpicPanelOpen,
   inset,
 }: {
-  view: BoardViewMode;
+  view: 'board' | 'backlog';
   isMobile: boolean;
   isEpicPanelOpen: boolean;
   inset: PageInset;

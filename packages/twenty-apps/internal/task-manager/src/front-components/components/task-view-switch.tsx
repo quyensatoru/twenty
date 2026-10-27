@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
-import { IconLayoutKanban, IconLayoutList } from 'twenty-ui/icon';
+import { IconChartBar, IconLayoutKanban } from 'twenty-ui/icon';
 
 import { type BoardViewMode } from '../../types/task-board';
 import { TASK_TOKENS } from './task-tokens';
@@ -12,8 +12,8 @@ type TaskViewSwitchProps = {
   isCompact?: boolean;
 };
 
-// Jira's Backlog / Board pair: two views of the same project, so the project,
-// the filters and the open issue stay put when switching.
+// The Board's two views of one project: the Kanban, and Insights on how the
+// sprint is going. Planning lives in the Product Backlog page.
 export const TaskViewSwitch = ({
   value,
   onChange,
@@ -21,8 +21,8 @@ export const TaskViewSwitch = ({
 }: TaskViewSwitchProps) => {
   const [hoveredValue, setHoveredValue] = useState<BoardViewMode | null>(null);
   const options = [
-    { value: 'backlog' as const, label: t('Backlog'), Icon: IconLayoutList },
-    { value: 'board' as const, label: t('Board'), Icon: IconLayoutKanban },
+    { value: 'board' as const, label: t('Kanban'), Icon: IconLayoutKanban },
+    { value: 'insights' as const, label: t('Insights'), Icon: IconChartBar },
   ];
 
   return (

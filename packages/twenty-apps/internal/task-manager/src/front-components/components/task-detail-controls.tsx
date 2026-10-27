@@ -37,7 +37,9 @@ export const DetailReadButton = ({
       style={{
         alignItems: 'center',
         background:
-          isHovered && !isReadOnly ? TASK_TOKENS.backgroundHover : 'transparent',
+          isHovered && !isReadOnly
+            ? TASK_TOKENS.backgroundHover
+            : 'transparent',
         border: 'none',
         borderRadius: TASK_TOKENS.radiusSmall,
         color: TASK_TOKENS.textPrimary,
@@ -132,7 +134,11 @@ export const LabelPicker = ({
         )}
       </button>
       {isOpen && !isReadOnly && (
-        <twenty-overlay offsetY={-4} offsetX={overlayOffsetX} onClose={() => onOpenChange(false)}>
+        <twenty-overlay
+          offsetY={-4}
+          offsetX={overlayOffsetX}
+          onClose={() => onOpenChange(false)}
+        >
           <div
             style={{
               background: TASK_TOKENS.background,
@@ -158,7 +164,14 @@ export const LabelPicker = ({
                 onChange={setSearch}
               />
             </div>
-            <div style={{ maxHeight: 180, overflowY: 'auto', ...TASK_THIN_SCROLLBAR_STYLE, padding: 4 }}>
+            <div
+              style={{
+                maxHeight: 180,
+                overflowY: 'auto',
+                ...TASK_THIN_SCROLLBAR_STYLE,
+                padding: 4,
+              }}
+            >
               {matches.map((option) => {
                 const isChecked = selected.includes(option.value);
 
@@ -192,7 +205,7 @@ export const LabelPicker = ({
                     }}
                   >
                     <TaskCheckbox isChecked={isChecked} />
-                    <TaskTag color={option.color}>{option.label}</TaskTag>
+                    <TaskTag color={option.color}>{t(option.label)}</TaskTag>
                   </button>
                 );
               })}

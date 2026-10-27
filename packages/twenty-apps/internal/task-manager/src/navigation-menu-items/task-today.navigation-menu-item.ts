@@ -14,7 +14,7 @@ export default defineNavigationMenuItem({
   name: 'Today',
   icon: 'IconLayoutDashboard',
   color: 'blue',
-  position: 2,
+  position: 3,
   type: NavigationMenuItemType.PAGE_LAYOUT,
   pageLayoutUniversalIdentifier: TASK_TODAY_PAGE_LAYOUT_UID,
   folderUniversalIdentifier: TASK_MANAGER_FOLDER_NAV_ITEM_UID,

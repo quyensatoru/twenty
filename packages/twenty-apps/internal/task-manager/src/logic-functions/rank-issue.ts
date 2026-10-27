@@ -13,6 +13,7 @@ import { buildRankSectionFilter } from './utils/build-rank-section-filter.util';
 import { fetchSprint } from './utils/fetch-sprint.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import { requireString } from './utils/require-string.util';
+import { assertIssueWriteAllowed } from './utils/resolve-product-backlog-access.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type RankIssueBody = {
@@ -109,6 +110,8 @@ const handler = async (event: RoutePayload<RankIssueBody>) =>
       recordId: issueId,
       operation: 'write',
     });
+
+    await assertIssueWriteAllowed({ client, scope, issueId });
 
     const issue = await fetchRankedIssue(client, issueId);
 

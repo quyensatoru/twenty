@@ -4,6 +4,7 @@ import { DELETE_ISSUE_ROUTE_PATH } from '../constants/route-paths';
 import { DELETE_ISSUE_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { requireString } from './utils/require-string.util';
+import { assertIssueWriteAllowed } from './utils/resolve-product-backlog-access.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type DeleteIssueBody = { issueId?: string };
@@ -23,6 +24,8 @@ const handler = async (event: RoutePayload<DeleteIssueBody>) =>
       recordId: issueId,
       operation: 'softDelete',
     });
+
+    await assertIssueWriteAllowed({ client, scope, issueId });
 
     await client.mutation({
       deleteIssue: { __args: { id: issueId }, id: true },
