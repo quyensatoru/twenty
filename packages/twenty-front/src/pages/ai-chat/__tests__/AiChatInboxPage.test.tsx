@@ -1,7 +1,7 @@
 import { MemoryRouterAppNavigatorProvider } from '~/testing/components/MemoryRouterAppNavigatorProvider';
 import { i18n } from '@lingui/core';
 import { I18nProvider } from '@lingui/react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { atom, Provider as JotaiProvider } from 'jotai';
 import { type ReactNode } from 'react';
@@ -16,6 +16,7 @@ import { contextStoreTargetedRecordsRuleComponentState } from '@/context-store/s
 import { ContextStoreComponentInstanceContext } from '@/context-store/states/contexts/ContextStoreComponentInstanceContext';
 import { AI_CHAT_INBOX_INSTANCE_ID } from '@/ai/constants/AiChatInboxInstanceId';
 import { AI_CHAT_INBOX_LAYOUT } from '@/ai/constants/AiChatInboxLayout';
+import { AI_CHAT_NEW_THREAD_PATH_SEGMENT } from '@/ai/constants/AiChatNewThreadPathSegment';
 import { AGENT_CHAT_THREAD_FILTER_STATUS } from '@/ai/constants/AgentChatThreadFilterStatus';
 import { useOptimisticallyRestoreOnSend } from '@/ai/hooks/useOptimisticallyRestoreOnSend';
 import { agentChatThreadFilterStatusState } from '@/ai/states/agentChatThreadFilterStatusState';
@@ -112,6 +113,20 @@ jest.mock('@/ai/components/AgentChatThreadsFetchMoreTrigger', () => ({
   AgentChatThreadsFetchMoreTrigger: () => null,
 }));
 
+jest.mock('@/ai/components/AgentChatChannelThreadsLoadEffect', () => ({
+  AgentChatChannelThreadsLoadEffect: () => null,
+}));
+
+jest.mock('@/ai/components/AgentChatChannelThreadsFetchMoreTrigger', () => ({
+  AgentChatChannelThreadsFetchMoreTrigger: () => null,
+}));
+
+jest.mock('@/ai/hooks/useLoadAgentChatChannelThreads', () => ({
+  useLoadAgentChatChannelThreads: () => ({
+    loadAgentChatChannelThreads: jest.fn(),
+  }),
+}));
+
 jest.mock('@/ai/hooks/useRefreshAgentChatThreads', () => ({
   useRefreshAgentChatThreads: () => ({ fetchMoreAgentChatThreads: jest.fn() }),
 }));
@@ -122,6 +137,19 @@ jest.mock('@/ai/hooks/useSwitchToNewAiChat', () => ({
 
 jest.mock('~/pages/ai-chat/AiChatPageEffects', () => ({
   AiChatPageEffects: () => null,
+}));
+
+jest.mock('@/ai/components/AiChatTab', () => ({
+  AiChatTab: () => <div>New conversation composer</div>,
+}));
+
+jest.mock('@/ai/components/AiChatPageHeader', () => ({
+  AiChatPageHeader: ({ actionButton }: { actionButton?: ReactNode }) => (
+    <div>
+      New chat header
+      {actionButton}
+    </div>
+  ),
 }));
 
 // Sending stands in for the composer with what a send applies right away
@@ -274,13 +302,27 @@ describe('AiChatInboxPage', () => {
     expect(screen.getByText('Chat page without the inbox')).toBeInTheDocument();
   });
 
-  it('opens the first chat beside the list', () => {
+  it('shows the list without selecting a chat on the base inbox route', () => {
     renderInbox('/inbox');
 
-    expect(screen.getByText(`Chat page ${firstThread.id}`)).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Conversation list' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Chat page /)).not.toBeInTheDocument();
     expect(
       screen.queryByText('No conversation selected'),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows a new chat beside the list without opening the first saved chat', () => {
+    renderInbox(`/inbox/${AI_CHAT_NEW_THREAD_PATH_SEGMENT}`);
+
+    expect(screen.getByText('New conversation composer')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'First chat' }),
+    ).toBeInTheDocument();
+    expect(isRowOpen('First chat')).toBe(false);
+    expect(screen.queryByText(/^Chat page /)).not.toBeInTheDocument();
   });
 
   it('opens the clicked chat', () => {
@@ -523,6 +565,16 @@ describe('AiChatInboxPage', () => {
       );
     });
 
+    it('shows a new chat in place of the list', () => {
+      renderInbox(`/inbox/${AI_CHAT_NEW_THREAD_PATH_SEGMENT}`);
+
+      expect(screen.getByText('New conversation composer')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'First chat' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Chat page /)).not.toBeInTheDocument();
+    });
+
     it('shows the list alone, then the clicked chat alone', () => {
       renderInbox('/inbox');
 
@@ -541,7 +593,7 @@ describe('AiChatInboxPage', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('moves between chats and back to the list from the chat', () => {
+    it('moves between chats and back to the list from the chat', async () => {
       renderInbox(`/inbox/${secondThread.id}`);
 
       fireEvent.click(screen.getByRole('button', { name: 'Next chat' }));
@@ -553,7 +605,9 @@ describe('AiChatInboxPage', () => {
 
       fireEvent.click(screen.getByRole('link', { name: /Open/ }));
 
-      expect(screen.queryByText(/Chat page/)).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByText(/Chat page/)).not.toBeInTheDocument(),
+      );
       expect(
         screen.getByRole('button', { name: 'Third chat' }),
       ).toBeInTheDocument();
@@ -595,6 +649,18 @@ describe('AiChatInboxPage', () => {
   describe('on a phone', () => {
     beforeEach(() => {
       isMobile = true;
+    });
+
+    it('shows a new chat with a way back to the inbox', () => {
+      renderInbox(`/inbox/${AI_CHAT_NEW_THREAD_PATH_SEGMENT}`);
+
+      expect(screen.getByText('New conversation composer')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Back to inbox' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'First chat' }),
+      ).not.toBeInTheDocument();
     });
 
     it('opens the tapped chat in place of the list', () => {

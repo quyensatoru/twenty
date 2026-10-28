@@ -135,6 +135,13 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
       isNullable: true,
       universalForeignKey: 'pageLayoutUniversalIdentifier',
     },
+    agentChatChannel: {
+      metadataName: 'agentChatChannel',
+      foreignKey: 'agentChatChannelId',
+      inverseOneToManyProperty: 'navigationMenuItems',
+      isNullable: true,
+      universalForeignKey: 'agentChatChannelUniversalIdentifier',
+    },
   },
   fieldMetadata: {
     object: {
@@ -528,6 +535,17 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
     workspace: null,
     application: null,
   },
+  mcpServer: {
+    workspace: null,
+    application: null,
+    connectionProvider: {
+      metadataName: 'connectionProvider',
+      foreignKey: 'connectionProviderId',
+      inverseOneToManyProperty: null,
+      isNullable: true,
+      universalForeignKey: 'connectionProviderUniversalIdentifier',
+    },
+  },
   applicationVariable: {
     workspace: null,
     application: null,
@@ -551,6 +569,10 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
     },
   },
   connectionProvider: {
+    workspace: null,
+    application: null,
+  },
+  messagingProvider: {
     workspace: null,
     application: null,
   },
@@ -620,6 +642,28 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
   workflowVersion: {
     workspace: null,
     application: null,
+  },
+  agentChatChannel: {
+    workspace: null,
+    application: null,
+  },
+  agentChatChannelRole: {
+    workspace: null,
+    application: null,
+    channel: {
+      metadataName: 'agentChatChannel',
+      foreignKey: 'channelId',
+      inverseOneToManyProperty: 'channelRoles',
+      isNullable: false,
+      universalForeignKey: 'channelUniversalIdentifier',
+    },
+    role: {
+      metadataName: 'role',
+      foreignKey: 'roleId',
+      inverseOneToManyProperty: 'agentChatChannelRoles',
+      isNullable: false,
+      universalForeignKey: 'roleUniversalIdentifier',
+    },
   },
 } as const satisfies ManyToOneMetadataRelationsProperties;
 

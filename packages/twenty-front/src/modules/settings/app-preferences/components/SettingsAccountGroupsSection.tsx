@@ -1,17 +1,18 @@
 import { SettingsAccountGroupTableRow } from '@/settings/app-preferences/components/SettingsAccountGroupTableRow';
-import { SettingsAppPreferencesListEmptyStateCard } from '@/settings/app-preferences/components/SettingsAppPreferencesListEmptyStateCard';
+import { SettingsAccountGroupsEmptyState } from '@/settings/app-preferences/components/SettingsAccountGroupsEmptyState';
 import { SETTINGS_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS } from '@/settings/app-preferences/constants/SettingsAccountGroupTableGridTemplateColumns';
-import { SETTINGS_NATIVE_ACCOUNT_APP_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS } from '@/settings/app-preferences/constants/SettingsNativeAccountAppAccountGroupTableGridTemplateColumns';
+import { SETTINGS_BUILT_IN_ACCOUNT_APP_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS } from '@/settings/app-preferences/constants/SettingsBuiltInAccountAppAccountGroupTableGridTemplateColumns';
 import { useMyAccountGroups } from '@/settings/app-preferences/hooks/useMyAccountGroups';
-import { type NativeAccountApp } from '@/settings/app-preferences/types/NativeAccountApp';
-import { getNativeAccountAppsUsingAccount } from '@/settings/app-preferences/utils/getNativeAccountAppsUsingAccount';
+import { type BuiltInAccountApp } from '@/settings/app-preferences/types/BuiltInAccountApp';
+import { getBuiltInAccountAppsUsingAccount } from '@/settings/app-preferences/utils/getBuiltInAccountAppsUsingAccount';
+import { useTriggerApisOAuth } from '@/settings/accounts/hooks/useTriggerApiOAuth';
 import { SettingsTableRowsSkeletonLoader } from '@/settings/components/SettingsTableRowsSkeletonLoader';
 import { Table } from '@/ui/layout/table/components/Table';
 import { TableHeader } from '@/ui/layout/table/components/TableHeader';
 import { TableRow } from '@/ui/layout/table/components/TableRow';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
-import { SettingsPath } from 'twenty-shared/types';
+import { ConnectedAccountProvider, SettingsPath } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { Section } from 'twenty-ui/components/layout';
 import { IconPlus } from 'twenty-ui/icon';
@@ -32,32 +33,33 @@ const StyledAddAccountContainer = styled.div`
 `;
 
 type SettingsAccountGroupsSectionProps = {
-  nativeAccountApp?: NativeAccountApp;
+  builtInAccountApp?: BuiltInAccountApp;
 };
 
 export const SettingsAccountGroupsSection = ({
-  nativeAccountApp,
+  builtInAccountApp,
 }: SettingsAccountGroupsSectionProps) => {
   const { t } = useLingui();
   const navigateSettings = useNavigateSettings();
+  const { triggerApisOAuth } = useTriggerApisOAuth();
   const { groups: allGroups, loading } = useMyAccountGroups();
 
-  const groups = isDefined(nativeAccountApp)
+  const groups = isDefined(builtInAccountApp)
     ? allGroups.filter((group) =>
-        getNativeAccountAppsUsingAccount(group.nativeAccount).some(
-          (app) => app.id === nativeAccountApp.id,
+        getBuiltInAccountAppsUsingAccount(group.builtInAccount).some(
+          (app) => app.id === builtInAccountApp.id,
         ),
       )
     : allGroups;
 
-  const gridTemplateColumns = isDefined(nativeAccountApp)
-    ? SETTINGS_NATIVE_ACCOUNT_APP_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS
+  const gridTemplateColumns = isDefined(builtInAccountApp)
+    ? SETTINGS_BUILT_IN_ACCOUNT_APP_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS
     : SETTINGS_ACCOUNT_GROUP_TABLE_GRID_TEMPLATE_COLUMNS;
 
   const tableHeaderRow = (
     <TableRow gridTemplateColumns={gridTemplateColumns}>
       <TableHeader>{t`Account`}</TableHeader>
-      {isDefined(nativeAccountApp) ? (
+      {isDefined(builtInAccountApp) ? (
         <TableHeader>{t`Permissions`}</TableHeader>
       ) : (
         <TableHeader align="right">{t`Used by`}</TableHeader>
@@ -65,6 +67,15 @@ export const SettingsAccountGroupsSection = ({
       <TableHeader />
     </TableRow>
   );
+
+  const addBuiltInAccount = (app: BuiltInAccountApp) => {
+    if (app.provider === ConnectedAccountProvider.IMAP_SMTP_CALDAV) {
+      navigateSettings(SettingsPath.NewImapSmtpCaldavConnection);
+      return;
+    }
+
+    triggerApisOAuth(app.provider);
+  };
 
   return (
     <Section.Root>
@@ -79,7 +90,7 @@ export const SettingsAccountGroupsSection = ({
             gridTemplateColumns={gridTemplateColumns}
             columns={[
               {},
-              isDefined(nativeAccountApp)
+              isDefined(builtInAccountApp)
                 ? { width: 140 }
                 : { align: 'right', width: 48 },
               {},
@@ -87,8 +98,8 @@ export const SettingsAccountGroupsSection = ({
           />
         </Table>
       ) : groups.length === 0 ? (
-        <SettingsAppPreferencesListEmptyStateCard
-          provider={nativeAccountApp?.provider}
+        <SettingsAccountGroupsEmptyState
+          builtInAccountApp={builtInAccountApp}
         />
       ) : (
         <>
@@ -100,19 +111,21 @@ export const SettingsAccountGroupsSection = ({
                   key={group.id}
                   group={group}
                   gridTemplateColumns={gridTemplateColumns}
-                  nativeAccountApp={nativeAccountApp}
+                  builtInAccountApp={builtInAccountApp}
                 />
               ))}
             </StyledTableRows>
           </Table>
-          <StyledAddAccountContainer>
-            <Button
-              startIcon={<IconPlus />}
-              size="sm"
-              onClick={() => navigateSettings(SettingsPath.NewAccount)}
-              variant="outline"
-            >{t`Add account`}</Button>
-          </StyledAddAccountContainer>
+          {isDefined(builtInAccountApp) && (
+            <StyledAddAccountContainer>
+              <Button
+                startIcon={<IconPlus />}
+                size="sm"
+                onClick={() => addBuiltInAccount(builtInAccountApp)}
+                variant="outline"
+              >{t`Add account`}</Button>
+            </StyledAddAccountContainer>
+          )}
         </>
       )}
     </Section.Root>

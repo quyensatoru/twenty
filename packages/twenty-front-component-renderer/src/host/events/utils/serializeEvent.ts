@@ -8,6 +8,7 @@ import { applyKeyboardEventProperties } from '@/host/events/utils/applyKeyboardE
 import { applyMouseEventProperties } from '@/host/events/utils/applyMouseEventProperties';
 import { applyPointerEventProperties } from '@/host/events/utils/applyPointerEventProperties';
 import { applyWheelEventProperties } from '@/host/events/utils/applyWheelEventProperties';
+import { isTargetScrollStateForwardable } from '@/host/events/utils/isTargetScrollStateForwardable';
 import { serializeTransferredFileList } from '@/host/events/utils/serializeTransferredFileList';
 import { type SerializedEventData } from '@/types/SerializedEventData';
 
@@ -39,6 +40,7 @@ export const serializeEvent = (
     serializedEvent,
     target: domEvent.target,
     includesFormControlState,
+    includesScrollState: isTargetScrollStateForwardable(domEvent),
   });
 
   // Fork-only: paste/drop carry files behind transfer objects and file

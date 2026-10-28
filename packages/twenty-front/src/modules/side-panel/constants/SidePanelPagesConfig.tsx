@@ -1,5 +1,6 @@
 import { SidePanelCommandMenuItemDisplayPage } from '@/command-menu-item/display/components/SidePanelCommandMenuItemDisplayPage';
 import { SidePanelCommandMenuItemEditPage } from '@/command-menu-item/edit/components/SidePanelCommandMenuItemEditPage';
+import { SidePanelCoreAgentFiltersPage } from '@/object-core/agents/components/SidePanelCoreAgentFiltersPage';
 import { SidePanelCoreWorkflowFiltersPage } from '@/object-core/workflows/components/SidePanelCoreWorkflowFiltersPage';
 import { SidePanelCoreWorkflowVersionPage } from '@/object-core/workflows/versions/components/SidePanelCoreWorkflowVersionPage';
 import { SidePanelCoreWorkflowVersionsPage } from '@/object-core/workflows/versions/components/SidePanelCoreWorkflowVersionsPage';
@@ -33,6 +34,7 @@ import { SidePanelMergeRecordPage } from '@/side-panel/pages/record-page/compone
 import { SidePanelUpdateMultipleRecords } from '@/side-panel/pages/record-page/components/SidePanelUpdateMultipleRecords';
 import { SidePanelEditRichTextPage } from '@/side-panel/pages/rich-text-page/components/SidePanelEditRichTextPage';
 import { SidePanelSearchRecordsPage } from '@/side-panel/pages/search/components/SidePanelSearchRecordsPage';
+import { SidePanelSearchAiChatsPage } from '@/side-panel/pages/search-ai-chats/components/SidePanelSearchAiChatsPage';
 import { SidePanelWorkflowCreateStep } from '@/side-panel/pages/workflow/step/create/components/SidePanelWorkflowCreateStep';
 import { SidePanelWorkflowEditStep } from '@/side-panel/pages/workflow/step/edit/components/SidePanelWorkflowEditStep';
 import { SidePanelWorkflowStepSettings } from '@/side-panel/pages/workflow/step/settings/components/SidePanelWorkflowStepSettings';
@@ -62,6 +64,7 @@ export const SIDE_PANEL_PAGES_CONFIG = new Map<
   [SidePanelPages.WorkflowStepView, <SidePanelWorkflowViewStep />],
   [SidePanelPages.WorkflowRunStepView, <SidePanelWorkflowRunViewStep />],
   [SidePanelPages.SearchRecords, <SidePanelSearchRecordsPage />],
+  [SidePanelPages.SearchAiChats, <SidePanelSearchAiChatsPage />],
   [SidePanelPages.AskAI, <SidePanelAskAiPage />],
   [
     SidePanelPages.PageLayoutDashboardWidgetTypeSelect,
@@ -111,6 +114,7 @@ export const SIDE_PANEL_PAGES_CONFIG = new Map<
   [SidePanelPages.EmailPageStyle, <SidePanelEmailPageStylePage />],
   [SidePanelPages.RoutedPage, <SidePanelRoutedPage />],
   [SidePanelPages.WorkflowCoreFilters, <SidePanelCoreWorkflowFiltersPage />],
+  [SidePanelPages.AgentCoreFilters, <SidePanelCoreAgentFiltersPage />],
   [SidePanelPages.WorkflowVersions, <SidePanelCoreWorkflowVersionsPage />],
   [SidePanelPages.WorkflowVersion, <SidePanelCoreWorkflowVersionPage />],
   [SidePanelPages.ShareRecord, <SidePanelShareRecordPage />],

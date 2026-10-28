@@ -1,6 +1,7 @@
 import { type AppLocale } from 'twenty-shared/translations';
 import { type RecordGqlOperationFilter } from 'twenty-shared/types';
 
+import { type FrontComponentLocation } from './FrontComponentLocation';
 import { type FrontComponentSelectedObjectMetadata } from './FrontComponentSelectedObjectMetadata';
 import { type FrontComponentToolCall } from './FrontComponentToolCall';
 
@@ -42,6 +43,7 @@ export type FrontComponentExecutionContext = {
    * cannot ship a media query, so this is how it adapts its own layout.
    */
   isMobile?: boolean;
+  location?: FrontComponentLocation;
   /** Set when the component renders an AI chat tool call */
   toolCall?: FrontComponentToolCall;
 };

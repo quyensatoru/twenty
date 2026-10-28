@@ -484,6 +484,12 @@ export const useFrontComponentExecutionContext = ({
     isMobile,
     // The host is always configured with APP_LOCALES, so this is a valid AppLocale.
     locale: i18n.locale as AppLocale,
+    location: {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      origin: window.location.origin,
+    },
   };
 
   const unmountFrontComponent: FrontComponentHostCommunicationApi['unmountFrontComponent'] =

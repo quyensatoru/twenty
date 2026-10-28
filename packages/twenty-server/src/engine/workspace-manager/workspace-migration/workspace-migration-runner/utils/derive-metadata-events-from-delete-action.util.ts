@@ -62,10 +62,14 @@ const deriveAllMetadataEventsFromDeleteAction = ({
     case 'fieldPermission':
     case 'viewSort':
     case 'webhook':
+    case 'mcpServer':
     case 'workflow':
     case 'workflowVersion':
     case 'connectionProvider':
+    case 'messagingProvider':
     case 'timelineActivityType':
+    case 'agentChatChannel':
+    case 'agentChatChannelRole':
     case 'settingsMenuItem':
     case 'validationRule':
     case 'searchFieldMetadata': {

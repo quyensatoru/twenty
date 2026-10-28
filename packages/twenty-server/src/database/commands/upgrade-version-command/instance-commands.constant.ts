@@ -249,6 +249,18 @@ import { AddConnectionProviderScopeFastInstanceCommand } from 'src/database/comm
 import { AddConnectedAccountScopeFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-49/2-49-instance-command-fast-1792170228100-add-connected-account-scope';
 import { AddExcludePrivateEventsToCalendarChannelFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-49/2-49-instance-command-fast-1792319637000-add-exclude-private-events-to-calendar-channel';
 import { AddPeriodMaxSeatsToBillingSubscriptionFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-50/2-50-instance-command-fast-1792410699010-add-period-max-seats-to-billing-subscription';
+import { DropBillingMeterTableFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-50/2-50-instance-command-fast-1792480059403-drop-billing-meter-table';
+import { AddContentSha256ToFileFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-fast-1792581115000-add-content-sha256-to-file';
+import { RepairApplicationRegistrationVersionsFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-fast-1792655604265-repair-application-registration-versions';
+import { RepairBackfillApplicationRegistrationVersionsSlowInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-slow-1792655604266-repair-backfill-application-registration-versions';
+import { AddAgentChatChannelFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-fast-1792686569823-add-agent-chat-channel';
+import { BackfillRoleAgentChatChannelAccessSlowInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-slow-1792686689823-backfill-role-agent-chat-channel-access';
+import { AddAgentChatChannelNavigationMenuItemFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-51/2-51-instance-command-fast-1792686749823-add-agent-chat-channel-navigation-menu-item';
+import { AddParticipantHandleFieldToMessageChannelFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-52/2-52-instance-command-fast-1792907887530-add-participant-handle-field-to-message-channel';
+import { AddCustomConfigToConnectionProviderFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-52/2-52-instance-command-fast-1793032438836-add-custom-config-to-connection-provider';
+import { AddObjectMetadataDisabledObjectPermissionActionsFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-53/2-53-instance-command-fast-1793111477950-add-object-metadata-disabled-object-permission-actions';
+import { AddMessagingProviderFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-52/2-52-instance-command-fast-1793032438837-add-messaging-provider';
+import { AddMcpServerFastInstanceCommand } from 'src/database/commands/upgrade-version-command/2-53/2-53-instance-command-fast-1793150000000-add-mcp-server';
 
 export const INSTANCE_COMMANDS = [
   AddViewFieldGroupIdIndexOnViewFieldFastInstanceCommand,
@@ -500,4 +512,16 @@ export const INSTANCE_COMMANDS = [
   AddConnectedAccountScopeFastInstanceCommand,
   AddExcludePrivateEventsToCalendarChannelFastInstanceCommand,
   AddPeriodMaxSeatsToBillingSubscriptionFastInstanceCommand,
+  DropBillingMeterTableFastInstanceCommand,
+  AddContentSha256ToFileFastInstanceCommand,
+  RepairApplicationRegistrationVersionsFastInstanceCommand,
+  RepairBackfillApplicationRegistrationVersionsSlowInstanceCommand,
+  AddAgentChatChannelFastInstanceCommand,
+  BackfillRoleAgentChatChannelAccessSlowInstanceCommand,
+  AddAgentChatChannelNavigationMenuItemFastInstanceCommand,
+  AddParticipantHandleFieldToMessageChannelFastInstanceCommand,
+  AddCustomConfigToConnectionProviderFastInstanceCommand,
+  AddMessagingProviderFastInstanceCommand,
+  AddMcpServerFastInstanceCommand,
+  AddObjectMetadataDisabledObjectPermissionActionsFastInstanceCommand,
 ];
