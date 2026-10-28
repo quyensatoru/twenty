@@ -9,37 +9,50 @@ const fileId = 'a722e7a0-cc5d-4267-b550-322a4cfa2ebf';
 const fileUrl = `https://workspace.example.com/file/files-field/${fileId}`;
 
 describe('resolveSignedMarkdown', () => {
-  it('replaces a stored file URL with the signed one from BlockNote', () => {
+  it('replaces a stored file URL with the signed one from TipTap', () => {
     expect(
       resolveSignedMarkdown({
         markdown: `Intro\n\n![shot.png](${fileUrl}?token=expired)`,
-        blocknote: JSON.stringify([
-          { type: 'paragraph', content: [] },
-          { type: 'image', props: { url: `${fileUrl}?token=fresh` } },
-        ]),
+        tiptap: JSON.stringify({
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Intro' }] },
+            { type: 'image', attrs: { src: `${fileUrl}?token=fresh` } },
+          ],
+        }),
       }),
     ).toBe(`Intro\n\n![shot.png](${fileUrl}?token=fresh)`);
   });
 
-  it('finds images nested under another block', () => {
+  it('finds files nested under another block', () => {
     expect(
       resolveSignedMarkdown({
-        markdown: `- item\n  ![a](${fileUrl}?token=expired)`,
-        blocknote: JSON.stringify([
-          {
-            type: 'bulletListItem',
-            children: [{ type: 'image', props: { url: `${fileUrl}?token=fresh` } }],
-          },
-        ]),
+        markdown: `- item\n  [a.pdf](${fileUrl}?token=expired)`,
+        tiptap: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'bulletList',
+              content: [
+                {
+                  type: 'listItem',
+                  content: [
+                    { type: 'file', attrs: { url: `${fileUrl}?token=fresh` } },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
       }),
-    ).toBe(`- item\n  ![a](${fileUrl}?token=fresh)`);
+    ).toBe(`- item\n  [a.pdf](${fileUrl}?token=fresh)`);
   });
 
-  it('keeps markdown as is when BlockNote is missing or unreadable', () => {
+  it('keeps markdown as is when TipTap is missing or unreadable', () => {
     const markdown = `![a](${fileUrl}?token=expired)`;
 
-    expect(resolveSignedMarkdown({ markdown, blocknote: null })).toBe(markdown);
-    expect(resolveSignedMarkdown({ markdown, blocknote: 'not-json' })).toBe(
+    expect(resolveSignedMarkdown({ markdown, tiptap: null })).toBe(markdown);
+    expect(resolveSignedMarkdown({ markdown, tiptap: 'not-json' })).toBe(
       markdown,
     );
   });

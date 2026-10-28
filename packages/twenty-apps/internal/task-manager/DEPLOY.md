@@ -350,11 +350,11 @@ Vì sao Activity không phải widget: widget host đọc/ghi bằng token của
 Đi qua route thì cả hai vẫn được áp dụng.
 
 Cái mất: không có WYSIWYG. Sandbox không có remote element contentEditable và không có Selection
-API, nên BlockNote/ProseMirror không chạy được ở đó. Thay vào đó Description, bình luận và mô tả
+API, nên TipTap/ProseMirror không chạy được ở đó. Thay vào đó Description, bình luận và mô tả
 worklog dùng chung một **editor markdown**: ô textarea + thanh công cụ (đậm, nghiêng, code, tiêu đề,
-danh sách, trích dẫn, liên kết) + nút **Preview** render tại chỗ. Ghi vào cả hai nửa của trường
-RICH_TEXT — `markdown` là bản gốc, `blocknote` sinh ra từ nó — nên editor thật của host và ô record
-table đọc lại vẫn đúng nội dung.
+danh sách, trích dẫn, liên kết) + nút **Preview** render tại chỗ. Chỉ ghi `markdown` của trường
+RICH_TEXT (`blocknote: null`): server giữ nguyên markdown và tự sinh `tiptap` từ nó, nên editor của
+host và ô record table đọc lại vẫn đúng nội dung.
 
 Ba giới hạn của sandbox mà thanh công cụ phải sống chung, đã kiểm chứng trên trình duyệt:
 

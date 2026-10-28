@@ -408,25 +408,28 @@ export const IssueWorklogList = ({
                         <IconPencil size={14} />
                       </TaskIconButton>
                     )}
+                    {boardPath !== null && (
+                      <TaskIconButton
+                        label={t('Copy link')}
+                        onClick={() =>
+                          copyLinkToClipboard(
+                            buildIssueWorklogUrl({
+                              baseUrl,
+                              issueId,
+                              worklogId: worklog.id,
+                              boardPath,
+                            }),
+                          )
+                        }
+                      >
+                        <IconLink size={14} />
+                      </TaskIconButton>
+                    )}
                     <TaskFeedMoreMenu
                       onOpenChange={(isOpen) =>
                         setOpenMenuWorklogId(isOpen ? worklog.id : null)
                       }
                       items={[
-                        ...(boardPath === null ? [] : [{
-                          key: 'copy-link',
-                          label: t('Copy link'),
-                          icon: <IconLink size={14} />,
-                          onSelect: () =>
-                            copyLinkToClipboard(
-                              buildIssueWorklogUrl({
-                                baseUrl,
-                                issueId,
-                                worklogId: worklog.id,
-                                boardPath,
-                              }),
-                            ),
-                        }]),
                         ...(canDelete
                           ? [
                               {

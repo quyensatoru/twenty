@@ -114,32 +114,15 @@ export const TaskFeedItem = ({
     const article = articleRef.current;
     if (article === null) return;
 
-    const alignIfOutsideView = () => {
-      if (document.activeElement !== article) return;
-      for (
-        let parent = article.parentElement;
-        parent !== null && parent !== document.body;
-        parent = parent.parentElement
-      ) {
-        if (parent.scrollHeight <= parent.clientHeight + 1) continue;
-        const articleBounds = article.getBoundingClientRect();
-        const parentBounds = parent.getBoundingClientRect();
-        const inset = 24;
-        if (
-          articleBounds.top >= parentBounds.top + inset &&
-          articleBounds.bottom <= parentBounds.bottom - inset
-        )
-          return;
-        const desiredTop =
-          parentBounds.top + Math.min(parent.clientHeight * 0.2, 120);
-        parent.scrollTop += articleBounds.top - desiredTop;
-        return;
-      }
-    };
-
-    article.focus();
-    const timers = [0, 150, 450].map((delay) =>
-      window.setTimeout(alignIfOutsideView, delay),
+    // The host measures and scrolls (scrollIntoView only moves this
+    // component's own scroll containers). Repeated because the thread and its
+    // images are still loading and push the row down after the first pass.
+    article.focus({ preventScroll: true });
+    const timers = [0, 300, 900].map((delay) =>
+      window.setTimeout(
+        () => article.scrollIntoView({ block: 'center' }),
+        delay,
+      ),
     );
     return () => timers.forEach(window.clearTimeout);
   }, [isHighlighted]);

@@ -4,7 +4,6 @@ import {
   navigate,
   type AppPath,
   t,
-  useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
 
 import { type SupportInboxTab } from '../../types/support-inbox';
@@ -21,19 +20,15 @@ import { ConversationThreadPanel } from './conversation-thread-panel';
 import { CustomerDetailsPanel } from './customer-details-panel';
 import { InboxOverview } from './inbox-overview';
 import { INBOX_TOKENS } from './inbox-tokens';
+import { useHostLocationHash, useHostLocationPathname } from '../hooks/use-host-location';
 
 const HISTORY_IMPORT_DAYS = 30;
 
 export const SupportInbox = () => {
   const isMobile = useIsMobile();
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const conversationAnchor = parseConversationAnchor(locationHash);
-  const pathname = useFrontComponentExecutionContext(
-    (context) =>
-      (context as { locationPathname?: string }).locationPathname ?? '',
-  );
+  const pathname = useHostLocationPathname();
   const [tab, setTab] = useState<SupportInboxTab>(
     conversationAnchor === null ? 'waiting' : 'all',
   );

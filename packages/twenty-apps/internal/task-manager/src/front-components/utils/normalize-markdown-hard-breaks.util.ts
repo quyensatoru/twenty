@@ -11,16 +11,21 @@ const LONE_TRAILING_HARD_BREAK = /(^|\n)\\(?=\n{2,}|\n*$)/g;
 // backslash, with nothing after it to break to.
 const TRAILING_HARD_BREAK_AFTER_TEXT = /([^\s\\])\\(?=\n{2,}|\n*$)/g;
 
+// Named character references are decoded through the DOM, which the sandbox
+// only fakes, so `&nbsp;` would render as that literal text. Numeric ones are
+// decoded in plain JavaScript.
+const NAMED_NON_BREAKING_SPACE = /&nbsp;/gi;
+
 const normalizeProse = (prose: string): string =>
   prose
     .replace(BARE_URL_BEFORE_HARD_BREAK, '$1<$2>\\\n')
-    .replace(LONE_TRAILING_HARD_BREAK, '$1&nbsp;')
-    .replace(TRAILING_HARD_BREAK_AFTER_TEXT, '$1');
+    .replace(LONE_TRAILING_HARD_BREAK, '$1&#160;')
+    .replace(TRAILING_HARD_BREAK_AFTER_TEXT, '$1')
+    .replace(NAMED_NON_BREAKING_SPACE, '&#160;');
 
-// BlockNote writes a hard break as a backslash before the newline, which
-// markdown readers misread in two places and show as a stray "\". Fenced code
-// is left exactly as written. The host editor applies the same rule when it
-// reads and writes, so the preview and the editor agree.
+// Text saved by the previous editor (BlockNote) wrote a hard break as a
+// backslash before the newline, which markdown readers misread in two places
+// and show as a stray "\". Fenced code is left exactly as written.
 export const normalizeMarkdownHardBreaks = (markdown: string): string => {
   const lines = markdown.split('\n');
   const parts: string[] = [];

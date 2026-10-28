@@ -1,10 +1,24 @@
-import { useFrontComponentExecutionContext } from 'twenty-sdk/front-component';
+import { useSyncExternalStore } from 'react';
 
-// The host's own mobile breakpoint. A front component's worker has no window
-// to measure and cannot ship a media query, so the host reports it. Cast: the
-// published SDK's context type predates the field; drop it once the app moves
-// to an SDK that declares it.
+// twenty-ui's MOBILE_VIEWPORT. The sandbox mirrors the host window's width and
+// announces geometry changes on visualViewport; a width of 0 means not yet
+// measured, read as desktop.
+const MOBILE_VIEWPORT = 768;
+
+const subscribeToViewport = (onChange: () => void) => {
+  const viewport = window.visualViewport;
+
+  viewport?.addEventListener('resize', onChange);
+  viewport?.addEventListener('scroll', onChange);
+
+  return () => {
+    viewport?.removeEventListener('resize', onChange);
+    viewport?.removeEventListener('scroll', onChange);
+  };
+};
+
+const readIsMobile = () =>
+  window.innerWidth > 0 && window.innerWidth <= MOBILE_VIEWPORT;
+
 export const useIsMobile = (): boolean =>
-  useFrontComponentExecutionContext(
-    (context) => (context as { isMobile?: boolean }).isMobile === true,
-  );
+  useSyncExternalStore(subscribeToViewport, readIsMobile);

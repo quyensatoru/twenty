@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { enqueueSnackbar, useFrontComponentExecutionContext } from 'twenty-sdk/front-component';
+import { enqueueSnackbar } from 'twenty-sdk/front-component';
 
 import { PREVIEW_POLL_ROUTE_PATH } from '../constants/route-paths';
 import { POLLS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
@@ -12,6 +12,7 @@ import { PollCard } from './components/poll-card';
 import { PollFormModal, type PollFormInput } from './components/poll-form-modal';
 import { usePollsData } from './hooks/use-polls-data';
 import { createRecord, deleteRecord, postAppRoute, readErrorText, resolveAppRouteUrl, updateRecord } from './utils/moments-rest.util';
+import { useHostLocationHash } from './hooks/use-host-location';
 
 const createOptionId = (): string => {
   const bytes = new Uint8Array(8);
@@ -23,9 +24,7 @@ const createOptionId = (): string => {
 
 const Polls = () => {
   const data = usePollsData();
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const [anchoredPollId] = useState(() => parsePollAnchor(locationHash));
   const [isCreating, setIsCreating] = useState(false);
 

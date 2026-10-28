@@ -210,7 +210,7 @@ export const IssueDescription = () => {
 
   // The remote element wrapper can go on answering with the mousedown/keydown
   // handler it was given on an earlier render even after the prop is set back
-  // to undefined for the editing render, so Enter bubbling up from BlockNote
+  // to undefined for the editing render, so Enter bubbling up from the host editor
   // (or a stray mousedown on this box) can still reach a startEditing closure
   // captured before editing began — restarting the edit mid-keystroke and
   // wiping everything typed since. The handler is therefore fixed for the

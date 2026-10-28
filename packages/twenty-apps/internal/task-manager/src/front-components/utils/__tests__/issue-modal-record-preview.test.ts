@@ -23,10 +23,12 @@ vi.mock('twenty-sdk/front-component', () => ({
   copyToClipboard: vi.fn(),
   useLocale: () => 'en',
   getApplicationVariable: () => undefined,
-  useFrontComponentExecutionContext: (
-    selector: (context: { isMobile: boolean }) => unknown,
-  ) => selector({ isMobile: mobile.value }),
+  useFrontComponentExecutionContext: (selector: (context: object) => unknown) =>
+    selector({}),
   AppPath: { RecordShowPage: '/object/:objectNameSingular/:objectRecordId' },
+}));
+vi.mock('../../hooks/use-is-mobile', () => ({
+  useIsMobile: () => mobile.value,
 }));
 vi.mock('../../hooks/use-issue-detail', () => ({
   useIssueDetail: (issueId: string) => ({

@@ -46,37 +46,19 @@ describe('parseMinutes', () => {
 });
 
 describe('readRichTextPlainValue', () => {
-  it('prefers the markdown half', () => {
-    expect(
-      readRichTextPlainValue({ blocknote: '[]', markdown: 'Hello' }),
-    ).toBe('Hello');
-  });
-
-  it('pulls plain text out of a BlockNote document written by the host', () => {
-    const blocknote = JSON.stringify([
-      { type: 'paragraph', content: [{ type: 'text', text: 'First line' }] },
-      { type: 'paragraph', content: [{ type: 'text', text: 'Second line' }] },
-    ]);
-
-    expect(readRichTextPlainValue({ blocknote, markdown: null })).toBe(
-      'First line\nSecond line',
-    );
-  });
-
-  it('returns nothing rather than raw JSON when the document will not parse', () => {
-    expect(readRichTextPlainValue({ blocknote: 'not json', markdown: null })).toBe(
-      '',
-    );
+  it('reads the markdown half', () => {
+    expect(readRichTextPlainValue({ markdown: 'Hello' })).toBe('Hello');
   });
 
   it('handles an absent value', () => {
     expect(readRichTextPlainValue(null)).toBe('');
     expect(readRichTextPlainValue(undefined)).toBe('');
+    expect(readRichTextPlainValue({ markdown: null })).toBe('');
   });
 });
 
 describe('buildRichTextValue', () => {
-  it('clears the blocknote half when there is nothing to write', () => {
-    expect(buildRichTextValue('')).toEqual({ blocknote: null, markdown: '' });
+  it('writes markdown alone', () => {
+    expect(buildRichTextValue('')).toEqual({ markdown: '' });
   });
 });

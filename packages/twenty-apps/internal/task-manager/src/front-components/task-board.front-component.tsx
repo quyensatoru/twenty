@@ -5,7 +5,6 @@ import {
   enqueueSnackbar,
   navigate,
   t,
-  useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
 import {
   IconCheckbox,
@@ -79,13 +78,14 @@ import { TaskViewSwitch } from './components/task-view-switch';
 import { useBoardSortPreference } from './hooks/use-board-sort-preference';
 import { useIsMobile } from './hooks/use-is-mobile';
 import {
-  parseBoardIssueAnchor,
   parseBoardViewAnchor,
 } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
 import { readMemberName } from './utils/read-member-name.util';
 import { summarizeBoardProgress } from './utils/summarize-board-progress.util';
+import { useBoardIssueSelection } from './hooks/use-board-issue-selection';
+import { useHostLocationHash, useHostLocationPathname } from './hooks/use-host-location';
 
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
@@ -131,19 +131,10 @@ const readStoredView = (): BoardViewMode =>
 // accepts the write), and host widgets read with the viewer's own token while
 // this app's reads go through its scoped routes.
 const TaskBoard = () => {
-  // Pinned to the published SDK, whose context type predates these fields.
-  // The host sends them (useFrontComponentExecutionContext in twenty-front);
-  // drop the casts once the app moves to an SDK that declares them.
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const isMobile = useIsMobile();
-  const boardPath = useFrontComponentExecutionContext((context) => {
-    const pathname = (context as { locationPathname?: string })
-      .locationPathname;
-
-    return typeof pathname === 'string' && pathname !== '' ? pathname : null;
-  });
+  const hostPathname = useHostLocationPathname();
+  const boardPath = hostPathname === '' ? null : hostPathname;
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -175,12 +166,8 @@ const TaskBoard = () => {
   const [isOnlyMine, setIsOnlyMine] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>(ALL_VALUE);
   const [priorityFilter, setPriorityFilter] = useState<string>(ALL_VALUE);
-  // A board deep link decides the opening modal, so a pasted link lands on
-  // the issue it is about. It is the INITIAL value only: the reader keeps
-  // whatever they open afterwards.
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(
-    parseBoardIssueAnchor(locationHash),
-  );
+  const { selectedIssueId, selectIssue: setSelectedIssueId } =
+    useBoardIssueSelection();
   const [composerStatusId, setComposerStatusId] = useState<string | null>(null);
   // A backlog row in flight, shared with the epic panel's drop targets.
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);

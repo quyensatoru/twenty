@@ -7,9 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { context, navigate, post, metadata } = vi.hoisted(() => ({
   context: {
-    locationHash: '',
-    locationPathname: '/page/inbox-page',
-    isMobile: false,
+    location: {
+      pathname: '/page/inbox-page',
+      search: '',
+      hash: '',
+      origin: 'http://localhost',
+    },
   },
   navigate: vi.fn().mockResolvedValue(undefined),
   post: vi.fn(),
@@ -28,7 +31,6 @@ vi.mock('twenty-client-sdk/metadata', () => ({
 vi.mock('twenty-sdk/front-component', () => ({
   t: (text: string) => text,
   useRecordId: () => 'conversation-1',
-  useLocationHash: () => context.locationHash,
   useFrontComponentExecutionContext: (
     selector: (value: typeof context) => unknown,
   ) => selector(context),
@@ -77,9 +79,7 @@ const conversation = {
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   Object.assign(context, {
-    locationHash: '',
-    locationPathname: '/page/inbox-page',
-    isMobile: false,
+    location: { ...context.location, pathname: '/page/inbox-page', hash: '' },
   });
   navigate.mockClear();
   metadata.mockReset().mockResolvedValue({
@@ -157,7 +157,7 @@ describe('full conversation navigation', () => {
     await act(async () =>
       user.click(getByRole(container, 'button', { name: /Test customer/ })),
     );
-    context.locationHash = 'conversation-conversation-1';
+    context.location.hash = 'conversation-conversation-1';
     await act(async () => root.render(createElement(SupportInbox)));
     expect(
       getByRole(container, 'tab', { name: /Resolved/ }).getAttribute(
@@ -167,7 +167,7 @@ describe('full conversation navigation', () => {
   });
 
   it('opens a linked thread and customer details even when the conversation is outside the visible list', async () => {
-    context.locationHash = '#conversation-conversation-1';
+    context.location.hash = '#conversation-conversation-1';
     await act(async () => root.render(createElement(SupportInbox)));
     expect(getByText(container, 'Message for conversation-1')).toBeDefined();
     expect(
@@ -176,16 +176,16 @@ describe('full conversation navigation', () => {
   });
 
   it('opens a different conversation when the host URL fragment changes', async () => {
-    context.locationHash = 'conversation-conversation-1';
+    context.location.hash = 'conversation-conversation-1';
     await act(async () => root.render(createElement(SupportInbox)));
-    context.locationHash = 'conversation-conversation-2';
+    context.location.hash = 'conversation-conversation-2';
     await act(async () => root.render(createElement(SupportInbox)));
     expect(getByText(container, 'Message for conversation-2')).toBeDefined();
     expect(container.textContent).not.toContain('Message for conversation-1');
   });
 
   it('keeps the record preview when its route matches the conversation record', async () => {
-    context.locationPathname = '/object/crispConversation/conversation-1';
+    context.location.pathname = '/object/crispConversation/conversation-1';
     await act(async () => root.render(createElement(ConversationRecord)));
     expect(navigate).not.toHaveBeenCalled();
     expect(getByText(container, 'Message for conversation-1')).toBeDefined();
@@ -193,7 +193,7 @@ describe('full conversation navigation', () => {
 
   it('keeps the side panel preview and offers an explicit action to open the full inbox', async () => {
     const user = userEvent.setup();
-    context.locationPathname = '/object/crispConversation/conversation-1';
+    context.location.pathname = '/object/crispConversation/conversation-1';
     await act(async () => root.render(createElement(ConversationRecord)));
     expect(navigate).not.toHaveBeenCalled();
     expect(getByText(container, 'Message for conversation-1')).toBeDefined();

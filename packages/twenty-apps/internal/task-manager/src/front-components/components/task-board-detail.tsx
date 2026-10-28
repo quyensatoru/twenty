@@ -7,7 +7,6 @@ import {
   openSidePanelPage,
   SidePanelPages,
   t,
-  useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
 import {
   IconArrowsDiagonal,
@@ -110,6 +109,7 @@ import {
   TASK_TOKENS,
 } from './task-tokens';
 import { TaskProjectBadge } from './task-toolbar';
+import { useHostLocationHash } from '../hooks/use-host-location';
 
 type TaskBoardDetailProps = {
   // `page` is the issue's own record page: no backdrop or prev/next, related
@@ -146,9 +146,7 @@ export const TaskBoardDetail = ({
   boardPath,
   onCardChanged,
 }: TaskBoardDetailProps) => {
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const boardAnchor = parseBoardActivityAnchor(locationHash);
   const activityAnchor =
     presentation === 'page'
@@ -205,7 +203,7 @@ export const TaskBoardDetail = ({
   const currentDescriptionRef = useRef('');
   // The remote element wrapper can go on answering with the mousedown/keydown
   // handler it was given on an earlier render even after the prop is set back
-  // to undefined for the editing render, so Enter bubbling up from BlockNote
+  // to undefined for the editing render, so Enter bubbling up from the host editor
   // can still reach a startEditingDescription closure captured before editing
   // began — restarting the edit mid-keystroke and wiping pendingDescriptionRef
   // back to the pre-edit text. isEditingDescription itself can't guard this: a
@@ -873,11 +871,12 @@ export const TaskBoardDetail = ({
           boxSizing: 'border-box',
           cursor: isEditingDescription ? 'auto' : 'text',
           display: 'flex',
-          // Pulled back out by the reading padding on the left and below, so
-          // the text lines up with the title and the next block keeps the
-          // column's 24px rhythm; the padding only shows as the hover tint.
+          // Pulled back out by the reading padding (the editor's frame and
+          // inset when editing) on the left and below, so the text lines up
+          // with the title in both modes and the next block keeps the column's
+          // 24px rhythm; the padding only shows as the hover tint.
           margin: isEditingDescription
-            ? 0
+            ? '0 0 0 -9px'
             : currentDescription.trim() === ''
               ? '0 0 0 -9px'
               : '0 0 -9px -9px',
@@ -890,7 +889,7 @@ export const TaskBoardDetail = ({
             isEditingDescription || currentDescription.trim() === ''
               ? 0
               : TASK_RICH_TEXT_READING_PADDING,
-          width: isEditingDescription ? '100%' : 'calc(100% + 9px)',
+          width: 'calc(100% + 9px)',
         }}
       >
         {!isEditingDescription && currentDescription.trim() === '' ? (

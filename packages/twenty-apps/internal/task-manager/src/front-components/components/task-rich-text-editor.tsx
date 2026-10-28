@@ -29,12 +29,12 @@ type TaskRichTextEditorProps = {
 const COMPOSER_MIN_HEIGHT = 72;
 
 // The one editing surface in this app, on every panel and in both directions:
-// the host renders Twenty's own BlockNote, this side speaks markdown to it and
+// the host renders Twenty's own TipTap editor, this side speaks markdown to it and
 // stores what comes back through the app's scoped routes.
 //
 // It has to be host-rendered: the sandbox's element set has no contentEditable
 // property and the guest has no Selection or Range, so ProseMirror — and the
-// BlockNote built on it — has nothing to attach to in here.
+// TipTap built on it — has nothing to attach to in here.
 export const TaskRichTextEditor = ({
   value,
   onChange,
@@ -48,7 +48,7 @@ export const TaskRichTextEditor = ({
   const { resolvedUploads, handleUpload } = useRichTextUploads(issueId);
 
   // A hidden host editor still answers every mousemove on the page: each
-  // BlockNote side menu measures every editor and repaints, so a page of
+  // block handle measures every editor and repaints, so a page of
   // comments made the whole issue lag. The host editor is only mounted once
   // this box is first edited, then kept for its edit session.
   const [hasBeenEditable, setHasBeenEditable] = useState(!isReadOnly);
@@ -87,7 +87,7 @@ export const TaskRichTextEditor = ({
   const handleChange = useCallback((event: { target: { value: string } }) => {
     const current = callbacksRef.current;
 
-    // Turning read-only makes BlockNote drop its trailing empty block, and the
+    // Turning read-only makes the host editor drop its trailing empty block, and the
     // change that reports arrives after Cancel has already put the old value
     // back. The event pipeline writes its text onto the element, which the
     // host takes as the new value, so the discarded edit would stay on screen

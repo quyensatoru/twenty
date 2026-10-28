@@ -22,7 +22,7 @@ import {
 } from '../utils/read-issue-attachments.util';
 import { readErrorText } from '../utils/read-error-text.util';
 
-type RichTextValue = { blocknote?: string | null; markdown?: string | null };
+type RichTextValue = { markdown?: string | null; tiptap?: string | null };
 
 // The markdown the panels render, with live file URLs. When a refetch brings
 // back the same body with only new tokens, the string already on screen is
@@ -50,7 +50,7 @@ export type IssueCommentRow = {
   authorId?: string | null;
   parentCommentId?: string | null;
   createdAt?: string | null;
-  bodyV2?: { blocknote?: string | null; markdown?: string | null } | null;
+  bodyV2?: RichTextValue | null;
 };
 
 export type WorklogRow = {

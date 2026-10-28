@@ -3,7 +3,7 @@ export const ISSUE_SELECTION = {
   title: true,
   // RICH_TEXT is composite: without naming the sub-fields the description comes
   // back absent and the description widget renders blank.
-  description: { blocknote: true, markdown: true },
+  description: { markdown: true, tiptap: true },
   issueKey: true,
   issueType: true,
   priority: true,
@@ -169,7 +169,7 @@ export const ISSUE_COMMENT_SELECTION = {
   issueId: true,
   // RICH_TEXT is composite: without naming the sub-fields the body comes back
   // absent and every comment renders blank.
-  bodyV2: { blocknote: true, markdown: true },
+  bodyV2: { markdown: true, tiptap: true },
   authorId: true,
   parentCommentId: true,
   createdAt: true,

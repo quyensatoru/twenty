@@ -23,7 +23,7 @@ export type DiscussionComment = {
   authorId?: string | null;
   mentionMemberIds?: string[] | null;
   parentCommentId?: string | null;
-  bodyV2?: { markdown?: string | null; blocknote?: string | null } | null;
+  bodyV2?: { markdown?: string | null; tiptap?: string | null } | null;
   createdAt: string;
 };
 

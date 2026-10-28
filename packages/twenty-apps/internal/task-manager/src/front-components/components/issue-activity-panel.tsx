@@ -1,7 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import {
   t,
-  useFrontComponentExecutionContext,
   useRecordId,
 } from 'twenty-sdk/front-component';
 
@@ -34,6 +33,7 @@ import {
 } from '../hooks/use-issue-detail';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { useHostLocationHash } from '../hooks/use-host-location';
 
 // The panel scrolls inside a fixed grid row, so the scroll container is this
 // element and everything pinned inside it pins against this box. The top
@@ -75,12 +75,7 @@ const ActivityFrame = ({ children }: { children: ReactNode }) => (
 // exports out of `*.front-component.tsx`.
 export const IssueActivity = () => {
   const issueId = useRecordId();
-  // Pinned to the published SDK, whose context type predates this field. The
-  // host sends it (useFrontComponentExecutionContext in twenty-front); drop the
-  // cast once the app moves to an SDK that declares `locationHash`.
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const anchor = parseActivityAnchor(locationHash);
   const { data, isLoading, loadError, reload } = useIssueDetail(issueId);
   const discussion = useDiscussionState(

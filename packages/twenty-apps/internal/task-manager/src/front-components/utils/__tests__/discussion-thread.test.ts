@@ -157,7 +157,7 @@ describe('discussion threads', () => {
     );
   });
 
-  it('keeps copy link and a confirmed delete behind the more menu', async () => {
+  it('offers copy link as a button and keeps a confirmed delete behind the more menu', async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
     await act(async () =>
@@ -179,10 +179,7 @@ describe('discussion threads', () => {
     expect(getByRole(container, 'button', { name: 'Edit' })).toBeDefined();
 
     await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'More actions' })),
-    );
-    await act(async () =>
-      user.click(getByRole(container, 'menuitem', { name: 'Copy link' })),
+      user.click(getByRole(container, 'button', { name: 'Copy link' })),
     );
     expect(copyToClipboard).toHaveBeenCalledWith(
       'https://crm.example.com/object/issue/issue#comment-root',
@@ -191,6 +188,7 @@ describe('discussion threads', () => {
     await act(async () =>
       user.click(getByRole(container, 'button', { name: 'More actions' })),
     );
+    expect(queryByRole(container, 'menuitem', { name: 'Copy link' })).toBeNull();
     await act(async () =>
       user.click(getByRole(container, 'menuitem', { name: 'Delete comment' })),
     );
@@ -214,12 +212,10 @@ describe('discussion threads', () => {
 
     await act(async () => user.hover(getByText(container, 'First reply')));
     expect(queryByRole(container, 'button', { name: 'Edit' })).toBeNull();
-    await act(async () =>
-      user.click(getByRole(container, 'button', { name: 'More actions' })),
-    );
+    expect(getByRole(container, 'button', { name: 'Copy link' })).toBeDefined();
     expect(
-      getByRole(container, 'menuitem', { name: 'Copy link' }),
-    ).toBeDefined();
+      queryByRole(container, 'button', { name: 'More actions' }),
+    ).toBeNull();
     expect(queryByText(container, 'Delete comment')).toBeNull();
   });
 

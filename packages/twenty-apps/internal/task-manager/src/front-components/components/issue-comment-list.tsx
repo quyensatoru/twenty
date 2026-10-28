@@ -457,25 +457,28 @@ export const IssueCommentList = ({
                     <IconPencil size={14} />
                   </TaskIconButton>
                 )}
+                {boardPath !== null && (
+                  <TaskIconButton
+                    label={t('Copy link')}
+                    onClick={() =>
+                      copyLinkToClipboard(
+                        buildIssueCommentUrl({
+                          baseUrl,
+                          issueId,
+                          commentId: comment.id,
+                          boardPath,
+                        }),
+                      )
+                    }
+                  >
+                    <IconLink size={14} />
+                  </TaskIconButton>
+                )}
                 <TaskFeedMoreMenu
                   onOpenChange={(isOpen) =>
                     setOpenMenuCommentId(isOpen ? comment.id : null)
                   }
                   items={[
-                    ...(boardPath === null ? [] : [{
-                      key: 'copy-link',
-                      label: t('Copy link'),
-                      icon: <IconLink size={14} />,
-                      onSelect: () =>
-                        copyLinkToClipboard(
-                          buildIssueCommentUrl({
-                            baseUrl,
-                            issueId,
-                            commentId: comment.id,
-                            boardPath,
-                          }),
-                        ),
-                    }]),
                     ...(canDelete
                       ? [
                           {

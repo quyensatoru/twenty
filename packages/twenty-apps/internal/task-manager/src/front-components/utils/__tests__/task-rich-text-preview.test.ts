@@ -84,16 +84,23 @@ describe('rich text preview', () => {
     ).not.toBeNull();
   });
 
-  it('keeps the guide of a nested checklist inside the text column', async () => {
+  it('lays out lists like the editor: checklists flush, nested lists one indent in', async () => {
     await renderPreview(
       '- [x] Backend\n  - [x] Authentication\n\nMixed list:\n\n- Application\n  - Frontend',
     );
     expect(
-      getByText(container, 'Authentication').closest('ul')?.style.marginLeft,
-    ).toBe('4px');
-    expect(
-      getByText(container, 'Frontend').closest('ul')?.style.marginLeft,
-    ).toBe('-20px');
+      getByText(container, 'Authentication').closest('ul')?.style.paddingLeft,
+    ).toBe('0px');
+    const nested = getByText(container, 'Frontend').closest('ul');
+    expect(nested?.style.paddingLeft).toBe('16px');
+    expect(nested?.style.listStyleType).toBe('circle');
+    expect(nested?.style.borderLeft).toBe('');
+  });
+
+  it('keeps a line break the editor wrote as a bare newline', async () => {
+    await renderPreview('first line\nsecond line\n\n```\na\nb\n```');
+    expect(container.querySelector('p br')).not.toBeNull();
+    expect(container.querySelector('pre br')).toBeNull();
   });
 
   it('preserves embedded HTML tables and inline formatting safely', async () => {

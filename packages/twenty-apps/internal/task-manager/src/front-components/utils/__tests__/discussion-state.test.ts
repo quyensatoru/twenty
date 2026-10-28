@@ -75,16 +75,19 @@ describe('discussion snapshot concurrency', () => {
     expect(post.mock.calls[1][1]).toMatchObject({ cursor: 'older-page' });
   });
 
-  it('resolves image URLs from signed BlockNote data and keeps unchanged image previews stable', async () => {
+  it('resolves image URLs from signed TipTap data and keeps unchanged image previews stable', async () => {
     const fileUrl =
       'https://example.com/file/workspace/12345678-1234-1234-1234-123456789abc';
     const imageComment = (signedToken: string, markdown: string) => ({
       id: 'image-comment',
       bodyV2: {
         markdown,
-        blocknote: JSON.stringify([
-          { type: 'image', props: { url: `${fileUrl}?token=${signedToken}` } },
-        ]),
+        tiptap: JSON.stringify({
+          type: 'doc',
+          content: [
+            { type: 'image', attrs: { src: `${fileUrl}?token=${signedToken}` } },
+          ],
+        }),
       },
     });
     post.mockResolvedValueOnce({

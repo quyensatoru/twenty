@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
-import { enqueueSnackbar, useFrontComponentExecutionContext } from 'twenty-sdk/front-component';
+import { enqueueSnackbar } from 'twenty-sdk/front-component';
 
 import { MOMENTS_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
 import { type TeamEventRow } from '../types/moments-records';
@@ -15,15 +15,14 @@ import { RoomView } from './components/room-view';
 import { useMomentsData } from './hooks/use-moments-data';
 import { useMomentsPermissions } from './hooks/use-moments-permissions';
 import { createRecord, readErrorText } from './utils/moments-rest.util';
+import { useHostLocationHash } from './hooks/use-host-location';
 
 type MomentsTab = 'overview' | 'members';
 
 const Moments = () => {
   const data = useMomentsData();
   const { canManageEvents, canEditMemberProfiles } = useMomentsPermissions();
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
+  const locationHash = useHostLocationHash();
   const [anchoredKey] = useState(() => parseMomentsCardAnchor(locationHash));
   const [tab, setTab] = useState<MomentsTab>('overview');
   const [openKey, setOpenKey] = useState<string | null>(anchoredKey);

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { defineFrontComponent } from 'twenty-sdk/define';
 import {
   t,
-  useFrontComponentExecutionContext,
 } from 'twenty-sdk/front-component';
 import {
   IconInbox,
@@ -55,8 +54,9 @@ import {
   type ProductBacklogTab,
   PRODUCT_BACKLOG_TABS,
 } from './product-backlog/utils/product-backlog-tabs.util';
-import { parseBoardIssueAnchor } from './utils/parse-board-anchor.util';
 import { readMemberName } from './utils/read-member-name.util';
+import { useBoardIssueSelection } from './hooks/use-board-issue-selection';
+import { useHostLocationHash, useHostLocationPathname } from './hooks/use-host-location';
 
 const PROJECT_STORAGE_KEY = 'product-backlog.project-id';
 const BOARD_PROJECT_STORAGE_KEY = 'task-board.project-id';
@@ -99,15 +99,9 @@ const TAB_ICONS = {
 // planned into sprints, and only then reach the Board as issues. One project
 // at a time, like the Board, with the issue modal shared with it.
 const ProductBacklog = () => {
-  const locationHash = useFrontComponentExecutionContext(
-    (context) => (context as { locationHash?: string }).locationHash ?? '',
-  );
-  const pagePath = useFrontComponentExecutionContext((context) => {
-    const pathname = (context as { locationPathname?: string })
-      .locationPathname;
-
-    return typeof pathname === 'string' && pathname !== '' ? pathname : null;
-  });
+  const locationHash = useHostLocationHash();
+  const hostPathname = useHostLocationPathname();
+  const pagePath = hostPathname === '' ? null : hostPathname;
   const isMobile = useIsMobile();
   const [projectId, setProjectId] = useState<string | null>(
     () =>
@@ -129,10 +123,8 @@ const ProductBacklog = () => {
   );
   const [healthFilterId, setHealthFilterId] =
     useState<BacklogHealthFilterId | null>(null);
-  // The issue modal's copy-link points back at this page, like the Board's.
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(() =>
-    parseBoardIssueAnchor(locationHash),
-  );
+  const { selectedIssueId, selectIssue: setSelectedIssueId } =
+    useBoardIssueSelection();
   const [plannedSprintId, setPlannedSprintId] = useState<string | null>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const { data, loadError, isLoading, reload, actions } =

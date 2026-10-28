@@ -36,7 +36,7 @@ export type IssueRow = {
   developmentSummary?: IssueDevelopmentSummary;
   id: string;
   title?: string | null;
-  description?: { blocknote?: string | null; markdown?: string | null } | null;
+  description?: { markdown?: string | null; tiptap?: string | null } | null;
   issueKey?: string | null;
   issueType?: string | null;
   priority?: string | null;

@@ -6,7 +6,6 @@ import { getTaskControlStyle } from './task-control-styles';
 import { t } from 'twenty-sdk/front-component';
 import { TASK_AI_ROUTE_PATH } from '../../constants/task-ai';
 import { CREATE_ISSUE_COMMENT_ROUTE_PATH } from '../../constants/route-paths';
-import { markdownToBlocknote } from '../../utils/markdown-to-blocknote.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { type TaskAiRunState } from '../../utils/task-ai-state.util';
@@ -18,6 +17,7 @@ import { TaskAiRunTimeline } from './task-ai-run-timeline';
 import { TaskButton } from './task-button';
 import { TaskRichTextPreview } from './task-rich-text-preview';
 import { TASK_TOKENS } from './task-tokens';
+import { buildRichTextValue } from '../../utils/read-rich-text-plain-value.util';
 import { resolveTaskAiCitationLinks } from '../../utils/resolve-task-ai-citation-links.util';
 
 type IssueAiPanelProps = { issueId: string };
@@ -262,7 +262,7 @@ export const IssueAiPanel = ({ issueId }: IssueAiPanelProps) => {
       await postAppRoute(CREATE_ISSUE_COMMENT_ROUTE_PATH, {
         issueId,
         requestId: shareRequestId.current,
-        bodyV2: { markdown, blocknote: markdownToBlocknote(markdown) },
+        bodyV2: buildRichTextValue(markdown),
       });
       setPreview(null);
       setShared(true);
