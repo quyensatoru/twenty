@@ -115,12 +115,8 @@ export const NavigationDrawerItemForObjectMetadataItem = ({
     ? getNavigationMenuItemLabel(navigationMenuItem, objectMetadataItems, views)
     : objectMetadataItem.labelPlural;
 
-  // An OBJECT entry normally shows the object's plural label; one named by
-  // whoever placed it shows that name instead.
-  const hasOwnName = isNonEmptyString(navigationMenuItem?.name?.trim() ?? '');
-
   const primaryLabel =
-    isRecord || isViewWithResolvedView || hasOwnName
+    isRecord || isViewWithResolvedView
       ? itemLabel
       : objectMetadataItem.labelPlural;
 

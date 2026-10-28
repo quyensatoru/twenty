@@ -24,7 +24,6 @@ export { useSelectedRecordIds } from './hooks/useSelectedRecordIds';
 export { useSelectedRecordsFilter } from './hooks/useSelectedRecordsFilter';
 export { useSelectedObjectMetadata } from './hooks/useSelectedObjectMetadata';
 export { useTimelineActivityId } from './hooks/useTimelineActivityId';
-export { useLocationHash } from './hooks/useLocationHash';
 export { useUserId } from './hooks/useUserId';
 export { msg } from './translations/msg';
 export { t } from './translations/t';

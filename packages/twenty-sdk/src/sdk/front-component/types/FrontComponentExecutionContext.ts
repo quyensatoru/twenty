@@ -24,25 +24,6 @@ export type FrontComponentExecutionContext = {
   /** Resolved color scheme of the host UI ('System' is already resolved) */
   colorScheme: 'light' | 'dark';
   locale?: AppLocale;
-  /**
-   * Fragment of the host page's URL, without the leading '#', empty when there
-   * is none. A front component runs in a worker with an opaque origin and no
-   * `location` of its own, so this is the only way it can answer a deep link
-   * that addresses something inside it rather than the record as a whole.
-   */
-  locationHash?: string;
-  /**
-   * Path of the host page, without query or fragment. A front component runs
-   * in a worker with an opaque origin and no `location` of its own, so this
-   * is the only way it can link back to exactly the page it renders on.
-   */
-  locationPathname?: string;
-  /**
-   * Whether the host renders its mobile layout (viewport below twenty-ui's
-   * MOBILE_VIEWPORT). A front component's worker has no window to measure and
-   * cannot ship a media query, so this is how it adapts its own layout.
-   */
-  isMobile?: boolean;
   location?: FrontComponentLocation;
   /** Set when the component renders an AI chat tool call */
   toolCall?: FrontComponentToolCall;
