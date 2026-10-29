@@ -1,9 +1,10 @@
+import { isNonEmptyString } from '@sniptt/guards';
 import { useRef, useState } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import {
   IconArrowRight,
   IconBlockquote,
-  IconInbox,
+  IconChevronUp,
   IconPlus,
   IconRestore,
   IconX,
@@ -251,6 +252,17 @@ type IdeaCardProps = {
   onOpenItem: (issueId: string) => void;
 };
 
+const IDEA_CLAMP_STYLE = {
+  display: '-webkit-box',
+  overflow: 'hidden',
+  overflowWrap: 'anywhere',
+  WebkitBoxOrient: 'vertical',
+} as const;
+
+// Rough character counts past which the clamped title or description is cut.
+const IDEA_TITLE_CLAMP_LENGTH = 60;
+const IDEA_DESCRIPTION_CLAMP_LENGTH = 130;
+
 const IdeaCard = ({
   idea,
   canWrite,
@@ -270,44 +282,56 @@ const IdeaCard = ({
       : 0;
   const status = idea.status ?? 'INBOX';
   const canCount = canWrite && status === 'INBOX';
+  const [isExpanded, setIsExpanded] = useState(false);
+  const canExpand =
+    (idea.title ?? '').length > IDEA_TITLE_CLAMP_LENGTH ||
+    (idea.description ?? '').length > IDEA_DESCRIPTION_CLAMP_LENGTH;
+  const metaParts = [
+    isNonEmptyString(idea.requester) ? idea.requester : null,
+    typeof idea.createdAt === 'string'
+      ? new Date(idea.createdAt).toLocaleDateString()
+      : null,
+  ].filter((part) => part !== null);
+  const footer =
+    canWrite && status === 'INBOX' ? (
+      <>
+        <TaskButton size="small" variant="ghost" onClick={onReject}>
+          <IconX size={14} />
+          {t('Reject')}
+        </TaskButton>
+        <TaskButton size="small" variant="primary" onClick={onPromote}>
+          <IconArrowRight size={14} />
+          {t('Add to backlog')}
+        </TaskButton>
+      </>
+    ) : status === 'PROMOTED' && typeof idea.promotedIssueId === 'string' ? (
+      <TaskButton
+        size="small"
+        variant="ghost"
+        onClick={() => onOpenItem(idea.promotedIssueId as string)}
+      >
+        <IconArrowRight size={14} />
+        {promotedIssueKey ?? t('Open item')}
+      </TaskButton>
+    ) : canWrite && status === 'REJECTED' ? (
+      <TaskButton size="small" variant="ghost" onClick={onRestore}>
+        <IconRestore size={14} />
+        {t('Restore')}
+      </TaskButton>
+    ) : null;
 
   return (
     <div
       style={{
+        background: TASK_TOKENS.backgroundSecondary,
         border: `1px solid ${TASK_TOKENS.border}`,
         borderRadius: TASK_TOKENS.radius,
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
-        padding: 12,
+        minWidth: 0,
       }}
     >
-      <div style={{ alignItems: 'flex-start', display: 'flex', gap: 8 }}>
-        <span
-          style={{
-            color: readTagColor('yellow').text,
-            display: 'inline-flex',
-            paddingTop: 2,
-          }}
-        >
-          <IconInbox size={15} />
-        </span>
-        <strong style={{ ...PRODUCT_TEXT_STYLE, flex: 1 }}>{idea.title}</strong>
-        {source !== undefined && (
-          <span
-            style={{
-              background: sourceColor.background,
-              borderRadius: TASK_TOKENS.radiusExtraSmall,
-              color: sourceColor.text,
-              fontFamily: TASK_TOKENS.fontFamily,
-              fontSize: 11,
-              padding: '1px 6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t(source.label)}
-          </span>
-        )}
+      <div style={{ display: 'flex', flex: 1, gap: 12, padding: 12 }}>
         <button
           type="button"
           disabled={!canCount}
@@ -319,87 +343,151 @@ const IdeaCard = ({
             }
           }}
           style={{
-            ...PRODUCT_MUTED_STYLE,
-            background: TASK_TOKENS.backgroundTertiary,
-            border: 'none',
-            borderRadius: TASK_TOKENS.radiusExtraSmall,
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            background: TASK_TOKENS.background,
+            border: `1px solid ${TASK_TOKENS.border}`,
+            borderRadius: TASK_TOKENS.radiusSmall,
+            color: TASK_TOKENS.textPrimary,
             cursor: canCount ? 'pointer' : 'default',
-            fontWeight: 600,
-            padding: '1px 6px',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          +{requestCount}
-        </button>
-      </div>
-      {typeof idea.description === 'string' && idea.description !== '' && (
-        <span
-          style={{ ...PRODUCT_TEXT_STYLE, color: TASK_TOKENS.textSecondary }}
-        >
-          {idea.description}
-        </span>
-      )}
-      {typeof idea.quote === 'string' && idea.quote !== '' && (
-        <span
-          style={{
-            ...PRODUCT_TEXT_STYLE,
-            alignItems: 'flex-start',
-            borderLeft: `2px solid ${TASK_TOKENS.borderStrong}`,
             display: 'flex',
-            fontStyle: 'italic',
-            gap: 6,
-            paddingLeft: 8,
+            flexDirection: 'column',
+            flexShrink: 0,
+            fontFamily: TASK_TOKENS.fontFamily,
+            gap: 1,
+            padding: '5px 0 6px',
+            width: 48,
           }}
         >
-          <IconBlockquote size={13} />
-          {idea.quote}
-        </span>
-      )}
-      <span style={PRODUCT_MUTED_STYLE}>
-        {[
-          idea.requester === null ||
-          idea.requester === undefined ||
-          idea.requester === ''
-            ? '—'
-            : idea.requester,
-          typeof idea.createdAt === 'string'
-            ? new Date(idea.createdAt).toLocaleDateString()
-            : null,
-          ageDays > STALE_ITEM_MONTHS * 30 ? t('over 6 months old') : null,
-        ]
-          .filter((part) => part !== null)
-          .join(' · ')}
-      </span>
-      {canWrite && status === 'INBOX' && (
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-          <TaskButton size="small" variant="ghost" onClick={onReject}>
-            <IconX size={14} />
-            {t('Reject')}
-          </TaskButton>
-          <TaskButton size="small" variant="primary" onClick={onPromote}>
-            <IconArrowRight size={14} />
-            {t('Add to backlog')}
-          </TaskButton>
-        </div>
-      )}
-      {status === 'PROMOTED' && typeof idea.promotedIssueId === 'string' && (
-        <div>
-          <TaskButton
-            size="small"
-            variant="ghost"
-            onClick={() => onOpenItem(idea.promotedIssueId as string)}
+          {canCount && (
+            <span style={{ color: TASK_TOKENS.textTertiary, display: 'flex' }}>
+              <IconChevronUp size={14} />
+            </span>
+          )}
+          <span
+            style={{
+              fontSize: 15,
+              fontVariantNumeric: 'tabular-nums',
+              fontWeight: 600,
+              lineHeight: '18px',
+            }}
           >
-            <IconArrowRight size={14} />
-            {promotedIssueKey ?? t('Open item')}
-          </TaskButton>
+            {requestCount}
+          </span>
+          <span style={{ color: TASK_TOKENS.textTertiary, fontSize: 10 }}>
+            {t('requests')}
+          </span>
+        </button>
+
+        <div
+          onClick={() => setIsExpanded((current) => !current)}
+          style={{
+            cursor: canExpand ? 'pointer' : 'default',
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            gap: 6,
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              ...PRODUCT_TEXT_STYLE,
+              ...(isExpanded ? {} : IDEA_CLAMP_STYLE),
+              fontSize: 14,
+              fontWeight: 600,
+              lineHeight: '20px',
+              WebkitLineClamp: isExpanded ? 'none' : 2,
+            }}
+          >
+            {idea.title}
+          </span>
+          <span
+            style={{
+              ...PRODUCT_MUTED_STYLE,
+              alignItems: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+            }}
+          >
+            {source !== undefined && (
+              <span
+                style={{
+                  background: sourceColor.background,
+                  borderRadius: TASK_TOKENS.radiusExtraSmall,
+                  color: sourceColor.text,
+                  fontSize: 11,
+                  padding: '1px 6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t(source.label)}
+              </span>
+            )}
+            {metaParts.length > 0 && <span>{metaParts.join(' · ')}</span>}
+            {ageDays > STALE_ITEM_MONTHS * 30 && (
+              <span style={{ color: readTagColor('orange').text }}>
+                {t('over 6 months old')}
+              </span>
+            )}
+          </span>
+          {isNonEmptyString(idea.description) && (
+            <span
+              style={{
+                ...PRODUCT_TEXT_STYLE,
+                ...(isExpanded ? {} : IDEA_CLAMP_STYLE),
+                color: TASK_TOKENS.textSecondary,
+                lineHeight: '19px',
+                whiteSpace: 'pre-wrap',
+                WebkitLineClamp: isExpanded ? 'none' : 3,
+              }}
+            >
+              {idea.description}
+            </span>
+          )}
+          {canExpand && (
+            <span
+              style={{
+                ...PRODUCT_MUTED_STYLE,
+                color: TASK_TOKENS.accent,
+                fontWeight: 500,
+              }}
+            >
+              {isExpanded ? t('Show less') : t('Show more')}
+            </span>
+          )}
+          {isNonEmptyString(idea.quote) && (
+            <span
+              style={{
+                ...PRODUCT_TEXT_STYLE,
+                alignItems: 'flex-start',
+                borderLeft: `2px solid ${TASK_TOKENS.borderStrong}`,
+                color: TASK_TOKENS.textSecondary,
+                display: 'flex',
+                fontStyle: 'italic',
+                gap: 6,
+                paddingLeft: 8,
+              }}
+            >
+              <IconBlockquote size={13} />
+              {idea.quote}
+            </span>
+          )}
         </div>
-      )}
-      {canWrite && status === 'REJECTED' && (
-        <div>
-          <TaskButton size="small" variant="ghost" onClick={onRestore}>
-            <IconRestore size={14} />
-            {t('Restore')}
-          </TaskButton>
+      </div>
+
+      {footer !== null && (
+        <div
+          style={{
+            borderTop: `1px solid ${TASK_TOKENS.borderLight}`,
+            display: 'flex',
+            gap: 6,
+            justifyContent: 'flex-end',
+            padding: '8px 12px',
+          }}
+        >
+          {footer}
         </div>
       )}
     </div>
