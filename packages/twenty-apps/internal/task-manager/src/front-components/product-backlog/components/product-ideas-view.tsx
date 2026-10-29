@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import {
   IconArrowRight,
@@ -58,13 +58,23 @@ export const ProductIdeasView = ({
 }: ProductViewProps) => {
   const [tab, setTab] = useState<IdeaStatus>('INBOX');
   const [isAdding, setIsAdding] = useState(false);
+  // Clicks land at once and in order; the page re-read only confirms them.
+  const [requestCounts, setRequestCounts] = useState<Record<string, number>>(
+    {},
+  );
+  // oxlint-disable-next-line twenty/no-state-useref
+  const requestCountsRef = useRef<Record<string, number>>({});
+  // oxlint-disable-next-line twenty/no-state-useref
+  const countWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const readRequestCount = (idea: Idea) =>
+    requestCounts[idea.id] ?? idea.requestCount ?? 1;
   const countOf = (status: IdeaStatus) =>
     data.ideas.filter((idea) => (idea.status ?? 'INBOX') === status).length;
   const ideas = data.ideas
     .filter((idea) => (idea.status ?? 'INBOX') === tab)
     .sort(
       (left, right) =>
-        (right.requestCount ?? 1) - (left.requestCount ?? 1) ||
+        readRequestCount(right) - readRequestCount(left) ||
         (right.createdAt ?? '').localeCompare(left.createdAt ?? ''),
     );
 
@@ -75,6 +85,36 @@ export const ProductIdeasView = ({
     } catch (error) {
       reportError(error);
     }
+  };
+
+  const changeRequestCount = (idea: Idea, delta: number) => {
+    const current = requestCountsRef.current[idea.id] ?? idea.requestCount ?? 1;
+    const next = Math.max(1, current + delta);
+
+    if (next === current) {
+      return;
+    }
+
+    requestCountsRef.current = { ...requestCountsRef.current, [idea.id]: next };
+    setRequestCounts(requestCountsRef.current);
+    countWriteQueueRef.current = countWriteQueueRef.current.then(async () => {
+      try {
+        await postAppRoute(UPDATE_IDEA_ROUTE_PATH, {
+          ideaId: idea.id,
+          data: { requestCount: next },
+        });
+      } catch (error) {
+        const rest = Object.fromEntries(
+          Object.entries(requestCountsRef.current).filter(
+            ([ideaId]) => ideaId !== idea.id,
+          ),
+        );
+
+        requestCountsRef.current = rest;
+        setRequestCounts(rest);
+        reportError(error);
+      }
+    });
   };
 
   const promoteIdea = async (ideaId: string) => {
@@ -171,11 +211,8 @@ export const ProductIdeasView = ({
                 data.items.find((item) => item.id === idea.promotedIssueId)
                   ?.issueKey ?? null
               }
-              onPlusOne={() =>
-                void updateIdea(idea.id, {
-                  requestCount: (idea.requestCount ?? 1) + 1,
-                })
-              }
+              requestCount={readRequestCount(idea)}
+              onChangeRequestCount={(delta) => changeRequestCount(idea, delta)}
               onReject={() => void updateIdea(idea.id, { status: 'REJECTED' })}
               onRestore={() => void updateIdea(idea.id, { status: 'INBOX' })}
               onPromote={() => void promoteIdea(idea.id)}
@@ -206,7 +243,8 @@ type IdeaCardProps = {
   idea: Idea;
   canWrite: boolean;
   promotedIssueKey: string | null;
-  onPlusOne: () => void;
+  requestCount: number;
+  onChangeRequestCount: (delta: number) => void;
   onReject: () => void;
   onRestore: () => void;
   onPromote: () => void;
@@ -217,7 +255,8 @@ const IdeaCard = ({
   idea,
   canWrite,
   promotedIssueKey,
-  onPlusOne,
+  requestCount,
+  onChangeRequestCount,
   onReject,
   onRestore,
   onPromote,
@@ -230,6 +269,7 @@ const IdeaCard = ({
       ? Math.round((Date.now() - Date.parse(idea.createdAt)) / DAY_IN_MS)
       : 0;
   const status = idea.status ?? 'INBOX';
+  const canCount = canWrite && status === 'INBOX';
 
   return (
     <div
@@ -270,22 +310,26 @@ const IdeaCard = ({
         )}
         <button
           type="button"
-          disabled={!canWrite || status !== 'INBOX'}
-          title={t('Asked for again: +1')}
-          onClick={onPlusOne}
+          disabled={!canCount}
+          title={canCount ? t('Left click: +1 · Right click: −1') : undefined}
+          onClick={() => onChangeRequestCount(1)}
+          onContextMenu={() => {
+            if (canCount && requestCount > 1) {
+              onChangeRequestCount(-1);
+            }
+          }}
           style={{
             ...PRODUCT_MUTED_STYLE,
             background: TASK_TOKENS.backgroundTertiary,
             border: 'none',
             borderRadius: TASK_TOKENS.radiusExtraSmall,
-            cursor: canWrite && status === 'INBOX' ? 'pointer' : 'default',
+            cursor: canCount ? 'pointer' : 'default',
             fontWeight: 600,
             padding: '1px 6px',
             whiteSpace: 'nowrap',
           }}
         >
-          ×{idea.requestCount ?? 1}
-          {canWrite && status === 'INBOX' ? ' +1' : ''}
+          +{requestCount}
         </button>
       </div>
       {typeof idea.description === 'string' && idea.description !== '' && (

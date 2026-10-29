@@ -181,6 +181,8 @@ export const ISSUE_HISTORY_FROM_STATUS_ID_FIELD_UID =
   'c5989500-8c38-4578-af7f-aa117a73a4ee';
 export const ISSUE_HISTORY_TO_STATUS_ID_FIELD_UID =
   '1151b071-4ed9-497b-b604-14ca9fbcc8ed';
+export const ISSUE_HISTORY_DETAIL_FIELD_UID =
+  '114ccef8-b2a2-4611-b5cc-de40bcfec5b2';
 export const ISSUE_HISTORY_ISSUE_FIELD_UID =
   'cc097730-abfd-4d2e-ab88-957722ff7319';
 export const ISSUE_HISTORIES_FIELD_UID = 'a7db2c78-506c-4f97-98aa-970eda8ee917';

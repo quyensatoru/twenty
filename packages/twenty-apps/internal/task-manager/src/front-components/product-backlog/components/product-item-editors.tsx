@@ -10,6 +10,7 @@ import {
   type UserStory,
 } from '../../../types/product-backlog';
 import { type ItemReadiness } from '../../../utils/product-backlog/item-readiness.util';
+import { TaskCheckbox } from '../../components/task-checkbox';
 import { TaskIconButton } from '../../components/task-icon-button';
 import { TASK_TOKENS } from '../../components/task-tokens';
 import {
@@ -79,50 +80,92 @@ type AcceptanceCriteriaEditorProps = {
   criteria: AcceptanceCriterion[] | null | undefined;
   onChange: (criteria: AcceptanceCriterion[]) => void;
   isReadOnly: boolean;
+  // The text becomes an input; only the box ticks the criterion.
+  isTextEditable?: boolean;
 };
 
 export const AcceptanceCriteriaEditor = ({
   criteria,
   onChange,
   isReadOnly,
+  isTextEditable = false,
 }: AcceptanceCriteriaEditorProps) => {
   const list = criteria ?? [];
+  const toggle = (criterionId: string) =>
+    onChange(
+      list.map((candidate) =>
+        candidate.id === criterionId
+          ? { ...candidate, isDone: !candidate.isDone }
+          : candidate,
+      ),
+    );
+  const remove = (criterionId: string) =>
+    onChange(list.filter((candidate) => candidate.id !== criterionId));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {list.map((criterion) => (
-        <ProductCheckRow
-          key={criterion.id}
-          label={criterion.text}
-          isChecked={criterion.isDone}
-          onToggle={
-            isReadOnly
-              ? undefined
-              : () =>
-                  onChange(
-                    list.map((candidate) =>
-                      candidate.id === criterion.id
-                        ? { ...candidate, isDone: !candidate.isDone }
-                        : candidate,
-                    ),
-                  )
-          }
-          trailing={
-            isReadOnly ? undefined : (
-              <TaskIconButton
-                label={t('Remove criterion')}
-                onClick={() =>
-                  onChange(
-                    list.filter((candidate) => candidate.id !== criterion.id),
-                  )
-                }
-              >
-                <IconTrash size={13} />
-              </TaskIconButton>
-            )
-          }
-        />
-      ))}
+      {list.map((criterion) =>
+        isTextEditable && !isReadOnly ? (
+          <div
+            key={criterion.id}
+            style={{ alignItems: 'center', display: 'flex', gap: 8 }}
+          >
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={criterion.isDone}
+              aria-label={criterion.text}
+              onClick={() => toggle(criterion.id)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                padding: 0,
+              }}
+            >
+              <TaskCheckbox isChecked={criterion.isDone} />
+            </button>
+            <ProductCommitTextInput
+              ariaLabel={t('Acceptance criterion')}
+              value={criterion.text}
+              onCommit={(text) =>
+                text.trim() !== '' &&
+                onChange(
+                  list.map((candidate) =>
+                    candidate.id === criterion.id
+                      ? { ...candidate, text: text.trim() }
+                      : candidate,
+                  ),
+                )
+              }
+            />
+            <TaskIconButton
+              label={t('Remove criterion')}
+              onClick={() => remove(criterion.id)}
+            >
+              <IconTrash size={13} />
+            </TaskIconButton>
+          </div>
+        ) : (
+          <ProductCheckRow
+            key={criterion.id}
+            label={criterion.text}
+            isChecked={criterion.isDone}
+            onToggle={isReadOnly ? undefined : () => toggle(criterion.id)}
+            trailing={
+              isReadOnly ? undefined : (
+                <TaskIconButton
+                  label={t('Remove criterion')}
+                  onClick={() => remove(criterion.id)}
+                >
+                  <IconTrash size={13} />
+                </TaskIconButton>
+              )
+            }
+          />
+        ),
+      )}
       {list.length === 0 && isReadOnly && (
         <span style={PRODUCT_MUTED_STYLE}>
           {t('No acceptance criteria yet.')}

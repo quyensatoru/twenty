@@ -859,3 +859,26 @@ Thiết kế gốc là prototype `product-backlog-crm` (README + PLAN.md, V1.3.6
   route là giao của quyền member với role app, nên chỉ người tự có hai cờ đó mới đọc/lưu được.
 - Production: tạo role **PMA** trong Settings → Roles rồi gán người, sau đó vào tab Cài đặt kiểm tra
   hai cột. Role CSE đã có sẵn nên mặc định đã bị ẩn.
+
+### V1.4 (Requirement CRM V1.4)
+
+- Bảng không còn cột Backlog. Lần đầu Bảng hoặc Product Backlog mở một project (hoặc khi gọi route
+  `migrate-product-backlog`), mọi issue top-level đang ở status `Backlog` thành item, giữ status,
+  xếp cuối Product Backlog theo thứ tự cũ trong cột. Sprint chưa bắt đầu được giữ; sprint đang chạy
+  hoặc đã xong bị bỏ. Cột `PLANNED` được tạo nếu project chưa có, để Bảng bắt đầu từ đó. Subtask ở
+  status Backlog mà issue cha vẫn ở Bảng chuyển sang `PLANNED`. Mỗi issue có History
+  "moved-from-backlog-column".
+- Log để rollback nằm ở `project.productBacklogSettings.backlogColumnMigration`: `issues[]` (id, key,
+  `previousSprintId`, `previousPosition`) và `subtasks[]` (id, key, `previousStatusId`). Rollback: đặt
+  lại `stage = 'ISSUE'`, sprint và position từ log cho từng issue (và `stage = 'ISSUE'` cho subtask của
+  chúng), status cũ cho subtask, rồi xoá key `backlogColumnMigration` nếu muốn chạy lại.
+- Nút "Trả về Backlog" trên header modal issue: issue thành item với status Backlog, rời sprint
+  (sprint đang chạy tính scope change âm từ `committedIssueIds`), History "returned-to-backlog".
+- History ghi thêm khi thêm / xoá / tick / bỏ tick acceptance criterion (field mới `issueHistory.detail`).
+- Renderer core: element có `onContextMenu` thì host chặn menu chuột phải của trình duyệt
+  (`useHtmlHostElementProps`), dùng cho nút đếm `+N` của Ideas. Cần build lại
+  `twenty-front-component-renderer` khi deploy front.
+- Bảng không chọn Sắp xếp thì xếp theo thứ tự thủ công (`issue.position`, mới nhất trước khi bằng
+  nhau), thay cho "mới tạo trước" như cũ. Kéo thẻ lên thẻ khác trong cùng cột thì chiếm chỗ thẻ đó,
+  sang cột khác thì chèn trước thẻ đó, thả vào khoảng trống thì xuống cuối cột; một ô trống hiện
+  đúng chỗ sẽ chèn. Có quy tắc Sắp xếp thì kéo thả chỉ đổi cột như trước.

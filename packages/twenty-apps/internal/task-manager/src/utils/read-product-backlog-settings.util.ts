@@ -129,3 +129,19 @@ export const readProductBacklogSettings = (
 // in the same JSON, outside the settings people edit.
 export const readProductBacklogMigratedAt = (value: unknown): string | null =>
   readText(readRecord(value).migratedAt);
+
+// The V1.4 move of the Board's Backlog column into the Product Backlog: when
+// it ran and what it moved, kept so it can be rolled back.
+export const readBacklogColumnMigration = (
+  value: unknown,
+): JsonRecord | null => {
+  const migration = readRecord(readRecord(value).backlogColumnMigration);
+
+  return readText(migration.migratedAt) === null ? null : migration;
+};
+
+// The keys only the app writes; a settings save must carry them over.
+export const readProductBacklogMigrationState = (value: unknown) => ({
+  migratedAt: readProductBacklogMigratedAt(value),
+  backlogColumnMigration: readBacklogColumnMigration(value),
+});

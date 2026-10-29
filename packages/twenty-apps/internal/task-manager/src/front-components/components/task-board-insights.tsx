@@ -4,6 +4,7 @@ import { t, useLocale } from 'twenty-sdk/front-component';
 import { type PageInset } from '../../types/task-board';
 import {
   buildSprintBurndown,
+  readSprintScopeChange,
   sumStoryPoints,
 } from '../../utils/product-backlog/backlog-metrics.util';
 import {
@@ -130,12 +131,13 @@ export const TaskBoardInsights = ({
   const daysLeft = Number.isNaN(endTime)
     ? null
     : Math.max(0, Math.ceil((endTime - Date.now()) / DAY_IN_MS));
-  const committedIds = new Set(sprint.committedIssueIds ?? []);
-  const addedIssues =
-    committedIds.size === 0
-      ? []
-      : issues.filter((issue) => !committedIds.has(issue.id));
-  const addedPoints = sumStoryPoints(addedIssues);
+  const { addedIssues, addedPoints, removedIssues, removedPoints } =
+    readSprintScopeChange({
+      sprintId: sprint.id,
+      committedIssueIds: sprint.committedIssueIds,
+      sprintIssues: issues,
+      items: data.items,
+    });
   const startOfToday = new Date();
 
   startOfToday.setHours(0, 0, 0, 0);
@@ -282,10 +284,21 @@ export const TaskBoardInsights = ({
         />
         <ProductKpi
           label={t('Scope change')}
-          value={`+${addedPoints} pt`}
-          note={t('{count} issues added after start', {
-            count: addedIssues.length,
-          })}
+          value={
+            removedPoints > 0
+              ? `+${addedPoints} / −${removedPoints} pt`
+              : `+${addedPoints} pt`
+          }
+          note={
+            removedIssues.length > 0
+              ? t('{added} issues added, {removed} removed after start', {
+                  added: addedIssues.length,
+                  removed: removedIssues.length,
+                })
+              : t('{count} issues added after start', {
+                  count: addedIssues.length,
+                })
+          }
         />
         <ProductKpi
           label={t('Overdue')}

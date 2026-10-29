@@ -26,6 +26,7 @@ import { listVisibleProjectIds } from './app-scope/list-visible-project-ids.util
 import { listAppMembers } from './utils/list-app-members.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
+import { migrateBacklogColumnToItems } from './utils/migrate-backlog-column-to-items.util';
 import { migrateProjectToProductBacklog } from './utils/migrate-project-to-product-backlog.util';
 import { resolveProductBacklogAccess } from './utils/resolve-product-backlog-access.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
@@ -178,6 +179,7 @@ const handler = async (event: RoutePayload<ProductBacklogBody>) =>
     const appId = activeProject.appId ?? null;
 
     await migrateProjectToProductBacklog(client, projectId);
+    await migrateBacklogColumnToItems(client, projectId);
 
     const [issueStatuses, sprints, epics, ideas, assignableMembers] =
       await Promise.all([

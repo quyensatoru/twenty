@@ -13,7 +13,7 @@ export const ISSUE_DETAIL_FIELDS = [
   { key: 'parent', label: 'Parent' },
   { key: 'merchants', label: 'Merchants' },
   { key: 'labels', label: 'Labels' },
-  { key: 'points', label: 'Points' },
+  { key: 'points', label: 'Story point' },
   { key: 'dueDate', label: 'Due date' },
   { key: 'resolution', label: 'Resolution' },
   { key: 'key', label: 'Key' },

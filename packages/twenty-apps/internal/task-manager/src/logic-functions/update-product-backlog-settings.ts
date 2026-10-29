@@ -6,7 +6,7 @@ import {
 } from '../constants/product-backlog';
 import { type Connection } from '../types/connection';
 import {
-  readProductBacklogMigratedAt,
+  readProductBacklogMigrationState,
   readProductBacklogSettings,
 } from '../utils/read-product-backlog-settings.util';
 import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
@@ -56,7 +56,7 @@ const handler = async (event: RoutePayload<UpdateProductBacklogSettingsBody>) =>
           data: {
             productBacklogSettings: {
               ...settings,
-              migratedAt: readProductBacklogMigratedAt(stored),
+              ...readProductBacklogMigrationState(stored),
             },
           },
         },

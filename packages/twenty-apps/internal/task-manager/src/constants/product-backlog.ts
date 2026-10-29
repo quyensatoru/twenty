@@ -230,6 +230,10 @@ export const IDEA_STATUS_OPTIONS = [
 // front of a project's columns the first time it is needed.
 export const PLANNED_STATUS_NAME = 'PLANNED';
 
+// The status every item carries. The Board shows no column for it: an issue
+// goes back to the backlog through "Return to Backlog", not a status change.
+export const BACKLOG_STATUS_NAME = 'Backlog';
+
 // Readiness criteria the app checks from the item's own data; the rest are
 // ticked by hand.
 export const AUTOMATIC_READINESS_CRITERION_IDS = [

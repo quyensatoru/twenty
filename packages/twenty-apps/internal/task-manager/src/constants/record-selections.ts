@@ -192,6 +192,7 @@ export const ISSUE_HISTORY_SELECTION = {
   action: true,
   fromStatusId: true,
   toStatusId: true,
+  detail: true,
   authorId: true,
   createdAt: true,
 } as const;

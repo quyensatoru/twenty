@@ -8,7 +8,7 @@ import {
   updateIssuesById,
 } from './product-backlog-stage.util';
 
-const readStoredSettings = async (
+export const readStoredProductBacklogSettings = async (
   client: ApiClient,
   projectId: string,
 ): Promise<Record<string, unknown>> => {
@@ -35,7 +35,7 @@ export const migrateProjectToProductBacklog = async (
   client: ApiClient,
   projectId: string,
 ): Promise<{ migratedItemCount: number }> => {
-  const stored = await readStoredSettings(client, projectId);
+  const stored = await readStoredProductBacklogSettings(client, projectId);
 
   if (readProductBacklogMigratedAt(stored) !== null) {
     return { migratedItemCount: 0 };

@@ -39,14 +39,23 @@ const handler = async (event: DatabaseEventPayload<ProjectCreateEvent>) => {
       : await generateUniqueProjectKey({ client, name: project.name ?? '' });
 
   // A new project has nothing to sort into backlog items, so the Product
-  // Backlog's one-off migration is marked done from the start.
+  // Backlog's one-off migrations are marked done from the start.
+  const now = new Date().toISOString();
+
   await client.mutation({
     updateProject: {
       __args: {
         id: projectId,
         data: {
           ...(key === (project.key ?? '') ? {} : { key }),
-          productBacklogSettings: { migratedAt: new Date().toISOString() },
+          productBacklogSettings: {
+            migratedAt: now,
+            backlogColumnMigration: {
+              migratedAt: now,
+              issues: [],
+              subtasks: [],
+            },
+          },
         },
       },
       id: true,

@@ -23,7 +23,10 @@ import {
   type ProductSprint,
 } from '../../../types/product-backlog';
 import { buildDefaultSprintName } from '../../../utils/build-default-sprint-name.util';
-import { sumStoryPoints } from '../../../utils/product-backlog/backlog-metrics.util';
+import {
+  readSprintScopeChange,
+  sumStoryPoints,
+} from '../../../utils/product-backlog/backlog-metrics.util';
 import { TaskAvatar } from '../../components/task-avatar';
 import {
   IssueTypeGlyph,
@@ -902,11 +905,13 @@ const ActiveSprintPanel = (
   const daysLeft = Number.isNaN(endTime)
     ? null
     : Math.max(0, Math.ceil((endTime - Date.now()) / DAY_IN_MS));
-  const committedIds = new Set(sprint.committedIssueIds ?? []);
-  const addedIssues =
-    committedIds.size === 0
-      ? []
-      : issues.filter((issue) => !committedIds.has(issue.id));
+  const { addedIssues, addedPoints, removedIssues, removedPoints } =
+    readSprintScopeChange({
+      sprintId: sprint.id,
+      committedIssueIds: sprint.committedIssueIds,
+      sprintIssues: issues,
+      items: data.items,
+    });
   const statuses = [...data.issueStatuses].sort(
     (left, right) => (left.position ?? 0) - (right.position ?? 0),
   );
@@ -935,10 +940,21 @@ const ActiveSprintPanel = (
         />
         <ProductKpi
           label={t('Scope change')}
-          value={`+${sumStoryPoints(addedIssues)} pt`}
-          note={t('{count} issues added after start', {
-            count: addedIssues.length,
-          })}
+          value={
+            removedPoints > 0
+              ? `+${addedPoints} / −${removedPoints} pt`
+              : `+${addedPoints} pt`
+          }
+          note={
+            removedIssues.length > 0
+              ? t('{added} issues added, {removed} removed after start', {
+                  added: addedIssues.length,
+                  removed: removedIssues.length,
+                })
+              : t('{count} issues added after start', {
+                  count: addedIssues.length,
+                })
+          }
         />
         <ProductCard style={{ flex: '1 1 220px' }}>
           <span style={PRODUCT_MUTED_STYLE}>{t('By status')}</span>

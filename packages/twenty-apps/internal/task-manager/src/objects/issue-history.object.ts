@@ -3,6 +3,7 @@ import { defineObject, FieldType } from 'twenty-sdk/define';
 import { getSystemFieldUniversalIdentifier } from '../constants/derived-system-field-identifiers';
 import {
   ISSUE_HISTORY_ACTION_FIELD_UID,
+  ISSUE_HISTORY_DETAIL_FIELD_UID,
   ISSUE_HISTORY_FROM_STATUS_ID_FIELD_UID,
   ISSUE_HISTORY_OBJECT_UID,
   ISSUE_HISTORY_TO_STATUS_ID_FIELD_UID,
@@ -26,9 +27,11 @@ export default defineObject({
     }),
   fields: [
     {
-      // `created` or `status-changed`. New actions stay in this one column so
-      // the feed never needs a schema change to learn a new event. Nullable
-      // like every other TEXT field here; the triggers always write it.
+      // `created`, `status-changed`, `ac-added` / `ac-removed` / `ac-checked`
+      // / `ac-unchecked`, `returned-to-backlog`, `moved-from-backlog-column`.
+      // New actions stay in this one column so the feed never needs a schema
+      // change to learn a new event. Nullable like every other TEXT field
+      // here; the triggers always write it.
       universalIdentifier: ISSUE_HISTORY_ACTION_FIELD_UID,
       type: FieldType.TEXT,
       name: 'action',
@@ -56,6 +59,16 @@ export default defineObject({
       label: 'To status id',
       description: 'Status record id after the change, if any',
       icon: 'IconArrowRight',
+      isNullable: true,
+    },
+    {
+      // The words the entry is about, e.g. an acceptance criterion's text.
+      universalIdentifier: ISSUE_HISTORY_DETAIL_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'detail',
+      label: 'Detail',
+      description: 'What the change was about, when the action needs it',
+      icon: 'IconFileText',
       isNullable: true,
     },
   ],

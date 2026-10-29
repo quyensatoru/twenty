@@ -1,7 +1,10 @@
 import { t } from 'twenty-sdk/front-component';
 import { IconHistory } from 'twenty-ui/icon';
 
-import { type IssueHistoryRow, type MemberRow } from '../hooks/use-issue-detail';
+import {
+  type IssueHistoryRow,
+  type MemberRow,
+} from '../hooks/use-issue-detail';
 import { readMemberName } from '../utils/read-member-name.util';
 import { TaskEmptyState } from './task-empty-state';
 import { formatDateTimeLabel } from '../utils/format-date-time-label.util';
@@ -170,7 +173,49 @@ const HistoryActionLine = ({
     );
   }
 
+  const criterionLabel = readCriterionActionLabel(history.action);
+
+  if (criterionLabel !== null) {
+    return (
+      <span style={lineStyle}>
+        {criterionLabel}{' '}
+        <strong style={{ color: TASK_TOKENS.textPrimary, fontWeight: 500 }}>
+          {history.detail ?? ''}
+        </strong>
+      </span>
+    );
+  }
+
+  if (history.action === 'returned-to-backlog') {
+    return (
+      <span style={lineStyle}>{t('returned it to the Product Backlog')}</span>
+    );
+  }
+
+  if (history.action === 'moved-from-backlog-column') {
+    return (
+      <span style={lineStyle}>
+        {t('moved it from the Backlog column to the Product Backlog (V1.4)')}
+      </span>
+    );
+  }
+
   return <span style={lineStyle}>{history.action ?? t('Changed')}</span>;
+};
+
+const readCriterionActionLabel = (action?: string | null) => {
+  switch (action) {
+    case 'ac-added':
+      return t('added acceptance criterion');
+    case 'ac-removed':
+      return t('removed acceptance criterion');
+    case 'ac-checked':
+      return t('met acceptance criterion');
+    case 'ac-unchecked':
+      return t('unmet acceptance criterion');
+    default:
+      return null;
+  }
 };
 
 const StatusName = ({

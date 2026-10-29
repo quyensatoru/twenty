@@ -1,6 +1,10 @@
-import { PLANNED_STATUS_NAME } from '../../constants/product-backlog';
+import {
+  BACKLOG_STATUS_NAME,
+  PLANNED_STATUS_NAME,
+} from '../../constants/product-backlog';
 import { type ApiClient } from '../../types/api-client';
 import { type IssueStage } from '../../types/product-backlog';
+import { isBacklogStatusName } from '../../utils/is-backlog-status-name.util';
 import { resolveEffectiveAppId } from '../app-scope/resolve-effective-app-id.util';
 import { listScopedRecords } from './list-scoped-records.util';
 
@@ -68,6 +72,53 @@ export const ensurePlannedStatusId = async (
 
   if (typeof statusId !== 'string') {
     throw new Error('The PLANNED status could not be created.');
+  }
+
+  return statusId;
+};
+
+// The status an item goes back to, created in front of the columns when the
+// project has none.
+export const ensureBacklogStatusId = async (
+  client: ApiClient,
+  projectId: string,
+): Promise<string> => {
+  const statuses = await listProjectStatuses(client, projectId);
+  const existing = statuses.find((status) => isBacklogStatusName(status.name));
+
+  if (existing !== undefined) {
+    return existing.id;
+  }
+
+  const firstPosition = statuses.reduce(
+    (lowest, status) => Math.min(lowest, status.position ?? 0),
+    0,
+  );
+  const appId = await resolveEffectiveAppId({
+    client,
+    objectNameSingular: 'issueStatus',
+    immediateForeignKeyValue: projectId,
+  });
+  const result = await client.mutation({
+    createIssueStatus: {
+      __args: {
+        data: {
+          projectId,
+          appId,
+          name: BACKLOG_STATUS_NAME,
+          category: 'UNSTARTED',
+          color: 'GRAY',
+          position: firstPosition - 2,
+        },
+      },
+      id: true,
+    },
+  });
+  const statusId = (result?.createIssueStatus as { id?: string } | undefined)
+    ?.id;
+
+  if (typeof statusId !== 'string') {
+    throw new Error('The Backlog status could not be created.');
   }
 
   return statusId;

@@ -9,7 +9,6 @@ import {
 import {
   IconCheckbox,
   IconFlag,
-  IconLayoutSidebar,
   IconPlus,
   IconCalendarRepeat,
   IconStack2,
@@ -25,7 +24,6 @@ import {
 } from '../constants/issue-view-fields';
 import {
   TASK_BOARD_ROUTE_PATH,
-  UPDATE_ISSUE_ROUTE_PATH,
   UPDATE_ISSUE_VIEW_SETTINGS_ROUTE_PATH,
 } from '../constants/route-paths';
 import { TASK_BOARD_FRONT_COMPONENT_UID } from '../constants/universal-identifiers';
@@ -56,7 +54,6 @@ import { NO_STATUS_VALUE, TaskBoardView } from './components/task-board-view';
 import { TaskDiscussionNotifications } from './components/task-discussion-notifications';
 import { TaskButton } from './components/task-button';
 import { TaskCompleteSprintDialog } from './components/task-complete-sprint-dialog';
-import { type EpicFilter, TaskEpicPanel } from './components/task-epic-panel';
 import { TaskColorDot, TaskFilterChip } from './components/task-chip';
 import { TaskFieldsMenu } from './components/task-fields-menu';
 import {
@@ -73,27 +70,30 @@ import {
   TaskSprintHeader,
 } from './components/task-sprint-header';
 import { readTagColor, TASK_TOKENS } from './components/task-tokens';
-import { TaskProjectBadge, TaskToolbarToggle } from './components/task-toolbar';
+import { TaskProjectBadge } from './components/task-toolbar';
 import { TaskViewSwitch } from './components/task-view-switch';
 import { useBoardSortPreference } from './hooks/use-board-sort-preference';
 import { useIsMobile } from './hooks/use-is-mobile';
-import {
-  parseBoardViewAnchor,
-} from './utils/parse-board-anchor.util';
+import { parseBoardViewAnchor } from './utils/parse-board-anchor.util';
 import { postAppRoute } from './utils/post-app-route.util';
 import { readErrorText } from './utils/read-error-text.util';
 import { readMemberName } from './utils/read-member-name.util';
 import { summarizeBoardProgress } from './utils/summarize-board-progress.util';
 import { useBoardIssueSelection } from './hooks/use-board-issue-selection';
-import { useHostLocationHash, useHostLocationPathname } from './hooks/use-host-location';
+import {
+  useHostLocationHash,
+  useHostLocationPathname,
+} from './hooks/use-host-location';
 
 const ALL_VALUE = 'ALL';
 const BACKLOG_VALUE = 'BACKLOG';
 const NO_EPIC_VALUE = 'NO_EPIC';
 const ACTIVE_SPRINT_VALUE = BOARD_ACTIVE_SPRINT;
+
+// undefined = every issue, null = issues with no epic.
+type EpicFilter = string | null | undefined;
 const PROJECT_STORAGE_KEY = 'task-board.project-id';
 const VIEW_STORAGE_KEY = 'task-board.view';
-const EPIC_PANEL_STORAGE_KEY = 'task-board.epic-panel-open';
 
 // The sandbox's localStorage is seeded from the host before the first render,
 // so these read synchronously. Guarded anyway: a store that is missing or
@@ -121,8 +121,8 @@ const readStoredView = (): BoardViewMode =>
 
 // The Jira-style planning page: one project at a time, seen as its Backlog
 // (sprints and backlog as ranked lists) or its Board (the active sprint as
-// status columns), with the epic panel beside either and the issue detail as
-// a drawer. Filters, project and open issue survive switching views.
+// status columns), with the issue detail as a drawer. Filters, project and
+// open issue survive switching views.
 //
 // Everything here is app-drawn — plain elements, TASK_TOKENS and twenty-ui
 // icons only. No host widget is used: a host board would be one shared view
@@ -147,9 +147,6 @@ const TaskBoard = () => {
   const [view, setView] = useState<BoardViewMode>(
     () => parseBoardViewAnchor(locationHash) ?? readStoredView(),
   );
-  const [isEpicPanelOpen, setIsEpicPanelOpen] = useState(
-    () => readStoredValue(EPIC_PANEL_STORAGE_KEY) === 'true',
-  );
   const [shouldIncludeOlderDone, setShouldIncludeOlderDone] = useState(false);
   const [loadingColumnKeys, setLoadingColumnKeys] = useState<string[]>([]);
   // Bumped on every full load, so a column page that was in flight when the
@@ -169,7 +166,6 @@ const TaskBoard = () => {
   const { selectedIssueId, selectIssue: setSelectedIssueId } =
     useBoardIssueSelection();
   const [composerStatusId, setComposerStatusId] = useState<string | null>(null);
-  // A backlog row in flight, shared with the epic panel's drop targets.
   const [draggingIssueId, setDraggingIssueId] = useState<string | null>(null);
   const [sprintDialogSprint, setSprintDialogSprint] =
     useState<BoardSprint | null>(null);
@@ -300,13 +296,6 @@ const TaskBoard = () => {
     setComposerStatusId(null);
   };
 
-  const toggleEpicPanel = () => {
-    const nextIsOpen = !isEpicPanelOpen;
-
-    setIsEpicPanelOpen(nextIsOpen);
-    storeValue(EPIC_PANEL_STORAGE_KEY, String(nextIsOpen));
-  };
-
   // A global-search pick jumps the board to the result's project (when it is
   // a project on screen) and opens its modal. The typed query is cleared: it
   // filtered the old project's columns, and keeping it would hide the very
@@ -365,26 +354,6 @@ const TaskBoard = () => {
   const toggleOnlyMine = () => {
     setSelectedAssigneeIds([]);
     setIsOnlyMine(!isOnlyMine);
-  };
-
-  // A subtask has no epic of its own in Jira: a subtask card dropped on an
-  // epic plans its parent there, and the server carries the epic down.
-  const assignIssueToEpic = async (issueId: string, epicId: string) => {
-    setDraggingIssueId(null);
-
-    const parentId = board?.issues.find(
-      (issue) => issue.id === issueId,
-    )?.parentId;
-
-    try {
-      await postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
-        issueId: typeof parentId === 'string' ? parentId : issueId,
-        data: { epicId },
-      });
-      refreshBoard();
-    } catch (error) {
-      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
-    }
   };
 
   const membersById = useMemo(
@@ -525,12 +494,7 @@ const TaskBoard = () => {
   if (isLoading && board === null) {
     return (
       <TaskBoardFrame>
-        <TaskBoardSkeleton
-          view="board"
-          isMobile={isMobile}
-          isEpicPanelOpen={isEpicPanelOpen}
-          inset={pageInset}
-        />
+        <TaskBoardSkeleton view="board" isMobile={isMobile} inset={pageInset} />
       </TaskBoardFrame>
     );
   }
@@ -590,10 +554,6 @@ const TaskBoard = () => {
         .map((status) => status.id),
     ),
   });
-
-  // On a phone the epic panel takes the whole page, like a screen of its own,
-  // since there is no room beside the view for it.
-  const isEpicPanelFullScreen = isMobile && isEpicPanelOpen && view === 'board';
 
   const openCreateIssue = () => {
     changeView('board');
@@ -682,39 +642,31 @@ const TaskBoard = () => {
       })),
       onToggle: toggleSingleValue(typeFilter, setTypeFilter),
     },
-    ...(board.epics.length > 0
-      ? [
-          {
-            key: 'epic',
-            label: t('Epic'),
-            icon: <IconStack2 size={14} />,
-            isMulti: false,
-            selectedValues:
-              epicFilter === undefined
-                ? []
-                : [epicFilter === null ? NO_EPIC_VALUE : epicFilter],
-            options: [
-              { value: NO_EPIC_VALUE, label: t('No epic') },
-              ...board.epics.map((epic) => ({
-                value: epic.id,
-                label: epic.name ?? t('Untitled epic'),
-                icon: (
-                  <TaskColorDot
-                    color={readTagColor(readEpicColor(epic)).text}
-                  />
-                ),
-              })),
-            ],
-            onToggle: (value: string) => {
-              const nextEpicFilter = value === NO_EPIC_VALUE ? null : value;
+    {
+      key: 'epic',
+      label: t('Epic'),
+      icon: <IconStack2 size={14} />,
+      isMulti: false,
+      selectedValues:
+        epicFilter === undefined
+          ? []
+          : [epicFilter === null ? NO_EPIC_VALUE : epicFilter],
+      options: [
+        { value: NO_EPIC_VALUE, label: t('No epic') },
+        ...board.epics.map((epic) => ({
+          value: epic.id,
+          label: epic.name ?? t('Untitled epic'),
+          icon: <TaskColorDot color={readTagColor(readEpicColor(epic)).text} />,
+        })),
+      ],
+      onToggle: (value: string) => {
+        const nextEpicFilter = value === NO_EPIC_VALUE ? null : value;
 
-              setEpicFilter(
-                epicFilter === nextEpicFilter ? undefined : nextEpicFilter,
-              );
-            },
-          },
-        ]
-      : []),
+        setEpicFilter(
+          epicFilter === nextEpicFilter ? undefined : nextEpicFilter,
+        );
+      },
+    },
     ...(view === 'board'
       ? [
           {
@@ -882,15 +834,6 @@ const TaskBoard = () => {
             padding: `6px ${pageInset.right}px 6px ${pageInset.left}px`,
           }}
         >
-          {board.activeProjectId !== null && (
-            <TaskToolbarToggle
-              label={isEpicPanelOpen ? t('Hide epics') : t('Show epics')}
-              isActive={isEpicPanelOpen}
-              onClick={toggleEpicPanel}
-            >
-              <IconLayoutSidebar size={16} />
-            </TaskToolbarToggle>
-          )}
           <TaskFilterMenu fields={filterFields} isCompact={isMobile} />
           {selectedAssigneeIds.length > 0 && (
             <TaskFilterChip
@@ -1032,37 +975,9 @@ const TaskBoard = () => {
         ))}
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {view === 'board' &&
-          isEpicPanelOpen &&
-          board.activeProjectId !== null && (
-            <TaskEpicPanel
-              isFullScreen={isEpicPanelFullScreen}
-              inset={pageInset}
-              projectId={board.activeProjectId}
-              epics={board.epics}
-              epicFilter={epicFilter}
-              onEpicFilterChange={(nextEpicFilter) => {
-                setEpicFilter(nextEpicFilter);
-
-                // Full screen, the panel hides what the filter changes.
-                if (isEpicPanelFullScreen) {
-                  toggleEpicPanel();
-                }
-              }}
-              canWrite={board.canWrite}
-              canSoftDelete={board.canSoftDelete}
-              refreshKey={refreshKey}
-              refreshBoard={refreshBoard}
-              draggingIssueId={draggingIssueId}
-              onAssignIssueToEpic={(issueId, epicId) =>
-                void assignIssueToEpic(issueId, epicId)
-              }
-              onClose={toggleEpicPanel}
-            />
-          )}
         <div
           style={{
-            display: isEpicPanelFullScreen ? 'none' : 'flex',
+            display: 'flex',
             flex: 1,
             flexDirection: 'column',
             minHeight: 0,
@@ -1095,6 +1010,7 @@ const TaskBoard = () => {
               newIssueEpicId={newIssueEpicId}
               draggingIssueId={draggingIssueId}
               setDraggingIssueId={setDraggingIssueId}
+              isManualOrder={boardSort.length === 0}
               loadError={loadError}
               boardPath={boardPath}
               inset={pageInset}
@@ -1175,6 +1091,6 @@ export default defineFrontComponent({
   universalIdentifier: TASK_BOARD_FRONT_COMPONENT_UID,
   name: 'task-board',
   description:
-    'Jira-style planning page: backlog with sprints, the active sprint board, an epic panel and the issue detail as a drawer.',
+    'Jira-style planning page: backlog with sprints, the active sprint board, and the issue detail as a drawer.',
   component: TaskBoard,
 });

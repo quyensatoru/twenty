@@ -9,6 +9,7 @@ import {
   t,
 } from 'twenty-sdk/front-component';
 import {
+  IconArrowBackUp,
   IconArrowsDiagonal,
   IconCalendar,
   IconChevronDown,
@@ -34,6 +35,7 @@ import {
 } from './task-detail-layout';
 import { TaskChip } from './task-chip';
 import { TaskPriorityGlyph } from './task-priority-glyph';
+import { SET_ISSUE_STAGE_ROUTE_PATH } from '../../constants/product-backlog';
 import { type ProductItem } from '../../types/product-backlog';
 import { type BoardIssue } from '../../types/task-board';
 import {
@@ -53,6 +55,7 @@ import {
   buildRecordUrl,
 } from '../utils/build-record-url.util';
 import { useHiddenDetailFields } from '../hooks/use-hidden-detail-fields';
+import { useProductItemContext } from '../hooks/use-product-item-context';
 import { useIsMobile } from '../hooks/use-is-mobile';
 import { useStoredSideColumnWidth } from '../hooks/use-side-column-resize';
 import {
@@ -84,7 +87,10 @@ import { IssueModalSummary } from './issue-modal-summary';
 import { TaskAttachmentsSection } from './task-attachments-section';
 import { IssueTypeGlyph } from './task-board-card';
 import { TaskButton } from './task-button';
+import { TaskDialogFrame } from './task-dialog-frame';
 import {
+  TASK_DETAIL_BLOCK_FRAME_STYLE,
+  TASK_DETAIL_BLOCK_INSET,
   TASK_EDITING_RICH_TEXT_FRAME_STYLE,
   TASK_DESCRIPTION_MIN_HEIGHT,
   TASK_RICH_TEXT_READING_PADDING,
@@ -191,6 +197,8 @@ export const TaskBoardDetail = ({
   const [isWorklogsNewestFirst, setIsWorklogsNewestFirst] = useState(true);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [isConfirmingReturn, setIsConfirmingReturn] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
   const { sideColumnWidth, changeSideColumnWidth } = useStoredSideColumnWidth();
   // Mirrors the description draft synchronously (see saveDescription below).
   // A ref, not state: it is written on every keystroke and must never
@@ -226,10 +234,15 @@ export const TaskBoardDetail = ({
     setDescriptionDraft(null);
     setSubtaskDraft('');
     setIsAddingSubtask(false);
+    setIsConfirmingReturn(false);
   }, [issueId]);
 
   const { detail: displayedDetail, saveHiddenDetailFields } =
     useHiddenDetailFields({ detail: data, reload });
+  const productContext = useProductItemContext(
+    issueId,
+    (data.issue as ProductItem | null)?.blockedByIssueIds ?? [],
+  );
 
   const projectId =
     typeof data.issue?.projectId === 'string' ? data.issue.projectId : null;
@@ -507,6 +520,31 @@ export const TaskBoardDetail = ({
     }
   };
 
+  // The issue becomes an item again with everything it carries; a draft
+  // description not saved yet is dropped, as closing the modal would.
+  const returnToBacklog = async () => {
+    setIsReturning(true);
+
+    try {
+      await postAppRoute(SET_ISSUE_STAGE_ROUTE_PATH, {
+        issueIds: [issueId],
+        stage: 'ITEM',
+      });
+      setIsConfirmingReturn(false);
+      cancelEditingDescription();
+      void enqueueSnackbar({
+        message: t('Back in the Product Backlog.'),
+        variant: 'success',
+      });
+      onCardChanged();
+      await reload();
+    } catch (error) {
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
+    } finally {
+      setIsReturning(false);
+    }
+  };
+
   const createSubtask = () => {
     const title = subtaskDraft.trim();
 
@@ -629,6 +667,12 @@ export const TaskBoardDetail = ({
   };
   const commentCount =
     discussion.snapshot?.comments.length ?? data.issueComments.length;
+  const canReturnToBacklog =
+    ((issue as ProductItem).stage ?? 'ISSUE') === 'ISSUE' &&
+    typeof issue.parentId !== 'string' &&
+    productContext?.canWrite === true;
+  const returningSprintName =
+    data.sprints.find((sprint) => sprint.id === issue.sprintId)?.name ?? null;
   const projectName = data.project?.name ?? null;
 
   const header = (
@@ -684,6 +728,20 @@ export const TaskBoardDetail = ({
           {issue.issueKey ?? ''}
         </span>
       </span>
+      {canReturnToBacklog && (
+        <>
+          <TaskButton
+            size="small"
+            variant="ghost"
+            title={t('Turn this issue back into a Product Backlog item')}
+            onClick={() => setIsConfirmingReturn(true)}
+          >
+            <IconArrowBackUp size={14} />
+            {!isMobile && t('Return to Backlog')}
+          </TaskButton>
+          <TaskHeaderDivider />
+        </>
+      )}
       {!isPage && navIndex >= 0 && navIssueIds.length > 1 && !isMobile && (
         <span
           style={{
@@ -955,6 +1013,7 @@ export const TaskBoardDetail = ({
       {data.parentIssue !== null && (
         <div
           style={{
+            ...TASK_DETAIL_BLOCK_FRAME_STYLE,
             border: `1px solid ${TASK_TOKENS.border}`,
             borderRadius: TASK_TOKENS.radius,
             overflow: 'hidden',
@@ -1020,6 +1079,7 @@ export const TaskBoardDetail = ({
       {(data.childIssues.length > 0 || data.canWrite) && (
         <div
           style={{
+            ...TASK_DETAIL_BLOCK_FRAME_STYLE,
             border: `1px solid ${TASK_TOKENS.border}`,
             borderRadius: TASK_TOKENS.radius,
             display: 'flex',
@@ -1379,6 +1439,8 @@ export const TaskBoardDetail = ({
       <IssueProductPanel
         key={`product-${issueId}`}
         item={issue as ProductItem}
+        context={productContext}
+        epics={data.epics}
         onUpdate={(patch) =>
           void update({ data: patch }, { refreshBoard: true })
         }
@@ -1392,6 +1454,56 @@ export const TaskBoardDetail = ({
       {activityBlock}
     </div>
   );
+
+  // Inside the modal rather than a nested overlay; Escape is routed to it
+  // through the frame's onEscape, which would otherwise close the modal too.
+  const returnDialog = isConfirmingReturn ? (
+    <TaskDialogFrame
+      title={t('Return {key} to the Product Backlog?', {
+        key: issue.issueKey ?? '',
+      })}
+      onClose={() => setIsConfirmingReturn(false)}
+      footer={
+        <>
+          <TaskButton
+            variant="ghost"
+            onClick={() => setIsConfirmingReturn(false)}
+          >
+            {t('Cancel')}
+          </TaskButton>
+          <TaskButton
+            variant="primary"
+            isDisabled={isReturning}
+            onClick={() => void returnToBacklog()}
+          >
+            <IconArrowBackUp size={14} />
+            {t('Return to Backlog')}
+          </TaskButton>
+        </>
+      }
+    >
+      <span
+        style={{
+          color: TASK_TOKENS.textPrimary,
+          fontFamily: TASK_TOKENS.fontFamily,
+          fontSize: 13,
+          lineHeight: '20px',
+        }}
+      >
+        {returningSprintName === null
+          ? t(
+              'The issue leaves the Board and goes back to the Product Backlog with status Backlog.',
+            )
+          : t(
+              'The issue leaves the Board and {sprint}, and goes back to the Product Backlog with status Backlog.',
+              { sprint: returningSprintName },
+            )}{' '}
+        {t(
+          'Description, user story, acceptance criteria, story points, priority score and every other field stay as they are.',
+        )}
+      </span>
+    </TaskDialogFrame>
+  ) : null;
 
   // The linked merchant or chat opens as a drawer over the right of the view
   // rather than widening the sidebar, so the issue under it never reflows.
@@ -1489,6 +1601,7 @@ export const TaskBoardDetail = ({
           })}
         />
         {recordPreviewDrawer}
+        {returnDialog}
         {isMobile && preview !== null && (
           <div
             style={{
@@ -1513,9 +1626,16 @@ export const TaskBoardDetail = ({
       focusKey={issueId}
       shouldFocusDialog={activityAnchor === null}
       isMobile={isMobile}
-      onEscape={preview === null ? onClose : () => setRecordPreview(null)}
+      onEscape={
+        isConfirmingReturn
+          ? () => setIsConfirmingReturn(false)
+          : preview === null
+            ? onClose
+            : () => setRecordPreview(null)
+      }
     >
       {header}
+      {returnDialog}
       <div
         style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}
       >
@@ -1619,7 +1739,7 @@ const TaskAddRow = ({
         fontSize: 13,
         gap: 10,
         minHeight: 34,
-        padding: '0 10px',
+        padding: `0 ${TASK_DETAIL_BLOCK_INSET}px`,
         textAlign: 'left',
         width: '100%',
       }}

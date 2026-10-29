@@ -3,6 +3,7 @@ import { IconX } from 'twenty-ui/icon';
 
 import { type LinkedIssueRow } from '../hooks/use-issue-detail';
 import { TaskAvatar } from './task-avatar';
+import { TASK_DETAIL_BLOCK_INSET } from './task-control-styles';
 import { TaskIconButton } from './task-icon-button';
 import { TaskPriorityGlyph } from './task-priority-glyph';
 import { TaskStatusIcon, type TaskStatusGlyph } from './task-status-icon';
@@ -60,7 +61,7 @@ export const TaskSubtaskRow = ({
         display: 'flex',
         gap: 4,
         minHeight: 34,
-        padding: '0 6px 0 12px',
+        padding: `0 6px 0 ${TASK_DETAIL_BLOCK_INSET}px`,
         width: '100%',
       }}
     >

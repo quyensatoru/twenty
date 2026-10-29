@@ -16,6 +16,46 @@ export const sumStoryPoints = (
   items: readonly { storyPoints?: number | null }[],
 ): number => items.reduce((total, item) => total + (item.storyPoints ?? 0), 0);
 
+// Work that joined or left a running sprint after it started, against the
+// snapshot taken at start. An issue returned to the backlog is still an item,
+// which is how its points are found once it has left the sprint.
+export const readSprintScopeChange = ({
+  sprintId,
+  committedIssueIds,
+  sprintIssues,
+  items,
+}: {
+  sprintId: string;
+  committedIssueIds: readonly string[] | null | undefined;
+  sprintIssues: readonly ProductItem[];
+  items: readonly ProductItem[];
+}) => {
+  const committedIds = new Set(committedIssueIds ?? []);
+
+  if (committedIds.size === 0) {
+    return {
+      addedIssues: [],
+      addedPoints: 0,
+      removedIssues: [],
+      removedPoints: 0,
+    };
+  }
+
+  const addedIssues = sprintIssues.filter(
+    (issue) => !committedIds.has(issue.id),
+  );
+  const removedIssues = items.filter(
+    (item) => committedIds.has(item.id) && item.sprintId !== sprintId,
+  );
+
+  return {
+    addedIssues,
+    addedPoints: sumStoryPoints(addedIssues),
+    removedIssues,
+    removedPoints: sumStoryPoints(removedIssues),
+  };
+};
+
 export const averageVelocity = (
   velocity: readonly SprintVelocity[],
   sprintCount: number = VELOCITY_SPRINT_COUNT,

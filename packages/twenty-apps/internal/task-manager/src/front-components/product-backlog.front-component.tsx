@@ -467,7 +467,6 @@ const ProductBacklog = () => {
                 fontWeight: 500,
                 gap: 6,
                 height: 40,
-                marginLeft: tabKey === 'settings' ? 'auto' : 0,
                 padding: '0 10px',
               }}
             >

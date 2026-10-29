@@ -9,10 +9,12 @@ import { assertRecordInScope } from './app-scope/assert-record-in-scope.util';
 import { findActiveSprintId } from './utils/find-active-sprint-id.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
 import {
+  ensureBacklogStatusId,
   ensurePlannedStatusId,
   moveIssueFamiliesToStage,
 } from './utils/product-backlog-stage.util';
 import { assertProductBacklogEditor } from './utils/resolve-product-backlog-access.util';
+import { recordIssueHistories } from './utils/record-issue-histories.util';
 import { runScopedRoute } from './utils/run-scoped-route.util';
 
 type SetIssueStageBody = {
@@ -25,6 +27,8 @@ type IssueRow = {
   projectId?: string | null;
   parentId?: string | null;
   sprintId?: string | null;
+  stage?: string | null;
+  appId?: string | null;
 };
 
 const STAGES: readonly IssueStage[] = ['ITEM', 'ISSUE', 'ARCHIVED'];
@@ -43,8 +47,9 @@ const readIssueIds = (value: unknown): string[] => {
 
 // Moves top-level issues, with their subtasks, between the Product Backlog and
 // the Board. To the Board they land in PLANNED, inside the running sprint when
-// there is one; back to the backlog they leave a running sprint, since an
-// item is never part of one.
+// there is one. An issue returned from the Board leaves its sprint, whatever
+// its state, and takes the Backlog status; an archived item restored keeps
+// its place.
 const handler = async (event: RoutePayload<SetIssueStageBody>) =>
   runScopedRoute(async ({ client, scope }) => {
     assertProductBacklogEditor(scope);
@@ -70,7 +75,14 @@ const handler = async (event: RoutePayload<SetIssueStageBody>) =>
       client,
       pluralName: 'issues',
       filter: { id: { in: issueIds } },
-      selection: { id: true, projectId: true, parentId: true, sprintId: true },
+      selection: {
+        id: true,
+        projectId: true,
+        parentId: true,
+        sprintId: true,
+        stage: true,
+        appId: true,
+      },
     });
     const projectIds = new Set(issues.map((issue) => issue.projectId));
 
@@ -101,7 +113,32 @@ const handler = async (event: RoutePayload<SetIssueStageBody>) =>
       return { stage, statusId, sprintId: activeSprintId };
     }
 
-    const leavingSprintIds = issues
+    const returningIssues =
+      stage === 'ITEM'
+        ? issues.filter((issue) => (issue.stage ?? 'ISSUE') === 'ISSUE')
+        : [];
+
+    if (returningIssues.length > 0) {
+      const backlogStatusId = await ensureBacklogStatusId(client, projectId);
+
+      await moveIssueFamiliesToStage({
+        client,
+        issueIds: returningIssues.map((issue) => issue.id),
+        stage,
+        extraData: { sprintId: null, statusId: backlogStatusId },
+      });
+      await recordIssueHistories({
+        client,
+        issues: returningIssues,
+        action: 'returned-to-backlog',
+        authorId: scope.workspaceMemberId,
+      });
+    }
+
+    const remainingIssues = issues.filter(
+      (issue) => !returningIssues.includes(issue),
+    );
+    const leavingSprintIds = remainingIssues
       .filter(
         (issue) =>
           stage === 'ARCHIVED' ||
@@ -117,9 +154,9 @@ const handler = async (event: RoutePayload<SetIssueStageBody>) =>
     });
     await moveIssueFamiliesToStage({
       client,
-      issueIds: issueIds.filter(
-        (issueId) => !leavingSprintIds.includes(issueId),
-      ),
+      issueIds: remainingIssues
+        .map((issue) => issue.id)
+        .filter((issueId) => !leavingSprintIds.includes(issueId)),
       stage,
     });
 

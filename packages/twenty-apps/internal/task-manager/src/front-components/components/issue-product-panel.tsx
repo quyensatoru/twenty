@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import {
   IconArchive,
-  IconArrowLeft,
   IconArrowRight,
   IconLock,
   IconPlus,
@@ -12,20 +11,15 @@ import {
 
 import {
   BUG_SEVERITY_OPTIONS,
-  PRODUCT_ITEM_ROUTE_PATH,
   REQUEST_SOURCE_OPTIONS,
   SET_ISSUE_STAGE_ROUTE_PATH,
 } from '../../constants/product-backlog';
-import {
-  type IssueStage,
-  type LinkedIssueSummary,
-  type ProductBacklogSettings,
-  type ProductItem,
-} from '../../types/product-backlog';
+import { type IssueStage, type ProductItem } from '../../types/product-backlog';
 import { type BoardIssue } from '../../types/task-board';
 import { readItemReadiness } from '../../utils/product-backlog/item-readiness.util';
+import { readEpicColor } from '../../utils/epic-color.util';
 import { findPrioritizationTemplate } from '../../utils/product-backlog/prioritization-templates.util';
-import { readProductBacklogSettings } from '../../utils/read-product-backlog-settings.util';
+import { type ProductItemContext } from '../hooks/use-product-item-context';
 import {
   AcceptanceCriteriaEditor,
   ReadinessChecklist,
@@ -41,7 +35,12 @@ import {
 } from '../product-backlog/components/product-ui';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
+import { IssueBacklogContext } from './issue-backlog-context';
 import { TaskBoardSelect } from './task-board-select';
+import {
+  TASK_DETAIL_BLOCK_FRAME_STYLE,
+  TASK_DETAIL_BLOCK_INSET,
+} from './task-control-styles';
 import { TaskButton } from './task-button';
 import { TaskChip } from './task-chip';
 import { TaskIconButton } from './task-icon-button';
@@ -51,15 +50,10 @@ import { readTagColor, TASK_TOKENS } from './task-tokens';
 
 const NONE_VALUE = '';
 
-type ProductItemContext = {
-  settings: ProductBacklogSettings;
-  doneStatusIds: ReadonlySet<string>;
-  linkedIssues: LinkedIssueSummary[];
-  canWrite: boolean;
-};
-
 type IssueProductPanelProps = {
   item: ProductItem;
+  context: ProductItemContext | null;
+  epics: readonly { id: string; name?: string | null; color?: string | null }[];
   onUpdate: (patch: Partial<ProductItem>) => void;
   // The stage moved: the board and the page behind the modal re-read.
   onStageChanged: () => void;
@@ -69,52 +63,19 @@ type IssueProductPanelProps = {
 // The product side of an issue: why it exists, what "done" means and whether
 // it is ready. Full for a backlog item; for an issue on the Board, only what
 // the people building it need to read.
+//
+// Mount it per issue: the Board's block fixes its fields when it opens.
 export const IssueProductPanel = ({
   item,
+  context,
+  epics,
   onUpdate,
   onStageChanged,
   onOpenIssue,
 }: IssueProductPanelProps) => {
-  const [context, setContext] = useState<ProductItemContext | null>(null);
   const [isAddingBlocker, setIsAddingBlocker] = useState(false);
   const [blockerSearch, setBlockerSearch] = useState('');
   const [isMoving, setIsMoving] = useState(false);
-  const blockerIdsKey = (item.blockedByIssueIds ?? []).join(',');
-
-  const load = useCallback(async () => {
-    try {
-      const result = await postAppRoute<
-        Record<string, unknown> & { success: true }
-      >(PRODUCT_ITEM_ROUTE_PATH, { issueId: item.id });
-
-      if (result.access === 'NONE') {
-        setContext(null);
-
-        return;
-      }
-
-      setContext({
-        settings: readProductBacklogSettings(result.settings),
-        doneStatusIds: new Set(
-          Array.isArray(result.doneStatusIds)
-            ? (result.doneStatusIds as string[])
-            : [],
-        ),
-        linkedIssues: Array.isArray(result.linkedIssues)
-          ? (result.linkedIssues as LinkedIssueSummary[])
-          : [],
-        canWrite: result.canWrite === true,
-      });
-    } catch {
-      setContext(null);
-    }
-    // Blockers are re-read when the list of ids changes, not on every edit.
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.id, blockerIdsKey]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   const linkedIssuesById = useMemo(
     () =>
@@ -165,29 +126,28 @@ export const IssueProductPanel = ({
     }
   };
 
-  const hasIssueContent =
-    (typeof item.userStory?.iWant === 'string' &&
-      item.userStory.iWant !== '') ||
-    (item.acceptanceCriteria?.length ?? 0) > 0 ||
-    (typeof item.whyNow === 'string' && item.whyNow !== '');
-
-  if (stage === 'ISSUE' && !hasIssueContent && blockerIds.length === 0) {
-    return null;
+  if (stage === 'ISSUE') {
+    return (
+      <IssueBacklogContext
+        item={item}
+        isReadOnly={isReadOnly}
+        onUpdate={onUpdate}
+      />
+    );
   }
 
-  const stageColor = readTagColor(
-    isItem ? 'blue' : stage === 'ARCHIVED' ? 'gray' : 'green',
-  );
+  const stageColor = readTagColor(isItem ? 'blue' : 'gray');
 
   return (
     <section
       style={{
+        ...TASK_DETAIL_BLOCK_FRAME_STYLE,
         border: `1px solid ${TASK_TOKENS.border}`,
         borderRadius: TASK_TOKENS.radius,
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
-        padding: 14,
+        padding: `14px ${TASK_DETAIL_BLOCK_INSET}px`,
       }}
     >
       <div
@@ -210,11 +170,7 @@ export const IssueProductPanel = ({
             padding: '1px 6px',
           }}
         >
-          {isItem
-            ? t('Backlog item')
-            : stage === 'ARCHIVED'
-              ? t('Archived')
-              : t('On the Board')}
+          {isItem ? t('Backlog item') : t('Archived')}
         </span>
         <span style={{ flex: 1 }} />
         {!isReadOnly && isItem && (
@@ -233,7 +189,22 @@ export const IssueProductPanel = ({
               <IconArrowRight size={14} />
               {readiness.isReady
                 ? t('Push to Board')
-                : t('Push to Board (not ready)')}
+                : t('Push to Board · DoR {passed}/{total}', {
+                    passed: readiness.passedCount,
+                    total: readiness.totalCount,
+                  })}
+              {!readiness.isReady && (
+                <span
+                  aria-hidden
+                  style={{
+                    background: readTagColor('orange').text,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    height: 8,
+                    width: 8,
+                  }}
+                />
+              )}
             </TaskButton>
             <TaskButton
               size="small"
@@ -254,17 +225,6 @@ export const IssueProductPanel = ({
           >
             <IconRestore size={14} />
             {t('Restore to backlog')}
-          </TaskButton>
-        )}
-        {!isReadOnly && stage === 'ISSUE' && (
-          <TaskButton
-            size="small"
-            variant="ghost"
-            isDisabled={isMoving}
-            onClick={() => void moveToStage('ITEM')}
-          >
-            <IconArrowLeft size={14} />
-            {t('Back to Product Backlog')}
           </TaskButton>
         )}
       </div>
@@ -296,6 +256,26 @@ export const IssueProductPanel = ({
                 onUpdate({
                   strategicGoalId: value === NONE_VALUE ? null : value,
                 })
+              }
+            />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <ProductSectionLabel>{t('Epic')}</ProductSectionLabel>
+            <TaskBoardSelect
+              ariaLabel={t('Epic')}
+              width="100%"
+              isDisabled={isReadOnly || typeof item.parentId === 'string'}
+              value={item.epicId ?? NONE_VALUE}
+              options={[
+                { value: NONE_VALUE, label: t('No epic') },
+                ...epics.map((epic) => ({
+                  value: epic.id,
+                  label: epic.name ?? t('Untitled epic'),
+                  color: readEpicColor(epic),
+                })),
+              ]}
+              onChange={(value) =>
+                onUpdate({ epicId: value === NONE_VALUE ? null : value })
               }
             />
           </label>

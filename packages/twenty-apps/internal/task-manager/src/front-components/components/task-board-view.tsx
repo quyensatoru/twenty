@@ -2,9 +2,12 @@ import {
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
+  Fragment,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { isNonEmptyString } from '@sniptt/guards';
 import { enqueueSnackbar, t } from 'twenty-sdk/front-component';
 import { IconGripVertical, IconPlus, IconX } from 'twenty-ui/icon';
 
@@ -39,6 +42,7 @@ import {
   readResizedColumnWidth,
 } from '../utils/column-widths.util';
 import { moveIdOnto } from '../utils/move-id-onto.util';
+import { placeBoardCard } from '../utils/place-board-card.util';
 import { postAppRoute } from '../utils/post-app-route.util';
 import { readErrorText } from '../utils/read-error-text.util';
 import { readMemberName } from '../utils/read-member-name.util';
@@ -64,6 +68,8 @@ const DONE_COLUMN_COLLAPSED_STORAGE_KEY = 'task-board.done-column-collapsed';
 // How close to a column's bottom its next page is fetched: a little ahead, so
 // the reader does not hit the end before the cards are there.
 const LAZY_LOAD_THRESHOLD_PX = 400;
+const DROP_SLOT_HEIGHT = 48;
+const DROP_END_ZONE_HEIGHT = 32;
 
 const readColumnKey = (statusId: string | null | undefined) =>
   typeof statusId === 'string' ? statusId : NO_STATUS_VALUE;
@@ -168,8 +174,9 @@ type TaskBoardViewProps = {
   // it does not vanish from the filtered board the moment it is created.
   newIssueSprintId: string | null;
   newIssueEpicId: string | null;
-  // Shared with the epic panel, which takes a card dropped on an epic.
   draggingIssueId: string | null;
+  // No sort rule chosen: cards keep the order they are dragged into.
+  isManualOrder: boolean;
   setDraggingIssueId: (issueId: string | null) => void;
   loadError: string | null;
   boardPath: string | null;
@@ -204,6 +211,7 @@ export const TaskBoardView = ({
   newIssueEpicId,
   draggingIssueId,
   setDraggingIssueId,
+  isManualOrder,
   loadError,
   boardPath,
   inset,
@@ -223,6 +231,20 @@ export const TaskBoardView = ({
   );
   const [isCollapsedStripHovered, setIsCollapsedStripHovered] = useState(false);
   const [dropTargetStatusId, setDropTargetStatusId] = useState<string | null>(
+    null,
+  );
+  // The card a dragged card would land on; null = the end of the column.
+  const [dropTargetIssueId, setDropTargetIssueId] = useState<string | null>(
+    null,
+  );
+  // dragover and drop reach a card (or the end zone, null) before its column;
+  // it leaves its target here for the column handler. Undefined = the pointer
+  // is in a gap, where the target stays put rather than flicker. The drop
+  // reads it rather than the hover state, which a quick drop can beat.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const hoveredCardIdRef = useRef<string | null | undefined>(undefined);
+  // The dragged card's height, so its slot takes the same room.
+  const [draggingCardHeight, setDraggingCardHeight] = useState<number | null>(
     null,
   );
   const [composerTitle, setComposerTitle] = useState('');
@@ -318,6 +340,165 @@ export const TaskBoardView = ({
       });
       const message = readErrorText(error);
       void enqueueSnackbar({ message, variant: 'error' });
+    }
+  };
+
+  // Where the slot for the dragged card goes in a column: before this card, at
+  // the end (null), or nowhere (undefined) when the drop would change nothing.
+  const readDropSlotBeforeIssueId = (
+    cards: readonly BoardIssue[],
+  ): string | null | undefined => {
+    const draggedIssue = board.issues.find(
+      (issue) => issue.id === draggingIssueId,
+    );
+
+    if (!isManualOrder || draggedIssue === undefined) {
+      return undefined;
+    }
+
+    const rankedCards = cards.filter(
+      (issue) =>
+        !isNonEmptyString(issue.pinnedAt) || issue.id === draggedIssue.id,
+    );
+    const rankedIds = rankedCards.map((issue) => issue.id);
+    const { orderedIds } = placeBoardCard({
+      columnCards: rankedCards,
+      movedCard: draggedIssue,
+      targetCardId:
+        dropTargetIssueId !== null && rankedIds.includes(dropTargetIssueId)
+          ? dropTargetIssueId
+          : null,
+    });
+    const nextId = orderedIds[orderedIds.indexOf(draggedIssue.id) + 1] ?? null;
+    const originalIndex = rankedIds.indexOf(draggedIssue.id);
+
+    if (
+      originalIndex !== -1 &&
+      (rankedIds[originalIndex + 1] ?? null) === nextId
+    ) {
+      return undefined;
+    }
+
+    return nextId;
+  };
+
+  // A drop on a manually ordered board: the status and the rank in one write,
+  // shown at once and put back if the write is refused.
+  const dropIssue = async (
+    issueId: string,
+    columnKey: string,
+    targetIssueId: string | null,
+  ) => {
+    const movedIssue = board.issues.find((issue) => issue.id === issueId);
+
+    if (!isManualOrder || movedIssue === undefined) {
+      await moveIssue(issueId, columnKey);
+
+      return;
+    }
+
+    setDropTargetStatusId(null);
+    setDraggingIssueId(null);
+
+    const fromColumnKey = readColumnKey(movedIssue.statusId);
+    const isPinned = (issue: BoardIssue) => isNonEmptyString(issue.pinnedAt);
+    // Pinned cards head the column whatever their rank, so they never anchor one.
+    const rankedCards = (issuesByStatus.get(columnKey) ?? []).filter(
+      (issue) => !isPinned(issue) || issue.id === issueId,
+    );
+    const { orderedIds, positionsById } = placeBoardCard({
+      columnCards: rankedCards,
+      movedCard: movedIssue,
+      targetCardId:
+        targetIssueId !== null &&
+        rankedCards.some((issue) => issue.id === targetIssueId)
+          ? targetIssueId
+          : null,
+    });
+    const isColumnChange = fromColumnKey !== columnKey;
+
+    if (!isColumnChange && Object.keys(positionsById).length === 0) {
+      return;
+    }
+
+    const targetStatusId = columnKey === NO_STATUS_VALUE ? null : columnKey;
+    const previousIssues = board.issues;
+    const previousColumnPages = board.columnPages;
+    const updatedById = new Map(
+      board.issues.map((issue) => [
+        issue.id,
+        {
+          ...issue,
+          ...(issue.id === issueId ? { statusId: targetStatusId } : {}),
+          ...(positionsById[issue.id] === undefined
+            ? {}
+            : { position: positionsById[issue.id] }),
+        },
+      ]),
+    );
+    const placedIds = new Set(orderedIds);
+    const firstPlacedIndex = board.issues.findIndex((issue) =>
+      placedIds.has(issue.id),
+    );
+    const others = board.issues.filter((issue) => !placedIds.has(issue.id));
+    const insertAt = Math.min(
+      firstPlacedIndex === -1 ? others.length : firstPlacedIndex,
+      others.length,
+    );
+    const placed = orderedIds.flatMap((id) => {
+      const issue = updatedById.get(id);
+
+      return issue === undefined ? [] : [issue];
+    });
+
+    setBoard({
+      ...board,
+      issues: [
+        ...others
+          .slice(0, insertAt)
+          .map((issue) => updatedById.get(issue.id) ?? issue),
+        ...placed,
+        ...others
+          .slice(insertAt)
+          .map((issue) => updatedById.get(issue.id) ?? issue),
+      ],
+      columnPages: isColumnChange
+        ? shiftColumnTotal(
+            shiftColumnTotal(board.columnPages, fromColumnKey, -1),
+            columnKey,
+            1,
+          )
+        : board.columnPages,
+    });
+
+    try {
+      await Promise.all(
+        [
+          ...new Set([
+            ...Object.keys(positionsById),
+            ...(isColumnChange ? [issueId] : []),
+          ]),
+        ].map((id) =>
+          postAppRoute(UPDATE_ISSUE_ROUTE_PATH, {
+            issueId: id,
+            data: {
+              ...(id === issueId && isColumnChange
+                ? { statusId: targetStatusId }
+                : {}),
+              ...(positionsById[id] === undefined
+                ? {}
+                : { position: positionsById[id] }),
+            },
+          }),
+        ),
+      );
+    } catch (error) {
+      setBoard({
+        ...board,
+        issues: previousIssues,
+        columnPages: previousColumnPages,
+      });
+      void enqueueSnackbar({ message: readErrorText(error), variant: 'error' });
     }
   };
 
@@ -727,6 +908,29 @@ export const TaskBoardView = ({
           const isColumnLoading = loadingColumnKeys.includes(column.id);
           const isOlderDoneToggleColumn = column.id === olderDoneToggleColumnId;
           const isDropTarget = dropTargetStatusId === column.id;
+          const slotBeforeIssueId = isDropTarget
+            ? readDropSlotBeforeIssueId(cards)
+            : undefined;
+          // An empty slot where the card will land; hovering it keeps the
+          // target it stands for, so the slot does not jump away.
+          const dropSlot = (
+            <div
+              onDragOver={() => {
+                hoveredCardIdRef.current = dropTargetIssueId;
+              }}
+              onDrop={() => {
+                hoveredCardIdRef.current = dropTargetIssueId;
+              }}
+              style={{
+                background: TASK_TOKENS.accentSoft,
+                border: `1px dashed ${TASK_TOKENS.accent}`,
+                borderRadius: TASK_TOKENS.radius,
+                boxSizing: 'border-box',
+                flexShrink: 0,
+                height: draggingCardHeight ?? DROP_SLOT_HEIGHT,
+              }}
+            />
+          );
           const columnLayout = columnLayouts[columnIndex];
           const isCollapsedColumn = columnLayout === 'collapsed';
           const isCollapsibleColumn = column.id === firstDoneColumnId;
@@ -751,6 +955,10 @@ export const TaskBoardView = ({
             <section
               key={column.id}
               onDragOver={(event) => {
+                const hoveredCardId = hoveredCardIdRef.current;
+
+                hoveredCardIdRef.current = undefined;
+
                 if (draggingStatusId !== null) {
                   // Not preventing the default is what marks this column as
                   // no drop target: the uncategorised column and the dragged
@@ -765,6 +973,12 @@ export const TaskBoardView = ({
 
                 event.preventDefault();
 
+                if (!isManualOrder) {
+                  setDropTargetIssueId(null);
+                } else if (hoveredCardId !== undefined) {
+                  setDropTargetIssueId(hoveredCardId);
+                }
+
                 // Guarded like the card's dragstart: the sandbox proxy has no
                 // dataTransfer, and an unguarded write throws into the host's
                 // error banner on every hover.
@@ -775,9 +989,15 @@ export const TaskBoardView = ({
                 setDropTargetStatusId(column.id);
               }}
               onDragLeave={() => {
-                setDropTargetStatusId((current) =>
-                  current === column.id ? null : current,
-                );
+                // A drag between the cards inside fires dragleave on the
+                // column too; clearing the slot then would make it flicker.
+                // The next column's dragover moves the slot instead.
+                if (!isManualOrder) {
+                  setDropTargetStatusId((current) =>
+                    current === column.id ? null : current,
+                  );
+                }
+
                 setStatusDropTargetId((current) =>
                   current === column.id ? null : current,
                 );
@@ -799,15 +1019,25 @@ export const TaskBoardView = ({
                 const payload = event.dataTransfer?.getData('text/plain') ?? '';
                 const issueId = payload !== '' ? payload : draggingIssueId;
 
+                const hoveredTarget = hoveredCardIdRef.current;
+                const targetIssueId =
+                  hoveredTarget === undefined
+                    ? dropTargetIssueId
+                    : hoveredTarget;
+
+                hoveredCardIdRef.current = undefined;
+                setDropTargetIssueId(null);
+
                 if (issueId !== null && issueId !== '') {
-                  void moveIssue(issueId, column.id);
+                  void dropIssue(issueId, column.id, targetIssueId);
                 }
               }}
               style={{
-                background: isDropTarget
-                  ? TASK_TOKENS.accentSoft
-                  : TASK_TOKENS.backgroundTransparentLighter,
-                border: `1px solid ${isDropTarget ? TASK_TOKENS.accent : 'transparent'}`,
+                background:
+                  isDropTarget && !isManualOrder
+                    ? TASK_TOKENS.accentSoft
+                    : TASK_TOKENS.backgroundTransparentLighter,
+                border: `1px solid ${isDropTarget && !isManualOrder ? TASK_TOKENS.accent : 'transparent'}`,
                 borderRadius: TASK_TOKENS.radius,
                 boxShadow:
                   columnDropSide === 'left'
@@ -1104,85 +1334,114 @@ export const TaskBoardView = ({
                       padding: '0 6px 6px 6px',
                     }}
                   >
-                    {cards.length === 0 && draggingIssueId !== null && (
-                      <span
-                        style={{
-                          border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
-                          borderRadius: TASK_TOKENS.radius,
-                          color: isDropTarget
-                            ? TASK_TOKENS.accent
-                            : TASK_TOKENS.textTertiary,
-                          flexShrink: 0,
-                          fontFamily: TASK_TOKENS.fontFamily,
-                          fontSize: 12,
-                          padding: '16px 8px',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {t('Drop here')}
-                      </span>
-                    )}
+                    {cards.length === 0 &&
+                      draggingIssueId !== null &&
+                      slotBeforeIssueId === undefined && (
+                        <span
+                          style={{
+                            border: `1px dashed ${isDropTarget ? TASK_TOKENS.accent : TASK_TOKENS.borderStrong}`,
+                            borderRadius: TASK_TOKENS.radius,
+                            color: isDropTarget
+                              ? TASK_TOKENS.accent
+                              : TASK_TOKENS.textTertiary,
+                            flexShrink: 0,
+                            fontFamily: TASK_TOKENS.fontFamily,
+                            fontSize: 12,
+                            padding: '16px 8px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {t('Drop here')}
+                        </span>
+                      )}
                     {cards.map((issue) => (
-                      <TaskBoardCard
-                        key={issue.id}
-                        issue={issue}
-                        statusOptions={statusOptions}
-                        assigneeName={
-                          issue.assigneeId === null ||
-                          issue.assigneeId === undefined
-                            ? null
-                            : readMemberName(
-                                membersById,
-                                issue.assigneeId,
-                                t('Unknown'),
-                              )
-                        }
-                        assigneeAvatarUrl={
-                          membersById.get(issue.assigneeId ?? '')?.avatarUrl
-                        }
-                        epicName={
-                          typeof issue.epicId === 'string'
-                            ? (epicsById.get(issue.epicId)?.name ?? null)
-                            : null
-                        }
-                        epicColor={readIssueEpicColor(issue.epicId)}
-                        sprintName={
-                          shouldShowSprintChip &&
-                          typeof issue.sprintId === 'string'
-                            ? (sprintNamesById.get(issue.sprintId) ?? null)
-                            : null
-                        }
-                        reporterName={
-                          typeof issue.reporterId === 'string'
-                            ? readMemberName(
-                                membersById,
-                                issue.reporterId,
-                                t('Unknown'),
-                              )
-                            : null
-                        }
-                        reporterAvatarUrl={
-                          membersById.get(issue.reporterId ?? '')?.avatarUrl
-                        }
-                        hiddenFields={hiddenCardFields}
-                        isDone={doneStatusIds.has(issue.statusId ?? '')}
-                        isSelected={selectedIssueId === issue.id}
-                        isDragging={draggingIssueId === issue.id}
-                        canMove={board.canWrite}
-                        canDelete={board.canSoftDelete}
-                        onOpen={() => setSelectedIssueId(issue.id)}
-                        onMove={(statusId) =>
-                          void moveIssue(issue.id, statusId)
-                        }
-                        onTogglePin={() => void toggleIssuePin(issue.id)}
-                        onDelete={() => void deleteIssue(issue.id)}
-                        onDragStartCard={() => setDraggingIssueId(issue.id)}
-                        onDragEndCard={() => {
-                          setDraggingIssueId(null);
-                          setDropTargetStatusId(null);
+                      <Fragment key={issue.id}>
+                        {slotBeforeIssueId === issue.id && dropSlot}
+                        <TaskBoardCard
+                          issue={issue}
+                          statusOptions={statusOptions}
+                          assigneeName={
+                            issue.assigneeId === null ||
+                            issue.assigneeId === undefined
+                              ? null
+                              : readMemberName(
+                                  membersById,
+                                  issue.assigneeId,
+                                  t('Unknown'),
+                                )
+                          }
+                          assigneeAvatarUrl={
+                            membersById.get(issue.assigneeId ?? '')?.avatarUrl
+                          }
+                          epicName={
+                            typeof issue.epicId === 'string'
+                              ? (epicsById.get(issue.epicId)?.name ?? null)
+                              : null
+                          }
+                          epicColor={readIssueEpicColor(issue.epicId)}
+                          sprintName={
+                            shouldShowSprintChip &&
+                            typeof issue.sprintId === 'string'
+                              ? (sprintNamesById.get(issue.sprintId) ?? null)
+                              : null
+                          }
+                          reporterName={
+                            typeof issue.reporterId === 'string'
+                              ? readMemberName(
+                                  membersById,
+                                  issue.reporterId,
+                                  t('Unknown'),
+                                )
+                              : null
+                          }
+                          reporterAvatarUrl={
+                            membersById.get(issue.reporterId ?? '')?.avatarUrl
+                          }
+                          hiddenFields={hiddenCardFields}
+                          isDone={doneStatusIds.has(issue.statusId ?? '')}
+                          isSelected={selectedIssueId === issue.id}
+                          isDragging={draggingIssueId === issue.id}
+                          onDragOverCard={() => {
+                            hoveredCardIdRef.current = issue.id;
+                          }}
+                          onDropCard={() => {
+                            hoveredCardIdRef.current = issue.id;
+                          }}
+                          canMove={board.canWrite}
+                          canDelete={board.canSoftDelete}
+                          onOpen={() => setSelectedIssueId(issue.id)}
+                          onMove={(statusId) =>
+                            void moveIssue(issue.id, statusId)
+                          }
+                          onTogglePin={() => void toggleIssuePin(issue.id)}
+                          onDelete={() => void deleteIssue(issue.id)}
+                          onDragStartCard={(height) => {
+                            setDraggingCardHeight(height);
+                            setDraggingIssueId(issue.id);
+                          }}
+                          onDragEndCard={() => {
+                            setDraggingIssueId(null);
+                            setDropTargetStatusId(null);
+                            setDropTargetIssueId(null);
+                          }}
+                        />
+                      </Fragment>
+                    ))}
+                    {slotBeforeIssueId === null && dropSlot}
+                    {isManualOrder && draggingIssueId !== null && (
+                      <div
+                        onDragOver={() => {
+                          hoveredCardIdRef.current = null;
+                        }}
+                        onDrop={() => {
+                          hoveredCardIdRef.current = null;
+                        }}
+                        style={{
+                          flexShrink: 0,
+                          minHeight: DROP_END_ZONE_HEIGHT,
                         }}
                       />
-                    ))}
+                    )}
 
                     {/* Scrolling near the bottom fetches the next page. The line
                     is a click target too, for a reader on a keyboard or a

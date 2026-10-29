@@ -1,5 +1,5 @@
 import { isNonEmptyString } from '@sniptt/guards';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { t } from 'twenty-sdk/front-component';
 import {
   IconGitBranch,
@@ -58,8 +58,11 @@ type TaskBoardCardProps = {
   onMove: (statusId: string) => void;
   onTogglePin: () => void;
   onDelete: () => void;
-  onDragStartCard: () => void;
+  // The card's height when known; the host's first measure can come back 0.
+  onDragStartCard: (height: number | null) => void;
   onDragEndCard: () => void;
+  onDragOverCard: () => void;
+  onDropCard: () => void;
 };
 
 // The type as a small filled square in the option's own colour, with a white
@@ -167,8 +170,13 @@ export const TaskBoardCard = ({
   onDelete,
   onDragStartCard,
   onDragEndCard,
+  onDragOverCard,
+  onDropCard,
 }: TaskBoardCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  // Measured on hover, ahead of the drag, in case the drag's own measure is 0.
+  // oxlint-disable-next-line twenty/no-state-useref
+  const measuredHeightRef = useRef<number | null>(null);
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
   const [isPinItemHovered, setIsPinItemHovered] = useState(false);
@@ -228,11 +236,23 @@ export const TaskBoardCard = ({
           // Sandbox proxy: state carries the payload.
         }
 
-        onDragStartCard();
+        const height = event.currentTarget.getBoundingClientRect().height;
+
+        onDragStartCard(height > 0 ? height : measuredHeightRef.current);
       }}
       onDragEnd={onDragEndCard}
+      onDragOver={onDragOverCard}
+      onDrop={onDropCard}
       title={tooltip}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={(event) => {
+        const height = event.currentTarget.getBoundingClientRect().height;
+
+        if (height > 0) {
+          measuredHeightRef.current = height;
+        }
+
+        setIsHovered(true);
+      }}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         background: TASK_TOKENS.background,

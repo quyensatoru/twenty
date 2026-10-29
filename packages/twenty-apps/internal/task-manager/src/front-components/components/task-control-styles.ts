@@ -36,6 +36,15 @@ export const TASK_EDITING_RICH_TEXT_FRAME_STYLE = {
 // the editor back to read only.
 export const TASK_RICH_TEXT_READING_PADDING = 9;
 
+// A framed block in the issue column (Product, sub-issues) sits where the
+// description's frame does, so the text inside lines up with the title.
+export const TASK_DETAIL_BLOCK_INSET = TASK_RICH_TEXT_READING_PADDING - 1;
+export const TASK_DETAIL_BLOCK_FRAME_STYLE: CSSProperties = {
+  boxSizing: 'border-box',
+  marginLeft: -TASK_RICH_TEXT_READING_PADDING,
+  width: `calc(100% + ${TASK_RICH_TEXT_READING_PADDING}px)`,
+};
+
 // A description's editing box, and its reading box too: the same floor in both
 // states keeps the page under it still when Save closes the editor, so only
 // the Save / Cancel row comes and goes.

@@ -66,6 +66,7 @@ export type IssueHistoryRow = {
   action?: string | null;
   fromStatusId?: string | null;
   toStatusId?: string | null;
+  detail?: string | null;
   authorId?: string | null;
   createdAt?: string | null;
 };

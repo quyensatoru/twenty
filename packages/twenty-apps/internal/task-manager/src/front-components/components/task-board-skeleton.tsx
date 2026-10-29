@@ -54,12 +54,10 @@ const rowStyle = (style: CSSProperties): CSSProperties => ({
 export const TaskBoardSkeleton = ({
   view,
   isMobile,
-  isEpicPanelOpen,
   inset,
 }: {
   view: 'board' | 'backlog';
   isMobile: boolean;
-  isEpicPanelOpen: boolean;
   inset: PageInset;
 }) => (
   <div
@@ -132,7 +130,7 @@ export const TaskBoardSkeleton = ({
       )}
     </div>
 
-    {/* Filter row: epics toggle, Filter, Only mine, the assignee faces; the
+    {/* Filter row: Filter, Only mine, the assignee faces; the
         board adds its done count, Sort and Display on the right. */}
     <div
       style={rowStyle({
@@ -142,7 +140,6 @@ export const TaskBoardSkeleton = ({
         padding: `6px ${inset.right}px 6px ${inset.left}px`,
       })}
     >
-      <Button width={BUTTON_HEIGHT} />
       <Button width={67} />
       <Button width={80} />
       <Circle size={24} />
@@ -175,24 +172,20 @@ export const TaskBoardSkeleton = ({
     )}
 
     <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-      {isEpicPanelOpen && (
-        <TaskEpicPanelSkeleton isFullScreen={isMobile} inset={inset} />
+      {view === 'board' ? (
+        <TaskBoardColumnsSkeleton inset={inset} />
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            minWidth: 0,
+          }}
+        >
+          <TaskBacklogSkeleton inset={inset} />
+        </div>
       )}
-      {!(isEpicPanelOpen && isMobile) &&
-        (view === 'board' ? (
-          <TaskBoardColumnsSkeleton inset={inset} />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              flex: 1,
-              flexDirection: 'column',
-              minWidth: 0,
-            }}
-          >
-            <TaskBacklogSkeleton inset={inset} />
-          </div>
-        ))}
     </div>
   </div>
 );
@@ -416,38 +409,6 @@ const TaskBacklogSectionSkeleton = ({
       <TaskSkeletonBar width={12} height={12} />
       <TaskSkeletonBar width={64} height={10} />
     </div>
-  </div>
-);
-
-const TaskEpicPanelSkeleton = ({
-  isFullScreen,
-  inset,
-}: {
-  isFullScreen: boolean;
-  inset: PageInset;
-}) => (
-  <div
-    style={{
-      borderRight: isFullScreen
-        ? 'none'
-        : `1px solid ${TASK_TOKENS.borderLight}`,
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0,
-      gap: 10,
-      padding: `12px ${inset.right}px 12px ${inset.left}px`,
-      width: isFullScreen ? '100%' : 280,
-    }}
-  >
-    <TaskSkeletonBar width={56} height={12} />
-    <TaskSkeletonBar height={BUTTON_HEIGHT} radius={TASK_TOKENS.radiusSmall} />
-    {[70, 55, 62].map((width) => (
-      <div key={width} style={rowStyle({ gap: 8, minHeight: 30 })}>
-        <TaskSkeletonBar width={8} height={8} radius="2px" />
-        <TaskSkeletonBar width={`${width}%`} height={12} />
-      </div>
-    ))}
   </div>
 );
 

@@ -24,6 +24,8 @@ import { fetchIssuePage } from './utils/fetch-issue-page.util';
 import { listAppMembers } from './utils/list-app-members.util';
 import { listIssueMembers } from './utils/list-issue-members.util';
 import { listScopedRecords } from './utils/list-scoped-records.util';
+import { migrateBacklogColumnToItems } from './utils/migrate-backlog-column-to-items.util';
+import { isBacklogStatusName } from '../utils/is-backlog-status-name.util';
 import {
   applyActiveSprint,
   type BoardIssueQueryBody,
@@ -117,13 +119,21 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
         ) as { appId?: string | null } | undefined
       )?.appId ?? null;
 
+    // Before any read: the Board has no Backlog column, so its issues must be
+    // items by the time the columns are drawn.
+    await migrateBacklogColumnToItems(client, activeProjectId);
+
     const isSortRequested = event.body?.sort !== undefined;
     const shouldIncludeIssues = event.body?.includeIssues !== false;
     const now = new Date();
 
-    const [issueStatuses, sprints, epics, assignableMembers, savedBoardSort] =
+    const [projectStatuses, sprints, epics, assignableMembers, savedBoardSort] =
       await Promise.all([
-        listScopedRecords<{ id: string; category?: string | null }>({
+        listScopedRecords<{
+          id: string;
+          name?: string | null;
+          category?: string | null;
+        }>({
           client,
           pluralName: 'issueStatuses',
           filter: { projectId: { eq: activeProjectId } },
@@ -158,6 +168,10 @@ const handler = async (event: RoutePayload<TaskBoardBody>) =>
               scope.workspaceMemberId,
             ).then((preferences) => preferences.boardSort),
       ]);
+
+    const issueStatuses = projectStatuses.filter(
+      (status) => !isBacklogStatusName(status.name),
+    );
 
     const requestedQuery = {
       ...readBoardIssueQuery(activeProjectId, event.body),

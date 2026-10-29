@@ -26,6 +26,7 @@ import {
 } from '../../components/task-tokens';
 import { type ProductViewProps } from '../types/product-view-props';
 import { ProductAccessSettings } from './product-access-settings';
+import { ProductEpicSettings } from './product-epic-settings';
 import {
   PRODUCT_MUTED_STYLE,
   PRODUCT_TEXT_STYLE,
@@ -44,11 +45,12 @@ const readNumber = (raw: string, fallback: number) => {
 
 type SettingsUpdate = (patch: Partial<ProductBacklogSettings>) => void;
 
-// Goals, the Definition of Ready and the scoring template are the team's own
-// rules: everything else in the Product Backlog reads them from here.
+// Goals, epics, the Definition of Ready and the scoring template are the
+// team's own rules: everything else in the Product Backlog reads them here.
 export const ProductSettingsView = ({
   data,
   actions,
+  reload,
   inset,
   isMobile,
 }: ProductViewProps) => {
@@ -185,6 +187,8 @@ export const ProductSettingsView = ({
           </div>
         )}
       </ProductCard>
+
+      <ProductEpicSettings data={data} reload={reload} />
 
       <ProductCard title={t('Definition of Ready')}>
         <span style={PRODUCT_MUTED_STYLE}>

@@ -11,6 +11,7 @@ import {
 } from 'twenty-ui/icon';
 
 import { ISSUE_PRIORITY_OPTIONS } from '../../constants/issue-priority-options';
+import { STORY_POINT_SCALE } from '../../constants/product-backlog';
 import { ISSUE_RESOLUTION_OPTIONS } from '../../constants/issue-resolution-options';
 import { ISSUE_TYPE_OPTIONS } from '../../constants/issue-type-options';
 import {
@@ -20,6 +21,7 @@ import {
 import { type IssueRow } from '../../types/task-manager-rows';
 import { readEpicColor } from '../../utils/epic-color.util';
 import { formatMinutes } from '../../utils/format-minutes.util';
+import { isBacklogStatusName } from '../../utils/is-backlog-status-name.util';
 import { type IssueDetail, type MemberRow } from '../hooks/use-issue-detail';
 import { useIssueCrispConversations } from '../hooks/use-issue-crisp-conversations';
 import { readDueDateHint } from '../utils/read-due-date-hint.util';
@@ -70,6 +72,13 @@ type IssueDetailsPanelProps = {
 };
 
 const NO_VALUE = '';
+
+// The scale, plus a value set before it existed so it still shows.
+const readStoryPointChoices = (current: number | null | undefined) =>
+  typeof current === 'number' &&
+  !(STORY_POINT_SCALE as readonly number[]).includes(current)
+    ? [...STORY_POINT_SCALE, current].sort((left, right) => left - right)
+    : [...STORY_POINT_SCALE];
 
 type DetailField = {
   key: string;
@@ -166,8 +175,6 @@ export const IssueDetailsPanel = ({
   // One flag for the whole panel: two fields each holding their own open
   // state means two dropdowns drawn over each other, with neither reachable.
   const [openField, setOpenField] = useState<string | null>(null);
-  const [pointsDraft, setPointsDraft] = useState<string | null>(null);
-  const [isEditingPoints, setIsEditingPoints] = useState(false);
   const [estimateDraft, setEstimateDraft] = useState<string | null>(null);
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [isDuePickerOpen, setIsDuePickerOpen] = useState(false);
@@ -305,53 +312,36 @@ export const IssueDetailsPanel = ({
       ),
     }));
 
+  // An issue on the Board goes back to the backlog through "Return to
+  // Backlog", never through the status.
+  const isOnBoard =
+    ((issue as { stage?: string | null }).stage ?? 'ISSUE') === 'ISSUE';
   const statusOptions: TaskRelationOption[] = [
     { value: NO_VALUE, label: t('No status'), chip: null },
-    ...detail.issueStatuses.map((status) => ({
-      value: status.id,
-      label: status.name ?? status.id,
-      chip: (
-        <TaskGlyphValue
-          glyph={
-            <TaskStatusIcon
-              glyph={readStatusGlyph(status, detail.issueStatuses)}
-              color={status.color}
-            />
-          }
-        >
-          {status.name ?? status.id}
-        </TaskGlyphValue>
-      ),
-    })),
+    ...detail.issueStatuses
+      .filter(
+        (status) =>
+          !isOnBoard ||
+          status.id === issue.statusId ||
+          !isBacklogStatusName(status.name),
+      )
+      .map((status) => ({
+        value: status.id,
+        label: status.name ?? status.id,
+        chip: (
+          <TaskGlyphValue
+            glyph={
+              <TaskStatusIcon
+                glyph={readStatusGlyph(status, detail.issueStatuses)}
+                color={status.color}
+              />
+            }
+          >
+            {status.name ?? status.id}
+          </TaskGlyphValue>
+        ),
+      })),
   ];
-
-  // Story points and the estimate save on commit (Enter or blur), not per
-  // keystroke: the number field reports every intermediate value.
-  const savePoints = (raw: string | null) => {
-    if (raw === null) {
-      return;
-    }
-
-    setPointsDraft(null);
-    setIsEditingPoints(false);
-
-    const trimmed = raw.trim();
-    const current =
-      typeof issue.storyPoints === 'number' ? issue.storyPoints : null;
-    const next = trimmed === '' ? null : Number(trimmed);
-
-    if (next === current) {
-      return;
-    }
-
-    if (next !== null && (!Number.isFinite(next) || next < 0)) {
-      onError(t('Story points must be a positive number.'));
-
-      return;
-    }
-
-    onUpdate({ data: { storyPoints: next } }, { refreshBoard: true });
-  };
 
   const estimate =
     typeof issue.originalEstimateMinutes === 'number' &&
@@ -368,6 +358,8 @@ export const IssueDetailsPanel = ({
       ? 0
       : Math.min(100, (totalMinutes / estimate) * 100);
 
+  // Saves on commit (Enter or blur), not per keystroke: the number field
+  // reports every intermediate value.
   const saveEstimate = (raw: string | null) => {
     if (raw === null) {
       return;
@@ -586,59 +578,6 @@ export const IssueDetailsPanel = ({
             options={buildMemberOptions(issue.reporterId ?? null)}
             onChange={(reporterId) => setRelation('reporterId', reporterId)}
           />
-        </TaskFieldRow>
-      ),
-    },
-    {
-      key: 'points',
-      label: t('Points'),
-      isShown: isShown('points'),
-      isEmpty: typeof issue.storyPoints !== 'number',
-      node: (
-        <TaskFieldRow label={t('Points')}>
-          {isEditingPoints ? (
-            <TaskTextInput
-              ariaLabel={t('Story points')}
-              type="number"
-              shouldAutoFocus
-              value={
-                pointsDraft ??
-                (typeof issue.storyPoints === 'number'
-                  ? String(issue.storyPoints)
-                  : '')
-              }
-              onChange={setPointsDraft}
-              onEnter={savePoints}
-              onBlur={savePoints}
-            />
-          ) : (
-            <DetailReadButton
-              label={t('Edit story points')}
-              isReadOnly={isReadOnly}
-              onOpen={() => {
-                touchField('points');
-                setPointsDraft(
-                  typeof issue.storyPoints === 'number'
-                    ? String(issue.storyPoints)
-                    : '',
-                );
-                setIsEditingPoints(true);
-              }}
-            >
-              {typeof issue.storyPoints === 'number' ? (
-                <span style={{ color: TASK_TOKENS.textPrimary }}>
-                  {issue.storyPoints}
-                  <span
-                    style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}
-                  >
-                    {` ${t('pts')}`}
-                  </span>
-                </span>
-              ) : (
-                <TaskEmptyValue>{t('No estimate')}</TaskEmptyValue>
-              )}
-            </DetailReadButton>
-          )}
         </TaskFieldRow>
       ),
     },
@@ -907,6 +846,59 @@ export const IssueDetailsPanel = ({
               })),
             ]}
             onChange={(epicId) => setRelation('epicId', epicId)}
+          />
+        </TaskFieldRow>
+      ),
+    },
+    {
+      key: 'points',
+      label: t('Story point'),
+      isShown: isShown('points'),
+      isEmpty: typeof issue.storyPoints !== 'number',
+      node: (
+        <TaskFieldRow label={t('Story point')}>
+          <TaskRelationSelect
+            ariaLabel={t('Story point')}
+            placeholder={t('Story point')}
+            {...buildOpenProps('points')}
+            emptyOptionLabel={t('Not estimated')}
+            isSidebar
+            emptyDisplay={<TaskEmptyValue>{t('Not estimated')}</TaskEmptyValue>}
+            value={
+              typeof issue.storyPoints === 'number'
+                ? String(issue.storyPoints)
+                : null
+            }
+            options={[
+              { value: NO_VALUE, label: t('Not estimated'), chip: null },
+              ...readStoryPointChoices(issue.storyPoints).map((points) => ({
+                value: String(points),
+                label: String(points),
+                chip: (
+                  <span style={{ color: TASK_TOKENS.textPrimary }}>
+                    {points}
+                    <span
+                      style={{ color: TASK_TOKENS.textTertiary, fontSize: 12 }}
+                    >
+                      {` ${t('pts')}`}
+                    </span>
+                  </span>
+                ),
+              })),
+            ]}
+            onChange={(value) =>
+              onUpdate(
+                {
+                  data: {
+                    storyPoints:
+                      value === null || value === NO_VALUE
+                        ? null
+                        : Number(value),
+                  },
+                },
+                { refreshBoard: true },
+              )
+            }
           />
         </TaskFieldRow>
       ),

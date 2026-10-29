@@ -63,7 +63,7 @@ export type BoardEpic = {
   position?: number | null;
 };
 
-// Progress of one epic for the epic panel: issues in a DONE-category status
+// Progress of one epic in Settings: issues in a DONE-category status
 // over all its issues.
 export type EpicSummary = {
   epicId: string;
