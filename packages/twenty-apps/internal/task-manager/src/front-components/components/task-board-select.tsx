@@ -42,6 +42,12 @@ const OPTIONS_MAX_HEIGHT = 280;
 // host select, which an app cannot style and which renders the operating
 // system's own widget. Opens through the host's <twenty-overlay> like every
 // other dropdown in this app, because a widget clips whatever it contains.
+const GHOST_TRIGGER_PADDING_LEFT = 4;
+
+// A ghost trigger leading a toolbar pulls left by this much so its icon sits
+// on the page edge, like the rows under it.
+export const GHOST_TRIGGER_LEADING_OFFSET = GHOST_TRIGGER_PADDING_LEFT + 1;
+
 export const TaskBoardSelect = ({
   value,
   options,
@@ -119,7 +125,9 @@ export const TaskBoardSelect = ({
           height: TRIGGER_HEIGHT,
           justifyContent: isGhost ? 'flex-start' : 'space-between',
           opacity: isDisabled ? 0.5 : 1,
-          padding: isGhost ? '0 6px 0 4px' : '0 8px',
+          padding: isGhost
+            ? `0 6px 0 ${GHOST_TRIGGER_PADDING_LEFT}px`
+            : '0 8px',
           textAlign: 'left',
           width: '100%',
         }}

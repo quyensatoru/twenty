@@ -47,7 +47,10 @@ import {
 import { TaskAvatar } from './components/task-avatar';
 import { TaskBoardInsights } from './components/task-board-insights';
 import { IssueTypeGlyph, UnassignedAvatar } from './components/task-board-card';
-import { TaskBoardSelect } from './components/task-board-select';
+import {
+  GHOST_TRIGGER_LEADING_OFFSET,
+  TaskBoardSelect,
+} from './components/task-board-select';
 import { TaskBoardSortMenu } from './components/task-board-sort-menu';
 import { TaskBoardSkeleton } from './components/task-board-skeleton';
 import { NO_STATUS_VALUE, TaskBoardView } from './components/task-board-view';
@@ -732,6 +735,7 @@ const TaskBoard = () => {
             style={{
               display: 'flex',
               flex: '0 1 auto',
+              marginLeft: -GHOST_TRIGGER_LEADING_OFFSET,
               minWidth: 0,
             }}
           >

@@ -46,6 +46,7 @@ export const TaskFilterMenu = ({
 }: TaskFilterMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isTriggerHovered, setIsTriggerHovered] = useState(false);
+  const triggerPaddingX = isCompact ? 6 : 8;
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -100,7 +101,14 @@ export const TaskFilterMenu = ({
     }) as const;
 
   return (
-    <span style={{ display: 'inline-flex', position: 'relative' }}>
+    // Leads its toolbar, so the icon lines up with the page edge.
+    <span
+      style={{
+        display: 'inline-flex',
+        marginLeft: -triggerPaddingX,
+        position: 'relative',
+      }}
+    >
       <button
         type="button"
         aria-expanded={isOpen}
@@ -126,7 +134,7 @@ export const TaskFilterMenu = ({
           fontWeight: 500,
           gap: 6,
           height: TRIGGER_HEIGHT,
-          padding: isCompact ? '0 6px' : '0 8px',
+          padding: `0 ${triggerPaddingX}px`,
         }}
       >
         <IconFilter size={14} />

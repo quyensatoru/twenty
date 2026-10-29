@@ -28,7 +28,10 @@ import { type BacklogHealthFilterId } from '../utils/product-backlog/backlog-hea
 import { TaskAvatar } from './components/task-avatar';
 import { IssueTypeGlyph, UnassignedAvatar } from './components/task-board-card';
 import { TaskBoardDetail } from './components/task-board-detail';
-import { TaskBoardSelect } from './components/task-board-select';
+import {
+  GHOST_TRIGGER_LEADING_OFFSET,
+  TaskBoardSelect,
+} from './components/task-board-select';
 import { TaskBacklogSkeleton } from './components/task-board-skeleton';
 import { TaskButton } from './components/task-button';
 import { TaskColorDot, TaskFilterChip } from './components/task-chip';
@@ -367,30 +370,38 @@ const ProductBacklog = () => {
           padding: `6px ${inset.right}px 6px ${inset.left}px`,
         }}
       >
-        <TaskBoardSelect
-          ariaLabel={t('Project')}
-          variant="ghost"
-          width="auto"
-          value={data.activeProjectId}
-          triggerIcon={
-            <TaskProjectBadge projectKey={activeProject?.key ?? null} />
-          }
-          options={data.projects.map((project) => ({
-            value: project.id,
-            label: project.name ?? project.key ?? project.id,
-            icon: (
-              <TaskProjectBadge projectKey={project.key ?? null} size={18} />
-            ),
-          }))}
-          onChange={(value) => {
-            setProjectId(value);
-            storeValue(PROJECT_STORAGE_KEY, value);
-            setSelectedIssueId(null);
-            setPlannedSprintId(null);
-            setHealthFilterId(null);
-            clearFilters();
+        <span
+          style={{
+            display: 'flex',
+            marginLeft: -GHOST_TRIGGER_LEADING_OFFSET,
+            minWidth: 0,
           }}
-        />
+        >
+          <TaskBoardSelect
+            ariaLabel={t('Project')}
+            variant="ghost"
+            width="auto"
+            value={data.activeProjectId}
+            triggerIcon={
+              <TaskProjectBadge projectKey={activeProject?.key ?? null} />
+            }
+            options={data.projects.map((project) => ({
+              value: project.id,
+              label: project.name ?? project.key ?? project.id,
+              icon: (
+                <TaskProjectBadge projectKey={project.key ?? null} size={18} />
+              ),
+            }))}
+            onChange={(value) => {
+              setProjectId(value);
+              storeValue(PROJECT_STORAGE_KEY, value);
+              setSelectedIssueId(null);
+              setPlannedSprintId(null);
+              setHealthFilterId(null);
+              clearFilters();
+            }}
+          />
+        </span>
         <span style={{ flex: 1 }} />
         {hasFilterBar && (
           <div
