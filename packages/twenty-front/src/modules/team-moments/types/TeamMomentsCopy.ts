@@ -1,0 +1,21 @@
+export type TeamMomentsCopy = {
+  yourBirthday: string;
+  memberBirthday: (memberName: string) => string;
+  turnsToday: (years: number) => string;
+  yourWorkAnniversary: string;
+  memberWorkAnniversary: (memberName: string) => string;
+  yearsWithTeam: (years: number) => string;
+  holiday: string;
+  teamEvent: string;
+  youAreCelebrated: string;
+  celebratingFemaleTeammates: (count: number) => string;
+  celebratingMaleTeammates: (count: number) => string;
+  today: (date: string) => string;
+  allAboutYou: string;
+  specialOccasions: (count: number) => string;
+  somethingWaiting: string;
+  sendYourWishes: string;
+  later: string;
+  openMyWishes: string;
+  sendWishes: string;
+};

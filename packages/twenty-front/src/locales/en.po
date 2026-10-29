@@ -263,12 +263,6 @@ msgstr "{0, plural, one {# Object} other {# Objects}}"
 msgid "{0, plural, one {# workspace failed or behind} other {# workspaces failed or behind}}"
 msgstr "{0, plural, one {# workspace failed or behind} other {# workspaces failed or behind}}"
 
-#. js-lingui-id: aovTBO
-#. placeholder {0}: moments.length
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{0, plural, one {A special day for the team} other {# special occasions today}}"
-msgstr "{0, plural, one {A special day for the team} other {# special occasions today}}"
-
 #. js-lingui-id: fkfOKg
 #. placeholder {0}: agentIds.length
 #: src/modules/ai/components/AiChatMessageReactions.tsx
@@ -779,16 +773,6 @@ msgstr "{heading}: {contextLabel}"
 msgid "{hiddenFieldCount, plural, one {# more populated field available} other {# more populated fields available}}"
 msgstr "{hiddenFieldCount, plural, one {# more populated field available} other {# more populated fields available}}"
 
-#. js-lingui-id: yzfsYF
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{honoreeCount, plural, one {Celebrating # female teammate} other {Celebrating # female teammates}}"
-msgstr "{honoreeCount, plural, one {Celebrating # female teammate} other {Celebrating # female teammates}}"
-
-#. js-lingui-id: 10x6xP
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{honoreeCount, plural, one {Celebrating # male teammate} other {Celebrating # male teammates}}"
-msgstr "{honoreeCount, plural, one {Celebrating # male teammate} other {Celebrating # male teammates}}"
-
 #. js-lingui-id: pEl0a0
 #: src/pages/settings/admin-panel/SettingsAdminQueueDetail.tsx
 msgid "{hours, plural, one {{hours} hour} other {{hours} hours}}"
@@ -870,16 +854,6 @@ msgstr "{label}, unread"
 #: src/modules/settings/roles/role-settings/components/SettingsRoleSettingsDeleteRoleConfirmationModalSubtitle.tsx
 msgid "{memberCount, plural, one {{memberCount} member} other {{memberCount} members}}"
 msgstr "{memberCount, plural, one {{memberCount} member} other {{memberCount} members}}"
-
-#. js-lingui-id: o6yHaX
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{memberName}'s birthday"
-msgstr "{memberName}'s birthday"
-
-#. js-lingui-id: aBItCl
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{memberName}'s work anniversary"
-msgstr "{memberName}'s work anniversary"
 
 #. js-lingui-id: Y32cMj
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadIntermediaryMessages.tsx
@@ -1235,11 +1209,6 @@ msgstr "{workspaceCreditsSeats, plural, one {Includes {seatCreditsDisplay} credi
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentConfirmationModalSubtitle.tsx
 msgid "{workspaceMemberName} will be unassigned from the following role:"
 msgstr "{workspaceMemberName} will be unassigned from the following role:"
-
-#. js-lingui-id: E+YbS6
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{years, plural, one {# year with the team} other {# years with the team}}"
-msgstr "{years, plural, one {# year with the team} other {# years with the team}}"
 
 #. js-lingui-id: h5WHNQ
 #: src/modules/settings/billing/components/SettingsBillingCreditsSection.tsx
@@ -6276,7 +6245,6 @@ msgstr "Clipboard requires a secure connection (HTTPS). Please access this app o
 #: src/modules/onboarding/components/OnboardingSkipDialog.tsx
 #: src/modules/settings/applications/components/SettingsApplicationScreenshotLightbox.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-level-permissions/components/SettingsRolePermissionsObjectLevelRecordLevelPermissionMeValueSelect.tsx
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
 #: src/modules/ui/feedback/toast/components/__tests__/AppToaster.test.tsx
 #: src/modules/ui/feedback/toast/utils/getLocalizedToastProps.ts
 #: src/modules/workflow/workflow-steps/components/WorkflowDropdownStepOutputItems.tsx
@@ -14066,11 +14034,6 @@ msgstr "Highlighted quotation"
 msgid "Hire a partner to help you implement and customize Twenty."
 msgstr "Hire a partner to help you implement and customize Twenty."
 
-#. js-lingui-id: UG8DCt
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Holiday"
-msgstr "Holiday"
-
 #. js-lingui-id: i0qMbr
 #: src/modules/ai/components/AiChatNewThreadPageActions.tsx
 #: src/modules/navigation/hooks/useMobileNavigationBarItems.ts
@@ -15801,11 +15764,6 @@ msgstr "Last updated"
 #: src/modules/settings/legal/components/DpaDocumentPreview.tsx
 msgid "Last Updated: {0}"
 msgstr "Last Updated: {0}"
-
-#. js-lingui-id: FIq1Ba
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Later"
-msgstr "Later"
 
 #. js-lingui-id: p9uaTd
 #: src/modules/ai/utils/getAgentChatThreadSnoozeOptions.ts
@@ -20094,11 +20052,6 @@ msgstr "Open log console"
 #: src/modules/command-menu-item/display/hooks/useCommandMenuAppActions.ts
 msgid "Open logs console"
 msgstr "Open logs console"
-
-#. js-lingui-id: 1YhPUA
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Open my wishes"
-msgstr "Open my wishes"
 
 #. js-lingui-id: xGd6Ih
 #: src/modules/auth/sign-in-up/components/EmailVerificationSent.tsx
@@ -24735,11 +24688,6 @@ msgstr "Send Test Email"
 msgid "Send to Inbox"
 msgstr "Send to Inbox"
 
-#. js-lingui-id: wXUV4G
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Send wishes"
-msgstr "Send wishes"
-
 #. js-lingui-id: LFupHB
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -26651,11 +26599,6 @@ msgstr "Table widget"
 msgid "Table, Kanban, Calendar"
 msgstr "Table, Kanban, Calendar"
 
-#. js-lingui-id: D+nV7p
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Take a minute to send your wishes."
-msgstr "Take a minute to send your wishes."
-
 #. js-lingui-id: DBxdLI
 #: src/pages/settings/applications/components/SettingsClaimApplicationSection.tsx
 msgid "Take ownership of an app you published to npm. Enter its exact package name (or universal identifier) to find it."
@@ -26704,11 +26647,6 @@ msgstr "Task Title"
 #: src/pages/settings/members/SettingsWorkspaceMembers.tsx
 msgid "Team"
 msgstr "Team"
-
-#. js-lingui-id: I+EPVE
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Team event"
-msgstr "Team event"
 
 #. js-lingui-id: nLqMRA
 #: src/modules/activities/emails/recipients/components/EmailRecipientChipMenuContent.tsx
@@ -27426,11 +27364,6 @@ msgstr "This custom domain does not exist or does not belong to this application
 msgid "This database value overrides environment settings. "
 msgstr "This database value overrides environment settings. "
 
-#. js-lingui-id: 5Z0hVK
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "This day is all about you!"
-msgstr "This day is all about you!"
-
 #. js-lingui-id: pmDHTY
 #: src/modules/settings/profile/devices/components/SettingsDeviceSessionRowRightComponent.tsx
 msgid "This device"
@@ -27895,11 +27828,6 @@ msgstr "To"
 #: src/utils/date-utils.ts
 msgid "Today"
 msgstr "Today"
-
-#. js-lingui-id: eKrNqC
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Today · {today}"
-msgstr "Today · {today}"
 
 #. js-lingui-id: TNXmKt
 #: src/modules/ai/hooks/useFormatAgentChatThreadDate.ts
@@ -28414,11 +28342,6 @@ msgstr "Turn into"
 #: src/modules/settings/admin-panel/constants/SettingsAdminFeatureFlagMetadata.ts
 msgid "Turn the AI tab into an inbox to triage, assign, snooze and follow chats, let workflows send messages and agent questions to a member's inbox, and show a Conversations tab on record pages."
 msgstr "Turn the AI tab into an inbox to triage, assign, snooze and follow chats, let workflows send messages and agent questions to a member's inbox, and show a Conversations tab on record pages."
-
-#. js-lingui-id: 989xsJ
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Turns {years} today"
-msgstr "Turns {years} today"
 
 #. js-lingui-id: 2JBBhG
 #: src/modules/validation-rules/constants/ValidationRuleKeywords.ts
@@ -31314,11 +31237,6 @@ msgstr "You are editing the {currentLanguageLabel} translation. Renaming instead
 msgid "You are not allowed to create records for this object"
 msgstr "You are not allowed to create records for this object"
 
-#. js-lingui-id: BWhAQC
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "You are one of the people celebrated today"
-msgstr "You are one of the people celebrated today"
-
 #. js-lingui-id: iibZbD
 #: src/pages/settings/developers/tabs/SettingsDevelopersAppsTab.tsx
 msgid "You can either create a private app or share it to others"
@@ -31461,11 +31379,6 @@ msgstr "Your billing switches to annual immediately. A new annual period starts 
 #: src/modules/settings/billing/hooks/useBillingSubscriptionChangeWording.ts
 msgid "Your billing switches to monthly on {0}, at the end of your current billing period."
 msgstr "Your billing switches to monthly on {0}, at the end of your current billing period."
-
-#. js-lingui-id: Z0UbVO
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your birthday"
-msgstr "Your birthday"
 
 #. js-lingui-id: u1O1GV
 #: src/modules/settings/billing/hooks/useWaitForPaymentRecovery.tsx
@@ -31640,16 +31553,6 @@ msgstr "Your subscription setup was not completed."
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Your subscription status is: {statusLabel}"
 msgstr "Your subscription status is: {statusLabel}"
-
-#. js-lingui-id: kBqd+0
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your teammates have something waiting for you."
-msgstr "Your teammates have something waiting for you."
-
-#. js-lingui-id: Hn5AjV
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your work anniversary"
-msgstr "Your work anniversary"
 
 #. js-lingui-id: oC6WBs
 #: src/modules/information-banner/components/billing/InformationBannerNoBillingSubscription.tsx

@@ -268,12 +268,6 @@ msgstr "{0, plural, one {# Object} other {# Objecten}}"
 msgid "{0, plural, one {# workspace failed or behind} other {# workspaces failed or behind}}"
 msgstr "{0, plural, one {# werkruimte is mislukt of loopt achter} other {# werkruimtes zijn mislukt of lopen achter}}"
 
-#. js-lingui-id: aovTBO
-#. placeholder {0}: moments.length
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{0, plural, one {A special day for the team} other {# special occasions today}}"
-msgstr ""
-
 #. js-lingui-id: fkfOKg
 #. placeholder {0}: agentIds.length
 #: src/modules/ai/components/AiChatMessageReactions.tsx
@@ -784,16 +778,6 @@ msgstr "{heading}: {contextLabel}"
 msgid "{hiddenFieldCount, plural, one {# more populated field available} other {# more populated fields available}}"
 msgstr "{hiddenFieldCount, plural, one {# extra ingevuld veld beschikbaar} other {# extra ingevulde velden beschikbaar}}"
 
-#. js-lingui-id: yzfsYF
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{honoreeCount, plural, one {Celebrating # female teammate} other {Celebrating # female teammates}}"
-msgstr ""
-
-#. js-lingui-id: 10x6xP
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{honoreeCount, plural, one {Celebrating # male teammate} other {Celebrating # male teammates}}"
-msgstr ""
-
 #. js-lingui-id: pEl0a0
 #: src/pages/settings/admin-panel/SettingsAdminQueueDetail.tsx
 msgid "{hours, plural, one {{hours} hour} other {{hours} hours}}"
@@ -875,16 +859,6 @@ msgstr "{label}, ongelezen"
 #: src/modules/settings/roles/role-settings/components/SettingsRoleSettingsDeleteRoleConfirmationModalSubtitle.tsx
 msgid "{memberCount, plural, one {{memberCount} member} other {{memberCount} members}}"
 msgstr "{memberCount, plural, one {{memberCount} lid} other {{memberCount} leden}}"
-
-#. js-lingui-id: o6yHaX
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{memberName}'s birthday"
-msgstr ""
-
-#. js-lingui-id: aBItCl
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{memberName}'s work anniversary"
-msgstr ""
 
 #. js-lingui-id: Y32cMj
 #: src/modules/page-layout/widgets/email-thread/components/EmailThreadIntermediaryMessages.tsx
@@ -1240,11 +1214,6 @@ msgstr "{workspaceCreditsSeats, plural, one {Inclusief {seatCreditsDisplay} cred
 #: src/modules/settings/roles/role-assignment/components/SettingsRoleAssignmentConfirmationModalSubtitle.tsx
 msgid "{workspaceMemberName} will be unassigned from the following role:"
 msgstr "{workspaceMemberName} zal ontheven worden van de volgende rol:"
-
-#. js-lingui-id: E+YbS6
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "{years, plural, one {# year with the team} other {# years with the team}}"
-msgstr ""
 
 #. js-lingui-id: h5WHNQ
 #: src/modules/settings/billing/components/SettingsBillingCreditsSection.tsx
@@ -6281,7 +6250,6 @@ msgstr ""
 #: src/modules/onboarding/components/OnboardingSkipDialog.tsx
 #: src/modules/settings/applications/components/SettingsApplicationScreenshotLightbox.tsx
 #: src/modules/settings/roles/role-permissions/object-level-permissions/record-level-permissions/components/SettingsRolePermissionsObjectLevelRecordLevelPermissionMeValueSelect.tsx
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
 #: src/modules/ui/feedback/toast/components/__tests__/AppToaster.test.tsx
 #: src/modules/ui/feedback/toast/utils/getLocalizedToastProps.ts
 #: src/modules/workflow/workflow-steps/components/WorkflowDropdownStepOutputItems.tsx
@@ -14071,11 +14039,6 @@ msgstr "Gemarkeerd citaat"
 msgid "Hire a partner to help you implement and customize Twenty."
 msgstr "Huur een partner in om je te helpen Twenty te implementeren en aan te passen."
 
-#. js-lingui-id: UG8DCt
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Holiday"
-msgstr ""
-
 #. js-lingui-id: i0qMbr
 #: src/modules/ai/components/AiChatNewThreadPageActions.tsx
 #: src/modules/navigation/hooks/useMobileNavigationBarItems.ts
@@ -15806,11 +15769,6 @@ msgstr "Laatst bijgewerkt"
 #: src/modules/settings/legal/components/DpaDocumentPreview.tsx
 msgid "Last Updated: {0}"
 msgstr "Laatst bijgewerkt: {0}"
-
-#. js-lingui-id: FIq1Ba
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Later"
-msgstr ""
 
 #. js-lingui-id: p9uaTd
 #: src/modules/ai/utils/getAgentChatThreadSnoozeOptions.ts
@@ -20099,11 +20057,6 @@ msgstr "Logconsole openen"
 #: src/modules/command-menu-item/display/hooks/useCommandMenuAppActions.ts
 msgid "Open logs console"
 msgstr "Logconsole openen"
-
-#. js-lingui-id: 1YhPUA
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Open my wishes"
-msgstr ""
 
 #. js-lingui-id: xGd6Ih
 #: src/modules/auth/sign-in-up/components/EmailVerificationSent.tsx
@@ -24740,11 +24693,6 @@ msgstr "Test-e-mail verzenden"
 msgid "Send to Inbox"
 msgstr "Naar inbox verzenden"
 
-#. js-lingui-id: wXUV4G
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Send wishes"
-msgstr ""
-
 #. js-lingui-id: LFupHB
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
 #: src/pages/settings/communications/SettingsWorkspaceCommunicationGroupChannelDetail.tsx
@@ -26656,11 +26604,6 @@ msgstr "Tabel-widget"
 msgid "Table, Kanban, Calendar"
 msgstr "Tabel, Kanban, Kalender"
 
-#. js-lingui-id: D+nV7p
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Take a minute to send your wishes."
-msgstr ""
-
 #. js-lingui-id: DBxdLI
 #: src/pages/settings/applications/components/SettingsClaimApplicationSection.tsx
 msgid "Take ownership of an app you published to npm. Enter its exact package name (or universal identifier) to find it."
@@ -26709,11 +26652,6 @@ msgstr "Taaktitel"
 #: src/pages/settings/members/SettingsWorkspaceMembers.tsx
 msgid "Team"
 msgstr "Team"
-
-#. js-lingui-id: I+EPVE
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Team event"
-msgstr ""
 
 #. js-lingui-id: nLqMRA
 #: src/modules/activities/emails/recipients/components/EmailRecipientChipMenuContent.tsx
@@ -27431,11 +27369,6 @@ msgstr "Dit aangepaste domein bestaat niet of behoort niet tot deze toepassing."
 msgid "This database value overrides environment settings. "
 msgstr "Deze databasewaarde overschrijft omgevingsinstellingen."
 
-#. js-lingui-id: 5Z0hVK
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "This day is all about you!"
-msgstr ""
-
 #. js-lingui-id: pmDHTY
 #: src/modules/settings/profile/devices/components/SettingsDeviceSessionRowRightComponent.tsx
 msgid "This device"
@@ -27900,11 +27833,6 @@ msgstr "Aan"
 #: src/utils/date-utils.ts
 msgid "Today"
 msgstr "Vandaag"
-
-#. js-lingui-id: eKrNqC
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Today · {today}"
-msgstr ""
 
 #. js-lingui-id: TNXmKt
 #: src/modules/ai/hooks/useFormatAgentChatThreadDate.ts
@@ -28419,11 +28347,6 @@ msgstr "Omzetten in"
 #: src/modules/settings/admin-panel/constants/SettingsAdminFeatureFlagMetadata.ts
 msgid "Turn the AI tab into an inbox to triage, assign, snooze and follow chats, let workflows send messages and agent questions to a member's inbox, and show a Conversations tab on record pages."
 msgstr "Maak van het AI-tabblad een inbox om chats te triëren, toe te wijzen, te snoozen en te volgen, laat workflows berichten en agentvragen naar de inbox van een lid sturen, en toon een tabblad Gesprekken op recordpagina's."
-
-#. js-lingui-id: 989xsJ
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Turns {years} today"
-msgstr ""
 
 #. js-lingui-id: 2JBBhG
 #: src/modules/validation-rules/constants/ValidationRuleKeywords.ts
@@ -31319,11 +31242,6 @@ msgstr "U bewerkt de vertaling in {currentLanguageLabel}. Als u in plaats daarva
 msgid "You are not allowed to create records for this object"
 msgstr "U mag geen records maken voor dit object"
 
-#. js-lingui-id: BWhAQC
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "You are one of the people celebrated today"
-msgstr ""
-
 #. js-lingui-id: iibZbD
 #: src/pages/settings/developers/tabs/SettingsDevelopersAppsTab.tsx
 msgid "You can either create a private app or share it to others"
@@ -31466,11 +31384,6 @@ msgstr "Je facturatie wordt onmiddellijk gewijzigd naar jaarlijks. Vandaag begin
 #: src/modules/settings/billing/hooks/useBillingSubscriptionChangeWording.ts
 msgid "Your billing switches to monthly on {0}, at the end of your current billing period."
 msgstr "Je facturatie wordt op {0}, aan het einde van je huidige factureringsperiode, gewijzigd naar maandelijks."
-
-#. js-lingui-id: Z0UbVO
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your birthday"
-msgstr ""
 
 #. js-lingui-id: u1O1GV
 #: src/modules/settings/billing/hooks/useWaitForPaymentRecovery.tsx
@@ -31645,16 +31558,6 @@ msgstr "Het instellen van uw abonnement is niet voltooid."
 #: src/pages/settings/enterprise/SettingsEnterprise.tsx
 msgid "Your subscription status is: {statusLabel}"
 msgstr "De status van uw abonnement is: {statusLabel}"
-
-#. js-lingui-id: kBqd+0
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your teammates have something waiting for you."
-msgstr ""
-
-#. js-lingui-id: Hn5AjV
-#: src/modules/team-moments/components/TeamMomentsTodayDialog.tsx
-msgid "Your work anniversary"
-msgstr ""
 
 #. js-lingui-id: oC6WBs
 #: src/modules/information-banner/components/billing/InformationBannerNoBillingSubscription.tsx

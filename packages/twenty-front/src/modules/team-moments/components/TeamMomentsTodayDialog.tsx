@@ -1,5 +1,6 @@
 import { styled } from '@linaria/react';
-import { plural, t } from '@lingui/core/macro';
+import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { AppPath } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { IconX } from 'twenty-ui/icon';
@@ -11,6 +12,7 @@ import { navigationMenuItemsSelector } from '@/navigation-menu-item/common/state
 import { TEAM_MOMENTS_PAGE_NAVIGATION_ITEM_NAME } from '@/team-moments/constants/TeamMomentsPageNavigationItemName';
 import { TeamMomentsFireworks } from '@/team-moments/components/TeamMomentsFireworks';
 import { type TeamMomentsToday } from '@/team-moments/types/TeamMomentsToday';
+import { getTeamMomentsCopy } from '@/team-moments/utils/getTeamMomentsCopy';
 import { RootStackingContextZIndices } from '@/ui/layout/constants/RootStackingContextZIndices';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { NavigationMenuItemType } from '~/generated-metadata/graphql';
@@ -196,6 +198,8 @@ export const TeamMomentsTodayDialog = ({
   );
   const navigationMenuItems = useAtomStateValue(navigationMenuItemsSelector);
   const navigateApp = useNavigateApp();
+  const { i18n } = useLingui();
+  const copy = getTeamMomentsCopy(i18n.locale);
 
   const momentsPageLayoutId = navigationMenuItems.find(
     (item) =>
@@ -228,24 +232,21 @@ export const TeamMomentsTodayDialog = ({
     switch (moment.kind) {
       case 'BIRTHDAY':
         return {
-          title: isSelf ? t`Your birthday` : t`${memberName}'s birthday`,
-          meta: years > 0 && years < 120 ? t`Turns ${years} today` : '',
+          title: isSelf ? copy.yourBirthday : copy.memberBirthday(memberName),
+          meta: years > 0 && years < 120 ? copy.turnsToday(years) : '',
         };
       case 'ANNIVERSARY':
         return {
           title: isSelf
-            ? t`Your work anniversary`
-            : t`${memberName}'s work anniversary`,
-          meta: plural(years, {
-            one: '# year with the team',
-            other: '# years with the team',
-          }),
+            ? copy.yourWorkAnniversary
+            : copy.memberWorkAnniversary(memberName),
+          meta: copy.yearsWithTeam(years),
         };
       case 'HOLIDAY':
       case 'CUSTOM': {
         const honoreeCount = moment.honoreeIds.length;
         const kindLabel =
-          moment.kind === 'HOLIDAY' ? t`Holiday` : t`Team event`;
+          moment.kind === 'HOLIDAY' ? copy.holiday : copy.teamEvent;
 
         if (moment.audience === 'EVERYONE') {
           return { title: moment.name, meta: kindLabel };
@@ -254,7 +255,7 @@ export const TeamMomentsTodayDialog = ({
         if (moment.honoreeIds.includes(currentWorkspaceMemberId)) {
           return {
             title: moment.name,
-            meta: t`You are one of the people celebrated today`,
+            meta: copy.youAreCelebrated,
           };
         }
 
@@ -262,14 +263,8 @@ export const TeamMomentsTodayDialog = ({
           title: moment.name,
           meta:
             moment.audience === 'WOMEN'
-              ? plural(honoreeCount, {
-                  one: 'Celebrating # female teammate',
-                  other: 'Celebrating # female teammates',
-                })
-              : plural(honoreeCount, {
-                  one: 'Celebrating # male teammate',
-                  other: 'Celebrating # male teammates',
-                }),
+              ? copy.celebratingFemaleTeammates(honoreeCount)
+              : copy.celebratingMaleTeammates(honoreeCount),
         };
       }
     }
@@ -330,19 +325,16 @@ export const TeamMomentsTodayDialog = ({
           >
             <IconX size={14} />
           </StyledCloseButton>
-          <StyledEyebrow>{t`Today · ${today}`}</StyledEyebrow>
+          <StyledEyebrow>{copy.today(today)}</StyledEyebrow>
           <StyledTitle id="team-moments-today-title">
             {isHonoree
-              ? t`This day is all about you!`
-              : plural(moments.length, {
-                  one: 'A special day for the team',
-                  other: '# special occasions today',
-                })}
+              ? copy.allAboutYou
+              : copy.specialOccasions(moments.length)}
           </StyledTitle>
           <StyledSubtitle>
             {isHonoree
-              ? t`Your teammates have something waiting for you.`
-              : t`Take a minute to send your wishes.`}
+              ? copy.somethingWaiting
+              : copy.sendYourWishes}
           </StyledSubtitle>
         </StyledHero>
         <StyledList>
@@ -365,11 +357,11 @@ export const TeamMomentsTodayDialog = ({
         </StyledList>
         <StyledFooter>
           <Button variant="outline" onClick={onClose}>
-            {t`Later`}
+            {copy.later}
           </Button>
           {isDefined(momentsPageLayoutId) && (
             <Button variant="solid" color="accent" onClick={openMomentsPage}>
-              {isHonoree ? t`Open my wishes` : t`Send wishes`}
+              {isHonoree ? copy.openMyWishes : copy.sendWishes}
             </Button>
           )}
         </StyledFooter>
