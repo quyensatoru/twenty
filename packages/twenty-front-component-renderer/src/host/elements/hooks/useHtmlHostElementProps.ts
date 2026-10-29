@@ -1,3 +1,4 @@
+import { isFunction } from '@sniptt/guards';
 import { useContext } from 'react';
 
 import { SCROLL_BRIDGE_PROPERTIES } from '@/constants/ScrollBridgeProperties';
@@ -88,6 +89,12 @@ export const useHtmlHostElementProps = ({
     // React 19 blocks the previous `action="javascript:void(0)"` guard.
     ...(htmlTag === 'form' && {
       onSubmit: preventDefaultThenForwardToRemote(reactBindableProps.onSubmit),
+    }),
+    // A remote that listens for contextmenu draws its own menu or action.
+    ...(isFunction(reactBindableProps.onContextMenu) && {
+      onContextMenu: preventDefaultThenForwardToRemote(
+        reactBindableProps.onContextMenu,
+      ),
     }),
   };
 

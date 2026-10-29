@@ -558,6 +558,48 @@ describe('createHtmlHostWrapper client events', () => {
       expect.objectContaining({ type: 'drop' }),
     );
   });
+
+  it('should prevent the browser menu when a remote contextmenu handler exists', () => {
+    const handleContextMenu = jest.fn();
+    const Wrapper = createHtmlHostWrapper('button');
+
+    act(() => {
+      root.render(createElement(Wrapper, { onContextMenu: handleContextMenu }));
+    });
+
+    const node = container.firstElementChild as HTMLElement;
+    const contextMenuEvent = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      node.dispatchEvent(contextMenuEvent);
+    });
+
+    expect(contextMenuEvent.defaultPrevented).toBe(true);
+    expect(handleContextMenu).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'contextmenu' }),
+    );
+  });
+
+  it('should leave the browser menu alone without a remote contextmenu handler', () => {
+    const Wrapper = createHtmlHostWrapper('button');
+
+    act(() => {
+      root.render(createElement(Wrapper, {}));
+    });
+
+    const node = container.firstElementChild as HTMLElement;
+    const contextMenuEvent = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      node.dispatchEvent(contextMenuEvent);
+    });
+
+    expect(contextMenuEvent.defaultPrevented).toBe(false);
+  });
 });
 
 describe('createHtmlHostWrapper scroll bridge props', () => {
