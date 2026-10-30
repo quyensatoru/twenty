@@ -1,12 +1,14 @@
 import { defineApplication, FieldType } from 'twenty-sdk/define';
 
 import { DEFAULT_CUSTOM_EMAIL_BODY_TEMPLATE } from './constants/default-custom-email-body-template';
+import { DEFAULT_CUSTOM_EMAIL_MAX_PER_MINUTE } from './constants/send-limits';
 
 import {
   CAMPAIGN_SENDERS_VARIABLE,
   CUSTOM_EMAIL_BODY_TEMPLATE_VARIABLE,
   CUSTOM_EMAIL_ENDPOINT_VARIABLE,
   CUSTOM_EMAIL_HEADERS_VARIABLE,
+  CUSTOM_EMAIL_MAX_PER_MINUTE_VARIABLE,
   EMAIL_PROVIDER_VARIABLE,
   INBOUND_EVENTS_API_KEY_VARIABLE,
   DEFAULT_FROM_EMAIL_VARIABLE,
@@ -21,6 +23,7 @@ import {
   CUSTOM_EMAIL_BODY_TEMPLATE_VARIABLE_UID,
   CUSTOM_EMAIL_ENDPOINT_VARIABLE_UID,
   CUSTOM_EMAIL_HEADERS_VARIABLE_UID,
+  CUSTOM_EMAIL_MAX_PER_MINUTE_VARIABLE_UID,
   EMAIL_PROVIDER_VARIABLE_UID,
   INBOUND_EVENTS_API_KEY_VARIABLE_UID,
   DEFAULT_FROM_EMAIL_VARIABLE_UID,
@@ -104,6 +107,13 @@ export default defineApplication({
       description:
         'JSON body with {{tokens}}: to, from, fromEmail, fromName, replyTo, subject, html, text, unsubscribeUrl, shopDomain, campaignId, campaignName, merchantId, idempotencyKey. A value that is exactly one token becomes null when empty.',
       value: JSON.stringify(DEFAULT_CUSTOM_EMAIL_BODY_TEMPLATE),
+    },
+    [CUSTOM_EMAIL_MAX_PER_MINUTE_VARIABLE]: {
+      universalIdentifier: CUSTOM_EMAIL_MAX_PER_MINUTE_VARIABLE_UID,
+      label: 'Custom email max per minute',
+      description:
+        'How many emails a broadcast sends per minute when the provider is CUSTOM_HTTP. Keep it under the email service rate limit.',
+      value: String(DEFAULT_CUSTOM_EMAIL_MAX_PER_MINUTE),
     },
     [INBOUND_EVENTS_API_KEY_VARIABLE]: {
       universalIdentifier: INBOUND_EVENTS_API_KEY_VARIABLE_UID,

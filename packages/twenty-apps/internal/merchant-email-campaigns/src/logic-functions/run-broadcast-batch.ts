@@ -1,7 +1,7 @@
 import { defineLogicFunction } from 'twenty-sdk/define';
 
-import { BROADCAST_BATCH_SIZE } from '../constants/send-limits';
 import { RUN_BROADCAST_BATCH_LOGIC_FUNCTION_UID } from '../constants/universal-identifiers';
+import { resolveBroadcastPageSize } from '../email-provider/resolve-broadcast-page-size';
 import { sendManyEmails } from '../email-provider/send-many-emails';
 import { type ApiClient } from '../types/api-client';
 import { type AudienceFilter } from '../types/audience-filter';
@@ -36,18 +36,20 @@ const prepareFilterPage = async ({
   campaign,
   template,
   audienceFilter,
+  pageSize,
   after,
 }: {
   client: ApiClient;
   campaign: CampaignRow;
   template: TemplateRow;
   audienceFilter: AudienceFilter;
+  pageSize: number;
   after?: string;
 }): Promise<{ prepared: PreparedEntry[]; hasNextPage: boolean; nextAfter?: string }> => {
   const page = await fetchMerchantPage({
     client,
     audienceFilter,
-    first: BROADCAST_BATCH_SIZE,
+    first: pageSize,
     after,
   });
   const merchants = (page.edges ?? []).map((edge) => edge.node);
@@ -73,15 +75,17 @@ const prepareManualListPage = async ({
   campaign,
   template,
   pageIndex,
+  pageSize,
 }: {
   client: ApiClient;
   campaign: CampaignRow;
   template: TemplateRow;
   pageIndex: number;
+  pageSize: number;
 }): Promise<{ prepared: PreparedEntry[]; hasNextPage: boolean }> => {
   const allRecipients = campaign.manualRecipients ?? [];
-  const pageStart = pageIndex * BROADCAST_BATCH_SIZE;
-  const pageRecipients = allRecipients.slice(pageStart, pageStart + BROADCAST_BATCH_SIZE);
+  const pageStart = pageIndex * pageSize;
+  const pageRecipients = allRecipients.slice(pageStart, pageStart + pageSize);
   const emails = pageRecipients.map((recipient) => recipient.email);
   const appIds = parseAudienceFilter(campaign.audienceFilter).appIds;
 
@@ -120,11 +124,12 @@ const prepareManualListPage = async ({
     };
   });
 
-  return { prepared, hasNextPage: pageStart + BROADCAST_BATCH_SIZE < allRecipients.length };
+  return { prepared, hasNextPage: pageStart + pageSize < allRecipients.length };
 };
 
 const runBatch = async (client: ApiClient, payload: BroadcastBatchPayload) => {
   const { campaignId, runId, pageIndex, after } = payload;
+  const pageSize = payload.pageSize ?? resolveBroadcastPageSize();
   const campaign = await fetchCampaign(client, campaignId);
 
   // Pausing or canceling is just a status change: the chain notices here and
@@ -146,12 +151,13 @@ const runBatch = async (client: ApiClient, payload: BroadcastBatchPayload) => {
 
   const isManualList = campaign.audienceMode === 'MANUAL_LIST';
   const { prepared, hasNextPage, nextAfter } = isManualList
-    ? { ...(await prepareManualListPage({ client, campaign, template, pageIndex })), nextAfter: undefined }
+    ? { ...(await prepareManualListPage({ client, campaign, template, pageIndex, pageSize })), nextAfter: undefined }
     : await prepareFilterPage({
         client,
         campaign,
         template,
         audienceFilter: parseAudienceFilter(campaign.audienceFilter),
+        pageSize,
         after,
       });
 
@@ -250,6 +256,7 @@ const runBatch = async (client: ApiClient, payload: BroadcastBatchPayload) => {
       campaignId,
       runId,
       pageIndex: pageIndex + 1,
+      pageSize,
       ...(nextAfter === undefined ? {} : { after: nextAfter }),
     });
   } else {
@@ -296,7 +303,7 @@ export default defineLogicFunction({
   universalIdentifier: RUN_BROADCAST_BATCH_LOGIC_FUNCTION_UID,
   name: 'run-broadcast-batch',
   description:
-    'Job: sends one page of a broadcast (audience filter or manual list) through Resend, logs every send, then queues the next page.',
+    'Job: sends one page of a broadcast (audience filter or manual list) through the email provider, logs every send, then queues the next page.',
   timeoutSeconds: 120,
   handler,
 });

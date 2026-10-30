@@ -2,6 +2,7 @@ import { type OutgoingEmail } from '../types/outgoing-email';
 import { type EmailSendResult } from '../types/email-send-result';
 import { buildCustomEmailTemplateValues } from '../utils/build-custom-email-template-values.util';
 import { readProviderMessageId } from '../utils/read-provider-message-id.util';
+import { parseRetryAfter } from '../utils/parse-retry-after.util';
 import { renderJsonTemplate } from '../utils/render-json-template.util';
 import { readCustomEmailConfig } from './read-custom-email-config';
 
@@ -54,5 +55,8 @@ export const sendCustomHttpEmail = async (
     ok: false,
     error: message,
     isRetryable: response.status === 429 || response.status >= 500,
+    ...(response.status === 429
+      ? { retryAfterMs: parseRetryAfter(response.headers.get('retry-after')) }
+      : {}),
   };
 };

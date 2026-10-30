@@ -251,6 +251,7 @@ ví dụ `{{event.days_left}}`, `{{event.DOMAIN}}`. Giá trị lồng nhau đư�
 | `CUSTOM_EMAIL_ENDPOINT`      | `https://mail.internal.example.com/send`                          |
 | `CUSTOM_EMAIL_HEADERS`       | `{"Authorization": "Bearer ...", "x-service-key": "..."}` (secret) |
 | `CUSTOM_EMAIL_BODY_TEMPLATE` | Mặc định khớp service hiện tại, xem dưới                          |
+| `CUSTOM_EMAIL_MAX_PER_MINUTE` | Mặc định `60`. Broadcast gửi đều theo tốc độ này; đặt thấp hơn rate limit của service |
 
 Body mặc định:
 
