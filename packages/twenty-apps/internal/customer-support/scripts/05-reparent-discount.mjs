@@ -32,11 +32,16 @@ const shouldApply = process.argv.includes('--apply');
 const derive = (applicationUid, entityNamespace, value) =>
   uuidv5(`${entityNamespace}:${value}`, applicationUid);
 
-const client = new pg.Client({
-  connectionString:
-    process.env.PG_DATABASE_URL ??
-    'postgres://postgres:postgres@localhost:5432/default',
-});
+const connectionString = process.env.PG_DATABASE_URL;
+
+if (!connectionString) {
+  console.error(
+    'Thiếu PG_DATABASE_URL, vd. PG_DATABASE_URL=postgres://<user>:<password>@localhost:5432/default',
+  );
+  process.exit(1);
+}
+
+const client = new pg.Client({ connectionString });
 
 await client.connect();
 

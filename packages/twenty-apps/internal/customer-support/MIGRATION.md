@@ -113,6 +113,8 @@ re-parent có chấp nhận nó không; nếu plan đòi tạo mới searchField
 
 ## Thứ tự chạy — đã diễn tập trọn vẹn trên DB dev 2026-09-29
 
+Các script đọc DB từ `PG_DATABASE_URL` (bắt buộc, không có giá trị mặc định): `export PG_DATABASE_URL=...` trước khi chạy.
+
 `cache:flush` sau MỖI đợt sửa SQL là bắt buộc, không phải tuỳ chọn. Bỏ nó thì `twenty plan` của
 task-manager vẫn báo `objectMetadata "merchant" — drops the table and all its rows` dù re-parent đã
 xong: `CoreEntityCacheService` cache workspace entity đã serialize nên server còn đọc chủ sở hữu cũ.
