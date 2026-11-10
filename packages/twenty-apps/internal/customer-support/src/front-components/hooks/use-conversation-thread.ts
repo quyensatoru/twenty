@@ -20,6 +20,7 @@ type ThreadState = {
   messages: SupportInboxMessage[];
   hasOlder: boolean;
   issues: SupportInboxIssue[];
+  canReply: boolean;
 };
 
 const mergeMessages = (
@@ -81,6 +82,7 @@ export const useConversationThread = (conversationId: string | null) => {
               ? previous.hasOlder
               : result.hasOlder,
           issues: result.issues ?? [],
+          canReply: result.canReply === true,
         }));
         setError(null);
       } catch (caught) {
@@ -155,6 +157,18 @@ export const useConversationThread = (conversationId: string | null) => {
       previous === null ? previous : { ...previous, issues },
     );
 
+  // A sent reply shows at once; the refresh later brings Crisp's own copy
+  // under the same id.
+  const appendMessage = (message: SupportInboxMessage) =>
+    setThread((previous) =>
+      previous === null
+        ? previous
+        : {
+            ...previous,
+            messages: mergeMessages(previous.messages, [message]),
+          },
+    );
+
   const isCurrent = thread?.conversationId === conversationId;
 
   return {
@@ -163,6 +177,8 @@ export const useConversationThread = (conversationId: string | null) => {
     hasOlder: isCurrent ? (thread?.hasOlder ?? false) : false,
     issues: isCurrent ? (thread?.issues ?? []) : [],
     replaceIssues,
+    canReply: isCurrent ? (thread?.canReply ?? false) : false,
+    appendMessage,
     isLoading: isLoading || (conversationId !== null && !isCurrent),
     isLoadingOlder,
     error,

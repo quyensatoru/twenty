@@ -5,7 +5,6 @@ import {
   IconExternalLink,
   IconLayoutSidebarRightCollapse,
   IconLayoutSidebarRightExpand,
-  IconLock,
   IconShoppingBag,
 } from 'twenty-ui/icon';
 
@@ -37,6 +36,7 @@ import {
   readTone,
 } from './inbox-tokens';
 import { MessageGroup } from './message-group';
+import { ReplyComposer } from './reply-composer';
 
 type ConversationThreadPanelProps = {
   conversation: SupportInboxConversation | null;
@@ -50,6 +50,8 @@ type ConversationThreadPanelProps = {
   onBack: () => void;
   onToggleDetails: () => void;
   onLoadOlder: () => void;
+  canReply: boolean;
+  onReplySent: (message: SupportInboxMessage) => void;
   // Shown in place of the thread while details are open. Left out, details
   // live in a column beside the panel and the thread always stays.
   detailsContent?: ReactNode;
@@ -107,12 +109,13 @@ export const ConversationThreadPanel = ({
   onBack,
   onToggleDetails,
   onLoadOlder,
+  canReply,
+  onReplySent,
   detailsContent,
   headerActions,
 }: ConversationThreadPanelProps) => {
   // Narrow places (the record page in a side panel, a phone) get the compact
-  // layout: details swap in for the thread, the pills move under the name,
-  // and the footer keeps only the reply action.
+  // layout: details swap in for the thread and the pills move under the name.
   const isCompact = detailsContent !== undefined;
   const isShowingDetailsInPlace = isCompact && isDetailsOpen;
   const name = conversation === null ? '' : readConversationName(conversation);
@@ -452,45 +455,14 @@ export const ConversationThreadPanel = ({
               padding: '12px 16px',
             }}
           >
-            {!isCompact && (
-              <div
-                style={{
-                  alignItems: 'center',
-                  background: INBOX_TOKENS.backgroundSecondary,
-                  border: `1px solid ${INBOX_TOKENS.border}`,
-                  borderRadius: 12,
-                  color: INBOX_TOKENS.textTertiary,
-                  display: 'flex',
-                  flex: 1,
-                  fontSize: 13,
-                  gap: 8,
-                  height: 40,
-                  minWidth: 0,
-                  padding: '0 14px',
-                }}
-              >
-                <IconLock size={14} style={{ flexShrink: 0 }} />
-                <span
-                  style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {t(
-                    'Read-only mirror. Reply from Crisp so the customer sees it.',
-                  )}
-                </span>
-              </div>
-            )}
-            {crispUrl !== null && (
-              <InboxButton
-                variant="primary"
-                href={crispUrl}
-                icon={<IconExternalLink size={15} />}
-              >
-                {t('Reply in Crisp')}
-              </InboxButton>
+            {conversation !== null && (
+              <ReplyComposer
+                conversationId={conversation.id}
+                canReply={canReply}
+                crispUrl={crispUrl}
+                isCompact={isCompact}
+                onSent={onReplySent}
+              />
             )}
           </footer>
         </>

@@ -62,10 +62,12 @@ const crispRequest = async <TData>(
     method = 'GET',
     query = {},
     body,
+    isMissingAllowed = true,
   }: {
-    method?: 'GET' | 'PATCH';
+    method?: 'GET' | 'PATCH' | 'POST';
     query?: Record<string, string | number | undefined>;
     body?: unknown;
+    isMissingAllowed?: boolean;
   } = {},
 ): Promise<TData | undefined> => {
   const url = new URL(`${CRISP_API_BASE_URL}${path}`);
@@ -103,7 +105,7 @@ const crispRequest = async <TData>(
     }
 
     // A conversation removed in Crisp between the event and this read.
-    if (response.status === 404) {
+    if (response.status === 404 && isMissingAllowed) {
       return undefined;
     }
 
@@ -201,5 +203,33 @@ export const updateCrispConversationData = async (
     settings,
     `/website/${websiteId}/conversation/${sessionId}/meta`,
     { method: 'PATCH', body: { data } },
+  );
+};
+
+export const sendCrispOperatorMessage = async (
+  settings: CrispSettings,
+  websiteId: string,
+  sessionId: string,
+  {
+    text,
+    fingerprint,
+    nickname,
+  }: { text: string; fingerprint: number; nickname: string | null },
+): Promise<void> => {
+  await crispRequest(
+    settings,
+    `/website/${websiteId}/conversation/${sessionId}/message`,
+    {
+      method: 'POST',
+      isMissingAllowed: false,
+      body: {
+        type: 'text',
+        from: 'operator',
+        origin: 'chat',
+        content: text,
+        fingerprint,
+        ...(nickname === null ? {} : { user: { type: 'website', nickname } }),
+      },
+    },
   );
 };

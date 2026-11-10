@@ -74,6 +74,12 @@ export type SupportInboxMessagesResult = {
   messages: SupportInboxMessage[];
   hasOlder: boolean;
   issues: SupportInboxIssue[];
+  canReply: boolean;
+};
+
+export type SupportInboxReplyResult = {
+  success: true;
+  message: SupportInboxMessage;
 };
 
 export type SupportInboxLinkIssueResult = {

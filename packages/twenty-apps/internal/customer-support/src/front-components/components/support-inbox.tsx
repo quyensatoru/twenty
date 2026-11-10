@@ -20,7 +20,10 @@ import { ConversationThreadPanel } from './conversation-thread-panel';
 import { CustomerDetailsPanel } from './customer-details-panel';
 import { InboxOverview } from './inbox-overview';
 import { INBOX_TOKENS } from './inbox-tokens';
-import { useHostLocationHash, useHostLocationPathname } from '../hooks/use-host-location';
+import {
+  useHostLocationHash,
+  useHostLocationPathname,
+} from '../hooks/use-host-location';
 
 const HISTORY_IMPORT_DAYS = 30;
 
@@ -155,6 +158,8 @@ export const SupportInbox = () => {
           ) : undefined
         }
         onLoadOlder={() => void thread.loadOlder()}
+        canReply={thread.canReply}
+        onReplySent={thread.appendMessage}
       />
     );
 

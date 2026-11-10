@@ -79,6 +79,8 @@ export const ConversationRecord = () => {
         onBack={() => setIsDetailsOpen(false)}
         onToggleDetails={() => setIsDetailsOpen((isOpen) => !isOpen)}
         onLoadOlder={() => void thread.loadOlder()}
+        canReply={thread.canReply}
+        onReplySent={thread.appendMessage}
         headerActions={
           <InboxIconButton
             label={t('Open full conversation')}
