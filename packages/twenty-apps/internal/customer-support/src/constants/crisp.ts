@@ -42,6 +42,8 @@ export const SUPPORT_INBOX_LINK_ISSUE_ROUTE_PATH =
 export const SUPPORT_INBOX_SUMMARIZE_ROUTE_PATH =
   '/customer-support/inbox/summarize';
 export const SUPPORT_INBOX_REPLY_ROUTE_PATH = '/customer-support/inbox/reply';
+// Public: the link a customer opens from a file sent in a reply.
+export const SUPPORT_INBOX_FILE_ROUTE_PATH = '/customer-support/inbox/file';
 export const SUPPORT_INBOX_SEARCH_ISSUES_ROUTE_PATH =
   '/customer-support/inbox/search-issues';
 // Called from task-manager's issue panel, so these paths are a contract
@@ -54,6 +56,7 @@ export const MERCHANT_CRISP_CONVERSATIONS_ROUTE_PATH =
 export const SUPPORT_INBOX_CONVERSATION_PAGE_SIZE = 30;
 export const SUPPORT_INBOX_MESSAGE_PAGE_SIZE = 80;
 export const SUPPORT_INBOX_REPLY_MAX_LENGTH = 10_000;
+export const SUPPORT_INBOX_REPLY_MAX_FILES = 5;
 
 export const CRISP_CONVERSATION_STATUSES = [
   'PENDING',

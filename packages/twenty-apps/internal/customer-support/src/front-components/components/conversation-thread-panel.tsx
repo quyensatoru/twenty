@@ -51,7 +51,7 @@ type ConversationThreadPanelProps = {
   onToggleDetails: () => void;
   onLoadOlder: () => void;
   canReply: boolean;
-  onReplySent: (message: SupportInboxMessage) => void;
+  onReplySent: (messages: SupportInboxMessage[]) => void;
   // Shown in place of the thread while details are open. Left out, details
   // live in a column beside the panel and the thread always stays.
   detailsContent?: ReactNode;

@@ -79,7 +79,9 @@ export type SupportInboxMessagesResult = {
 
 export type SupportInboxReplyResult = {
   success: true;
-  message: SupportInboxMessage;
+  messages: SupportInboxMessage[];
+  failedFileIds: string[];
+  failure: string | null;
 };
 
 export type SupportInboxLinkIssueResult = {

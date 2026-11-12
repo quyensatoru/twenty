@@ -3,6 +3,7 @@ import { defineObject, FieldType } from 'twenty-sdk/define';
 import { CRISP_MESSAGE_SENDER_OPTIONS } from '../constants/crisp';
 import {
   CRISP_MESSAGE_CONTENT_FIELD_UID,
+  CRISP_MESSAGE_FILES_FIELD_UID,
   CRISP_MESSAGE_FINGERPRINT_FIELD_UID,
   CRISP_MESSAGE_MESSAGE_TYPE_FIELD_UID,
   CRISP_MESSAGE_OBJECT_UID,
@@ -90,6 +91,16 @@ export default defineObject({
       description: 'Original Crisp content, for files, pickers and fields',
       icon: 'IconBraces',
       isNullable: true,
+    },
+    {
+      universalIdentifier: CRISP_MESSAGE_FILES_FIELD_UID,
+      type: FieldType.FILES,
+      name: 'files',
+      label: 'Files',
+      description: 'File sent from the support inbox, kept in the CRM',
+      icon: 'IconPaperclip',
+      isNullable: true,
+      universalSettings: { maxNumberOfValues: 1 },
     },
   ],
 });

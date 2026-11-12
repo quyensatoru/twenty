@@ -159,7 +159,7 @@ export const SupportInbox = () => {
         }
         onLoadOlder={() => void thread.loadOlder()}
         canReply={thread.canReply}
-        onReplySent={thread.appendMessage}
+        onReplySent={thread.appendMessages}
       />
     );
 

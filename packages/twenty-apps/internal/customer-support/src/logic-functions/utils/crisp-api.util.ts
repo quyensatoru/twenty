@@ -211,10 +211,16 @@ export const sendCrispOperatorMessage = async (
   websiteId: string,
   sessionId: string,
   {
-    text,
+    type,
+    content,
     fingerprint,
     nickname,
-  }: { text: string; fingerprint: number; nickname: string | null },
+  }: {
+    type: 'text' | 'file';
+    content: unknown;
+    fingerprint: number;
+    nickname: string | null;
+  },
 ): Promise<void> => {
   await crispRequest(
     settings,
@@ -223,10 +229,10 @@ export const sendCrispOperatorMessage = async (
       method: 'POST',
       isMissingAllowed: false,
       body: {
-        type: 'text',
+        type,
         from: 'operator',
         origin: 'chat',
-        content: text,
+        content,
         fingerprint,
         ...(nickname === null ? {} : { user: { type: 'website', nickname } }),
       },
