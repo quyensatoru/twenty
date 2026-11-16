@@ -1,0 +1,150 @@
+import { defineObject } from 'twenty-sdk/define';
+
+import {
+  RECORD_SOURCE_OPTIONS,
+  SUBSCRIPTION_EVENT_TYPE_OPTIONS,
+} from '../constants/select-options';
+import {
+  BC_SUBSCRIPTION_EVENT_APP_NAME_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_ATTRIBUTED_MEMBER_ID_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_ATTRIBUTION_EVIDENCE_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_EVENT_TYPE_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_EXTERNAL_ID_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_IS_BC_INFLUENCED_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_IS_VERIFIED_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_MERCHANT_ID_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_MRR_DELTA_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_NAME_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_NEW_PLAN_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_OBJECT_UID,
+  BC_SUBSCRIPTION_EVENT_OCCURRED_AT_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_OLD_PLAN_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_OPPORTUNITY_ID_FIELD_UID,
+  BC_SUBSCRIPTION_EVENT_SOURCE_FIELD_UID,
+} from '../constants/universal-identifiers';
+import {
+  booleanField,
+  dateTimeField,
+  numberField,
+  rawJsonField,
+  selectField,
+  textField,
+  uuidField,
+} from '../utils/field-builders.util';
+
+export default defineObject({
+  universalIdentifier: BC_SUBSCRIPTION_EVENT_OBJECT_UID,
+  nameSingular: 'bcSubscriptionEvent',
+  namePlural: 'bcSubscriptionEvents',
+  labelSingular: 'Subscription Event',
+  labelPlural: 'Subscription Events',
+  description: 'A verified plan change, install or uninstall of a VIP client app',
+  icon: 'IconReceipt',
+  isSearchable: false,
+  labelIdentifierFieldMetadataUniversalIdentifier:
+    BC_SUBSCRIPTION_EVENT_NAME_FIELD_UID,
+  fields: [
+    textField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_NAME_FIELD_UID,
+      name: 'name',
+      label: 'Name',
+      icon: 'IconReceipt',
+    }),
+    textField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_APP_NAME_FIELD_UID,
+      name: 'appName',
+      label: 'App',
+      icon: 'IconApps',
+    }),
+    selectField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_EVENT_TYPE_FIELD_UID,
+      name: 'eventType',
+      label: 'Event',
+      icon: 'IconArrowsUpDown',
+      options: SUBSCRIPTION_EVENT_TYPE_OPTIONS,
+      defaultValue: 'UPGRADE',
+    }),
+    textField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_OLD_PLAN_FIELD_UID,
+      name: 'oldPlan',
+      label: 'From plan',
+      icon: 'IconArrowLeft',
+    }),
+    textField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_NEW_PLAN_FIELD_UID,
+      name: 'newPlan',
+      label: 'To plan',
+      icon: 'IconArrowRight',
+    }),
+    dateTimeField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_OCCURRED_AT_FIELD_UID,
+      name: 'occurredAt',
+      label: 'Occurred at',
+      icon: 'IconClock',
+    }),
+    numberField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_MRR_DELTA_FIELD_UID,
+      name: 'mrrDelta',
+      label: 'MRR change',
+      description: 'Monthly recurring revenue change in the base currency',
+      icon: 'IconCurrencyDollar',
+    }),
+    booleanField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_IS_VERIFIED_FIELD_UID,
+      name: 'isVerified',
+      label: 'Verified',
+      icon: 'IconRosetteDiscountCheck',
+      defaultValue: true,
+    }),
+    selectField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_SOURCE_FIELD_UID,
+      name: 'source',
+      label: 'Source',
+      icon: 'IconPlug',
+      options: RECORD_SOURCE_OPTIONS,
+      defaultValue: 'CRM_SYNC',
+    }),
+    {
+      ...textField({
+        universalIdentifier: BC_SUBSCRIPTION_EVENT_EXTERNAL_ID_FIELD_UID,
+        name: 'externalId',
+        label: 'External ID',
+        icon: 'IconKey',
+      }),
+      isUnique: true,
+    },
+    booleanField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_IS_BC_INFLUENCED_FIELD_UID,
+      name: 'isBcInfluenced',
+      label: 'BC influenced',
+      description: 'A BC outreach on the topic happened before the change',
+      icon: 'IconUserCheck',
+      defaultValue: false,
+    }),
+    uuidField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_ATTRIBUTED_MEMBER_ID_FIELD_UID,
+      name: 'attributedMemberId',
+      label: 'Credited BC',
+      icon: 'IconUser',
+    }),
+    rawJsonField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_ATTRIBUTION_EVIDENCE_FIELD_UID,
+      name: 'attributionEvidence',
+      label: 'Attribution evidence',
+      description: 'Why the change was or was not credited: { activityIds, reason }',
+      icon: 'IconFileSearch',
+    }),
+    uuidField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_MERCHANT_ID_FIELD_UID,
+      name: 'merchantId',
+      label: 'Merchant',
+      icon: 'IconBuildingStore',
+    }),
+    uuidField({
+      universalIdentifier: BC_SUBSCRIPTION_EVENT_OPPORTUNITY_ID_FIELD_UID,
+      name: 'opportunityId',
+      label: 'Opportunity',
+      icon: 'IconTargetArrow',
+    }),
+  ],
+});
