@@ -96,7 +96,7 @@ export const readScopeLabel = (context: BcContextResult | null): string | undefi
 export const NoBcAccess = () => (
   <div style={{ padding: spacing(4) }}>
     <Banner color="blue" variant="secondary">
-      {t('You are not in a BC team yet. Ask a workspace admin to add you in BC Workspace settings.')}
+      {t('You are not in a BC team yet. Ask a workspace admin or a BC Workspace admin to add you in BC Workspace settings.')}
     </Banner>
   </div>
 );

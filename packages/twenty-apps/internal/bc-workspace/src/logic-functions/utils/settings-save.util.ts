@@ -1,5 +1,9 @@
 import { type ApiClient } from '../../types/api-client';
-import { type BcMemberRecord, type BcPlanRecord } from '../../types/bc-records';
+import {
+  type BcMemberRecord,
+  type BcMemberRole,
+  type BcPlanRecord,
+} from '../../types/bc-records';
 import {
   type MemberInput,
   type PlanInput,
@@ -16,6 +20,8 @@ import {
 } from './record-store.util';
 import { BC_MEMBER_SELECTION } from './resolve-bc-scope.util';
 import { listWorkspaceMembers } from './workspace-members.util';
+
+const BC_MEMBER_ROLES: BcMemberRole[] = ['BC', 'MANAGER', 'ADMIN'];
 
 const requireId = (value: unknown, name: string): string => {
   if (typeof value !== 'string' || value.length === 0) {
@@ -87,10 +93,10 @@ const deleteTeam = async (client: ApiClient, teamId: string) => {
 const saveMember = async (client: ApiClient, member: MemberInput | undefined) => {
   const workspaceMemberId = requireId(member?.workspaceMemberId, 'workspace member');
   const teamId = requireId(member?.teamId, 'team');
-  const role = member?.role === 'MANAGER' ? 'MANAGER' : member?.role === 'BC' ? 'BC' : null;
+  const role = BC_MEMBER_ROLES.find((candidate) => candidate === member?.role) ?? null;
 
   if (role === null) {
-    throw new Error('Role must be BC or MANAGER.');
+    throw new Error('Role must be BC, MANAGER or ADMIN.');
   }
 
   const existing = await listAllRecords<BcMemberRecord>({

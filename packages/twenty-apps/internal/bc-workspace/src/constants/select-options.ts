@@ -11,6 +11,7 @@ export const RELATIONSHIP_STATUS_OPTIONS = [
 export const BC_MEMBER_ROLE_OPTIONS = [
   { id: '11493bb5-9578-4c86-867d-3ad7c5585f99', value: 'BC', label: 'Business Consultant', position: 0, color: 'blue' },
   { id: '105a39f6-0018-44c5-8cf3-f017de4d7421', value: 'MANAGER', label: 'Manager', position: 1, color: 'purple' },
+  { id: '39707f4c-638a-41b0-b2ca-c9d943ab5800', value: 'ADMIN', label: 'BC Workspace admin', position: 2, color: 'red' },
 ] as const;
 
 export const ISSUE_STATUS_OPTIONS = [

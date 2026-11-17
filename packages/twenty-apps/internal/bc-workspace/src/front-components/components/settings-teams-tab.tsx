@@ -19,6 +19,7 @@ type SaveSettings = (body: SettingsSaveBody) => Promise<boolean>;
 const ROLE_OPTIONS = (): { value: BcMemberRole; label: string }[] => [
   { value: 'BC', label: t('Business Consultant') },
   { value: 'MANAGER', label: t('Manager') },
+  { value: 'ADMIN', label: t('BC Workspace admin') },
 ];
 
 const splitNames = (value: string): string[] =>

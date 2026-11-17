@@ -14,7 +14,7 @@ export type SubscriptionLifecycle = 'TRIAL' | 'ACTIVE' | 'CANCELLED' | 'UNINSTAL
 
 export type ReviewState = 'REVIEWED' | 'NEEDS_REVIEW' | 'NOT_ELIGIBLE';
 
-export type BcMemberRole = 'BC' | 'MANAGER';
+export type BcMemberRole = 'BC' | 'MANAGER' | 'ADMIN';
 
 export type IssueStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 

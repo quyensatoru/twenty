@@ -47,6 +47,9 @@ export const buildBcScope = ({
   const activeMemberships = memberships.filter(
     (membership) => membership.isActive,
   );
+  const isBcWorkspaceAdmin = activeMemberships.some(
+    (membership) => membership.memberRole === 'ADMIN',
+  );
   const managedTeamIds = activeMemberships
     .filter((membership) => membership.memberRole === 'MANAGER')
     .flatMap((membership) =>
@@ -60,7 +63,7 @@ export const buildBcScope = ({
     ),
   ];
 
-  if (isAdmin) {
+  if (isAdmin || isBcWorkspaceAdmin) {
     return {
       workspaceMemberId,
       memberName,
@@ -240,7 +243,7 @@ export const assertCanSeeFinance = (scope: BcScope): void => {
 
 export const assertCanManageSettings = (scope: BcScope): void => {
   if (!scope.canManageSettings) {
-    throw new Error('Not authorized: only workspace admins can change BC Workspace settings.');
+    throw new Error('Not authorized: only workspace admins and BC Workspace admins can change BC Workspace settings.');
   }
 };
 

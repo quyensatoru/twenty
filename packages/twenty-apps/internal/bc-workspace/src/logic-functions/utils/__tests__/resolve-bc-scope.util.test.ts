@@ -19,6 +19,33 @@ const membership = (overrides: Partial<BcMemberRecord>): BcMemberRecord => ({
 });
 
 describe('buildBcScope', () => {
+  it('gives a BC Workspace admin membership full scope and settings', () => {
+    const scope = buildBcScope({
+      workspaceMemberId: 'me',
+      memberName: 'Me',
+      isAdmin: false,
+      memberships: [membership({ memberRole: 'ADMIN' })],
+      teamMembers: [],
+    });
+
+    expect(scope.role).toBe('ADMIN');
+    expect(scope.canManageSettings).toBe(true);
+    expect(scope.visibleMemberIds).toBeNull();
+  });
+
+  it('ignores an inactive BC Workspace admin membership', () => {
+    const scope = buildBcScope({
+      workspaceMemberId: 'me',
+      memberName: 'Me',
+      isAdmin: false,
+      memberships: [membership({ memberRole: 'ADMIN', isActive: false })],
+      teamMembers: [],
+    });
+
+    expect(scope.role).toBe('NONE');
+    expect(scope.canManageSettings).toBe(false);
+  });
+
   it('limits a BC to the clients they own, without finance', () => {
     const scope = buildBcScope({
       workspaceMemberId: 'me',

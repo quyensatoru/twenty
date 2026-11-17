@@ -41,7 +41,7 @@ Admins can correct a credit in Settings > Integrations: the upgrade or review ge
 
 ## Permissions
 
-Resolved per route from the caller's `bcMember` rows: a BC sees clients they own; a manager sees every client of the teams they manage plus unassigned clients, and financial figures; workspace admins see everything and manage settings. The routes run as the app role, so the UI never decides access.
+Resolved per route from the caller's `bcMember` rows: a BC sees clients they own; a manager sees every client of the teams they manage plus unassigned clients, and financial figures; workspace admins and members with the BC Workspace admin team role see everything and manage settings. The routes run as the app role, so the UI never decides access.
 
 ## Ingest API
 
@@ -78,5 +78,5 @@ Scope rules in the routes:
 
 - BC: clients whose PIC is the member.
 - Manager: clients whose PIC is in a team they manage, plus unassigned clients owned by one of those teams (`vipClient.teamId`).
-- Admin: every client.
+- Admin: every client. A Twenty Admin (or a member with the WORKSPACE or ROLES permission) is one; so is anyone with an active `bcMember` row whose `memberRole` is `ADMIN`, which an admin sets in Settings > Teams. Settings can add anyone to any team, so this role is full BC Workspace access, not a narrower settings-only right.
 - A client's team follows its PIC; an unassigned client keeps the team an admin chose or the team of the manager who added it.
