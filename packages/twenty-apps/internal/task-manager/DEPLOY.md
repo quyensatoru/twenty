@@ -882,3 +882,25 @@ Thiết kế gốc là prototype `product-backlog-crm` (README + PLAN.md, V1.3.6
   nhau), thay cho "mới tạo trước" như cũ. Kéo thẻ lên thẻ khác trong cùng cột thì chiếm chỗ thẻ đó,
   sang cột khác thì chèn trước thẻ đó, thả vào khoảng trống thì xuống cuối cột; một ô trống hiện
   đúng chỗ sẽ chèn. Có quy tắc Sắp xếp thì kéo thả chỉ đổi cột như trước.
+
+## 10. Release Notes (thông báo phát hành)
+
+Object `releaseNotification`, mỗi bản ghi thuộc đúng một `app` (`appId`): `title`, `content`
+(rich text, đọc `content.markdown`), `category` (`NEW` / `IMPROVEMENT` / `FIX`), `version`,
+`releaseDate` (`YYYY-MM-DD`), `linkDoc.primaryLinkUrl`, `status` (`DRAFT` / `PUBLISHED`),
+`publishedAt` (đặt lúc phát hành lần đầu, giữ nguyên khi sửa, về null khi gỡ phát hành).
+
+Page quản lý là standalone page layout **Release Notes**, app không tạo navigation item: admin tự
+thêm page vào folder mong muốn (Settings → Navigation hoặc kéo vào sidebar). Quyền theo app-scope
+như các object khác: chỉ thấy app có grant `read`, sửa cần `write`, xoá cần `softDelete`;
+admin (bypass) thấy mọi app. Mọi ghi đều qua route `save-release-notification` /
+`delete-release-notification`.
+
+**Webhook cho các app:** tạo webhook của workspace (Settings → APIs & Webhooks) với các event
+`releaseNotification.created`, `releaseNotification.updated`, `releaseNotification.deleted`.
+Payload có `record` chứa các cột trên và `appId`. Mỗi app consumer:
+
+- chỉ nhận bản ghi có `record.appId` bằng id app của mình trong CRM (lấy ở object App),
+- upsert theo `record.id` khi `status = PUBLISHED`, xoá/ẩn khi `status = DRAFT` hoặc event `deleted`.
+
+Bản nháp cũng sinh event, nên bước lọc `status` ở phía consumer là bắt buộc.

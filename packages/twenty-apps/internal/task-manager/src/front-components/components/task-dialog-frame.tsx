@@ -10,6 +10,7 @@ type TaskDialogFrameProps = {
   onClose: () => void;
   children: ReactNode;
   footer: ReactNode;
+  width?: number;
 };
 
 // A small modal for the sprint forms. Rendered inside a <twenty-overlay>
@@ -21,6 +22,7 @@ export const TaskDialogFrame = ({
   onClose,
   children,
   footer,
+  width = 520,
 }: TaskDialogFrameProps) => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
@@ -70,7 +72,7 @@ export const TaskDialogFrame = ({
           maxHeight: 'calc(100vh - 32px)',
           maxWidth: '100%',
           position: 'relative',
-          width: 520,
+          width,
           zIndex: 71,
         }}
       >
@@ -124,24 +126,35 @@ export const TaskDialogFrame = ({
   );
 };
 
-// A labelled form row inside a dialog.
+// A labelled form row inside a dialog. A group of several controls is not a
+// <label>: a click on its padding would activate the first control.
 export const TaskDialogField = ({
   label,
   children,
+  isGroup = false,
 }: {
   label: string;
   children: ReactNode;
-}) => (
-  <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-    <span
-      style={{
-        color: TASK_TOKENS.textSecondary,
-        fontSize: 12,
-        fontWeight: 600,
-      }}
+  isGroup?: boolean;
+}) => {
+  const Container = isGroup ? 'div' : 'label';
+
+  return (
+    <Container
+      role={isGroup ? 'group' : undefined}
+      aria-label={isGroup ? label : undefined}
+      style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
     >
-      {label}
-    </span>
-    {children}
-  </label>
-);
+      <span
+        style={{
+          color: TASK_TOKENS.textSecondary,
+          fontSize: 12,
+          fontWeight: 600,
+        }}
+      >
+        {label}
+      </span>
+      {children}
+    </Container>
+  );
+};

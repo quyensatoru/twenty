@@ -1,0 +1,101 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+
+import {
+  RELEASE_NOTIFICATION_CATEGORY_FIELD_UID,
+  RELEASE_NOTIFICATION_CATEGORY_OPTIONS,
+  RELEASE_NOTIFICATION_CONTENT_FIELD_UID,
+  RELEASE_NOTIFICATION_LINK_DOC_FIELD_UID,
+  RELEASE_NOTIFICATION_OBJECT_UID,
+  RELEASE_NOTIFICATION_PUBLISHED_AT_FIELD_UID,
+  RELEASE_NOTIFICATION_RELEASE_DATE_FIELD_UID,
+  RELEASE_NOTIFICATION_STATUS_FIELD_UID,
+  RELEASE_NOTIFICATION_STATUS_OPTIONS,
+  RELEASE_NOTIFICATION_TITLE_FIELD_UID,
+  RELEASE_NOTIFICATION_VERSION_FIELD_UID,
+} from '../constants/release-notification';
+
+// Consumer apps receive these through workspace webhooks and should only show
+// PUBLISHED rows: a row moved back to DRAFT or deleted is withdrawn.
+export default defineObject({
+  universalIdentifier: RELEASE_NOTIFICATION_OBJECT_UID,
+  nameSingular: 'releaseNotification',
+  namePlural: 'releaseNotifications',
+  labelSingular: 'Release notification',
+  labelPlural: 'Release notifications',
+  description: 'A release note announced inside one Shopify app',
+  icon: 'IconSpeakerphone',
+  isSearchable: true,
+  labelIdentifierFieldMetadataUniversalIdentifier:
+    RELEASE_NOTIFICATION_TITLE_FIELD_UID,
+  fields: [
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_TITLE_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'title',
+      label: 'Title',
+      icon: 'IconSpeakerphone',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_CONTENT_FIELD_UID,
+      type: FieldType.RICH_TEXT,
+      name: 'content',
+      label: 'Content',
+      icon: 'IconFileText',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_CATEGORY_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'category',
+      label: 'Category',
+      icon: 'IconTag',
+      isNullable: true,
+      defaultValue: "'NEW'",
+      options: [...RELEASE_NOTIFICATION_CATEGORY_OPTIONS],
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_RELEASE_DATE_FIELD_UID,
+      type: FieldType.DATE,
+      name: 'releaseDate',
+      label: 'Release date',
+      icon: 'IconCalendarEvent',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_LINK_DOC_FIELD_UID,
+      type: FieldType.LINKS,
+      name: 'linkDoc',
+      label: 'Doc link',
+      icon: 'IconBook',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_VERSION_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'version',
+      label: 'Version',
+      icon: 'IconVersions',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_STATUS_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'status',
+      label: 'Status',
+      icon: 'IconProgress',
+      isNullable: true,
+      defaultValue: "'DRAFT'",
+      options: [...RELEASE_NOTIFICATION_STATUS_OPTIONS],
+    },
+    {
+      universalIdentifier: RELEASE_NOTIFICATION_PUBLISHED_AT_FIELD_UID,
+      type: FieldType.DATE_TIME,
+      name: 'publishedAt',
+      label: 'Published at',
+      icon: 'IconSend',
+      isNullable: true,
+      isUIEditable: false,
+    },
+  ],
+});

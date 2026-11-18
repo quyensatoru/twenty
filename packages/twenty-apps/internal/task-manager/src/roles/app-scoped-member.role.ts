@@ -1,4 +1,9 @@
 import { IDEA_OBJECT_UID } from '../constants/product-backlog';
+import {
+  RELEASE_NOTIFICATION_APP_FIELD_UID,
+  RELEASE_NOTIFICATION_APP_SCOPE_PREDICATE_UID,
+  RELEASE_NOTIFICATION_OBJECT_UID,
+} from '../constants/release-notification';
 import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../constants/task-personal-board';
 import {
   TASK_AI_RUN_LOCK_OBJECT_UID,
@@ -161,6 +166,10 @@ export default defineRole({
     { objectUniversalIdentifier: ISSUE_MERCHANT_OBJECT_UID, ...scopedWrite },
     { objectUniversalIdentifier: ISSUE_HISTORY_OBJECT_UID, ...scopedWrite },
     {
+      objectUniversalIdentifier: RELEASE_NOTIFICATION_OBJECT_UID,
+      ...scopedWrite,
+    },
+    {
       objectUniversalIdentifier: REPOSITORY_OBJECT_UID,
       canReadObjectRecords: true,
       canUpdateObjectRecords: false,
@@ -256,6 +265,11 @@ export default defineRole({
       universalIdentifier: REPOSITORY_APP_SCOPE_PREDICATE_UID,
       objectUniversalIdentifier: REPOSITORY_OBJECT_UID,
       fieldUniversalIdentifier: REPOSITORY_APP_FIELD_UID,
+    }),
+    buildAppScopePredicate({
+      universalIdentifier: RELEASE_NOTIFICATION_APP_SCOPE_PREDICATE_UID,
+      objectUniversalIdentifier: RELEASE_NOTIFICATION_OBJECT_UID,
+      fieldUniversalIdentifier: RELEASE_NOTIFICATION_APP_FIELD_UID,
     }),
     buildAppScopePredicate({
       universalIdentifier: DEVELOPMENT_LINK_APP_SCOPE_PREDICATE_UID,

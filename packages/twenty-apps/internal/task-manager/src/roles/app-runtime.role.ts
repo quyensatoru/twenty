@@ -1,4 +1,5 @@
 import { IDEA_OBJECT_UID } from '../constants/product-backlog';
+import { RELEASE_NOTIFICATION_OBJECT_UID } from '../constants/release-notification';
 import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../constants/task-personal-board';
 import { TASK_AI_RUN_LOCK_OBJECT_UID } from '../constants/task-ai-run-lock';
 import {
@@ -97,6 +98,7 @@ export default defineApplicationRole({
       TASK_AI_RUN_LOCK_OBJECT_UID,
       TASK_PERSONAL_BOARD_OBJECT_UID,
       IDEA_OBJECT_UID,
+      RELEASE_NOTIFICATION_OBJECT_UID,
     ].map((objectUniversalIdentifier) => ({
       objectUniversalIdentifier,
       ...readWriteDelete,

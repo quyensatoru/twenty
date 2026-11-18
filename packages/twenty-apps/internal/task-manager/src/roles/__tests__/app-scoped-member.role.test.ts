@@ -21,6 +21,7 @@ import {
   ISSUE_NOTIFICATION_OBJECT_UID,
 } from '../../constants/discussion';
 import { IDEA_OBJECT_UID } from '../../constants/product-backlog';
+import { RELEASE_NOTIFICATION_OBJECT_UID } from '../../constants/release-notification';
 import { TASK_PERSONAL_BOARD_OBJECT_UID } from '../../constants/task-personal-board';
 import appRuntimeRole from '../app-runtime.role';
 import appScopedMemberRole from '../app-scoped-member.role';
@@ -41,6 +42,7 @@ const OBJECT_UID_BY_NAME: Record<string, string> = {
   repository: REPOSITORY_OBJECT_UID,
   developmentLink: DEVELOPMENT_LINK_OBJECT_UID,
   developmentDelivery: DEVELOPMENT_DELIVERY_OBJECT_UID,
+  releaseNotification: RELEASE_NOTIFICATION_OBJECT_UID,
 };
 
 const predicatedObjectUniversalIdentifiers = new Set(
