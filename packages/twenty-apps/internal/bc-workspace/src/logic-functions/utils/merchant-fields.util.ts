@@ -4,10 +4,10 @@ import { MERCHANT_OBJECT_UID } from '../../constants/universal-identifiers';
 import { type ApiClient } from '../../types/api-client';
 import { MERCHANT_SELECTION } from './record-selections';
 
-// pricingPlan, using and storeName are custom fields the product syncs create
-// on production; no app declares them, so other workspaces may lack them and
-// a query naming a missing field fails outright.
-const OPTIONAL_MERCHANT_FIELDS = ['pricingPlan', 'using', 'storeName'] as const;
+// pricingPlan, using, storeName and shopifyPlan are custom fields the product
+// syncs create on production; no app declares them, so other workspaces may
+// lack them and a query naming a missing field fails outright.
+const OPTIONAL_MERCHANT_FIELDS = ['pricingPlan', 'using', 'storeName', 'shopifyPlan'] as const;
 
 export type OptionalMerchantField = (typeof OPTIONAL_MERCHANT_FIELDS)[number];
 
